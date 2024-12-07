@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/config"
 	_ "github.com/oibacidem/lims-hl-seven/statik"
 	"github.com/rakyll/statik/fs"
 )
@@ -16,7 +15,7 @@ type Handler struct {
 }
 
 // RegisterRoutes registers the routes of the REST server.
-func RegisterRoutes(e *echo.Echo, handler *Handler, cfg *config.Schema) *echo.Echo {
+func RegisterRoutes(e *echo.Echo, handler *Handler) *echo.Echo {
 	registerFrontendPath(e)
 
 	api := e.Group("/api")
