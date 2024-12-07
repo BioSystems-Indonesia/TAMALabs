@@ -3,12 +3,14 @@ package server
 import (
 	"context"
 	"errors"
-	"github.com/labstack/echo/v4"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
 )
 
 // RestServer is an interface for rest server
@@ -26,7 +28,7 @@ type Rest struct {
 func (r *Rest) Serve() {
 	// Start server in a goroutine so that it doesn't block.
 	go func() {
-		if err := r.Client.Start(":" + r.Port); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := r.Client.Start("localhost:" + r.Port); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("Error starting server: %v", err)
 		}
 	}()
@@ -51,9 +53,21 @@ func (r *Rest) GetClient() *echo.Echo {
 	return r.Client
 }
 
+type Validator struct {
+	v *validator.Validate
+}
+
+func (v *Validator) Validate(i interface{}) error {
+	if err := v.v.Struct(i); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	return nil
+}
+
 // NewRest returns a new rest server
-func NewRest(port string) RestServer {
+func NewRest(port string, validate *validator.Validate) RestServer {
 	e := echo.New()
+	e.Validator = &Validator{v: validate}
 	return &Rest{
 		Port:   port,
 		Client: e,

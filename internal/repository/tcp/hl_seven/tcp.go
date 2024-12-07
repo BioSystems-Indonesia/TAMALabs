@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/labstack/gommon/log"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/pkg/tcp"
 )
@@ -17,7 +18,7 @@ type TCP struct {
 func NewTCP(cfg *config.Schema) *TCP {
 	conn, err := tcp.NewTCP("localhost", 5678, 10*time.Second)
 	if err != nil {
-		panic(fmt.Sprintf("failed to connect tcp, error: %s", err.Error()))
+		log.Error(fmt.Sprintf("failed to connect tcp, error: %s", err.Error()))
 	}
 	return &TCP{
 		tcp: conn,
