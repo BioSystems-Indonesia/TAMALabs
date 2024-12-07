@@ -1,7 +1,7 @@
 package hl_seven
 
 import (
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/config"
@@ -17,7 +17,7 @@ type TCP struct {
 func NewTCP(cfg *config.Schema) *TCP {
 	conn, err := tcp.NewTCP("localhost", 5678, 10*time.Second)
 	if err != nil {
-		panic(fmt.Sprintf("failed to connect tcp, error: %s", err.Error()))
+		log.Println("Failed to connect to HL7 server")
 	}
 	return &TCP{
 		tcp: conn,

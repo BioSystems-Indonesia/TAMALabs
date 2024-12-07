@@ -16,3 +16,8 @@ func InitRestApp(config *config.Schema) server.RestServer {
 	wire.Build(restAppSet)
 	return &server.Rest{}
 }
+
+func InitTCPApp(config *config.Schema) server.TCPServer {
+	wire.Build(tcpAppSet)
+	return &server.TCP{}
+}
