@@ -1,11 +1,44 @@
 # LIMS Client
 
+
+
 ## Overview
 This project is a simplified implementation for sending HL7 ORM messages. It supports serialization and transmission of ORM^O01 messages via a REST API endpoint.
 
 Currently, the application only supports the `SendORM` operation.
 
 ---
+
+## Development
+### Frontend
+Code is located at `web` folder. Tech stack include:
+1. React + Vite
+2. React Admin
+### Backend
+Tech stack include:
+1. Golang Echo
+### Run development
+Run Frontend
+```bash
+make dev-fe
+```
+Run Backend
+```bash
+make dev-be
+```
+### Build
+Build one golang binary file with go `statik`
+```
+make build
+```
+1. Build frontend to `web/dist` folder
+2. Gather all static files from `web/dist` and put it on binary
+3. Build golang binary on `bin/app`
+```bash
+# Run binary
+./bin/app
+```
+
 
 ## Supported Endpoint
 

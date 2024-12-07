@@ -6,6 +6,10 @@ import (
 )
 
 func main() {
-	server := app.InitRestApp(&config.Schema{})
+	cfg, err := config.New()
+	if err != nil {
+		panic(err)
+	}
+	server := app.InitRestApp(&cfg)
 	server.Serve()
 }
