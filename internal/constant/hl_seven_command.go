@@ -33,4 +33,8 @@ const (
 	// ORM is the order message
 	// The ORM message is used to transmit an order for a test or observation.
 	ORM = "ORM"
+
+	// ADT is the admission, discharge, transfer message
+	// The ADT message is used to transmit information about a patient's admission, discharge, or transfer.
+	ADT = "ADT"
 )

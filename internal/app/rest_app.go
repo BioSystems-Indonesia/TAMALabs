@@ -22,7 +22,7 @@ var (
 		rest.NewHealthCheckHandler,
 		rest.NewPatientHandler,
 		provideTCP,
-		provideHandler,
-		provideRest,
+		provideRestHandler,
+		provideRestServer,
 	)
 )

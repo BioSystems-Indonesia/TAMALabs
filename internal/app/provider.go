@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/hl_seven"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
@@ -20,14 +21,20 @@ func provideTCP(config *config.Schema) *hl_seven.TCP {
 	return tcpEr
 }
 
-func provideRest(config *config.Schema, handlers *rest.Handler, validate *validator.Validate) server.RestServer {
+func provideTCPServer(config *config.Schema, handler *tcp.Handler) server.TCPServer {
+	serv := server.NewTCP("5678")
+	tcp.RegisterRoutes(serv.GetClient(), handler)
+	return serv
+}
+
+func provideRestServer(config *config.Schema, handlers *rest.Handler, validate *validator.Validate) server.RestServer {
 	serv := server.NewRest(config.Port, validate)
 	rest.RegisterMiddleware(serv.GetClient())
 	rest.RegisterRoutes(serv.GetClient(), handlers)
 	return serv
 }
 
-func provideHandler(
+func provideRestHandler(
 	hlSevenHandler *rest.HlSevenHandler,
 	healthCheck *rest.HealthCheckHandler,
 	patientHandler *rest.PatientHandler,
@@ -36,6 +43,14 @@ func provideHandler(
 		hlSevenHandler,
 		healthCheck,
 		patientHandler,
+	}
+}
+
+func provideTCPHandler(
+	HlSevenHHandler *tcp.HlSevenHandler,
+) *tcp.Handler {
+	return &tcp.Handler{
+		HlSevenHandler: HlSevenHHandler,
 	}
 }
 
