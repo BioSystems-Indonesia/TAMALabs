@@ -9,8 +9,10 @@ package app
 import (
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/hl_seven"
 	hl_seven2 "github.com/oibacidem/lims-hl-seven/internal/usecase/hl_seven"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
 
@@ -22,7 +24,13 @@ func InitRestApp(config2 *config.Schema) server.RestServer {
 	repository := hl_seven.NewRepository(tcp)
 	usecase := hl_seven2.NewUsecase(repository)
 	hlSevenHandler := rest.NewHlSevenHandler(usecase)
-	handler := provideHandler(hlSevenHandler)
-	restServer := provideRest(config2, handler)
+	healthCheckHandler := rest.NewHealthCheckHandler(config2)
+	db := provideDB(config2)
+	patientRepository := patientrepo.NewPatientRepository(db, config2)
+	validate := provideValidator()
+	patientUseCase := patientuc.NewPatientUseCase(config2, patientRepository, validate)
+	patientHandler := rest.NewPatientHandler(config2, patientUseCase)
+	handler := provideHandler(hlSevenHandler, healthCheckHandler, patientHandler)
+	restServer := provideRest(config2, handler, validate)
 	return restServer
 }
