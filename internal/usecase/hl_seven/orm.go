@@ -1,6 +1,9 @@
 package hl_seven
 
-import "github.com/oibacidem/lims-hl-seven/internal/entity"
+import (
+	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"log"
+)
 
 // SendORM returns an ORM struct
 func (u *Usecase) SendORM(message entity.SendORMRequest) (*entity.SendORMResponse, error) {
@@ -9,4 +12,11 @@ func (u *Usecase) SendORM(message entity.SendORMRequest) (*entity.SendORMRespons
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (u *Usecase) ProcessORM(orm entity.ORM) (string, error) {
+	//resp, err := u.ORMRepository.ProcessORM()
+
+	log.Println(orm)
+	return "ACK: ", nil
 }

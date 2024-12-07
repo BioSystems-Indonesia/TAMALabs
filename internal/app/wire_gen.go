@@ -9,6 +9,7 @@ package app
 import (
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/hl_seven"
 	hl_seven2 "github.com/oibacidem/lims-hl-seven/internal/usecase/hl_seven"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
@@ -22,7 +23,17 @@ func InitRestApp(config2 *config.Schema) server.RestServer {
 	repository := hl_seven.NewRepository(tcp)
 	usecase := hl_seven2.NewUsecase(repository)
 	hlSevenHandler := rest.NewHlSevenHandler(usecase)
-	handler := provideHandler(hlSevenHandler)
-	restServer := provideRest(config2, handler)
+	handler := provideRestHandler(hlSevenHandler)
+	restServer := provideRestServer(config2, handler)
 	return restServer
+}
+
+func InitTCPApp(config2 *config.Schema) server.TCPServer {
+	hl_sevenTCP := provideTCP(config2)
+	repository := hl_seven.NewRepository(hl_sevenTCP)
+	usecase := hl_seven2.NewUsecase(repository)
+	hlSevenHandler := tcp.NewHlSevenHandler(usecase)
+	handler := provideTCPHandler(hlSevenHandler)
+	tcpServer := provideTCPServer(config2, handler)
+	return tcpServer
 }

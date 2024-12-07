@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/pkg/hl7"
-	"reflect"
 	"strings"
 )
 
-// ORM represents the ORM HL7 message (request)
+// ORM (Order) segment (used in ORM requests)
 type ORM struct {
 	MSH MSH `json:"msh"`
 	PID PID `json:"pid"`
@@ -51,7 +50,7 @@ func (o ORMMessage) Parse() (ORM, error) {
 		var segmentStruct interface{}
 		switch segmentType {
 		case constant.MSH:
-			segmentStruct = reflect.ValueOf(result).Elem().FieldByName(constant.MSH).Addr().Interface()
+			segmentStruct = &result.MSH
 		case constant.ORM:
 			segmentStruct = &result.PID
 		case constant.ORC:

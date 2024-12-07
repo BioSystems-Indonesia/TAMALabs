@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/hl_seven"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
@@ -13,13 +14,27 @@ func provideTCP(config *config.Schema) *hl_seven.TCP {
 	return tcpEr
 }
 
-func provideRest(config *config.Schema, handlers *rest.Handler) server.RestServer {
+func provideTCPServer(config *config.Schema, handler *tcp.Handler) server.TCPServer {
+	serv := server.NewTCP("5678")
+	tcp.RegisterRoutes(serv.GetClient(), handler)
+	return serv
+}
+
+func provideRestServer(config *config.Schema, handlers *rest.Handler) server.RestServer {
 	serv := server.NewRest("8080")
 	rest.RegisterRoutes(serv.GetClient(), handlers)
 	return serv
 }
 
-func provideHandler(
+func provideTCPHandler(
+	HlSevenHHandler *tcp.HlSevenHandler,
+) *tcp.Handler {
+	return &tcp.Handler{
+		HlSevenHandler: HlSevenHHandler,
+	}
+}
+
+func provideRestHandler(
 	hlSevenHandler *rest.HlSevenHandler,
 ) *rest.Handler {
 	return &rest.Handler{
