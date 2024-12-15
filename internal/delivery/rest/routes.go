@@ -96,12 +96,7 @@ func RegisterRoutes(e *echo.Echo, handler *Handler) {
 		workOrder.DELETE("/:id", handler.DeleteWorkOrder)
 	}
 
-	// HL Seven routes
-	hlSeven := v1.Group("/hl-seven")
-	// Register the routes here
-	hlSeven.POST("/orm", handler.SendORM)
-
-	handler.RegisterFeatureList(v1)
+		handler.RegisterFeatureList(v1)
 }
 
 func registerFrontendPath(e *echo.Echo) {

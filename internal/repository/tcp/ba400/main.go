@@ -1,4 +1,4 @@
-package hl_seven
+package ba400
 
 // Repository is a repository for HLSeven
 type Repository struct {

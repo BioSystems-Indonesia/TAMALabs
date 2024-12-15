@@ -10,11 +10,12 @@ import (
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/speciment"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/hl_seven"
-	hl_seven2 "github.com/oibacidem/lims-hl-seven/internal/usecase/hl_seven"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/speciment"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
@@ -26,11 +27,14 @@ import (
 // InitRestApp is a Wire provider function that returns a RestServer.
 func InitRestApp(config2 *config.Schema) server.RestServer {
 	tcp := provideTCP(config2)
-	repository := hl_seven.NewRepository(tcp)
-	usecase := hl_seven2.NewUsecase(repository)
+	repository := ba400.NewRepository(tcp)
+	db := provideDB(config2)
+	specimenRepository := specimen.NewRepository(db, config2)
+	observationRepository := observation.NewRepository(db, config2)
+	observation_requestRepository := observation_request.NewRepository(db, config2)
+	usecase := analyzer.NewUsecase(repository, specimenRepository, observationRepository, observation_requestRepository)
 	hlSevenHandler := rest.NewHlSevenHandler(usecase)
 	healthCheckHandler := rest.NewHealthCheckHandler(config2)
-	db := provideDB(config2)
 	patientRepository := patientrepo.NewPatientRepository(db, config2)
 	validate := provideValidator()
 	patientUseCase := patientuc.NewPatientUseCase(config2, patientRepository, validate)
@@ -48,9 +52,13 @@ func InitRestApp(config2 *config.Schema) server.RestServer {
 }
 
 func InitTCPApp(config2 *config.Schema) server.TCPServer {
-	hl_sevenTCP := provideTCP(config2)
-	repository := hl_seven.NewRepository(hl_sevenTCP)
-	usecase := hl_seven2.NewUsecase(repository)
+	ba400TCP := provideTCP(config2)
+	repository := ba400.NewRepository(ba400TCP)
+	db := provideDB(config2)
+	specimenRepository := specimen.NewRepository(db, config2)
+	observationRepository := observation.NewRepository(db, config2)
+	observation_requestRepository := observation_request.NewRepository(db, config2)
+	usecase := analyzer.NewUsecase(repository, specimenRepository, observationRepository, observation_requestRepository)
 	hlSevenHandler := tcp.NewHlSevenHandler(usecase)
 	handler := provideTCPHandler(hlSevenHandler)
 	tcpServer := provideTCPServer(config2, handler)
