@@ -16,5 +16,5 @@ dev-fe:
 	cd web && npm run dev
 
 dev-be:
-	air --build.cmd "go build -o bin/app cmd/rest/main.go" --build.bin "./bin/app" --build.exclude_dir "node_modules,bin,web"
+	air
 
