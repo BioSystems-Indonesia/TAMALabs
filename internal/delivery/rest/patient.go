@@ -40,7 +40,7 @@ func (h *PatientHandler) FindPatients(c echo.Context) error {
 func (h *PatientHandler) GetOnePatient(c echo.Context) error {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		return handleError(c, err)
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
 	patient, err := h.patientUsecase.FindOneByID(id)
@@ -54,7 +54,7 @@ func (h *PatientHandler) GetOnePatient(c echo.Context) error {
 func (h *PatientHandler) DeletePatient(c echo.Context) error {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		return handleError(c, err)
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
 	if err := h.patientUsecase.Delete(id); err != nil {
@@ -69,7 +69,7 @@ func (h *PatientHandler) DeletePatient(c echo.Context) error {
 func (h *PatientHandler) UpdatePatient(c echo.Context) error {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		return handleError(c, err)
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
 	req := entity.Patient{ID: id}

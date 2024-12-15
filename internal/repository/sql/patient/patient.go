@@ -24,12 +24,23 @@ func (r PatientRepository) FindAll(ctx context.Context, req *entity.GetManyReque
 	var patients []entity.Patient
 
 	db := r.db.WithContext(ctx)
-	db = db.Order(clause.OrderByColumn{
-		Column: clause.Column{
-			Name: req.Sort,
-		},
-		Desc: req.IsSortDesc(),
-	})
+
+	if req.Query != "" {
+		db = db.Where("first_name like ? or last_name like ?", req.Query+"%", req.Query+"%")
+	}
+
+	if len(req.ID) > 0 {
+		db = db.Where("id in (?)", req.ID)
+	}
+
+	if req.Sort != "" {
+		db = db.Order(clause.OrderByColumn{
+			Column: clause.Column{
+				Name: req.Sort,
+			},
+			Desc: req.IsSortDesc(),
+		})
+	}
 
 	err := db.Find(&patients).Error
 	if err != nil {

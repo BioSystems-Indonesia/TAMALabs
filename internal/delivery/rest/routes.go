@@ -15,6 +15,9 @@ type Handler struct {
 	*HlSevenHandler
 	*HealthCheckHandler
 	*PatientHandler
+	*SpecimentHandler
+	*WorkOrderHandler
+	*FeatureListHandler
 }
 
 func RegisterMiddleware(e *echo.Echo) {
@@ -65,7 +68,6 @@ func RegisterRoutes(e *echo.Echo, handler *Handler) {
 	v1 := api.Group("/v1")
 	v1.GET("/ping", handler.Ping)
 
-	// User
 	patient := v1.Group("/patient")
 	{
 		patient.GET("", handler.FindPatients)
@@ -75,10 +77,31 @@ func RegisterRoutes(e *echo.Echo, handler *Handler) {
 		patient.DELETE("/:id", handler.DeletePatient)
 	}
 
+	speciment := v1.Group("/speciment")
+	{
+		speciment.GET("", handler.FindSpeciments)
+		speciment.GET("/:id", handler.GetOneSpeciment)
+		speciment.POST("", handler.CreateSpeciment)
+		speciment.PUT("/:id", handler.UpdateSpeciment)
+		speciment.DELETE("/:id", handler.DeleteSpeciment)
+	}
+
+	workOrder := v1.Group("/work-order")
+	{
+		workOrder.GET("", handler.FindWorkOrders)
+		workOrder.POST("", handler.CreateWorkOrder)
+		workOrder.POST("/:id/speciment", handler.AddSpeciment)
+		workOrder.GET("/:id", handler.GetOneWorkOrder)
+		workOrder.PUT("/:id", handler.UpdateWorkOrder)
+		workOrder.DELETE("/:id", handler.DeleteWorkOrder)
+	}
+
 	// HL Seven routes
 	hlSeven := v1.Group("/hl-seven")
 	// Register the routes here
 	hlSeven.POST("/orm", handler.SendORM)
+
+	handler.RegisterFeatureList(v1)
 }
 
 func registerFrontendPath(e *echo.Echo) {

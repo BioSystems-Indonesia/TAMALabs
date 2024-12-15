@@ -2,29 +2,36 @@ package entity
 
 import "time"
 
-type Patient struct {
-	ID        int64     `json:"id,omitempty" gorm:"primaryKey;autoIncrement"`
-	FirstName string    `json:"first_name" gorm:"not null" validate:"required"`
-	LastName  string    `json:"last_name" gorm:"not null" validate:"required"`
-	Birthdate time.Time `json:"birthdate" gorm:"not null" validate:"required"`
-	Sex       string    `json:"sex" gorm:"not null" validate:"required"`
-	Location  string    `json:"location" gorm:"not null" validate:"required"`
-	CreatedAt time.Time `json:"created_at" gorm:"not null"`
-	UpdatedAt time.Time `json:"updated_at" gorm:"not null"`
-}
+type PatientSex string
 
-type GetManyRequest struct {
-	Order  string `query:"_order"`
-	Sort   string `query:"_sort"`
-	Start  int    `query:"_start"`
-	End    int    `query:"_end"`
-	Search string `query:"_search"`
-}
+const (
+	PatientSexMale    PatientSex = "M"
+	PatientSexFemale  PatientSex = "F"
+	PatientSexUnknown PatientSex = "U"
+)
 
-func (g GetManyRequest) IsSortDesc() bool {
-	if g.Order == "DESC" {
-		return true
+func (p PatientSex) String() string {
+	switch p {
+	case PatientSexMale:
+		return "Male"
+	case PatientSexFemale:
+		return "Female"
+	case PatientSexUnknown:
+		return "Unknown"
+	default:
+		return "Undefined"
 	}
+}
 
-	return false
+type Patient struct {
+	ID          int64      `json:"id,omitempty" gorm:"primaryKey;autoIncrement"`
+	FirstName   string     `json:"first_name" gorm:"not null" validate:"required"`
+	LastName    string     `json:"last_name" gorm:"not null" validate:"required"`
+	Birthdate   time.Time  `json:"birthdate" gorm:"not null" validate:"required"`
+	Sex         PatientSex `json:"sex" gorm:"not null" validate:"required,sex"`
+	PhoneNumber string     `json:"phone_number" gorm:"not null" validate:""`
+	Location    string     `json:"location" gorm:"not null" validate:""`
+	Address     string     `json:"address" gorm:"not null" validate:""`
+	CreatedAt   time.Time  `json:"created_at" gorm:"not null"`
+	UpdatedAt   time.Time  `json:"updated_at" gorm:"not null"`
 }
