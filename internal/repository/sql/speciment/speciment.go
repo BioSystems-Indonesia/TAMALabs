@@ -20,7 +20,7 @@ func NewSpecimentRepository(db *gorm.DB, cfg *config.Schema) *SpecimentRepositor
 	return &SpecimentRepository{db: db, cfg: cfg}
 }
 
-func (r SpecimentRepository) FindAll(ctx context.Context, req *entity.SpecimentGetManyRequest) ([]entity.Specimen, error) {
+func (r SpecimentRepository) FindAll(ctx context.Context, req *entity.SpecimenGetManyRequest) ([]entity.Specimen, error) {
 	var speciments []entity.Specimen
 
 	db := r.db.WithContext(ctx)

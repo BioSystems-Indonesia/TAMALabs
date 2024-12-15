@@ -25,7 +25,7 @@ func NewSpecimenUseCase(
 }
 
 func (p SpecimenUseCase) FindAll(
-	ctx context.Context, req *entity.SpecimentGetManyRequest,
+	ctx context.Context, req *entity.SpecimenGetManyRequest,
 ) ([]entity.Specimen, error) {
 	return p.specimentRepo.FindAll(ctx, req)
 }

@@ -21,7 +21,7 @@ type Specimen struct {
 	Patient Patient `json:"patient" gorm:"foreignKey:PatientID" validate:"-"`
 }
 
-type SpecimentGetManyRequest struct {
+type SpecimenGetManyRequest struct {
 	GetManyRequest
 	PatientID int64 `query:"patient_id"`
 }
