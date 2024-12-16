@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/labstack/gommon/log"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
@@ -13,6 +14,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func provideTCP(config *config.Schema) *hl_seven.TCP {
@@ -38,11 +40,17 @@ func provideRestHandler(
 	hlSevenHandler *rest.HlSevenHandler,
 	healthCheck *rest.HealthCheckHandler,
 	patientHandler *rest.PatientHandler,
+	specimentHandler *rest.SpecimentHandler,
+	workOrder *rest.WorkOrderHandler,
+	featureListHandler *rest.FeatureListHandler,
 ) *rest.Handler {
 	return &rest.Handler{
 		hlSevenHandler,
 		healthCheck,
 		patientHandler,
+		specimentHandler,
+		workOrder,
+		featureListHandler,
 	}
 }
 
@@ -65,9 +73,9 @@ func fileExists(filename string) bool {
 }
 func InitSQLiteDB() (*gorm.DB, error) {
 	if fileExists(dbFileName) {
-		fmt.Println("db is existed already")
+		log.Info("db is existed already")
 	} else {
-		fmt.Println("db is not exists, start create and migrate db")
+		log.Info("db is not exists, start create and migrate db")
 		err := os.MkdirAll("./tmp", 0755)
 		if err != nil {
 			return nil, err
@@ -84,6 +92,8 @@ func InitSQLiteDB() (*gorm.DB, error) {
 		fmt.Println(err)
 		return nil, err
 	}
+	db.Logger = db.Logger.LogMode(logger.Info)
+
 	return db, nil
 }
 
@@ -92,9 +102,21 @@ func InitDatabase() (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = db.AutoMigrate(&entity.Patient{})
-	if err != nil {
-		return nil, err
+
+	autoMigrate := []interface{}{
+		&entity.Patient{},
+		&entity.Speciment{},
+		&entity.WorkOrder{},
+		&entity.WorkOrderSpeciment{},
+	}
+
+	for _, model := range autoMigrate {
+		log.Infof("AutoMigrate: %T", model)
+
+		err = db.AutoMigrate(model)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return db, nil
@@ -108,7 +130,40 @@ func provideDB(config *config.Schema) *gorm.DB {
 
 	return db
 }
+func TableKeyValidation(tables entity.Tables) validator.Func {
+	return func(fl validator.FieldLevel) bool {
+		value := fl.Field().String()
+		if value == "" {
+			return true
+		}
+
+		_, ok := tables.Find(value)
+		if !ok {
+			return false
+		}
+
+		return true
+	}
+}
+
+func registerTableValidation(v *validator.Validate) error {
+	for key, table := range entity.TableList {
+		err := v.RegisterValidation(key, TableKeyValidation(table))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func provideValidator() *validator.Validate {
-	return validator.New()
+	v := validator.New()
+
+	err := registerTableValidation(v)
+	if err != nil {
+		panic(err)
+	}
+
+	return v
 }

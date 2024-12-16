@@ -11,9 +11,13 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/speciment"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/hl_seven"
 	hl_seven2 "github.com/oibacidem/lims-hl-seven/internal/usecase/hl_seven"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/speciment"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
 
@@ -31,7 +35,14 @@ func InitRestApp(config2 *config.Schema) server.RestServer {
 	validate := provideValidator()
 	patientUseCase := patientuc.NewPatientUseCase(config2, patientRepository, validate)
 	patientHandler := rest.NewPatientHandler(config2, patientUseCase)
-	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler)
+	specimentRepository := specimentrepo.NewSpecimentRepository(db, config2)
+	specimentUseCase := specimentuc.NewSpecimentUseCase(config2, specimentRepository, validate)
+	specimentHandler := rest.NewSpecimentHandler(config2, specimentUseCase)
+	workOrderRepository := workOrderrepo.NewWorkOrderRepository(db, config2)
+	workOrderUseCase := workOrderuc.NewWorkOrderUseCase(config2, workOrderRepository, validate)
+	workOrderHandler := rest.NewWorkOrderHandler(config2, workOrderUseCase)
+	featureListHandler := rest.NewFeatureListHandler()
+	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimentHandler, workOrderHandler, featureListHandler)
 	restServer := provideRestServer(config2, handler, validate)
 	return restServer
 }
