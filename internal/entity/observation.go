@@ -3,15 +3,14 @@ package entity
 import "time"
 
 type ObservationRequest struct {
-	ID                          int       `json:"id" gorm:"primaryKey;autoIncrement"`
-	SpecimenID                  int       `json:"specimen_id"`      // Foreign key linking to Specimen
-	OrderID                     string    `json:"order_id"`         // OBR-2
-	TestCode                    string    `json:"test_code"`        // OBR-4
-	TestDescription             string    `json:"test_description"` // OBR-4
-	RequestedDate               time.Time `json:"requested_date"`   // OBR-7
-	ResultStatus                string    `json:"result_status"`    // OBR-25
-	PerformingLab               string    `json:"performing_lab"`   // OBR-21
-	RelevantClinicalInformation string    `json:"comments"`         // OBR-13
+	ID              int       `json:"id" gorm:"primaryKey;autoIncrement"`
+	SpecimenID      int       `json:"specimen_id"`      // Foreign key linking to Specimen
+	OrderID         string    `json:"order_id"`         // OBR-2
+	TestCode        string    `json:"test_code"`        // OBR-4
+	TestDescription string    `json:"test_description"` // OBR-4
+	RequestedDate   time.Time `json:"requested_date"`   // OBR-7
+	ResultStatus    string    `json:"result_status"`    // OBR-25
+
 }
 
 type Observation struct {

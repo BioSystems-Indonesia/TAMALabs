@@ -35,7 +35,7 @@ func TestHlSevenHandler(t *testing.T) {
 				AnalyzerUsecase: &analyzer.Usecase{},
 			},
 			args: args{
-				message: "MSH|^~\\&|LabSystem|LabFacility|EHR|Hospital|20241209120000||OUL^R22|MSG001|P|2.5.1\rPID|12|123|123456||John^Doe||19800101|M|||123 Main St^City^State^12345|(555)123-4567\rSPM|1|SPEC123||BLD^Blood|||||||Routine|||Normal||||20241209113000|||||||\rOBR|1|ORD001||GLU^Glucose Test|||20241209110000||||||F|||||LAB123\rOBX|1|NM|GLU^Glucose Level||85|mg/dL|70-99|N|||F\rNTE|1|L|Specimen was hemolyzed; results may be affected.",
+				message: "MSH|^~\\&|LabSystem|LabFacility|EHR|Hospital|20241209120000||OUL^R22|MSG001|P|2.5.1\rPID|12|123|123456||John^Doe||19800101|M|||123 Main St^City^State^12345|(555)123-4567\rSPM|1|SPEC123^21321||BLD^Blood|||||||Routine|||Normal||||20241209113000|||||||\rOBR|1|ORD001||GLU^Glucose Test|||20241209110000||||||F|||||LAB123\rOBX|1|NM|GLU^Glucose Level||85|mg/dL|70-99|N|||F\rNTE|1|L|Specimen was hemolyzed; results may be affected.",
 			},
 			want: "OBX processed",
 		},
