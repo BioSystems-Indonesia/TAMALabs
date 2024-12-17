@@ -32,7 +32,7 @@ func MapOULR22ToEntity(msg *h251.OUL_R22) (entity.OUL_R22, error) {
 		FirstName: msg.Patient.PID.PatientName[0].GivenName,
 		LastName:  msg.Patient.PID.PatientName[0].FamilyName,
 		Birthdate: msg.Patient.PID.DateTimeOfBirth,
-		Sex:       msg.Patient.PID.AdministrativeSex,
+		Sex:       entity.PatientSex(msg.Patient.PID.AdministrativeSex),
 		Location:  fmt.Sprintf("%s %s %s %s %s", msg.Patient.PID.PatientAddress[0].StreetAddress, msg.Patient.PID.PatientAddress[0].City, msg.Patient.PID.PatientAddress[0].StateOrProvince, msg.Patient.PID.PatientAddress[0].ZipOrPostalCode, msg.Patient.PID.PatientAddress[0].Country),
 		CreatedAt: time.Time{},
 		UpdatedAt: time.Time{},
@@ -40,23 +40,21 @@ func MapOULR22ToEntity(msg *h251.OUL_R22) (entity.OUL_R22, error) {
 
 	// Specimen Mapping (SPM Segment)
 	specimen := entity.Specimen{
-		SpecimenHL7ID:        msg.Specimen[0].SPM.SpecimenID.PlacerAssignedIdentifier.EntityIdentifier,
-		SpecimenType:         msg.Specimen[0].SPM.SpecimenType.Identifier,
-		SpecimenReceivedDate: msg.Specimen[0].SPM.SpecimenReceivedDateTime,
+		HL7ID:        msg.Specimen[0].SPM.SpecimenID.PlacerAssignedIdentifier.EntityIdentifier,
+		Type:         msg.Specimen[0].SPM.SpecimenType.Identifier,
+		ReceivedDate: msg.Specimen[0].SPM.SpecimenReceivedDateTime,
 	}
 
 	// Observation Request Mapping (OBR Segment)
 	order := msg.Specimen[0].Order[0]
 	observationRequest := entity.ObservationRequest{
-		ID:                          0,
-		SpecimenID:                  0,
-		OrderID:                     order.OBR.PlacerOrderNumber.EntityIdentifier,
-		TestCode:                    order.OBR.UniversalServiceIdentifier.Identifier,
-		TestDescription:             order.OBR.UniversalServiceIdentifier.Text,
-		RequestedDate:               order.OBR.RequestedDateTime,
-		ResultStatus:                order.OBR.ResultStatus,
-		PerformingLab:               order.OBR.PlacerField1,
-		RelevantClinicalInformation: order.OBR.RelevantClinicalInformation,
+		ID:              0,
+		SpecimenID:      0,
+		OrderID:         order.OBR.PlacerOrderNumber.EntityIdentifier,
+		TestCode:        order.OBR.UniversalServiceIdentifier.Identifier,
+		TestDescription: order.OBR.UniversalServiceIdentifier.Text,
+		RequestedDate:   order.OBR.RequestedDateTime,
+		ResultStatus:    order.OBR.ResultStatus,
 	}
 
 	// Observations Mapping (OBX Segments)
