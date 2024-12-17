@@ -3,10 +3,15 @@ package app
 import (
 	"github.com/google/wire"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
 	specimentrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/speciment"
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
+	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/hl_seven"
+	hlsUC "github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
 	hlsUC "github.com/oibacidem/lims-hl-seven/internal/usecase/hl_seven"
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	specimentuc "github.com/oibacidem/lims-hl-seven/internal/usecase/speciment"
@@ -22,6 +27,9 @@ var (
 		patientrepo.NewPatientRepository,
 		specimentrepo.NewSpecimentRepository,
 		workOrderrepo.NewWorkOrderRepository,
+		observation_request.NewRepository,
+		observation.NewRepository,
+		specimen.NewRepository,
 		hlsUC.NewUsecase,
 		patientuc.NewPatientUseCase,
 		specimentuc.NewSpecimentUseCase,

@@ -10,15 +10,15 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/hl_seven"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-func provideTCP(config *config.Schema) *hl_seven.TCP {
-	tcpEr := hl_seven.NewTCP(config)
+func provideTCP(config *config.Schema) *ba400.TCP {
+	tcpEr := ba400.NewTCP(config)
 
 	return tcpEr
 }

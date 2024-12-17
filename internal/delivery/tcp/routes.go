@@ -68,23 +68,11 @@ func processMessage(message string, handler *Handler, writer *bufio.Writer) {
 // routes processes the complete message and delegates it to the appropriate handler
 func routes(msg string, handler *Handler) string {
 	if strings.HasPrefix(msg, constant.MSH) {
-		// Determine the message type from the MSH segment
-		if strings.Contains(msg, constant.ORM) {
-			_, err := handler.ProcessORM(msg)
-			if err != nil {
-				return "NAK: " + err.Error()
-			}
-			return "ACK: "
-		} else if strings.Contains(msg, constant.ADT) {
-			return ADTHandler(msg)
+		resp, err := handler.HL7Handler(msg)
+		if err != nil {
+			return "NAK: " + err.Error()
 		}
-		return "NAK: Unsupported HL7 message type"
+		return resp
 	}
-	return "NAK: Invalid HL7 message"
-}
-
-// ADTHandler processes ADT requests
-func ADTHandler(msg string) string {
-	log.Println("Processing ADT message...")
-	return "ACK: ADT Message Processed"
+	return "NAK: Invalid message"
 }
