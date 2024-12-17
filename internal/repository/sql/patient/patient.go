@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -20,7 +21,7 @@ func NewPatientRepository(db *gorm.DB, cfg *config.Schema) *PatientRepository {
 	return &PatientRepository{db: db, cfg: cfg}
 }
 
-func (r PatientRepository) FindAll(ctx context.Context, req *entity.GetManyRequest) ([]entity.Patient, error) {
+func (r PatientRepository) FindAll(ctx context.Context, req *entity.GetManyRequestPatient) ([]entity.Patient, error) {
 	var patients []entity.Patient
 
 	db := r.db.WithContext(ctx)
@@ -31,6 +32,10 @@ func (r PatientRepository) FindAll(ctx context.Context, req *entity.GetManyReque
 
 	if len(req.ID) > 0 {
 		db = db.Where("id in (?)", req.ID)
+	}
+
+	if !req.BirthDate.IsZero() {
+		db = db.Where("date(birthdate) = ?", req.BirthDate.Format(time.DateOnly))
 	}
 
 	if req.Sort != "" {

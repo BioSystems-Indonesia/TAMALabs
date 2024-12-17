@@ -31,3 +31,11 @@ export const dateParser = (value: any) => {
     return d;
 };
 
+
+export const requiredAstrix = (required?: boolean) => {
+    if (required) {
+        return "*";
+    }
+
+    return "";
+};
