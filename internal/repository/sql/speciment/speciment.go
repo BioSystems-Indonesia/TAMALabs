@@ -20,8 +20,8 @@ func NewSpecimentRepository(db *gorm.DB, cfg *config.Schema) *SpecimentRepositor
 	return &SpecimentRepository{db: db, cfg: cfg}
 }
 
-func (r SpecimentRepository) FindAll(ctx context.Context, req *entity.SpecimentGetManyRequest) ([]entity.Speciment, error) {
-	var speciments []entity.Speciment
+func (r SpecimentRepository) FindAll(ctx context.Context, req *entity.SpecimentGetManyRequest) ([]entity.Specimen, error) {
+	var speciments []entity.Specimen
 
 	db := r.db.WithContext(ctx)
 	if len(req.ID) > 0 {
@@ -52,25 +52,25 @@ func (r SpecimentRepository) FindAll(ctx context.Context, req *entity.SpecimentG
 	return speciments, nil
 }
 
-func (r SpecimentRepository) FindOne(id int64) (entity.Speciment, error) {
-	var speciment entity.Speciment
+func (r SpecimentRepository) FindOne(id int64) (entity.Specimen, error) {
+	var speciment entity.Specimen
 	err := r.db.Where("id = ?", id).First(&speciment).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return entity.Speciment{}, entity.ErrNotFound
+		return entity.Specimen{}, entity.ErrNotFound
 	}
 
 	if err != nil {
-		return entity.Speciment{}, fmt.Errorf("error finding speciment: %w", err)
+		return entity.Specimen{}, fmt.Errorf("error finding speciment: %w", err)
 	}
 
 	return speciment, nil
 }
 
-func (r SpecimentRepository) Create(speciment *entity.Speciment) error {
+func (r SpecimentRepository) Create(speciment *entity.Specimen) error {
 	return r.db.Create(speciment).Error
 }
 
-func (r SpecimentRepository) Update(speciment *entity.Speciment) error {
+func (r SpecimentRepository) Update(speciment *entity.Specimen) error {
 	res := r.db.Save(speciment).Error
 	if res != nil {
 		return fmt.Errorf("error updating speciment: %w", res)
@@ -80,7 +80,7 @@ func (r SpecimentRepository) Update(speciment *entity.Speciment) error {
 }
 
 func (r SpecimentRepository) Delete(id int64) error {
-	res := r.db.Delete(&entity.Speciment{ID: id})
+	res := r.db.Delete(&entity.Specimen{ID: id})
 	if res.Error != nil {
 		return fmt.Errorf("error deleting speciment: %w", res.Error)
 	}

@@ -3,7 +3,7 @@ package entity
 import "time"
 
 type Specimen struct {
-	ID             int       `json:"id" gorm:"primaryKey;autoIncrement"`
+	ID             int64     `json:"id" gorm:"primaryKey;autoIncrement"`
 	HL7ID          string    `json:"specimen_hl7_id"`          // SPM-2
 	PatientID      int       `json:"patient_id"`               // Foreign key linking to Patient
 	Type           string    `json:"specimen_type"`            // SPM-4

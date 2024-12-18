@@ -15,7 +15,7 @@ type Handler struct {
 	*HlSevenHandler
 	*HealthCheckHandler
 	*PatientHandler
-	*SpecimentHandler
+	*SpecimenHandler
 	*WorkOrderHandler
 	*FeatureListHandler
 }
@@ -79,11 +79,11 @@ func RegisterRoutes(e *echo.Echo, handler *Handler) {
 
 	speciment := v1.Group("/speciment")
 	{
-		speciment.GET("", handler.FindSpeciments)
-		speciment.GET("/:id", handler.GetOneSpeciment)
-		speciment.POST("", handler.CreateSpeciment)
-		speciment.PUT("/:id", handler.UpdateSpeciment)
-		speciment.DELETE("/:id", handler.DeleteSpeciment)
+		speciment.GET("", handler.FindSpecimens)
+		speciment.GET("/:id", handler.GetOneSpecimen)
+		speciment.POST("", handler.CreateSpecimen)
+		speciment.PUT("/:id", handler.UpdateSpecimen)
+		speciment.DELETE("/:id", handler.DeleteSpecimen)
 	}
 
 	workOrder := v1.Group("/work-order")

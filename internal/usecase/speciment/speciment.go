@@ -10,44 +10,44 @@ import (
 	specimentrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/speciment"
 )
 
-type SpecimentUseCase struct {
+type SpecimenUseCase struct {
 	cfg           *config.Schema
 	specimentRepo *specimentrepo.SpecimentRepository
 	validate      *validator.Validate
 }
 
-func NewSpecimentUseCase(
+func NewSpecimenUseCase(
 	cfg *config.Schema,
 	specimentRepo *specimentrepo.SpecimentRepository,
 	validate *validator.Validate,
-) *SpecimentUseCase {
-	return &SpecimentUseCase{cfg: cfg, specimentRepo: specimentRepo, validate: validate}
+) *SpecimenUseCase {
+	return &SpecimenUseCase{cfg: cfg, specimentRepo: specimentRepo, validate: validate}
 }
 
-func (p SpecimentUseCase) FindAll(
+func (p SpecimenUseCase) FindAll(
 	ctx context.Context, req *entity.SpecimentGetManyRequest,
-) ([]entity.Speciment, error) {
+) ([]entity.Specimen, error) {
 	return p.specimentRepo.FindAll(ctx, req)
 }
 
-func (p SpecimentUseCase) FindOneByID(id int64) (entity.Speciment, error) {
+func (p SpecimenUseCase) FindOneByID(id int64) (entity.Specimen, error) {
 	return p.specimentRepo.FindOne(id)
 }
 
-func (p SpecimentUseCase) Create(req *entity.Speciment) error {
+func (p SpecimenUseCase) Create(req *entity.Specimen) error {
 	req.Barcode = p.generateBarcode(context.Background(), req)
 
 	return p.specimentRepo.Create(req)
 }
 
-func (p SpecimentUseCase) generateBarcode(ctx context.Context, req *entity.Speciment) string {
+func (p SpecimenUseCase) generateBarcode(ctx context.Context, req *entity.Specimen) string {
 	return time.Now().Format("20060102150405")
 }
 
-func (p SpecimentUseCase) Update(req *entity.Speciment) error {
+func (p SpecimenUseCase) Update(req *entity.Specimen) error {
 	return p.specimentRepo.Update(req)
 }
 
-func (p SpecimentUseCase) Delete(id int64) error {
+func (p SpecimenUseCase) Delete(id int64) error {
 	return p.specimentRepo.Delete(id)
 }
