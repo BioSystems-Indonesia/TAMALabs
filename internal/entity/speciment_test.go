@@ -7,7 +7,7 @@ import (
 )
 
 func TestValidSpeciment(t *testing.T) {
-	speciment := Speciment{
+	speciment := Specimen{
 		Type:      "type",
 		PatientID: 1,
 	}

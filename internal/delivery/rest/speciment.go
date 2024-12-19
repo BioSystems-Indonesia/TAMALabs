@@ -10,16 +10,16 @@ import (
 	specimentuc "github.com/oibacidem/lims-hl-seven/internal/usecase/speciment"
 )
 
-type SpecimentHandler struct {
+type SpecimenHandler struct {
 	cfg              *config.Schema
-	specimentUsecase *specimentuc.SpecimentUseCase
+	specimentUsecase *specimentuc.SpecimenUseCase
 }
 
-func NewSpecimentHandler(cfg *config.Schema, specimentUsecase *specimentuc.SpecimentUseCase) *SpecimentHandler {
-	return &SpecimentHandler{cfg: cfg, specimentUsecase: specimentUsecase}
+func NewSpecimenHandler(cfg *config.Schema, specimentUsecase *specimentuc.SpecimenUseCase) *SpecimenHandler {
+	return &SpecimenHandler{cfg: cfg, specimentUsecase: specimentUsecase}
 }
 
-func (h *SpecimentHandler) FindSpeciments(c echo.Context) error {
+func (h *SpecimenHandler) FindSpecimens(c echo.Context) error {
 	var req entity.SpecimentGetManyRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return handleError(c, err)
@@ -37,7 +37,7 @@ func (h *SpecimentHandler) FindSpeciments(c echo.Context) error {
 	return c.JSON(http.StatusOK, speciments)
 }
 
-func (h *SpecimentHandler) GetOneSpeciment(c echo.Context) error {
+func (h *SpecimenHandler) GetOneSpecimen(c echo.Context) error {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
@@ -51,7 +51,7 @@ func (h *SpecimentHandler) GetOneSpeciment(c echo.Context) error {
 	return c.JSON(http.StatusOK, speciment)
 }
 
-func (h *SpecimentHandler) DeleteSpeciment(c echo.Context) error {
+func (h *SpecimenHandler) DeleteSpecimen(c echo.Context) error {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
@@ -61,18 +61,18 @@ func (h *SpecimentHandler) DeleteSpeciment(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	return c.JSON(http.StatusOK, entity.Speciment{
+	return c.JSON(http.StatusOK, entity.Specimen{
 		ID: id,
 	})
 }
 
-func (h *SpecimentHandler) UpdateSpeciment(c echo.Context) error {
+func (h *SpecimenHandler) UpdateSpecimen(c echo.Context) error {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
-	req := entity.Speciment{ID: id}
+	req := entity.Specimen{ID: id}
 	if err := bindAndValidate(c, &req); err != nil {
 		return handleError(c, err)
 	}
@@ -84,8 +84,8 @@ func (h *SpecimentHandler) UpdateSpeciment(c echo.Context) error {
 	return c.JSON(http.StatusOK, req)
 }
 
-func (h *SpecimentHandler) CreateSpeciment(c echo.Context) error {
-	var req entity.Speciment
+func (h *SpecimenHandler) CreateSpecimen(c echo.Context) error {
+	var req entity.Specimen
 	if err := bindAndValidate(c, &req); err != nil {
 		return handleError(c, err)
 	}

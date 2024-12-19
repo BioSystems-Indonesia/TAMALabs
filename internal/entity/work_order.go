@@ -19,7 +19,7 @@ type WorkOrder struct {
 	CreatedAt    time.Time       `json:"created_at" gorm:"not null"`
 	UpdatedAt    time.Time       `json:"updated_at" gorm:"not null"`
 
-	Speciments []Speciment `json:"speciments" gorm:"many2many:work_order_speciments;->" validate:"-"`
+	Speciments []Specimen `json:"speciments" gorm:"many2many:work_order_speciments;->" validate:"-"`
 }
 
 type WorkOrderAddSpeciment struct {
