@@ -90,13 +90,13 @@ func RegisterRoutes(e *echo.Echo, handler *Handler) {
 	{
 		workOrder.GET("", handler.FindWorkOrders)
 		workOrder.POST("", handler.CreateWorkOrder)
-		workOrder.POST("/:id/speciment", handler.AddSpeciment)
+		workOrder.POST("/:id/specimen", handler.AddSpeciment)
 		workOrder.GET("/:id", handler.GetOneWorkOrder)
 		workOrder.PUT("/:id", handler.UpdateWorkOrder)
 		workOrder.DELETE("/:id", handler.DeleteWorkOrder)
 	}
 
-		handler.RegisterFeatureList(v1)
+	handler.RegisterFeatureList(v1)
 }
 
 func registerFrontendPath(e *echo.Echo) {

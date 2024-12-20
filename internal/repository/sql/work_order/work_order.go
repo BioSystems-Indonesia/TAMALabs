@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/config"
@@ -29,8 +30,8 @@ func (r WorkOrderRepository) FindAll(ctx context.Context, req *entity.WorkOrderG
 		db = db.Where("id in (?)", req.ID)
 	}
 
-	if len(req.SpecimentIDs) > 0 {
-		db = db.Joins("join work_order_speciments on work_order_speciments.work_order_id = work_orders.id and work_order_speciments.speciment_id in (?)", req.SpecimentIDs)
+	if len(req.SpecimenIDs) > 0 {
+		db = db.Joins("join work_order_Specimens on work_order_Specimens.work_order_id = work_orders.id and work_order_Specimens.Specimen_id in (?)", req.SpecimenIDs)
 	}
 
 	if req.Sort != "" {
@@ -51,7 +52,7 @@ func (r WorkOrderRepository) FindAll(ctx context.Context, req *entity.WorkOrderG
 
 func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
 	var workOrder entity.WorkOrder
-	err := r.db.Where("id = ?", id).Preload("Speciments").Preload("Speciments.Patient").First(&workOrder).Error
+	err := r.db.Where("id = ?", id).Preload("Specimens").Preload("Specimens.Patient").First(&workOrder).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return entity.WorkOrder{}, entity.ErrNotFound
 	}
@@ -60,9 +61,9 @@ func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
 		return entity.WorkOrder{}, fmt.Errorf("error finding workOrder: %w", err)
 	}
 
-	workOrder.SpecimentIDs = make([]int64, len(workOrder.Speciments))
-	for i, speciment := range workOrder.Speciments {
-		workOrder.SpecimentIDs[i] = speciment.ID
+	workOrder.SpecimenIDs = make([]int64, len(workOrder.Specimens))
+	for i, Specimen := range workOrder.Specimens {
+		workOrder.SpecimenIDs[i] = int64(Specimen.ID)
 	}
 
 	return workOrder, nil
@@ -75,14 +76,50 @@ func (r WorkOrderRepository) Create(workOrder *entity.WorkOrder) error {
 			return err
 		}
 
-		for _, specimentID := range workOrder.SpecimentIDs {
-			workOrderSpeciment := entity.WorkOrderSpeciment{
-				WorkOrderID: workOrder.ID,
-				SpecimentID: specimentID,
+		var specimens []entity.Specimen
+		for _, patientID := range workOrder.PatientIds {
+			speciment := entity.Specimen{
+				PatientID:      int(patientID),
+				Type:           "SER", // TODO: Change it so it not be hardcoded
+				CollectionDate: time.Now().Format(time.RFC3339),
 			}
-			err := tx.Create(&workOrderSpeciment).Error
+			err := tx.Create(&speciment).Error
 			if err != nil {
 				return err
+			}
+
+			specimens = append(specimens, speciment)
+		}
+
+		var observationRequests []entity.ObservationRequest
+		for _, specimen := range specimens {
+			workOrderSpecimen := entity.WorkOrderSpecimen{
+				WorkOrderID: workOrder.ID,
+				SpecimenID:  int64(specimen.ID),
+			}
+			err := tx.Create(&workOrderSpecimen).Error
+			if err != nil {
+				return err
+			}
+
+			for _, observationRequestID := range workOrder.ObservationRequests {
+				observationType, ok := entity.TableObservationType.Find(observationRequestID)
+				if !ok {
+					return fmt.Errorf("observation request: %w", entity.ErrBadRequest)
+				}
+
+				observationRequest := entity.ObservationRequest{
+					TestCode:        observationType.ID,
+					TestDescription: observationType.Name,
+					SpecimenID:      specimen.ID,
+					OrderID:         strconv.Itoa(int(workOrder.ID)),
+				}
+				err := tx.Create(&observationRequest).Error
+				if err != nil {
+					return err
+				}
+
+				observationRequests = append(observationRequests, observationRequest)
 			}
 		}
 
@@ -90,14 +127,14 @@ func (r WorkOrderRepository) Create(workOrder *entity.WorkOrder) error {
 	})
 }
 
-func (r WorkOrderRepository) AddSpeciment(workOrderID int64, req *entity.WorkOrderAddSpeciment) error {
+func (r WorkOrderRepository) AddSpecimen(workOrderID int64, req *entity.WorkOrderAddSpecimen) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		for _, specimentID := range req.SpecimentIDs {
-			workOrderSpeciment := entity.WorkOrderSpeciment{
+		for _, SpecimenID := range req.SpecimenIDs {
+			workOrderSpecimen := entity.WorkOrderSpecimen{
 				WorkOrderID: workOrderID,
-				SpecimentID: specimentID,
+				SpecimenID:  SpecimenID,
 			}
-			err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&workOrderSpeciment).Error
+			err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&workOrderSpecimen).Error
 			if err != nil {
 				return err
 			}
@@ -114,19 +151,19 @@ func (r WorkOrderRepository) Update(workOrder *entity.WorkOrder) error {
 			return err
 		}
 
-		err = tx.Delete(&entity.WorkOrderSpeciment{}, "work_order_id = ?", workOrder.ID).Error
+		err = tx.Delete(&entity.WorkOrderSpecimen{}, "work_order_id = ?", workOrder.ID).Error
 		if err != nil {
 			return err
 		}
 
-		for _, specimentID := range workOrder.SpecimentIDs {
-			workOrderSpeciment := entity.WorkOrderSpeciment{
+		for _, SpecimenID := range workOrder.SpecimenIDs {
+			workOrderSpecimen := entity.WorkOrderSpecimen{
 				WorkOrderID: workOrder.ID,
-				SpecimentID: specimentID,
+				SpecimenID:  SpecimenID,
 				CreatedAt:   time.Now(),
 				UpdatedAt:   time.Now(),
 			}
-			err := tx.Create(&workOrderSpeciment).Error
+			err := tx.Create(&workOrderSpecimen).Error
 			if err != nil {
 				return err
 			}

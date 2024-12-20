@@ -11,16 +11,17 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import KeyBoardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import React from "react";
+import {Button} from "@mui/material";
 
-export default function SendSpecimentToWorkOrder() {
+export default function SendSpecimenToWorkOrder() {
     const {selectedIds} = useListContext();
     const refresh = useRefresh();
     const notify = useNotify();
-    const unselectAll = useUnselectAll('speciment');
+    const unselectAll = useUnselectAll('Specimen');
     const {data} = useGetManyReference<any>(
         'work-order',
         {
-            target: 'speciment_ids',
+            target: 'Specimen_ids',
             id: selectedIds.join(","),
             pagination: {page: 1, perPage: 100},
             filter: {status: 'pending'},
@@ -31,10 +32,10 @@ export default function SendSpecimentToWorkOrder() {
     const sendToOrder = (order: any) => {
         return async () => {
             await create(
-                `work-order/${order.id}/speciment`,
+                `work-order/${order.id}/Specimen`,
                 {
                     data: {
-                        speciment_ids: selectedIds
+                        Specimen_ids: selectedIds
                     },
                 },
                 {

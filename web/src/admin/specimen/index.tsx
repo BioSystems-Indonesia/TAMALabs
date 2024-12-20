@@ -27,9 +27,9 @@ import {Action, ActionKeys} from "../../types/props.ts";
 import FeatureList from "../../component/FeatureList.tsx";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import SendSpecimentToWorkOrder from "./SendSpecimentToWorkOrder.tsx";
+import SendSpecimenToWorkOrder from "./SendSpecimenToWorkOrder.tsx";
 
-type SpecimentFormProps = {
+type SpecimenFormProps = {
     readonly?: boolean
     mode?: ActionKeys
 }
@@ -56,7 +56,7 @@ function ReferenceSection() {
     )
 }
 
-function SpecimentForm(props: SpecimentFormProps) {
+function SpecimenForm(props: SpecimenFormProps) {
     return (
         <SimpleForm disabled={props.readonly}
                     toolbar={props.readonly === false ? false : undefined}
@@ -71,46 +71,45 @@ function SpecimentForm(props: SpecimentFormProps) {
                 </div>
             )}
 
-            <TextInput source={"description"}/>
             <ReferenceInput source={"patient_id"} reference={"patient"}>
                 <AutocompleteInput source={"patient_id"} readOnly={props.readonly}/>
             </ReferenceInput>
-            <FeatureList source={"type"} types={"speciment-type"}>
+            <FeatureList source={"type"} types={"Specimen-type"}>
                 <AutocompleteInput source={"type"} readOnly={props.readonly}/>
             </FeatureList>
-            <FeatureList source={"test"} types={"speciment-test"}>
+            <FeatureList source={"test"} types={"Specimen-test"}>
                 <AutocompleteInput source={"test"} readOnly={props.readonly}/>
             </FeatureList>
         </SimpleForm>
     )
 }
 
-export function SpecimentCreate() {
+export function SpecimenCreate() {
     return (
         <Create redirect={"list"}>
-            <SpecimentForm mode={"CREATE"}/>
+            <SpecimenForm mode={"CREATE"}/>
         </Create>
     )
 }
 
-export function SpecimentShow() {
+export function SpecimenShow() {
     return (
         <Show>
-            <SpecimentForm readonly mode={"SHOW"}/>
+            <SpecimenForm readonly mode={"SHOW"}/>
             <ReferenceSection/>
         </Show>
     )
 }
 
-export function SpecimentEdit() {
+export function SpecimenEdit() {
     return (
         <Edit>
-            <SpecimentForm mode={"EDIT"}/>
+            <SpecimenForm mode={"EDIT"}/>
         </Edit>
     )
 }
 
-const SpecimentListActions = () => (
+const SpecimenListActions = () => (
     <TopToolbar>
         <SelectColumnsButton/>
         <FilterButton/>
@@ -119,23 +118,22 @@ const SpecimentListActions = () => (
     </TopToolbar>
 );
 
-const SpecimentFilters = [
+const SpecimenFilters = [
     <SearchInput source="q" alwaysOn/>
 ];
 
-const SpecimentBulkAction = () => (
+const SpecimenBulkAction = () => (
     <>
-        <SendSpecimentToWorkOrder/>
+        <SendSpecimenToWorkOrder/>
         <BulkDeleteButton/>
     </>
 );
 
 
-export const SpecimentList = () => (
-    <List actions={<SpecimentListActions/>} filters={SpecimentFilters}>
-        <DatagridConfigurable bulkActionButtons={<SpecimentBulkAction/>}>
+export const SpecimenList = () => (
+    <List actions={<SpecimenListActions/>} filters={SpecimenFilters}>
+        <DatagridConfigurable bulkActionButtons={<SpecimenBulkAction/>}>
             <TextField source="id"/>
-            <TextField source="description"/>
             <TextField source="barcode"/>
             <TextField source="type"/>
             <TextField source="test"/>

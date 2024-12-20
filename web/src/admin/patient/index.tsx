@@ -35,11 +35,10 @@ function ReferenceSection() {
     return (
         <Box sx={{width: "100%"}}>
             <Divider sx={{my: "1rem"}}/>
-            <Typography variant={"h6"}>Speciments</Typography>
-            <ReferenceManyField label={"Speciments"} reference="speciment" target="patient_id">
+            <Typography variant={"h6"}>Specimens</Typography>
+            <ReferenceManyField label={"Specimens"} reference="Specimen" target="patient_id">
                 <Datagrid>
                     <TextField source="id"/>
-                    <TextField source="description"/>
                     <TextField source="barcode"/>
                     <TextField source="type"/>
                     <DateField source="created_at" showTime/>

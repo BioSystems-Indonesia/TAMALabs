@@ -2,9 +2,10 @@ package tcp
 
 import (
 	"fmt"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"strconv"
 	"time"
+
+	"github.com/oibacidem/lims-hl-seven/internal/entity"
 
 	"github.com/kardianos/hl7/h251"
 )

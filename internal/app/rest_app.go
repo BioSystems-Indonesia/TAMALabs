@@ -7,12 +7,11 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
-	specimentrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/speciment"
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	hlsUC "github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
-	specimentuc "github.com/oibacidem/lims-hl-seven/internal/usecase/speciment"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
 	workOrderuc "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
 )
 
@@ -23,7 +22,6 @@ var (
 		provideDB,
 		hlsRepo.NewRepository,
 		patientrepo.NewPatientRepository,
-		specimentrepo.NewSpecimentRepository,
 		workOrderrepo.NewWorkOrderRepository,
 		observation_request.NewRepository,
 		observation.NewRepository,

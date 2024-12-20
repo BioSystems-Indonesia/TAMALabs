@@ -97,18 +97,18 @@ func (h *WorkOrderHandler) CreateWorkOrder(c echo.Context) error {
 	return c.JSON(http.StatusCreated, req)
 }
 
-func (h *WorkOrderHandler) AddSpeciment(c echo.Context) error {
+func (h *WorkOrderHandler) AddSpecimen(c echo.Context) error {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
-	var req entity.WorkOrderAddSpeciment
+	var req entity.WorkOrderAddSpecimen
 	if err := bindAndValidate(c, &req); err != nil {
 		return handleError(c, err)
 	}
 
-	workOrder, err := h.workOrderUsecase.AddSpeciment(id, &req)
+	workOrder, err := h.workOrderUsecase.AddSpecimen(id, &req)
 	if err != nil {
 		return handleError(c, err)
 	}

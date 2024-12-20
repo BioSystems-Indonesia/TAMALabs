@@ -7,16 +7,16 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	specimentuc "github.com/oibacidem/lims-hl-seven/internal/usecase/speciment"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
 )
 
 type SpecimenHandler struct {
-	cfg              *config.Schema
-	specimentUsecase *specimentuc.SpecimenUseCase
+	cfg             *config.Schema
+	SpecimenUsecase *specimenuc.SpecimenUseCase
 }
 
-func NewSpecimenHandler(cfg *config.Schema, specimentUsecase *specimentuc.SpecimenUseCase) *SpecimenHandler {
-	return &SpecimenHandler{cfg: cfg, specimentUsecase: specimentUsecase}
+func NewSpecimenHandler(cfg *config.Schema, SpecimenUsecase *specimenuc.SpecimenUseCase) *SpecimenHandler {
+	return &SpecimenHandler{cfg: cfg, SpecimenUsecase: SpecimenUsecase}
 }
 
 func (h *SpecimenHandler) FindSpecimens(c echo.Context) error {
@@ -25,7 +25,7 @@ func (h *SpecimenHandler) FindSpecimens(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	speciments, err := h.specimentUsecase.FindAll(
+	Specimens, err := h.SpecimenUsecase.FindAll(
 		c.Request().Context(),
 		&req,
 	)
@@ -33,8 +33,8 @@ func (h *SpecimenHandler) FindSpecimens(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(len(speciments)))
-	return c.JSON(http.StatusOK, speciments)
+	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(len(Specimens)))
+	return c.JSON(http.StatusOK, Specimens)
 }
 
 func (h *SpecimenHandler) GetOneSpecimen(c echo.Context) error {
@@ -43,12 +43,12 @@ func (h *SpecimenHandler) GetOneSpecimen(c echo.Context) error {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
-	speciment, err := h.specimentUsecase.FindOneByID(id)
+	specimen, err := h.SpecimenUsecase.FindOneByID(id)
 	if err != nil {
 		return handleError(c, err)
 	}
 
-	return c.JSON(http.StatusOK, speciment)
+	return c.JSON(http.StatusOK, specimen)
 }
 
 func (h *SpecimenHandler) DeleteSpecimen(c echo.Context) error {
@@ -57,12 +57,12 @@ func (h *SpecimenHandler) DeleteSpecimen(c echo.Context) error {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
-	if err := h.specimentUsecase.Delete(id); err != nil {
+	if err := h.SpecimenUsecase.Delete(int(id)); err != nil {
 		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, entity.Specimen{
-		ID: id,
+		ID: int(id),
 	})
 }
 
@@ -72,12 +72,12 @@ func (h *SpecimenHandler) UpdateSpecimen(c echo.Context) error {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
-	req := entity.Specimen{ID: id}
+	req := entity.Specimen{ID: int(id)}
 	if err := bindAndValidate(c, &req); err != nil {
 		return handleError(c, err)
 	}
 
-	if err := h.specimentUsecase.Update(&req); err != nil {
+	if err := h.SpecimenUsecase.Update(&req); err != nil {
 		return handleError(c, err)
 	}
 
@@ -90,7 +90,7 @@ func (h *SpecimenHandler) CreateSpecimen(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	if err := h.specimentUsecase.Create(&req); err != nil {
+	if err := h.SpecimenUsecase.Create(&req); err != nil {
 		return handleError(c, err)
 	}
 
