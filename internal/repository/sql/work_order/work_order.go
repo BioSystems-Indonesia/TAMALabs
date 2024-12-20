@@ -9,6 +9,7 @@ import (
 
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/oibacidem/lims-hl-seven/internal/util"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -52,7 +53,9 @@ func (r WorkOrderRepository) FindAll(ctx context.Context, req *entity.WorkOrderG
 
 func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
 	var workOrder entity.WorkOrder
-	err := r.db.Where("id = ?", id).Preload("Specimens").Preload("Specimens.Patient").First(&workOrder).Error
+	err := r.db.Where("id = ?", id).
+		Preload("Specimen").
+		Preload("Patient").Preload("ObservationRequests").First(&workOrder).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return entity.WorkOrder{}, entity.ErrNotFound
 	}
@@ -61,10 +64,17 @@ func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
 		return entity.WorkOrder{}, fmt.Errorf("error finding workOrder: %w", err)
 	}
 
-	workOrder.SpecimenIDs = make([]int64, len(workOrder.Specimens))
-	for i, Specimen := range workOrder.Specimens {
-		workOrder.SpecimenIDs[i] = int64(Specimen.ID)
+	workOrder.PatientIDs = make([]int64, len(workOrder.Patient))
+	for i, patient := range workOrder.Patient {
+		workOrder.PatientIDs[i] = patient.ID
 	}
+	workOrder.PatientIDs = util.Unique(workOrder.PatientIDs)
+
+	workOrder.ObservationRequestsIDs = make([]string, len(workOrder.ObservationRequests))
+	for i, observationRequest := range workOrder.ObservationRequests {
+		workOrder.ObservationRequestsIDs[i] = observationRequest.TestCode
+	}
+	workOrder.ObservationRequestsIDs = util.Unique(workOrder.ObservationRequestsIDs)
 
 	return workOrder, nil
 }
@@ -76,101 +86,147 @@ func (r WorkOrderRepository) Create(workOrder *entity.WorkOrder) error {
 			return err
 		}
 
-		var specimens []entity.Specimen
-		for _, patientID := range workOrder.PatientIds {
-			speciment := entity.Specimen{
-				PatientID:      int(patientID),
-				Type:           "SER", // TODO: Change it so it not be hardcoded
-				CollectionDate: time.Now().Format(time.RFC3339),
-			}
-			err := tx.Create(&speciment).Error
-			if err != nil {
-				return err
-			}
-
-			specimens = append(specimens, speciment)
+		err = r.upsertRelation(tx, workOrder)
+		if err != nil {
+			return err
 		}
-
-		var observationRequests []entity.ObservationRequest
-		for _, specimen := range specimens {
-			workOrderSpecimen := entity.WorkOrderSpecimen{
-				WorkOrderID: workOrder.ID,
-				SpecimenID:  int64(specimen.ID),
-			}
-			err := tx.Create(&workOrderSpecimen).Error
-			if err != nil {
-				return err
-			}
-
-			for _, observationRequestID := range workOrder.ObservationRequests {
-				observationType, ok := entity.TableObservationType.Find(observationRequestID)
-				if !ok {
-					return fmt.Errorf("observation request: %w", entity.ErrBadRequest)
-				}
-
-				observationRequest := entity.ObservationRequest{
-					TestCode:        observationType.ID,
-					TestDescription: observationType.Name,
-					SpecimenID:      specimen.ID,
-					OrderID:         strconv.Itoa(int(workOrder.ID)),
-				}
-				err := tx.Create(&observationRequest).Error
-				if err != nil {
-					return err
-				}
-
-				observationRequests = append(observationRequests, observationRequest)
-			}
-		}
-
-		return nil
-	})
-}
-
-func (r WorkOrderRepository) AddSpecimen(workOrderID int64, req *entity.WorkOrderAddSpecimen) error {
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		for _, SpecimenID := range req.SpecimenIDs {
-			workOrderSpecimen := entity.WorkOrderSpecimen{
-				WorkOrderID: workOrderID,
-				SpecimenID:  SpecimenID,
-			}
-			err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&workOrderSpecimen).Error
-			if err != nil {
-				return err
-			}
-		}
-
 		return nil
 	})
 }
 
 func (r WorkOrderRepository) Update(workOrder *entity.WorkOrder) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		err := tx.Save(workOrder).Error
+		err := r.deleteUnusedRelation(tx, workOrder)
 		if err != nil {
 			return err
 		}
 
-		err = tx.Delete(&entity.WorkOrderSpecimen{}, "work_order_id = ?", workOrder.ID).Error
+		err = r.upsertRelation(tx, workOrder)
 		if err != nil {
 			return err
 		}
 
-		for _, SpecimenID := range workOrder.SpecimenIDs {
-			workOrderSpecimen := entity.WorkOrderSpecimen{
-				WorkOrderID: workOrder.ID,
-				SpecimenID:  SpecimenID,
-				CreatedAt:   time.Now(),
-				UpdatedAt:   time.Now(),
+		err = tx.Save(workOrder).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (r WorkOrderRepository) deleteUnusedRelation(tx *gorm.DB, workOrder *entity.WorkOrder) error {
+	oldWorkOrder, err := r.FindOne(workOrder.ID)
+	if err != nil {
+		return err
+	}
+
+	toDeletePatient, _ := util.CompareSlices(oldWorkOrder.PatientIDs, workOrder.PatientIDs)
+	for _, patientID := range toDeletePatient {
+		var specimens []entity.Specimen
+		err = tx.Find(&specimens, "order_id = ? AND patient_id = ?", workOrder.ID, patientID).Error
+		if err != nil {
+			return fmt.Errorf("error finding specimen work_order:%d patient:%d: %w", workOrder.ID, patientID, err)
+		}
+
+		for _, s := range specimens {
+			err = tx.Delete(&entity.Specimen{}, "id = ?", s.ID).Error
+			if err != nil {
+				return fmt.Errorf("error deleting specimen specimen:%d: %w", s.ID, err)
 			}
-			err := tx.Create(&workOrderSpecimen).Error
+
+			var observationRequests []entity.ObservationRequest
+			err = tx.Delete(&observationRequests, "specimen_id = ?", s.ID).Error
+			if err != nil {
+				return fmt.Errorf("error deleting observationRequest specimen:%d: %w", s.ID, err)
+			}
+		}
+
+		err = tx.Delete(&entity.WorkOrderPatient{}, "work_order_id = ? AND patient_id = ?", workOrder.ID, patientID).Error
+		if err != nil {
+			return fmt.Errorf("error deleting workOrderPatient work_order:%d patient:%d: %w", workOrder.ID, patientID, err)
+		}
+	}
+
+	toDeleteObservationRequest, _ := util.CompareSlices(
+		oldWorkOrder.ObservationRequestsIDs,
+		workOrder.ObservationRequestsIDs,
+	)
+	for _, observationRequestID := range toDeleteObservationRequest {
+		err := tx.Model(&entity.ObservationRequest{}).
+			Where("order_id = ? AND test_code = ?", workOrder.ID, observationRequestID).
+			Delete(&entity.ObservationRequest{}).Error
+		if err != nil {
+			return fmt.Errorf("error deleting observationRequest %v: %w", observationRequestID, err)
+		}
+	}
+
+	return nil
+}
+
+const defaultSerumType = "SER"
+
+func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.WorkOrder) error {
+	for _, patientID := range workOrder.PatientIDs {
+		workOrderPatient := entity.WorkOrderPatient{
+			WorkOrderID: workOrder.ID,
+			PatientID:   patientID,
+		}
+		workOrderPatientQuery := trx.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(&workOrderPatient)
+		if workOrderPatientQuery.Error != nil {
+			return workOrderPatientQuery.Error
+		}
+
+		specimen := entity.Specimen{
+			PatientID:      int(patientID),
+			OrderID:        int(workOrder.ID),
+			Type:           defaultSerumType, // TODO: Change it so it not be hardcoded
+			CollectionDate: time.Now().Format(time.RFC3339),
+		}
+		specimenQuery := trx.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(&specimen)
+		err := specimenQuery.Error
+		if err != nil {
+			return err
+		}
+
+		if specimenQuery.RowsAffected == 0 {
+			err = trx.Find(&specimen).
+				Where("patient_id = ? AND order_id = ? AND type = ?", patientID, workOrder.ID, defaultSerumType).Error
 			if err != nil {
 				return err
 			}
 		}
 
-		return nil
-	})
+		for _, observationRequestID := range workOrder.ObservationRequestsIDs {
+			observationType, ok := entity.TableObservationType.Find(observationRequestID)
+			if !ok {
+				return fmt.Errorf("observation request: %w", entity.ErrBadRequest)
+			}
+
+			observationRequest := entity.ObservationRequest{
+				TestCode:        observationType.ID,
+				TestDescription: observationType.Name,
+				SpecimenID:      specimen.ID,
+				OrderID:         strconv.Itoa(int(workOrder.ID)),
+			}
+
+			observationRequestQuery := trx.Clauses(clause.OnConflict{DoNothing: true}).Create(&observationRequest)
+			err := observationRequestQuery.Error
+			if err != nil {
+				return err
+			}
+
+			if observationRequestQuery.RowsAffected == 0 {
+				continue
+			}
+		}
+	}
+
+	return nil
 }
 
 func (r WorkOrderRepository) Delete(id int64) error {

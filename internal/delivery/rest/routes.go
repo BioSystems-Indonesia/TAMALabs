@@ -91,6 +91,7 @@ func RegisterRoutes(e *echo.Echo, handler *Handler) {
 		workOrder.GET("", handler.FindWorkOrders)
 		workOrder.POST("", handler.CreateWorkOrder)
 		workOrder.POST("/:id/specimen", handler.AddSpeciment)
+		workOrder.POST("/run", handler.RunWorkOrder)
 		workOrder.GET("/:id", handler.GetOneWorkOrder)
 		workOrder.PUT("/:id", handler.UpdateWorkOrder)
 		workOrder.DELETE("/:id", handler.DeleteWorkOrder)

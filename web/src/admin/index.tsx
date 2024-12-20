@@ -7,17 +7,18 @@ import UserIcon from '@mui/icons-material/Person';
 import ScienceIcon from '@mui/icons-material/Science';
 import BiotechIcon from '@mui/icons-material/Biotech';
 import {SpecimenCreate, SpecimenEdit, SpecimenList, SpecimenShow} from "./Specimen";
-import {WorkOrderCreate, WorkOrderEdit, WorkOrderList, WorkOrderShow} from "./workOrder";
+import {WorkOrderCreate, WorkOrderEdit, WorkOrderList} from "./workOrder";
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
 const App = () => {
     return (<Admin dataProvider={dataProvider} layout={DefaultLayout}>
-        <Resource name="work-order" list={WorkOrderList} show={WorkOrderShow} edit={WorkOrderEdit}
+        <Resource name="work-order" list={WorkOrderList}
+                  edit={WorkOrderEdit}
                   create={WorkOrderCreate}
                   hasCreate={true}
                   hasEdit={true}
-                  hasShow={true}
+                  hasShow={false}
                   icon={BiotechIcon}/>
         <Resource name="patient" list={PatientList} show={PatientShow} edit={PatientEdit} create={PatientCreate}
                   hasCreate={true}

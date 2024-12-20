@@ -4,10 +4,11 @@ import "time"
 
 type Specimen struct {
 	ID             int       `json:"id" gorm:"primaryKey;autoIncrement"`
-	HL7ID          string    `json:"specimen_hl7_id" gorm:"not null"`                        // SPM-2
-	PatientID      int       `json:"patient_id" gorm:"not null" validate:"required"`         // Foreign key linking to Patient
-	Type           string    `json:"type" gorm:"not null" validate:"required,specimen-type"` // SPM-4
-	CollectionDate string    `json:"collection_date" gorm:"not null"`                        // SPM-17
+	HL7ID          string    `json:"specimen_hl7_id" gorm:"not null"`                                                              // SPM-2
+	PatientID      int       `json:"patient_id" gorm:"not null;index:specimen_uniq,unique,priority:2" validate:"required"`         // Foreign key linking to Patient
+	OrderID        int       `json:"order_id" gorm:"not null;index:specimen_uniq,unique,priority:1" validate:"required"`           // Foreign key linking to WorkOrder
+	Type           string    `json:"type" gorm:"not null;index:specimen_uniq,unique,priority:3" validate:"required,specimen-type"` // SPM-4
+	CollectionDate string    `json:"collection_date" gorm:"not null"`                                                              // SPM-17
 	ReceivedDate   time.Time `json:"received_date" gorm:"not null"`
 	Source         string    `json:"source" gorm:"not null"`    // SPM-8
 	Condition      string    `json:"condition" gorm:"not null"` // SPM-25

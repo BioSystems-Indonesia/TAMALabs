@@ -1,0 +1,74 @@
+package util
+
+// Unique filters unique items from a slice
+func Unique[T comparable](items []T) []T {
+	seen := make(map[T]struct{}) // Use a map to track seen items
+	var result []T
+
+	for _, item := range items {
+		if _, exists := seen[item]; !exists {
+			seen[item] = struct{}{}
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
+func Contains[T comparable](ss []T, v T) bool {
+	for _, s := range ss {
+		if s == v {
+			return true
+		}
+	}
+	return false
+}
+
+func Filter[T any](ss []T, filterFunc func(T) bool) []T {
+	var ret []T
+	for _, s := range ss {
+		if filterFunc(s) {
+			ret = append(ret, s)
+		}
+	}
+	return ret
+}
+
+func CompareSlices[T comparable](old, new []T) (toDelete []T, toCreate []T) {
+	// Create maps to track element frequencies
+	oldMap := make(map[T]int)
+	newMap := make(map[T]int)
+
+	// Count frequencies in old slice
+	for _, item := range old {
+		oldMap[item]++
+	}
+
+	// Count frequencies in new slice
+	for _, item := range new {
+		newMap[item]++
+	}
+
+	// Find elements to delete (present in old but not in new, or have higher frequency in old)
+	for item, oldCount := range oldMap {
+		newCount := newMap[item]
+		if oldCount > newCount {
+			// Add the item to toDelete as many times as it appears more frequently in old
+			for i := 0; i < oldCount-newCount; i++ {
+				toDelete = append(toDelete, item)
+			}
+		}
+	}
+
+	// Find elements to create (present in new but not in old, or have higher frequency in new)
+	for item, newCount := range newMap {
+		oldCount := oldMap[item]
+		if newCount > oldCount {
+			// Add the item to toCreate as many times as it appears more frequently in new
+			for i := 0; i < newCount-oldCount; i++ {
+				toCreate = append(toCreate, item)
+			}
+		}
+	}
+
+	return toDelete, toCreate
+}

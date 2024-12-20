@@ -19,7 +19,7 @@ import {
     useGetMany,
     useListContext,
     useNotify,
-    useRedirect,
+    useRecordContext,
     useSaveContext
 } from "react-admin";
 import {useFormContext} from "react-hook-form";
@@ -81,9 +81,20 @@ const PickedTest = () => {
     )
 }
 
-function TestTable() {
-    const {selectedIds} = useListContext();
+const patientIDsField = "patient_ids";
+
+function TestTable(props: WorkOrderFormProps) {
+    const {selectedIds, onSelect} = useListContext();
     const {setValue} = useFormContext();
+
+    const data = useRecordContext()
+    useEffect(() => {
+        if (data) {
+            console.debug("setDataToValue", data[observationRequestField]);
+            onSelect(data[observationRequestField])
+            setValue(observationRequestField, data[observationRequestField]);
+        }
+    }, [data]);
 
     useEffect(() => {
         console.debug("test selected ids", selectedIds);
@@ -95,7 +106,6 @@ function TestTable() {
             <></>
         );
     };
-
 
     return <Grid container spacing={2}>
         <Grid item xs={12} md={8}>
@@ -114,15 +124,17 @@ function TestTable() {
     </Grid>;
 }
 
-function TestInput() {
+function TestInput(props: WorkOrderFormProps) {
 
     return (<List resource={"feature-list-observation-type"} exporter={false} aside={<TestFilterSidebar/>}
                   perPage={25}
+                  storeKey={false}
+                  disableSyncWithLocation
                   sx={{
                       width: "100%"
                   }}
     >
-        <TestTable/>
+        <TestTable {...props}/>
     </List>);
 }
 
@@ -184,25 +196,33 @@ function PickedPatient() {
 }
 
 
-function PatientTable() {
+function PatientTable(props: WorkOrderFormProps) {
     const BulkActionButtons = () => {
         return (
             <></>
         );
     };
-    const {selectedIds} = useListContext();
+    const {selectedIds, onSelect} = useListContext();
     const {setValue} = useFormContext();
+    const data = useRecordContext()
 
     useEffect(() => {
-        setValue("patient_ids", selectedIds);
-        console.debug("patient selected ids", selectedIds);
+        if (data) {
+            console.debug("setDataToValue", data[patientIDsField]);
+            onSelect(data[patientIDsField])
+            setValue(patientIDsField, data[patientIDsField]);
+        }
+    }, [data]);
+
+    useEffect(() => {
+        console.debug("test selected ids", selectedIds);
+        setValue(patientIDsField, selectedIds);
     }, [selectedIds]);
 
 
     return <Grid container spacing={2}>
         <Grid item xs={12} md={8}>
             <Datagrid rowClick={"toggleSelection"} bulkActionButtons={<BulkActionButtons/>}
-
             >
                 <TextField source="id"/>
                 <TextField source="first_name"/>
@@ -224,7 +244,7 @@ const PatientListActions = () => (
     </TopToolbar>
 );
 
-function PatientInput() {
+function PatientInput(props: WorkOrderFormProps) {
 
     return (
         <List aside={<PatientFilterSidebar/>} resource={"patient"}
@@ -234,21 +254,43 @@ function PatientInput() {
               sx={{
                   width: "100%"
               }}
+              disableSyncWithLocation
+              storeKey={false}
               empty={false}
         >
-            <PatientTable/>
+            <PatientTable {...props}/>
         </List>
     )
 }
 
 const WorkOrderToolbar = () => {
-    const notify = useNotify();
     const {getValues} = useFormContext();
-    const redirect = useRedirect();
     const {save} = useSaveContext();
+    const notify = useNotify();
     const handleClick = (e: any) => {
         e.preventDefault(); // necessary to prevent default SaveButton submit logic
         const {...data} = getValues();
+
+        if (data == undefined) {
+            notify("Please fill in all required fields", {
+                type: "error",
+            });
+            return;
+        }
+
+        if (!data[patientIDsField] || data[patientIDsField].length === 0) {
+            notify("Please select patient", {
+                type: "error",
+            });
+            return;
+        }
+
+        if (!data[observationRequestField] || data[observationRequestField].length === 0) {
+            notify("Please select observation request", {
+                type: "error",
+            });
+            return;
+        }
 
         if (save) {
             save(data);
@@ -256,9 +298,11 @@ const WorkOrderToolbar = () => {
     };
 
     return (
-        <Toolbar>
+        <Toolbar sx={{
+            gap: 2
+        }}>
+            <DeleteButton variant="contained" size="small"/>
             <SaveButton type="button" onClick={handleClick} alwaysEnable/>
-            <DeleteButton/>
         </Toolbar>
     )
 };
@@ -267,7 +311,13 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
     return (
         <TabbedForm toolbar={<WorkOrderToolbar/>}>
             <TabbedForm.Tab label="Test">
-                {props.mode !== Action.CREATE && (
+                <TestInput {...props}/>
+            </TabbedForm.Tab>
+            <TabbedForm.Tab label="Patient">
+                <PatientInput {...props}/>
+            </TabbedForm.Tab>
+            {props.mode !== Action.CREATE && (
+                <TabbedForm.Tab label="Detail">
                     <div>
                         <TextInput source={"id"} readOnly={true} size={"small"}/>
                         <DateTimeInput source={"created_at"} readOnly={true} size={"small"}/>
@@ -277,13 +327,8 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
                         </FeatureList>
                         <Divider/>
                     </div>
-                )}
-
-                <TestInput/>
-            </TabbedForm.Tab>
-            <TabbedForm.Tab label="Patient">
-                <PatientInput/>
-            </TabbedForm.Tab>
+                </TabbedForm.Tab>
+            )}
         </TabbedForm>
     )
 }

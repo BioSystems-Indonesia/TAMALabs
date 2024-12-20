@@ -104,10 +104,10 @@ func InitDatabase() (*gorm.DB, error) {
 	}
 
 	autoMigrate := []interface{}{
+		&entity.WorkOrderPatient{},
+		&entity.WorkOrder{},
 		&entity.Patient{},
 		&entity.Specimen{},
-		&entity.WorkOrder{},
-		&entity.WorkOrderSpecimen{},
 		&entity.ObservationRequest{},
 	}
 

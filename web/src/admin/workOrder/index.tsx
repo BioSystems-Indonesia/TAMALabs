@@ -1,39 +1,22 @@
 import {
+    Button,
     ChipField,
     Create,
     Datagrid,
     DateField,
+    DeleteButton,
     Edit,
     List,
-    ReferenceField,
-    ReferenceManyField,
     Show,
-    TextField
+    TextField,
+    useCreate,
+    useListContext,
+    useNotify,
+    useRefresh,
+    useUnselectAll
 } from "react-admin";
-import Divider from "@mui/material/Divider";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 import WorkOrderForm from "./Form.tsx";
-
-
-function ReferenceSection() {
-    return (
-        <Box sx={{width: "100%"}}>
-            <Divider sx={{my: "1rem"}}/>
-            <Typography variant={"h6"}>Specimens</Typography>
-            <ReferenceManyField reference={"Specimen"} target={"id"} source={"Specimen_ids"}>
-                <Datagrid>
-                    <TextField source="id"/>
-                    <TextField source="barcode"/>
-                    <TextField source="type"/>
-                    <ReferenceField reference={"patient"} source={"patient_id"}/>
-                    <DateField source="created_at" showTime/>
-                    <DateField source="updated_at" showTime/>
-                </Datagrid>
-            </ReferenceManyField>
-        </Box>
-    )
-}
+import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
 
 
 export function WorkOrderCreate() {
@@ -48,26 +31,68 @@ export function WorkOrderShow() {
     return (
         <Show>
             <WorkOrderForm readonly mode={"SHOW"}/>
-            <ReferenceSection/>
         </Show>
     )
 }
 
 export function WorkOrderEdit() {
     return (
-        <Edit>
+        <Edit mutationMode={"pessimistic"}>
             <WorkOrderForm mode={"EDIT"}/>
         </Edit>
     )
 }
 
+const RunWorkOrderButton = () => {
+    const {selectedIds} = useListContext();
+    const refresh = useRefresh();
+    const notify = useNotify();
+    const unselectAll = useUnselectAll('posts');
+    const [create, {isPending}] = useCreate(
+        'work-order/run',
+        {
+            data: {
+                work_order_ids: selectedIds
+            }
+        },
+        {
+            onSuccess: () => {
+                notify('Success run');
+                unselectAll();
+            },
+            onError: () => {
+                notify('Error: run', {
+                    type: 'error',
+                });
+                refresh();
+            },
+        }
+    );
+    const handleClick = () => {
+        create();
+    }
+
+    return (
+        <Button label="Run Work Order" onClick={handleClick} disabled={isPending}>
+            <PlayCircleFilledIcon/>
+        </Button>
+    );
+};
+
+const WorkOrderBulkActionButtons = () => (
+    <>
+        <RunWorkOrderButton/>
+    </>
+);
+
 export const WorkOrderList = () => (
     <List>
-        <Datagrid>
+        <Datagrid rowClick={"edit"} bulkActionButtons={<WorkOrderBulkActionButtons/>}>
             <TextField source="id"/>
             <ChipField source="status"/>
             <DateField source="created_at"/>
             <DateField source="updated_at"/>
+            <DeleteButton/>
         </Datagrid>
     </List>
 );

@@ -12,19 +12,20 @@ const (
 )
 
 type WorkOrder struct {
-	ID                  int64           `json:"id,omitempty" gorm:"primaryKey;autoIncrement"`
-	Status              WorkOrderStatus `json:"status" gorm:"not null" validate:"work-order-status"`
-	ObservationRequests []string        `json:"observation_requests" gorm:"-" validate:"required"`
-	PatientIds          []int64         `json:"Patient_ids" gorm:"-" validate:"required"`
-	SpecimenIDs         []int64         `json:"Specimen_ids" gorm:"-" validate:"-"`
-	CreatedAt           time.Time       `json:"created_at" gorm:"not null"`
-	UpdatedAt           time.Time       `json:"updated_at" gorm:"not null"`
+	ID                     int64           `json:"id,omitempty" gorm:"primaryKey;autoIncrement"`
+	Status                 WorkOrderStatus `json:"status" gorm:"not null" validate:"work-order-status"`
+	ObservationRequestsIDs []string        `json:"observation_requests" gorm:"-" validate:"required"`
+	PatientIDs             []int64         `json:"patient_ids" gorm:"-" validate:"required"`
+	CreatedAt              time.Time       `json:"created_at" gorm:"not null"`
+	UpdatedAt              time.Time       `json:"updated_at" gorm:"not null"`
 
-	Specimens []Specimen `json:"specimens" gorm:"many2many:work_order_Specimens;->" validate:"-"`
+	Patient             []Patient            `json:"patient_list" gorm:"many2many:work_order_patients;->" validate:"-"`
+	Specimen            []Specimen           `json:"specimen_list" gorm:"foreignKey:OrderID;->" validate:"-"`
+	ObservationRequests []ObservationRequest `json:"observation_requests_list" gorm:"foreignKey:OrderID;->" validate:"-"`
 }
 
-type WorkOrderAddSpecimen struct {
-	SpecimenIDs []int64 `json:"specimen_ids" gorm:"-" validate:"required"`
+type WorkOrderRunRequest struct {
+	WorkOrderID []int64 `json:"work_order_ids" gorm:"-" validate:"required"`
 }
 
 type WorkOrderGetManyRequest struct {
