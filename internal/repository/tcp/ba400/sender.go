@@ -33,12 +33,3 @@ func (s *Sender) SendRaw(msg []byte) ([]byte, error) {
 	return res, nil
 }
 
-func (s *Sender) SendOML_O33(msg []byte) (bool, error) {
-	_, err := s.SendRaw(msg)
-	if err != nil {
-		return false, err
-	}
-	panic("what is this")
-	return false, fmt.Errorf("panic")
-
-}
