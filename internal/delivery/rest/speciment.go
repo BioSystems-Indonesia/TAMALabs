@@ -20,7 +20,7 @@ func NewSpecimenHandler(cfg *config.Schema, specimentUsecase *specimentuc.Specim
 }
 
 func (h *SpecimenHandler) FindSpecimens(c echo.Context) error {
-	var req entity.SpecimentGetManyRequest
+	var req entity.SpecimenGetManyRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return handleError(c, err)
 	}
