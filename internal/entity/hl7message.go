@@ -1,6 +1,6 @@
 package entity
 
-type HL7Message struct {
+type MSH struct {
 	ID                   int    `json:"id" gorm:"primaryKey;autoIncrement"`
 	MessageControlID     string `json:"message_control_id"`    // MSH-10
 	SendingApplication   string `json:"sending_application"`   // MSH-3
