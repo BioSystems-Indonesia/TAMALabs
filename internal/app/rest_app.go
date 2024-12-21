@@ -28,7 +28,7 @@ var (
 		specimen.NewRepository,
 		hlsUC.NewUsecase,
 		patientuc.NewPatientUseCase,
-		specimentuc.NewSpecimenUseCase,
+		specimenuc.NewSpecimenUseCase,
 		workOrderuc.NewWorkOrderUseCase,
 		rest.NewHlSevenHandler,
 		rest.NewHealthCheckHandler,
