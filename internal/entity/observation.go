@@ -17,6 +17,9 @@ type ObservationRequest struct {
 	ResultStatus    string    `json:"result_status" gorm:"not null"`                                                                                   // OBR-25
 	CreatedAt       time.Time `json:"created_at" gorm:"not null"`
 	UpdatedAt       time.Time `json:"updated_at" gorm:"not null"`
+
+	Order    WorkOrder `json:"order" gorm:"foreignKey:OrderID;->" validate:"-"`
+	Specimen Specimen  `json:"specimen" gorm:"foreignKey:SpecimenID;->" validate:"-"`
 }
 
 type ObservationResult struct {

@@ -19,8 +19,9 @@ type Specimen struct {
 	UpdatedAt      time.Time `json:"updated_at" gorm:"not null"`
 
 	// Relationships
-	Observation    []Observation `json:"observation"`
-	Patient Patient `json:"patient" gorm:"foreignKey:PatientID;->" validate:"-"`
+	Observation        []Observation        `json:"observation" gorm:"-" validate:"-"`
+	ObservationRequest []ObservationRequest `json:"observation_requests" gorm:"foreignKey:SpecimenID;->" validate:"-"`
+	Patient            Patient              `json:"patient" gorm:"foreignKey:PatientID;->" validate:"-"`
 }
 
 type SpecimenGetManyRequest struct {
