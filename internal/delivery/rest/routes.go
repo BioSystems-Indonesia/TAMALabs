@@ -6,8 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
-	_ "github.com/oibacidem/lims-hl-seven/statik"
-	"github.com/rakyll/statik/fs"
+	"github.com/oibacidem/lims-hl-seven/web"
 )
 
 // Handler is a struct that contains the handler of the REST server.
@@ -100,10 +99,6 @@ func RegisterRoutes(e *echo.Echo, handler *Handler) {
 }
 
 func registerFrontendPath(e *echo.Echo) {
-	statikFS, err := fs.New()
-	if err != nil {
-		panic(err)
-	}
-	h := http.FileServer(statikFS)
-	e.GET("/*", echo.WrapHandler(http.StripPrefix("/", h)))
+	h := http.FileServer(http.FS(web.Content()))
+	e.GET("/*", echo.WrapHandler(h))
 }
