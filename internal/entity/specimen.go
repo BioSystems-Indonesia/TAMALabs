@@ -19,6 +19,7 @@ type Specimen struct {
 	UpdatedAt      time.Time `json:"updated_at" gorm:"not null"`
 
 	// Relationships
+	Observation    []Observation `json:"observation"`
 	Patient Patient `json:"patient" gorm:"foreignKey:PatientID;->" validate:"-"`
 }
 
