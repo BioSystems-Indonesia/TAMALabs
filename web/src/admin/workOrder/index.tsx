@@ -9,7 +9,6 @@ import {
     List,
     Show,
     TextField,
-    useCreate,
     useListContext,
     useNotify,
     useRefresh,
@@ -17,6 +16,7 @@ import {
 } from "react-admin";
 import WorkOrderForm from "./Form.tsx";
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
+import {useMutation} from "@tanstack/react-query";
 
 
 export function WorkOrderCreate() {
@@ -44,18 +44,17 @@ export function WorkOrderEdit() {
 }
 
 const RunWorkOrderButton = () => {
-    const {selectedIds} = useListContext();
-    const refresh = useRefresh();
-    const notify = useNotify();
-    const unselectAll = useUnselectAll('posts');
-    const [create, {isPending}] = useCreate(
-        'work-order/run',
-        {
-            data: {
-                work_order_ids: selectedIds
-            }
-        },
-        {
+        const {selectedIds} = useListContext();
+        const refresh = useRefresh();
+        const notify = useNotify();
+        const unselectAll = useUnselectAll('posts');
+        const {mutate, isPending} = useMutation({
+            mutationFn: (data: any) => {
+                return fetch('/api/work-order/run', {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                })
+            },
             onSuccess: () => {
                 notify('Success run');
                 unselectAll();
@@ -66,18 +65,21 @@ const RunWorkOrderButton = () => {
                 });
                 refresh();
             },
-        }
-    );
-    const handleClick = () => {
-        create();
-    }
+        })
 
-    return (
-        <Button label="Run Work Order" onClick={handleClick} disabled={isPending}>
-            <PlayCircleFilledIcon/>
-        </Button>
-    );
-};
+        const handleClick = () => {
+            mutate({
+                work_order_ids: selectedIds
+            });
+        }
+
+        return (
+            <Button label="Run Work Order" onClick={handleClick} disabled={isPending}>
+                <PlayCircleFilledIcon/>
+            </Button>
+        );
+    }
+;
 
 const WorkOrderBulkActionButtons = () => (
     <>
