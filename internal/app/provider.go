@@ -44,6 +44,7 @@ func provideRestHandler(
 	specimenHandler *rest.SpecimenHandler,
 	workOrder *rest.WorkOrderHandler,
 	featureListHandler *rest.FeatureListHandler,
+	observationRequest *rest.ObservationRequestHandler,
 ) *rest.Handler {
 	return &rest.Handler{
 		hlSevenHandler,
@@ -52,6 +53,7 @@ func provideRestHandler(
 		specimenHandler,
 		workOrder,
 		featureListHandler,
+		observationRequest,
 	}
 }
 

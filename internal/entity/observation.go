@@ -35,3 +35,7 @@ type ObservationResult struct {
 	AbnormalFlag   []string  `json:"abnormal_flag"`   // OBX-8
 	Comments       string    `json:"comments"`        // OBX-16
 }
+
+type ObservationRequestGetManyRequest struct {
+	GetManyRequest
+}

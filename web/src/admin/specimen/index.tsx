@@ -1,8 +1,8 @@
 import {
+    ArrayField,
     AutocompleteInput,
-    BulkDeleteButton,
+    ChipField,
     Create,
-    CreateButton,
     Datagrid,
     DatagridConfigurable,
     DateField,
@@ -18,6 +18,7 @@ import {
     SelectColumnsButton,
     Show,
     SimpleForm,
+    SingleFieldList,
     TextField,
     TextInput,
     TopToolbar
@@ -27,7 +28,6 @@ import {Action, ActionKeys} from "../../types/props.ts";
 import FeatureList from "../../component/FeatureList.tsx";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import SendSpecimenToWorkOrder from "./SendSpecimenToWorkOrder.tsx";
 
 type SpecimenFormProps = {
     readonly?: boolean
@@ -113,7 +113,6 @@ const SpecimenListActions = () => (
     <TopToolbar>
         <SelectColumnsButton/>
         <FilterButton/>
-        <CreateButton/>
         <ExportButton/>
     </TopToolbar>
 );
@@ -122,22 +121,20 @@ const SpecimenFilters = [
     <SearchInput source="q" alwaysOn/>
 ];
 
-const SpecimenBulkAction = () => (
-    <>
-        <SendSpecimenToWorkOrder/>
-        <BulkDeleteButton/>
-    </>
-);
-
 
 export const SpecimenList = () => (
     <List actions={<SpecimenListActions/>} filters={SpecimenFilters}>
-        <DatagridConfigurable bulkActionButtons={<SpecimenBulkAction/>}>
+        <DatagridConfigurable bulkActionButtons={false}>
             <TextField source="id"/>
             <TextField source="barcode"/>
             <TextField source="type"/>
-            <TextField source="test"/>
+            <ReferenceField reference={"work-order"} source={"order_id"}/>
             <ReferenceField reference={"patient"} source={"patient_id"}/>
+            <ArrayField source={"observation_requests"} label={"Observation Requests"}>
+                <SingleFieldList>
+                    <ChipField source={"test_code"}/>
+                </SingleFieldList>
+            </ArrayField>
             <DateField source="created_at" showTime/>
             <DateField source="updated_at" showTime/>
         </DatagridConfigurable>

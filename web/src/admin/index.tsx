@@ -6,8 +6,10 @@ import {PatientCreate, PatientEdit, PatientList, PatientShow} from "./patient";
 import UserIcon from '@mui/icons-material/Person';
 import ScienceIcon from '@mui/icons-material/Science';
 import BiotechIcon from '@mui/icons-material/Biotech';
-import {SpecimenCreate, SpecimenEdit, SpecimenList, SpecimenShow} from "./specimen";
 import {WorkOrderCreate, WorkOrderEdit, WorkOrderList} from "./workOrder";
+import {ObservationRequestList, ObservationRequestShow} from "./observationRequest";
+import {SpecimenList, SpecimenShow} from "./specimen";
+import ListIcon from '@mui/icons-material/List';
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
@@ -27,12 +29,18 @@ const App = () => {
                   icon={UserIcon}
                   recordRepresentation={record => `#${record.id} - ${record.first_name} ${record.last_name}`}
         />
-        <Resource name="Specimen" list={SpecimenList} show={SpecimenShow} edit={SpecimenEdit}
-                  create={SpecimenCreate}
-                  hasCreate={true}
-                  hasEdit={true}
+        <Resource name="specimen" list={SpecimenList} show={SpecimenShow}
+                  hasCreate={false}
+                  hasEdit={false}
                   hasShow={true}
                   icon={ScienceIcon}
+                  recordRepresentation={record => `#${record.id} - ${record.type}`}
+        />
+        <Resource name="observation-request" list={ObservationRequestList} show={ObservationRequestShow}
+                  hasCreate={false}
+                  hasEdit={false}
+                  hasShow={true}
+                  icon={ListIcon}
                   recordRepresentation={record => `#${record.id} - ${record.type}`}
         />
     </Admin>)

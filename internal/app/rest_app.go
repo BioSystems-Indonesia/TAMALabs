@@ -10,6 +10,7 @@ import (
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	hlsUC "github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
+	observation_requestuc "github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
 	workOrderuc "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
@@ -30,12 +31,14 @@ var (
 		patientuc.NewPatientUseCase,
 		specimenuc.NewSpecimenUseCase,
 		workOrderuc.NewWorkOrderUseCase,
+		observation_requestuc.NewObservationRequestUseCase,
 		rest.NewHlSevenHandler,
 		rest.NewHealthCheckHandler,
 		rest.NewPatientHandler,
 		rest.NewSpecimenHandler,
 		rest.NewWorkOrderHandler,
 		rest.NewFeatureListHandler,
+		rest.NewObservationRequestHandler,
 		provideTCP,
 		provideRestHandler,
 		provideRestServer,

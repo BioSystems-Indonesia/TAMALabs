@@ -17,6 +17,7 @@ type Handler struct {
 	*SpecimenHandler
 	*WorkOrderHandler
 	*FeatureListHandler
+	*ObservationRequestHandler
 }
 
 func RegisterMiddleware(e *echo.Echo) {
@@ -76,13 +77,16 @@ func RegisterRoutes(e *echo.Echo, handler *Handler) {
 		patient.DELETE("/:id", handler.DeletePatient)
 	}
 
-	speciment := v1.Group("/speciment")
+	specimen := v1.Group("/specimen")
 	{
-		speciment.GET("", handler.FindSpecimens)
-		speciment.GET("/:id", handler.GetOneSpecimen)
-		speciment.POST("", handler.CreateSpecimen)
-		speciment.PUT("/:id", handler.UpdateSpecimen)
-		speciment.DELETE("/:id", handler.DeleteSpecimen)
+		specimen.GET("", handler.FindSpecimens)
+		specimen.GET("/:id", handler.GetOneSpecimen)
+	}
+
+	observationRequest := v1.Group("/observation-request")
+	{
+		observationRequest.GET("", handler.FindObservationRequests)
+		observationRequest.GET("/:id", handler.GetOneObservationRequest)
 	}
 
 	workOrder := v1.Group("/work-order")

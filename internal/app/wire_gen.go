@@ -17,6 +17,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
@@ -46,7 +47,9 @@ func InitRestApp(config2 *config.Schema) server.RestServer {
 	workOrderUseCase := workOrderuc.NewWorkOrderUseCase(config2, workOrderRepository, validate)
 	workOrderHandler := rest.NewWorkOrderHandler(config2, workOrderUseCase)
 	featureListHandler := rest.NewFeatureListHandler()
-	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler)
+	observationRequestUseCase := observation_requestuc.NewObservationRequestUseCase(config2, observation_requestRepository, validate)
+	observationRequestHandler := rest.NewObservationRequestHandler(config2, observationRequestUseCase)
+	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler)
 	restServer := provideRestServer(config2, handler, validate)
 	return restServer
 }

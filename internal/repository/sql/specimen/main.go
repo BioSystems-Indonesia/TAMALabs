@@ -41,7 +41,7 @@ func (r Repository) FindAll(ctx context.Context, req *entity.SpecimenGetManyRequ
 		})
 	}
 
-	err := db.Find(&Specimens).Error
+	err := db.Preload("ObservationRequest").Find(&Specimens).Error
 	if err != nil {
 		return nil, fmt.Errorf("error finding Specimens: %w", err)
 	}
