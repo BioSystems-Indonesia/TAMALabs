@@ -1,13 +1,13 @@
 package rest
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	workOrderuc "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
 )
 
@@ -104,8 +104,17 @@ func (h Handler) RunWorkOrder(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	// TODO: add run logic
-	log.Println(req)
+	workOrders, err := h.workOrderUsecase.FindManyByID(c.Request().Context(), req.WorkOrderID)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	for _, workOrder := range workOrders {
+		err := ba400.SendToBA400(workOrder.Patient[0], workOrder.Specimen, workOrder.ObservationRequests)
+		if err != nil {
+			return handleError(c, err)
+		}
+	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "ok",

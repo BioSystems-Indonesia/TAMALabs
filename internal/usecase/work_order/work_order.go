@@ -29,6 +29,12 @@ func (p WorkOrderUseCase) FindAll(
 	return p.workOrderRepo.FindAll(ctx, req)
 }
 
+func (p WorkOrderUseCase) FindManyByID(
+	ctx context.Context, id []int64,
+) ([]entity.WorkOrder, error) {
+	return p.workOrderRepo.FindManyByID(ctx, id)
+}
+
 func (p WorkOrderUseCase) FindOneByID(id int64) (entity.WorkOrder, error) {
 	return p.workOrderRepo.FindOne(id)
 }

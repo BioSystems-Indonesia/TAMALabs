@@ -2,6 +2,7 @@ package ba400
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/kardianos/hl7"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -18,6 +19,7 @@ func SendToBA400(patient entity.Patient, sepecimen []entity.Specimen, observatio
 	if err != nil {
 		return fmt.Errorf("failed to encode oml_33: %w", err)
 	}
+	log.Print(string(b))
 
 	sender := Sender{
 		host: "192.168.1.11:2050",
