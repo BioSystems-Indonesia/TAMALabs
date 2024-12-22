@@ -1,6 +1,12 @@
 package entity
 
-import "time"
+import (
+	"fmt"
+	"time"
+
+	"github.com/labstack/gommon/log"
+	"github.com/oibacidem/lims-hl-seven/internal/util"
+)
 
 type Specimen struct {
 	ID             int       `json:"id" gorm:"primaryKey;autoIncrement"`
@@ -22,6 +28,18 @@ type Specimen struct {
 	Observation        []Observation        `json:"observation" gorm:"-" validate:"-"`
 	ObservationRequest []ObservationRequest `json:"observation_requests" gorm:"foreignKey:SpecimenID;->" validate:"-"`
 	Patient            Patient              `json:"patient" gorm:"foreignKey:PatientID;->" validate:"-"`
+}
+
+func GenerateBarcode() string {
+	randomDigits, err := util.GenerateRandomDigits(4)
+	if err != nil {
+		log.Errorj(map[string]interface{}{
+			"message": "error generating barcode",
+			"error":   err,
+		})
+	}
+
+	return fmt.Sprintf("%s%s", time.Now().Format("20060102"), randomDigits)
 }
 
 type SpecimenGetManyRequest struct {

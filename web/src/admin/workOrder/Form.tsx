@@ -83,6 +83,7 @@ const PickedTest = () => {
 
 const patientIDsField = "patient_ids";
 
+// eslint-disable-next-line no-unused-vars
 function TestTable(props: WorkOrderFormProps) {
     const {selectedIds, onSelect} = useListContext();
     const {setValue} = useFormContext();
@@ -195,7 +196,7 @@ function PickedPatient() {
     )
 }
 
-
+// eslint-disable-next-line no-unused-vars
 function PatientTable(props: WorkOrderFormProps) {
     const BulkActionButtons = () => {
         return (

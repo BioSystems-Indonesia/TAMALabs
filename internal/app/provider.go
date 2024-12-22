@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/glebarez/sqlite"
 	"github.com/go-playground/validator/v10"
@@ -92,7 +93,7 @@ func InitSQLiteDB() (*gorm.DB, error) {
 		fmt.Println(err)
 		return nil, err
 	}
-	db.Logger = db.Logger.LogMode(logger.Info)
+	db.Logger = db.Logger.LogMode(logger.Silent)
 
 	return db, nil
 }
@@ -120,7 +121,59 @@ func InitDatabase() (*gorm.DB, error) {
 		}
 	}
 
+	err = seedTestData(db)
+	if err != nil {
+		return nil, err
+	}
+
 	return db, nil
+}
+
+func seedTestData(db *gorm.DB) error {
+	patient := []entity.Patient{
+		{
+			FirstName:   "Pasien",
+			LastName:    "Pertama",
+			Birthdate:   time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC),
+			Sex:         "M",
+			PhoneNumber: "",
+			Location:    "",
+			Address:     "",
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
+		{
+			FirstName:   "Pasien",
+			LastName:    "Kedua",
+			Birthdate:   time.Date(2002, time.October, 23, 0, 0, 0, 0, time.UTC),
+			Sex:         "F",
+			PhoneNumber: "",
+			Location:    "",
+			Address:     "",
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
+		{
+			FirstName:   "Pasien",
+			LastName:    "Ketiga",
+			Birthdate:   time.Date(1998, time.February, 20, 0, 0, 0, 0, time.UTC),
+			Sex:         "F",
+			PhoneNumber: "",
+			Location:    "",
+			Address:     "",
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
+	}
+
+	for _, p := range patient {
+		err := db.Create(&p).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func provideDB(config *config.Schema) *gorm.DB {

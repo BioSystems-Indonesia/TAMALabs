@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -109,11 +110,14 @@ func (h Handler) RunWorkOrder(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	for _, workOrder := range workOrders {
-		err := ba400.SendToBA400(workOrder.Patient[0], workOrder.Specimen, workOrder.ObservationRequests)
-		if err != nil {
-			return handleError(c, err)
-		}
+	if len(workOrders) == 0 {
+		return handleError(c, entity.ErrNotFound.WithInternal(errors.New("work order not found")))
+	}
+
+	// TODO: Support multiple work order by merge the patient
+	err = ba400.SendToBA400(c.Request().Context(), workOrders[0].Patient)
+	if err != nil {
+		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{

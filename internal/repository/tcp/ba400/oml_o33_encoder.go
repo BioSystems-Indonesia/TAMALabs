@@ -9,20 +9,20 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
-func NewOML_O33(patient entity.Patient, sepecimen []entity.Specimen, observationRequest []entity.ObservationRequest) h251.OML_O33 {
+func NewOML_O33(patient entity.Patient) h251.OML_O33 {
 	msgControlID := uuid.New()
 	date := time.Now()
 	return h251.OML_O33{
 		MSH:      NewOML_O33_MSH(msgControlID.String(), date),
 		Patient:  NewOML_O33_Patient(patient),
-		Specimen: NewOML_O33_Specimens(sepecimen, observationRequest, date),
+		Specimen: NewOML_O33_Specimens(patient.Specimen, date),
 	}
 }
 
-func NewOML_O33_Specimens(sepeciments []entity.Specimen, obr []entity.ObservationRequest, date time.Time) []h251.OML_O33_Specimen {
+func NewOML_O33_Specimens(sepeciments []entity.Specimen, date time.Time) []h251.OML_O33_Specimen {
 	var specimens []h251.OML_O33_Specimen
 	for i, s := range sepeciments {
-		specimens = append(specimens, NewOML_O33_Specimen(i+1, s, obr, date))
+		specimens = append(specimens, NewOML_O33_Specimen(i+1, s, s.ObservationRequest, date))
 	}
 	return specimens
 }

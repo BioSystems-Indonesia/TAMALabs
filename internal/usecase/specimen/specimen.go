@@ -2,7 +2,6 @@ package specimenuc
 
 import (
 	"context"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/oibacidem/lims-hl-seven/config"
@@ -35,13 +34,9 @@ func (p SpecimenUseCase) FindOneByID(id int64) (entity.Specimen, error) {
 }
 
 func (p SpecimenUseCase) Create(req *entity.Specimen) error {
-	req.Barcode = p.generateBarcode(context.Background(), req)
+	req.Barcode = entity.GenerateBarcode()
 
 	return p.SpecimenRepo.Create(req)
-}
-
-func (p SpecimenUseCase) generateBarcode(ctx context.Context, req *entity.Specimen) string {
-	return time.Now().Format("20060102150405")
 }
 
 func (p SpecimenUseCase) Update(req *entity.Specimen) error {

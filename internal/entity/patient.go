@@ -34,6 +34,8 @@ type Patient struct {
 	Address     string     `json:"address" gorm:"not null" validate:""`
 	CreatedAt   time.Time  `json:"created_at" gorm:"not null"`
 	UpdatedAt   time.Time  `json:"updated_at" gorm:"not null"`
+
+	Specimen []Specimen `json:"specimen_list" gorm:"foreignKey:PatientID;->" validate:"-"`
 }
 
 type GetManyRequestPatient struct {

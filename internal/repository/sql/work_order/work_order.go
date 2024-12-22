@@ -54,8 +54,9 @@ func (r WorkOrderRepository) FindAll(ctx context.Context, req *entity.WorkOrderG
 func (r WorkOrderRepository) FindManyByID(ctx context.Context, id []int64) ([]entity.WorkOrder, error) {
 	var workOrders []entity.WorkOrder
 	err := r.db.WithContext(ctx).
-		Preload("Patient").Preload("Specimen").
-		Preload("ObservationRequests").Find(&workOrders, "id in (?)", id).Error
+		Preload("Patient").
+		Preload("Patient.Specimen", "order_id = work_orders.id").
+		Preload("Patient.Specimen.ObservationRequests", "order_id = work_orders.id").Find(&workOrders, "id in (?)", id).Error
 	if err != nil {
 		return nil, fmt.Errorf("error finding workOrders: %w", err)
 	}
@@ -193,6 +194,7 @@ func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.Work
 			PatientID:      int(patientID),
 			OrderID:        int(workOrder.ID),
 			Type:           defaultSerumType, // TODO: Change it so it not be hardcoded
+			Barcode:        entity.GenerateBarcode(),
 			CollectionDate: time.Now().Format(time.RFC3339),
 		}
 		specimenQuery := trx.Clauses(clause.OnConflict{
@@ -222,6 +224,7 @@ func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.Work
 				TestDescription: observationType.Name,
 				SpecimenID:      specimen.ID,
 				OrderID:         strconv.Itoa(int(workOrder.ID)),
+				RequestedDate:   time.Now(),
 			}
 
 			observationRequestQuery := trx.Clauses(clause.OnConflict{DoNothing: true}).Create(&observationRequest)
