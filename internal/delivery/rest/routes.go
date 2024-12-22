@@ -59,7 +59,7 @@ func RegisterMiddleware(e *echo.Echo) {
 }
 
 // RegisterRoutes registers the routes of the REST server.
-func RegisterRoutes(e *echo.Echo, handler *Handler) {
+func RegisterRoutes(e *echo.Echo, handler *Handler, deviceHandler *DeviceHandler) {
 	log.Info("Registering routes")
 
 	registerFrontendPath(e)
@@ -97,6 +97,15 @@ func RegisterRoutes(e *echo.Echo, handler *Handler) {
 		workOrder.GET("/:id", handler.GetOneWorkOrder)
 		workOrder.PUT("/:id", handler.UpdateWorkOrder)
 		workOrder.DELETE("/:id", handler.DeleteWorkOrder)
+	}
+
+	device := v1.Group("/device")
+	{
+		device.GET("", deviceHandler.ListDevices)
+		device.POST("", deviceHandler.CreateDevice)
+		device.GET("/:id", deviceHandler.GetDevice)
+		device.PUT("/:id", deviceHandler.UpdateDevice)
+		device.DELETE("/:id", deviceHandler.DeleteDevice)
 	}
 
 	handler.RegisterFeatureList(v1)

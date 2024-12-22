@@ -10,15 +10,17 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	workOrderuc "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
+	"gorm.io/gorm"
 )
 
 type WorkOrderHandler struct {
 	cfg              *config.Schema
 	workOrderUsecase *workOrderuc.WorkOrderUseCase
+	db               *gorm.DB
 }
 
-func NewWorkOrderHandler(cfg *config.Schema, workOrderUsecase *workOrderuc.WorkOrderUseCase) *WorkOrderHandler {
-	return &WorkOrderHandler{cfg: cfg, workOrderUsecase: workOrderUsecase}
+func NewWorkOrderHandler(cfg *config.Schema, workOrderUsecase *workOrderuc.WorkOrderUseCase, db *gorm.DB) *WorkOrderHandler {
+	return &WorkOrderHandler{cfg: cfg, workOrderUsecase: workOrderUsecase, db: db}
 }
 
 func (h *WorkOrderHandler) FindWorkOrders(c echo.Context) error {
@@ -110,12 +112,15 @@ func (h Handler) RunWorkOrder(c echo.Context) error {
 		return handleError(c, err)
 	}
 
+	device := entity.Device{}
+	h.db.Find(&device)
+
 	if len(workOrders) == 0 {
 		return handleError(c, entity.ErrNotFound.WithInternal(errors.New("work order not found")))
 	}
 
 	// TODO: Support multiple work order by merge the patient
-	err = ba400.SendToBA400(c.Request().Context(), workOrders[0].Patient)
+	err = ba400.SendToBA400(c.Request().Context(), workOrders[0].Patient, device)
 	if err != nil {
 		return handleError(c, err)
 	}

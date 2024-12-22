@@ -3,10 +3,14 @@ package tcp
 import (
 	"bufio"
 	"context"
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
+	"io"
 	"log"
 	"net"
 	"strings"
+
+	"github.com/oibacidem/lims-hl-seven/internal/constant"
+	"github.com/oibacidem/lims-hl-seven/pkg/mllp"
+	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
 
 type Handler struct {
@@ -49,6 +53,25 @@ func RegisterRoutes(conn *net.TCPConn, handler *Handler) {
 			messageBuilder.Reset()
 		}
 	}
+}
+
+func RegisterRotes2(s server.TCPServer, handler *Handler) {
+	go func () {
+		for {
+			c := s.GetClient()
+			mc := mllp.NewClient(c)
+			b, err := mc.ReadAll()
+			if err != nil {
+				if err != io.EOF {
+					log.Println(err)
+				}
+			}
+			res, err := handler.HL7Handler(context.Background(), string(b))
+			mc.Write([]byte(res))
+
+			c.Close()
+		}
+	}()
 }
 
 // processMessage routes the message to the appropriate handler
