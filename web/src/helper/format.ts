@@ -31,3 +31,18 @@ export const dateParser = (value: any) => {
     return d;
 };
 
+
+export const requiredAstrix = (required?: boolean) => {
+    if (required) {
+        return "*";
+    }
+
+    return "";
+};
+
+export function arrayToRecord<T extends { id: string | number }>(array: T[]): Record<string, T> {
+    return array.reduce((record, item) => {
+        record[String(item.id)] = item;
+        return record;
+    }, {} as Record<string, T>);
+}

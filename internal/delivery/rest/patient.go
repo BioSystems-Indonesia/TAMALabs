@@ -20,7 +20,7 @@ func NewPatientHandler(cfg *config.Schema, patientUsecase *patientuc.PatientUseC
 }
 
 func (h *PatientHandler) FindPatients(c echo.Context) error {
-	var req entity.GetManyRequest
+	var req entity.GetManyRequestPatient
 	if err := bindAndValidate(c, &req); err != nil {
 		return handleError(c, err)
 	}

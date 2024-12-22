@@ -6,15 +6,20 @@ import {PatientCreate, PatientEdit, PatientList, PatientShow} from "./patient";
 import UserIcon from '@mui/icons-material/Person';
 import ScienceIcon from '@mui/icons-material/Science';
 import BiotechIcon from '@mui/icons-material/Biotech';
-import {SpecimentCreate, SpecimentEdit, SpecimentList, SpecimentShow} from "./speciment";
-import {WorkOrderCreate, WorkOrderEdit, WorkOrderList, WorkOrderShow} from "./workOrder";
+import {SpecimenCreate, SpecimenEdit, SpecimenList, SpecimenShow} from "./Specimen";
+import {WorkOrderCreate, WorkOrderEdit, WorkOrderList} from "./workOrder";
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
 const App = () => {
-
-    console.log(import.meta.env.VITE_BACKEND_BASE_URL)
     return (<Admin dataProvider={dataProvider} layout={DefaultLayout}>
+        <Resource name="work-order" list={WorkOrderList}
+                  edit={WorkOrderEdit}
+                  create={WorkOrderCreate}
+                  hasCreate={true}
+                  hasEdit={true}
+                  hasShow={false}
+                  icon={BiotechIcon}/>
         <Resource name="patient" list={PatientList} show={PatientShow} edit={PatientEdit} create={PatientCreate}
                   hasCreate={true}
                   hasEdit={true}
@@ -22,20 +27,14 @@ const App = () => {
                   icon={UserIcon}
                   recordRepresentation={record => `#${record.id} - ${record.first_name} ${record.last_name}`}
         />
-        <Resource name="speciment" list={SpecimentList} show={SpecimentShow} edit={SpecimentEdit}
-                  create={SpecimentCreate}
+        <Resource name="Specimen" list={SpecimenList} show={SpecimenShow} edit={SpecimenEdit}
+                  create={SpecimenCreate}
                   hasCreate={true}
                   hasEdit={true}
                   hasShow={true}
                   icon={ScienceIcon}
-                  recordRepresentation={record => `#${record.id} - ${record.description}`}
+                  recordRepresentation={record => `#${record.id} - ${record.type}`}
         />
-        <Resource name="work-order" list={WorkOrderList} show={WorkOrderShow} edit={WorkOrderEdit}
-                  create={WorkOrderCreate}
-                  hasCreate={true}
-                  hasEdit={true}
-                  hasShow={true}
-                  icon={BiotechIcon}/>
     </Admin>)
 }
 

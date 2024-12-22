@@ -1,74 +1,23 @@
 import {
-    AutocompleteArrayInput,
+    Button,
     ChipField,
     Create,
     Datagrid,
     DateField,
-    DateTimeInput,
+    DeleteButton,
     Edit,
     List,
-    RadioButtonGroupInput,
-    ReferenceArrayInput,
-    ReferenceField,
-    ReferenceManyField,
     Show,
-    SimpleForm,
     TextField,
-    TextInput
+    useCreate,
+    useListContext,
+    useNotify,
+    useRefresh,
+    useUnselectAll
 } from "react-admin";
-import Divider from "@mui/material/Divider";
-import {Action, ActionKeys} from "../../types/props.ts";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import FeatureList from "../../component/FeatureList.tsx";
+import WorkOrderForm from "./Form.tsx";
+import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
 
-type WorkOrderFormProps = {
-    readonly?: boolean
-    mode?: ActionKeys
-}
-
-function ReferenceSection() {
-    return (
-        <Box sx={{width: "100%"}}>
-            <Divider sx={{my: "1rem"}}/>
-            <Typography variant={"h6"}>Speciments</Typography>
-            <ReferenceManyField reference={"speciment"} target={"id"} source={"speciment_ids"}>
-                <Datagrid>
-                    <TextField source="id"/>
-                    <TextField source="description"/>
-                    <TextField source="barcode"/>
-                    <TextField source="type"/>
-                    <ReferenceField reference={"patient"} source={"patient_id"}/>
-                    <DateField source="created_at" showTime/>
-                    <DateField source="updated_at" showTime/>
-                </Datagrid>
-            </ReferenceManyField>
-        </Box>
-    )
-}
-
-function WorkOrderForm(props: WorkOrderFormProps) {
-    return (
-        <SimpleForm>
-            {props.mode !== Action.CREATE && (
-                <div>
-                    <TextInput source={"id"} readOnly={true}/>
-                    <DateTimeInput source={"created_at"} readOnly={true}/>
-                    <DateTimeInput source={"updated_at"} readOnly={true}/>
-                    <FeatureList types={"work-order-status"} source={"status"}>
-                        <RadioButtonGroupInput source="status" readOnly={props.readonly}/>
-                    </FeatureList>
-                    <Divider/>
-                </div>
-            )}
-
-            <TextInput source={"description"} readOnly={props.readonly}/>
-            <ReferenceArrayInput source="speciment_ids" reference={"speciment"} readOnly={props.readonly}>
-                <AutocompleteArrayInput source={"speciment_ids"} readOnly={props.readonly}/>
-            </ReferenceArrayInput>
-        </SimpleForm>
-    )
-}
 
 export function WorkOrderCreate() {
     return (
@@ -82,27 +31,68 @@ export function WorkOrderShow() {
     return (
         <Show>
             <WorkOrderForm readonly mode={"SHOW"}/>
-            <ReferenceSection/>
         </Show>
     )
 }
 
 export function WorkOrderEdit() {
     return (
-        <Edit>
+        <Edit mutationMode={"pessimistic"}>
             <WorkOrderForm mode={"EDIT"}/>
         </Edit>
     )
 }
 
+const RunWorkOrderButton = () => {
+    const {selectedIds} = useListContext();
+    const refresh = useRefresh();
+    const notify = useNotify();
+    const unselectAll = useUnselectAll('posts');
+    const [create, {isPending}] = useCreate(
+        'work-order/run',
+        {
+            data: {
+                work_order_ids: selectedIds
+            }
+        },
+        {
+            onSuccess: () => {
+                notify('Success run');
+                unselectAll();
+            },
+            onError: () => {
+                notify('Error: run', {
+                    type: 'error',
+                });
+                refresh();
+            },
+        }
+    );
+    const handleClick = () => {
+        create();
+    }
+
+    return (
+        <Button label="Run Work Order" onClick={handleClick} disabled={isPending}>
+            <PlayCircleFilledIcon/>
+        </Button>
+    );
+};
+
+const WorkOrderBulkActionButtons = () => (
+    <>
+        <RunWorkOrderButton/>
+    </>
+);
+
 export const WorkOrderList = () => (
     <List>
-        <Datagrid>
+        <Datagrid rowClick={"edit"} bulkActionButtons={<WorkOrderBulkActionButtons/>}>
             <TextField source="id"/>
-            <TextField source="description"/>
             <ChipField source="status"/>
             <DateField source="created_at"/>
             <DateField source="updated_at"/>
+            <DeleteButton/>
         </Datagrid>
     </List>
 );

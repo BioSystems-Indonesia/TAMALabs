@@ -40,7 +40,7 @@ func provideRestHandler(
 	hlSevenHandler *rest.HlSevenHandler,
 	healthCheck *rest.HealthCheckHandler,
 	patientHandler *rest.PatientHandler,
-	specimentHandler *rest.SpecimenHandler,
+	specimenHandler *rest.SpecimenHandler,
 	workOrder *rest.WorkOrderHandler,
 	featureListHandler *rest.FeatureListHandler,
 ) *rest.Handler {
@@ -48,7 +48,7 @@ func provideRestHandler(
 		hlSevenHandler,
 		healthCheck,
 		patientHandler,
-		specimentHandler,
+		specimenHandler,
 		workOrder,
 		featureListHandler,
 	}
@@ -104,10 +104,11 @@ func InitDatabase() (*gorm.DB, error) {
 	}
 
 	autoMigrate := []interface{}{
+		&entity.WorkOrderPatient{},
+		&entity.WorkOrder{},
 		&entity.Patient{},
 		&entity.Specimen{},
-		&entity.WorkOrder{},
-		&entity.WorkOrderSpeciment{},
+		&entity.ObservationRequest{},
 	}
 
 	for _, model := range autoMigrate {

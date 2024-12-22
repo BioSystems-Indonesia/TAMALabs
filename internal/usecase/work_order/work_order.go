@@ -39,15 +39,6 @@ func (p WorkOrderUseCase) Create(req *entity.WorkOrder) error {
 	return p.workOrderRepo.Create(req)
 }
 
-func (p WorkOrderUseCase) AddSpeciment(workOrderID int64, req *entity.WorkOrderAddSpeciment) (entity.WorkOrder, error) {
-	err := p.workOrderRepo.AddSpeciment(workOrderID, req)
-	if err != nil {
-		return entity.WorkOrder{}, err
-	}
-
-	return p.workOrderRepo.FindOne(workOrderID)
-}
-
 func (p WorkOrderUseCase) Update(req *entity.WorkOrder) error {
 	return p.workOrderRepo.Update(req)
 }

@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -97,21 +98,16 @@ func (h *WorkOrderHandler) CreateWorkOrder(c echo.Context) error {
 	return c.JSON(http.StatusCreated, req)
 }
 
-func (h *WorkOrderHandler) AddSpeciment(c echo.Context) error {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		return handleError(c, entity.ErrBadRequest.WithInternal(err))
-	}
-
-	var req entity.WorkOrderAddSpeciment
+func (h Handler) RunWorkOrder(c echo.Context) error {
+	var req entity.WorkOrderRunRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return handleError(c, err)
 	}
 
-	workOrder, err := h.workOrderUsecase.AddSpeciment(id, &req)
-	if err != nil {
-		return handleError(c, err)
-	}
+	// TODO: add run logic
+	log.Println(req)
 
-	return c.JSON(http.StatusCreated, workOrder)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "ok",
+	})
 }

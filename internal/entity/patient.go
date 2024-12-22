@@ -35,3 +35,9 @@ type Patient struct {
 	CreatedAt   time.Time  `json:"created_at" gorm:"not null"`
 	UpdatedAt   time.Time  `json:"updated_at" gorm:"not null"`
 }
+
+type GetManyRequestPatient struct {
+	GetManyRequest
+
+	BirthDate time.Time `query:"birthdate"`
+}

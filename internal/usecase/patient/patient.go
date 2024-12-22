@@ -24,7 +24,7 @@ func NewPatientUseCase(
 }
 
 func (p PatientUseCase) FindAll(
-	ctx context.Context, req *entity.GetManyRequest,
+	ctx context.Context, req *entity.GetManyRequestPatient,
 ) ([]entity.Patient, error) {
 	return p.patientRepo.FindAll(ctx, req)
 }
