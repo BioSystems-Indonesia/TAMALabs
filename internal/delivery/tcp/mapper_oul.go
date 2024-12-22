@@ -60,67 +60,41 @@ func mapOULSpecimenToSpecimenEntity(specimen h251.OUL_R22_Specimen) entity.Speci
 	if specimen.OBX != nil {
 		var observationResult []entity.ObservationResult
 		for i := range specimen.OBX {
-			observationResult = append(observationResult, entity.ObservationResult{
-				Code:           specimen.OBX[i].ObservationIdentifier.Identifier,
-				Description:    specimen.OBX[i].ObservationIdentifier.Text,
-				Value:          mapObservationValueToValues(specimen.OBX[i].ObservationValue),
-				Type:           specimen.OBX[i].ValueType,
-				Unit:           specimen.OBX[i].Units.Identifier,
-				ReferenceRange: specimen.OBX[i].ReferencesRange,
-				Date:           specimen.OBX[i].DateTimeOfTheObservation,
-				AbnormalFlag:   specimen.OBX[i].AbnormalFlags,
-				Comments:       specimen.OBX[i].ObservationResultStatus,
-			})
+			observationResult = append(observationResult, mapOBXToObservationResultEntity(&specimen.OBX[i]))
 		}
 		observations = append(observations, entity.Observation{
 			Result: observationResult,
 		})
-
 	} else {
 		for i := range specimen.Order {
 			order := specimen.Order[i]
 
 			// request
-			obr := order.OBR
-			observationRequest := entity.ObservationRequest{
-				ID:              0,
-				SpecimenID:      0,
-				OrderID:         obr.PlacerOrderNumber.EntityIdentifier,
-				TestCode:        obr.UniversalServiceIdentifier.Identifier,
-				TestDescription: obr.UniversalServiceIdentifier.Text,
-				RequestedDate:   obr.RequestedDateTime,
-				ResultStatus:    obr.ResultStatus,
-			}
+			observationRequest := mapOBRToObservationRequestEntity(order.OBR)
 
 			// result
-			var observationResult []entity.ObservationResult
+			var observationResults []entity.ObservationResult
 			for j := range order.Result {
-				obx := order.Result[j].OBX
-				observationResult = append(observationResult, entity.ObservationResult{
-					Code:           obx.ObservationIdentifier.Identifier,
-					Description:    obx.ObservationIdentifier.Text,
-					Value:          mapObservationValueToValues(obx.ObservationValue),
-					Type:           obx.ValueType,
-					Unit:           obx.Units.Identifier,
-					ReferenceRange: obx.ReferencesRange,
-					Date:           obx.DateTimeOfTheObservation,
-					AbnormalFlag:   obx.AbnormalFlags,
-					Comments:       obx.ObservationResultStatus,
-				})
+				observationResults = append(observationResults, mapOBXToObservationResultEntity(order.Result[j].OBX))
 			}
 			observations = append(observations, entity.Observation{
 				Request: observationRequest,
-				Result:  observationResult,
+				Result:  observationResults,
 			})
 		}
 	}
 
-	return entity.Specimen{
-		HL7ID:        specimen.SPM.SpecimenID.PlacerAssignedIdentifier.EntityIdentifier,
-		Type:         specimen.SPM.SpecimenType.Identifier,
-		ReceivedDate: specimen.SPM.SpecimenReceivedDateTime,
-		Observation:  observations,
+	specimenResult := entity.Specimen{
+		Observation: observations,
 	}
+
+	if specimen.SPM != nil {
+		specimenResult.HL7ID = specimen.SPM.SpecimenID.PlacerAssignedIdentifier.EntityIdentifier
+		specimenResult.Type = specimen.SPM.SpecimenType.Identifier
+		specimenResult.ReceivedDate = specimen.SPM.SpecimenReceivedDateTime
+	}
+
+	return specimenResult
 }
 
 func mapObservationValueToValues(values []h251.VARIES) []string {
@@ -129,4 +103,28 @@ func mapObservationValueToValues(values []h251.VARIES) []string {
 		results = append(results, fmt.Sprintf("%v", values[i]))
 	}
 	return results
+}
+
+func mapOBRToObservationRequestEntity(obr *h251.OBR) entity.ObservationRequest {
+	return entity.ObservationRequest{
+		OrderID:         obr.PlacerOrderNumber.EntityIdentifier,
+		TestCode:        obr.UniversalServiceIdentifier.Identifier,
+		TestDescription: obr.UniversalServiceIdentifier.Text,
+		RequestedDate:   obr.RequestedDateTime,
+		ResultStatus:    obr.ResultStatus,
+	}
+}
+
+func mapOBXToObservationResultEntity(obx *h251.OBX) entity.ObservationResult {
+	return entity.ObservationResult{
+		Code:           obx.ObservationIdentifier.Identifier,
+		Description:    obx.ObservationIdentifier.Text,
+		Values:         mapObservationValueToValues(obx.ObservationValue),
+		Type:           obx.ValueType,
+		Unit:           obx.Units.Identifier,
+		ReferenceRange: obx.ReferencesRange,
+		Date:           obx.DateTimeOfTheObservation,
+		AbnormalFlag:   obx.AbnormalFlags,
+		Comments:       obx.ObservationResultStatus,
+	}
 }
