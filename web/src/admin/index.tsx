@@ -6,7 +6,7 @@ import {PatientCreate, PatientEdit, PatientList, PatientShow} from "./patient";
 import UserIcon from '@mui/icons-material/Person';
 import ScienceIcon from '@mui/icons-material/Science';
 import BiotechIcon from '@mui/icons-material/Biotech';
-import {SpecimenCreate, SpecimenEdit, SpecimenList, SpecimenShow} from "./Specimen";
+import {SpecimenCreate, SpecimenEdit, SpecimenList, SpecimenShow} from "./specimen";
 import {WorkOrderCreate, WorkOrderEdit, WorkOrderList} from "./workOrder";
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
