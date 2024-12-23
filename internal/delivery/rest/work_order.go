@@ -101,7 +101,7 @@ func (h *WorkOrderHandler) CreateWorkOrder(c echo.Context) error {
 	return c.JSON(http.StatusCreated, req)
 }
 
-func (h Handler) RunWorkOrder(c echo.Context) error {
+func (h *WorkOrderHandler) RunWorkOrder(c echo.Context) error {
 	var req entity.WorkOrderRunRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return handleError(c, err)
@@ -117,6 +117,12 @@ func (h Handler) RunWorkOrder(c echo.Context) error {
 
 	if len(workOrders) == 0 {
 		return handleError(c, entity.ErrNotFound.WithInternal(errors.New("work order not found")))
+	}
+
+	device := entity.Device{}
+	tx := h.db.First(&device)
+	if tx.Error != nil {
+		return handleError(c, tx.Error)
 	}
 
 	// TODO: Support multiple work order by merge the patient
