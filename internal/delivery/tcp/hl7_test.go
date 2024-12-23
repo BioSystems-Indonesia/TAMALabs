@@ -32,10 +32,10 @@ func TestHlSevenHandler(t *testing.T) {
 			fields: fields{
 				AnalyzerUsecase: &analyzer.Usecase{
 					ObservationRequestRepository: &observation_request.Repository{
-						db: db,
+						DB: db,
 					},
 					ObservationResultRepository: &observation_result.Repository{
-						db: db,
+						DB: db,
 					},
 				},
 			},
@@ -49,10 +49,10 @@ func TestHlSevenHandler(t *testing.T) {
 			fields: fields{
 				AnalyzerUsecase: &analyzer.Usecase{
 					ObservationRequestRepository: &observation_request.Repository{
-						db: db,
+						DB: db,
 					},
 					ObservationResultRepository: &observation_result.Repository{
-						db: db,
+						DB: db,
 					},
 				},
 			},
