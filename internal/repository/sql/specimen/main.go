@@ -48,7 +48,7 @@ func (r Repository) FindAll(ctx context.Context, req *entity.SpecimenGetManyRequ
 	return Specimens, nil
 }
 
-func (r Repository) FindOne(id int64) (entity.Specimen, error) {
+func (r Repository) FindOne(ctx context.Context, id int64) (entity.Specimen, error) {
 	var Specimen entity.Specimen
 	err := r.db.Where("id = ?", id).First(&Specimen).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -62,11 +62,11 @@ func (r Repository) FindOne(id int64) (entity.Specimen, error) {
 	return Specimen, nil
 }
 
-func (r Repository) Create(Specimen *entity.Specimen) error {
+func (r Repository) Create(ctx context.Context, Specimen *entity.Specimen) error {
 	return r.db.Create(Specimen).Error
 }
 
-func (r Repository) Update(Specimen *entity.Specimen) error {
+func (r Repository) Update(ctx context.Context, Specimen *entity.Specimen) error {
 	res := r.db.Save(Specimen).Error
 	if res != nil {
 		return fmt.Errorf("error updating Specimen: %w", res)

@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"log"
 
 	"github.com/kardianos/hl7"
@@ -21,7 +22,7 @@ func NewHlSevenHandler(analyzerUsecase *analyzer.Usecase) *HlSevenHandler {
 }
 
 // HL7Handler handles the HL7 message.
-func (h *HlSevenHandler) HL7Handler(message string) (string, error) {
+func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string, error) {
 	msgByte := []byte(message)
 	d := hl7.NewDecoder(h251.Registry, nil)
 	msg, err := d.Decode(msgByte)
@@ -35,7 +36,7 @@ func (h *HlSevenHandler) HL7Handler(message string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = h.AnalyzerUsecase.ProcessOULR22(data)
+		err = h.AnalyzerUsecase.ProcessOULR22(ctx, data)
 		if err != nil {
 			return "", err
 		}

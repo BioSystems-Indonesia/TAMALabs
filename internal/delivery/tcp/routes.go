@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"bufio"
+	"context"
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"log"
 	"net"
@@ -68,7 +69,7 @@ func processMessage(message string, handler *Handler, writer *bufio.Writer) {
 // routes processes the complete message and delegates it to the appropriate handler
 func routes(msg string, handler *Handler) string {
 	if strings.HasPrefix(msg, constant.MSH) {
-		resp, err := handler.HL7Handler(msg)
+		resp, err := handler.HL7Handler(context.TODO(), msg)
 		if err != nil {
 			return "NAK: " + err.Error()
 		}
