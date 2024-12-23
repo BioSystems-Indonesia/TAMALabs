@@ -3,8 +3,8 @@ package app
 import (
 	"github.com/google/wire"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
@@ -24,8 +24,8 @@ var (
 		hlsRepo.NewRepository,
 		patientrepo.NewPatientRepository,
 		workOrderrepo.NewWorkOrderRepository,
+		observation_result.NewRepository,
 		observation_request.NewRepository,
-		observation.NewRepository,
 		specimen.NewRepository,
 		hlsUC.NewUsecase,
 		patientuc.NewPatientUseCase,

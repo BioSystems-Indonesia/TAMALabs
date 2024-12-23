@@ -2,38 +2,31 @@ package entity
 
 import "time"
 
-type Observation struct {
-	Request ObservationRequest  `json:"request"`
-	Result  []ObservationResult `json:"result"`
-}
-
 type ObservationRequest struct {
-	ID              int       `json:"id" gorm:"primaryKey;autoIncrement"`
-	SpecimenID      int       `json:"specimen_id" gorm:"not null;index:observation_request_uniq,unique,priority:2" validate:"required"`                // Foreign key linking to Specimen
-	OrderID         string    `json:"order_id" gorm:"not null;index:observation_request_uniq,unique,priority:1"`                                       // OBR-2
-	TestCode        string    `json:"test_code" gorm:"not null;index:observation_request_uniq,unique,priority:3" validate:"required,observation-type"` // OBR-4
-	TestDescription string    `json:"test_description" gorm:"not null"`                                                                                // OBR-4
-	RequestedDate   time.Time `json:"requested_date" gorm:"not null"`                                                                                  // OBR-7
-	ResultStatus    string    `json:"result_status" gorm:"not null"`                                                                                   // OBR-25
+	ID              int64     `json:"id" gorm:"primaryKey;autoIncrement"`
+	TestCode        string    `json:"test_code"`
+	TestDescription string    `json:"test_description"`
+	RequestedDate   time.Time `json:"requested_date"`
+	ResultStatus    string    `json:"result_status"`
+	SpecimenID      int64     `json:"specimen_id" gorm:"not null;index:observation_request_uniq,unique,priority:2" validate:"required"`
 	CreatedAt       time.Time `json:"created_at" gorm:"not null"`
 	UpdatedAt       time.Time `json:"updated_at" gorm:"not null"`
-
-	Order    WorkOrder `json:"order" gorm:"foreignKey:OrderID;->" validate:"-"`
-	Specimen Specimen  `json:"specimen" gorm:"foreignKey:SpecimenID;->" validate:"-"`
 }
 
 type ObservationResult struct {
-	ID             int       `json:"id" gorm:"primaryKey;autoIncrement"`
-	RequestID      int       `json:"request_id"`      // Foreign key linking to ObservationRequest
-	Code           string    `json:"code"`            // OBX-3
-	Description    string    `json:"description"`     // OBX-3
-	Value          []string  `json:"value"`           // OBX-5
-	Type           string    `json:"type"`            // OBX-2
-	Unit           string    `json:"unit"`            // OBX-6
-	ReferenceRange string    `json:"reference_range"` // OBX-7
-	Date           time.Time `json:"date"`            // OBX-14
-	AbnormalFlag   []string  `json:"abnormal_flag"`   // OBX-8
-	Comments       string    `json:"comments"`        // OBX-16
+	ID             int64     `json:"id" gorm:"primaryKey;autoIncrement"`
+	SpecimenID     int64     `json:"specimen_id" gorm:"not null;index:observation_result_uniq,unique,priority:2" validate:"required"`
+	Code           string    `json:"code"`
+	Description    string    `json:"description"`
+	Values         []string  `json:"values" gorm:"type:json"` // Using JSON for the slice
+	Type           string    `json:"type"`
+	Unit           string    `json:"unit"`
+	ReferenceRange string    `json:"reference_range"`
+	Date           time.Time `json:"date"`
+	AbnormalFlag   []string  `json:"abnormal_flag" gorm:"type:json"` // Using JSON for the slice
+	Comments       string    `json:"comments"`
+	CreatedAt      time.Time `json:"created_at" gorm:"not null"`
+	UpdatedAt      time.Time `json:"updated_at" gorm:"not null"`
 }
 
 type ObservationRequestGetManyRequest struct {
