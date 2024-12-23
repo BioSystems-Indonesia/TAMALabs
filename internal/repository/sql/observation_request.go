@@ -1,8 +1,13 @@
 package sql
 
-import "github.com/oibacidem/lims-hl-seven/internal/entity"
+import (
+	"context"
+	"github.com/oibacidem/lims-hl-seven/internal/entity"
+)
 
 type ObservationRequest interface {
-	Create(data *entity.ObservationRequest) error
-	CreateMany(data *[]entity.ObservationRequest) error
+	Create(ctx context.Context, data *entity.ObservationRequest) error
+	CreateMany(ctx context.Context, data []entity.ObservationRequest) error
+	FindAll(ctx context.Context, req *entity.ObservationRequestGetManyRequest) ([]entity.ObservationRequest, error)
+	FindOne(ctx context.Context, id int64) (entity.ObservationRequest, error)
 }

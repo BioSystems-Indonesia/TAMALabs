@@ -29,6 +29,6 @@ func (p ObservationRequestUseCase) FindAll(
 	return p.ObservationRequestRepo.FindAll(ctx, req)
 }
 
-func (p ObservationRequestUseCase) FindOneByID(id int64) (entity.ObservationRequest, error) {
-	return p.ObservationRequestRepo.FindOne(id)
+func (p ObservationRequestUseCase) FindOneByID(ctx context.Context, id int64) (entity.ObservationRequest, error) {
+	return p.ObservationRequestRepo.FindOne(ctx, id)
 }

@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
@@ -43,7 +44,7 @@ func (h *ObservationRequestHandler) GetOneObservationRequest(c echo.Context) err
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
-	observationRequest, err := h.ObservationRequestUsecase.FindOneByID(id)
+	observationRequest, err := h.ObservationRequestUsecase.FindOneByID(context.TODO(), id)
 	if err != nil {
 		return handleError(c, err)
 	}
