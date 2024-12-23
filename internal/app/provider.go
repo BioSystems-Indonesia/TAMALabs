@@ -107,14 +107,12 @@ func InitDatabase() (*gorm.DB, error) {
 	}
 
 	autoMigrate := []interface{}{
-		&entity.Observation{},
 		&entity.ObservationRequest{},
 		&entity.ObservationResult{},
 		&entity.WorkOrderPatient{},
 		&entity.Patient{},
 		&entity.Specimen{},
 		&entity.WorkOrder{},
-		&entity.WorkOrderSpeciment{},
 	}
 
 	for _, model := range autoMigrate {

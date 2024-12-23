@@ -55,37 +55,32 @@ func MapOULR22PatientToPatientEntity(patient *h251.OUL_R22_Patient) entity.Patie
 }
 
 func mapOULSpecimenToSpecimenEntity(specimen h251.OUL_R22_Specimen) entity.Specimen {
-	var observations []entity.Observation
+	var (
+		observationRequests []entity.ObservationRequest
+		observationResults  []entity.ObservationResult
+	)
 
 	if specimen.OBX != nil {
-		var observationResult []entity.ObservationResult
 		for i := range specimen.OBX {
-			observationResult = append(observationResult, mapOBXToObservationResultEntity(&specimen.OBX[i]))
+			observationResults = append(observationResults, mapOBXToObservationResultEntity(&specimen.OBX[i]))
 		}
-		observations = append(observations, entity.Observation{
-			Result: observationResult,
-		})
 	} else {
 		for i := range specimen.Order {
 			order := specimen.Order[i]
 
 			// request
-			observationRequest := mapOBRToObservationRequestEntity(order.OBR)
+			observationRequests = append(observationRequests, mapOBRToObservationRequestEntity(order.OBR))
 
 			// result
-			var observationResults []entity.ObservationResult
 			for j := range order.Result {
 				observationResults = append(observationResults, mapOBXToObservationResultEntity(order.Result[j].OBX))
 			}
-			observations = append(observations, entity.Observation{
-				Request: observationRequest,
-				Result:  observationResults,
-			})
 		}
 	}
 
 	specimenResult := entity.Specimen{
-		Observation: observations,
+		ObservationRequest: observationRequests,
+		ObservationResult:  observationResults,
 	}
 
 	if specimen.SPM != nil {
@@ -107,7 +102,6 @@ func mapObservationValueToValues(values []h251.VARIES) []string {
 
 func mapOBRToObservationRequestEntity(obr *h251.OBR) entity.ObservationRequest {
 	return entity.ObservationRequest{
-		OrderID:         obr.PlacerOrderNumber.EntityIdentifier,
 		TestCode:        obr.UniversalServiceIdentifier.Identifier,
 		TestDescription: obr.UniversalServiceIdentifier.Text,
 		RequestedDate:   obr.RequestedDateTime,

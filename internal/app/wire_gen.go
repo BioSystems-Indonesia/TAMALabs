@@ -10,7 +10,8 @@ import (
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
@@ -31,8 +32,9 @@ func InitRestApp(config2 *config.Schema) server.RestServer {
 	repository := ba400.NewRepository(tcp)
 	db := provideDB(config2)
 	specimenRepository := specimen.NewRepository(db, config2)
-	observationRepository := observation.NewRepository(db, config2)
-	usecase := analyzer.NewUsecase(repository, specimenRepository, observationRepository)
+	observation_resultRepository := observation_result.NewRepository(db, config2)
+	observation_requestRepository := observation_request.NewRepository(db, config2)
+	usecase := analyzer.NewUsecase(repository, specimenRepository, observation_resultRepository, observation_requestRepository)
 	hlSevenHandler := rest.NewHlSevenHandler(usecase)
 	healthCheckHandler := rest.NewHealthCheckHandler(config2)
 	patientRepository := patientrepo.NewPatientRepository(db, config2)
@@ -57,8 +59,9 @@ func InitTCPApp(config2 *config.Schema) server.TCPServer {
 	repository := ba400.NewRepository(ba400TCP)
 	db := provideDB(config2)
 	specimenRepository := specimen.NewRepository(db, config2)
-	observationRepository := observation.NewRepository(db, config2)
-	usecase := analyzer.NewUsecase(repository, specimenRepository, observationRepository)
+	observation_resultRepository := observation_result.NewRepository(db, config2)
+	observation_requestRepository := observation_request.NewRepository(db, config2)
+	usecase := analyzer.NewUsecase(repository, specimenRepository, observation_resultRepository, observation_requestRepository)
 	hlSevenHandler := tcp.NewHlSevenHandler(usecase)
 	handler := provideTCPHandler(hlSevenHandler)
 	tcpServer := provideTCPServer(config2, handler)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/config"
@@ -81,12 +80,6 @@ func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
 	}
 	workOrder.PatientIDs = util.Unique(workOrder.PatientIDs)
 
-	workOrder.ObservationRequestsIDs = make([]string, len(workOrder.ObservationRequests))
-	for i, observationRequest := range workOrder.ObservationRequests {
-		workOrder.ObservationRequestsIDs[i] = observationRequest.TestCode
-	}
-	workOrder.ObservationRequestsIDs = util.Unique(workOrder.ObservationRequestsIDs)
-
 	return workOrder, nil
 }
 
@@ -159,19 +152,6 @@ func (r WorkOrderRepository) deleteUnusedRelation(tx *gorm.DB, workOrder *entity
 		}
 	}
 
-	toDeleteObservationRequest, _ := util.CompareSlices(
-		oldWorkOrder.ObservationRequestsIDs,
-		workOrder.ObservationRequestsIDs,
-	)
-	for _, observationRequestID := range toDeleteObservationRequest {
-		err := tx.Model(&entity.ObservationRequest{}).
-			Where("order_id = ? AND test_code = ?", workOrder.ID, observationRequestID).
-			Delete(&entity.ObservationRequest{}).Error
-		if err != nil {
-			return fmt.Errorf("error deleting observationRequest %v: %w", observationRequestID, err)
-		}
-	}
-
 	return nil
 }
 
@@ -210,31 +190,6 @@ func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.Work
 				Where("patient_id = ? AND order_id = ? AND type = ?", patientID, workOrder.ID, defaultSerumType).Error
 			if err != nil {
 				return err
-			}
-		}
-
-		for _, observationRequestID := range workOrder.ObservationRequestsIDs {
-			observationType, ok := entity.TableObservationType.Find(observationRequestID)
-			if !ok {
-				return fmt.Errorf("observation request: %w", entity.ErrBadRequest)
-			}
-
-			observationRequest := entity.ObservationRequest{
-				TestCode:        observationType.ID,
-				TestDescription: observationType.Name,
-				SpecimenID:      specimen.ID,
-				OrderID:         strconv.Itoa(int(workOrder.ID)),
-				RequestedDate:   time.Now(),
-			}
-
-			observationRequestQuery := trx.Clauses(clause.OnConflict{DoNothing: true}).Create(&observationRequest)
-			err := observationRequestQuery.Error
-			if err != nil {
-				return err
-			}
-
-			if observationRequestQuery.RowsAffected == 0 {
-				continue
 			}
 		}
 	}
