@@ -31,4 +31,5 @@ type ObservationResult struct {
 
 type ObservationRequestGetManyRequest struct {
 	GetManyRequest
+	SpecimenID []int64 `query:"specimen_id"`
 }
