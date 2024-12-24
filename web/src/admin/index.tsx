@@ -10,6 +10,7 @@ import {WorkOrderCreate, WorkOrderEdit, WorkOrderList} from "./workOrder";
 import {ObservationRequestList, ObservationRequestShow} from "./observationRequest";
 import {SpecimenList, SpecimenShow} from "./specimen";
 import ListIcon from '@mui/icons-material/List';
+import {WorkOrderShow} from "./workOrder/Show.tsx";
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
@@ -18,9 +19,10 @@ const App = () => {
         <Resource name="work-order" list={WorkOrderList}
                   edit={WorkOrderEdit}
                   create={WorkOrderCreate}
+                  show={WorkOrderShow}
                   hasCreate={true}
                   hasEdit={true}
-                  hasShow={false}
+                  hasShow={true}
                   icon={BiotechIcon}/>
         <Resource name="patient" list={PatientList} show={PatientShow} edit={PatientEdit} create={PatientCreate}
                   hasCreate={true}

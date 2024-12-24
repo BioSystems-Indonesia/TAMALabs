@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/kardianos/hl7"
 	"github.com/labstack/gommon/log"
@@ -33,7 +34,8 @@ func SendToBA400(ctx context.Context, patients []entity.Patient) error {
 	}
 
 	sender := Sender{
-		host: "192.168.33.68:2050",
+		host:     "192.168.33.68:2050",
+		deadline: time.Second * 5,
 	}
 	messageToSend := buf.Bytes()
 	resp, err := sender.SendRaw(messageToSend)

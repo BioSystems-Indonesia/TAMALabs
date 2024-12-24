@@ -95,7 +95,7 @@ func InitSQLiteDB() (*gorm.DB, error) {
 		fmt.Println(err)
 		return nil, err
 	}
-	db.Logger = db.Logger.LogMode(logger.Silent)
+	db.Logger = db.Logger.LogMode(logger.Error)
 
 	return db, nil
 }
@@ -109,10 +109,10 @@ func InitDatabase() (*gorm.DB, error) {
 	autoMigrate := []interface{}{
 		&entity.ObservationRequest{},
 		&entity.ObservationResult{},
-		&entity.WorkOrderPatient{},
 		&entity.Patient{},
 		&entity.Specimen{},
 		&entity.WorkOrder{},
+		&entity.WorkOrderPatient{},
 	}
 
 	for _, model := range autoMigrate {

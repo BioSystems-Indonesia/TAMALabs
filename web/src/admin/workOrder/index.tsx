@@ -7,7 +7,6 @@ import {
     DeleteButton,
     Edit,
     List,
-    Show,
     TextField,
     useListContext,
     useNotify,
@@ -17,21 +16,15 @@ import {
 import WorkOrderForm from "./Form.tsx";
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
 import {useMutation} from "@tanstack/react-query";
+import React from "react";
+import {Simulate} from "react-dom/test-utils";
 
 
 export function WorkOrderCreate() {
     return (
-        <Create redirect={"list"}>
+        <Create redirect={"show"}>
             <WorkOrderForm mode={"CREATE"}/>
         </Create>
-    )
-}
-
-export function WorkOrderShow() {
-    return (
-        <Show>
-            <WorkOrderForm readonly mode={"SHOW"}/>
-        </Show>
     )
 }
 
@@ -48,19 +41,30 @@ const RunWorkOrderButton = () => {
         const refresh = useRefresh();
         const notify = useNotify();
         const unselectAll = useUnselectAll('posts');
+
         const {mutate, isPending} = useMutation({
-            mutationFn: (data: any) => {
-                return fetch('/api/work-order/run', {
+            mutationFn: async (data: any) => {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`, {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                     body: JSON.stringify(data),
-                })
+                });
+
+                if (!response.ok) {
+                    const responseJson = await response.json();
+                    throw new Error(responseJson.error);
+                }
+
+                return response.json();
             },
             onSuccess: () => {
                 notify('Success run');
                 unselectAll();
             },
-            onError: () => {
-                notify('Error: run', {
+            onError: (error) => {
+                notify('Error:' + error.message, {
                     type: 'error',
                 });
                 refresh();
@@ -81,6 +85,7 @@ const RunWorkOrderButton = () => {
     }
 ;
 
+
 const WorkOrderBulkActionButtons = () => (
     <>
         <RunWorkOrderButton/>
@@ -89,7 +94,7 @@ const WorkOrderBulkActionButtons = () => (
 
 export const WorkOrderList = () => (
     <List>
-        <Datagrid rowClick={"edit"} bulkActionButtons={<WorkOrderBulkActionButtons/>}>
+        <Datagrid bulkActionButtons={<WorkOrderBulkActionButtons/>}>
             <TextField source="id"/>
             <ChipField source="status"/>
             <DateField source="created_at"/>

@@ -54,8 +54,9 @@ func (r WorkOrderRepository) FindManyByID(ctx context.Context, id []int64) ([]en
 	var workOrders []entity.WorkOrder
 	err := r.db.WithContext(ctx).
 		Preload("Patient").
-		Preload("Patient.Specimen", "order_id = work_orders.id").
-		Preload("Patient.Specimen.ObservationRequests", "order_id = work_orders.id").Find(&workOrders, "id in (?)", id).Error
+		Preload("Patient.Specimen", "order_id in (?)", id).
+		Preload("Patient.Specimen.ObservationRequest").
+		Find(&workOrders, "id in (?)", id).Error
 	if err != nil {
 		return nil, fmt.Errorf("error finding workOrders: %w", err)
 	}
@@ -65,7 +66,9 @@ func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
 	var workOrder entity.WorkOrder
 	err := r.db.Where("id = ?", id).
 		Preload("Specimen").
-		Preload("Patient").Preload("ObservationRequests").First(&workOrder).Error
+		Preload("Specimen.ObservationRequest").
+		Preload("Specimen.Patient").
+		Preload("Patient").First(&workOrder).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return entity.WorkOrder{}, entity.ErrNotFound
 	}
@@ -79,6 +82,14 @@ func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
 		workOrder.PatientIDs[i] = patient.ID
 	}
 	workOrder.PatientIDs = util.Unique(workOrder.PatientIDs)
+
+	workOrder.ObservationRequests = make([]string, 0)
+	for _, specimen := range workOrder.Specimen {
+		for _, observationRequest := range specimen.ObservationRequest {
+			workOrder.ObservationRequests = append(workOrder.ObservationRequests, observationRequest.TestCode)
+		}
+	}
+	workOrder.ObservationRequests = util.Unique(workOrder.ObservationRequests)
 
 	return workOrder, nil
 }
@@ -190,6 +201,30 @@ func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.Work
 				Where("patient_id = ? AND order_id = ? AND type = ?", patientID, workOrder.ID, defaultSerumType).Error
 			if err != nil {
 				return err
+			}
+		}
+
+		for _, observationRequestID := range workOrder.ObservationRequests {
+			observationType, ok := entity.TableObservationType.Find(observationRequestID)
+			if !ok {
+				return fmt.Errorf("observation request: %w", entity.ErrBadRequest)
+			}
+
+			observationRequest := entity.ObservationRequest{
+				TestCode:        observationType.ID,
+				TestDescription: observationType.Name,
+				SpecimenID:      int64(specimen.ID),
+				RequestedDate:   time.Now(),
+			}
+
+			observationRequestQuery := trx.Clauses(clause.OnConflict{DoNothing: true}).Create(&observationRequest)
+			err := observationRequestQuery.Error
+			if err != nil {
+				return err
+			}
+
+			if observationRequestQuery.RowsAffected == 0 {
+				continue
 			}
 		}
 	}
