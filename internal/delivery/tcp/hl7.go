@@ -27,15 +27,22 @@ func NewHlSevenHandler(analyzerUsecase *analyzer.Usecase) *HlSevenHandler {
 // HL7Handler handles the HL7 message.
 func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string, error) {
 	msgByte := []byte(message)
-	d := hl7.NewDecoder(h251.Registry, nil)
-	msg, err := d.Decode(msgByte)
+	headerDecoder := hl7.NewDecoder(h251.Registry, &hl7.DecodeOption{HeaderOnly: true})
+	header, err := headerDecoder.Decode(msgByte)
 	if err != nil {
 		return "", err
 	}
 
-	switch m := msg.(type) {
+	switch m := header.(type) {
 	case h251.OUL_R22:
-		data, err := MapOULR22ToEntity(&m)
+		d := hl7.NewDecoder(h251.Registry, nil)
+		msgByte = h.deleteSegment(msgByte, "ORC")
+		msg, err := d.Decode(msgByte)
+		if err != nil {
+			return "", err
+		}
+		oul22 := msg.(h251.OUL_R22)
+		data, err := MapOULR22ToEntity(&oul22)
 		if err != nil {
 			return "", err
 		}
@@ -115,6 +122,19 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 	// Encode the message
 
 	return string(bb), nil
+}
+
+func (h *HlSevenHandler) deleteSegment(message []byte, seg string) []byte {
+	lines := bytes.Split(message, []byte("\n"))
+
+	var filteredLines [][]byte
+	for _, line := range lines {
+		if !bytes.HasPrefix(line, []byte(seg)) {
+			filteredLines = append(filteredLines, line)
+		}
+	}
+
+	return bytes.Join(filteredLines, []byte("\n"))
 }
 
 func simpleHD(id string) *h251.HD {
