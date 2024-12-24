@@ -155,14 +155,21 @@ export function WorkOrderShow() {
                 <ArrayField source={"specimen_list"} label={"Specimens"}>
                     <Datagrid bulkActionButtons={false}>
                         <TextField source="id"/>
-                        <TextField source="barcode"/>
                         <ReferenceField reference={"patient"} source={"patient_id"}/>
                         <TextField source="type"/>
                         <WrapperField source={"barcode"} label={"Barcode"} textAlign={"center"}>
                             <Stack>
                                 <WithRecord render={(record: any) => {
                                     return (
-                                        <Barcode value={record.barcode} displayValue={false}/>
+                                        <Stack gap={0} justifyContent={"center"} alignItems={"center"}>
+                                            <Barcode value={record.barcode} displayValue={false}/>
+                                            <Typography
+                                                className={"barcode-text"}
+                                                fontSize={12}
+                                                sx={{
+                                                    margin: 0,
+                                                }}>{record.barcode}</Typography>
+                                        </Stack>
                                     )
                                 }}/>
                             </Stack>
