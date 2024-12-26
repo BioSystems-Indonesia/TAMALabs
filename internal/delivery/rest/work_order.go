@@ -112,9 +112,6 @@ func (h *WorkOrderHandler) RunWorkOrder(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	device := entity.Device{}
-	h.db.Find(&device)
-
 	if len(workOrders) == 0 {
 		return handleError(c, entity.ErrNotFound.WithInternal(errors.New("work order not found")))
 	}
