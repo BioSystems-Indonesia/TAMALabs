@@ -13,6 +13,7 @@ import {SpecimenList, SpecimenShow} from "./specimen";
 import ListIcon from '@mui/icons-material/List';
 import {WorkOrderShow} from "./workOrder/Show.tsx";
 import { DeviceCreate, DeviceEdit, DeviceList, DeviceShow } from "./device/index.tsx";
+import {TestTypeList, TestTypeShow} from "./testType";
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
@@ -40,6 +41,13 @@ const App = () => {
                   icon={ScienceIcon}
                   recordRepresentation={record => `#${record.id} - ${record.type}`}
 		  />
+        <Resource name="test-type" list={TestTypeList} show={TestTypeShow}
+                  hasCreate={false}
+                  hasEdit={false}
+                  hasShow={true}
+                  icon={BiotechIcon}
+                  recordRepresentation={record => `#${record.id} - ${record.code}`}
+        />
         <Resource name="device" list={DeviceList} show={DeviceShow} edit={DeviceEdit}
             create={DeviceCreate}
             hasCreate={true}

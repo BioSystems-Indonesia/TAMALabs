@@ -48,6 +48,7 @@ func provideRestHandler(
 	workOrder *rest.WorkOrderHandler,
 	featureListHandler *rest.FeatureListHandler,
 	observationRequest *rest.ObservationRequestHandler,
+	testTypeHandler *rest.TestTypeHandler,
 ) *rest.Handler {
 	return &rest.Handler{
 		hlSevenHandler,
@@ -57,6 +58,7 @@ func provideRestHandler(
 		workOrder,
 		featureListHandler,
 		observationRequest,
+		testTypeHandler,
 	}
 }
 
@@ -117,6 +119,7 @@ func InitDatabase() (*gorm.DB, error) {
 		&entity.WorkOrder{},
 		&entity.WorkOrderPatient{},
 		&entity.Device{},
+		&entity.TestType{},
 	}
 
 	for _, model := range autoMigrate {
@@ -180,6 +183,15 @@ func seedTestData(db *gorm.DB) error {
 		err := db.Clauses(clause.OnConflict{
 			DoNothing: true,
 		}).Create(&p).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, testType := range entity.SeedDataTestType {
+		err := db.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(&testType).Error
 		if err != nil {
 			return err
 		}
