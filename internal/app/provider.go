@@ -14,7 +14,9 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
+	"github.com/patrickmn/go-cache"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
 )
 
@@ -137,6 +139,7 @@ func InitDatabase() (*gorm.DB, error) {
 func seedTestData(db *gorm.DB) error {
 	patient := []entity.Patient{
 		{
+			ID:          1,
 			FirstName:   "Pasien",
 			LastName:    "Pertama",
 			Birthdate:   time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC),
@@ -148,6 +151,7 @@ func seedTestData(db *gorm.DB) error {
 			UpdatedAt:   time.Now(),
 		},
 		{
+			ID:          2,
 			FirstName:   "Pasien",
 			LastName:    "Kedua",
 			Birthdate:   time.Date(2002, time.October, 23, 0, 0, 0, 0, time.UTC),
@@ -159,6 +163,7 @@ func seedTestData(db *gorm.DB) error {
 			UpdatedAt:   time.Now(),
 		},
 		{
+			ID:          3,
 			FirstName:   "Pasien",
 			LastName:    "Ketiga",
 			Birthdate:   time.Date(1998, time.February, 20, 0, 0, 0, 0, time.UTC),
@@ -172,7 +177,9 @@ func seedTestData(db *gorm.DB) error {
 	}
 
 	for _, p := range patient {
-		err := db.Create(&p).Error
+		err := db.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(&p).Error
 		if err != nil {
 			return err
 		}
@@ -225,4 +232,8 @@ func provideValidator() *validator.Validate {
 	}
 
 	return v
+}
+
+func provideCache() *cache.Cache {
+	return cache.New(time.Hour, cache.NoExpiration)
 }

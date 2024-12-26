@@ -15,6 +15,7 @@ var (
 	tcpAppSet = wire.NewSet(
 		provideValidator,
 		provideDB,
+		provideCache,
 		hlsRepo.NewRepository,
 		observation_result.NewRepository,
 		observation_request.NewRepository,

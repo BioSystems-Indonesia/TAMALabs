@@ -32,17 +32,3 @@ func (p SpecimenUseCase) FindAll(
 func (p SpecimenUseCase) FindOneByID(id int64) (entity.Specimen, error) {
 	return p.SpecimenRepo.FindOne(context.TODO(), id)
 }
-
-func (p SpecimenUseCase) Create(req *entity.Specimen) error {
-	req.Barcode = entity.GenerateBarcode()
-
-	return p.SpecimenRepo.Create(context.TODO(), req)
-}
-
-func (p SpecimenUseCase) Update(req *entity.Specimen) error {
-	return p.SpecimenRepo.Update(context.TODO(), req)
-}
-
-func (p SpecimenUseCase) Delete(id int) error {
-	return p.SpecimenRepo.Delete(id)
-}
