@@ -72,24 +72,25 @@ func (r Repository) FindOne(ctx context.Context, id int64) (entity.Specimen, err
 	return Specimen, nil
 }
 
-func (r *Repository) GenerateBarcode(ctx context.Context) (string, error) {
-	seq, err := r.GetBarcodeSequence(ctx)
-	if err != nil {
-		return "", err
-	}
-
+func (r *Repository) GenerateBarcode(ctx context.Context) string {
+	seq := r.GetBarcodeSequence(ctx)
 	seqPadding := fmt.Sprintf("%06d", seq) // Prints to stdout '000012'
 
-	return fmt.Sprintf("%s%s", time.Now().Format("20060102"), seqPadding), nil
+	return fmt.Sprintf("%s%s", time.Now().Format("20060102"), seqPadding)
 }
 
-func (r *Repository) GetBarcodeSequence(ctx context.Context) (int64, error) {
+func (r *Repository) GetBarcodeSequence(ctx context.Context) int64 {
 	seq, ok := r.cache.Get(constant.KeySpecimenBarcodeSequence)
 	if !ok {
-		return 0, errors.New("barcode sequence not found")
+		now := time.Now()
+		tomorrowMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, constant.LocationJakarta)
+		expire := tomorrowMidnight.Sub(now)
+		r.cache.Set(constant.KeySpecimenBarcodeSequence, 1, expire)
+
+		return 1
 	}
 
-	return seq.(int64), nil
+	return seq.(int64)
 }
 
 func (r *Repository) IncrementBarcodeSequence(ctx context.Context) error {

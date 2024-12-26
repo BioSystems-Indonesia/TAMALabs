@@ -184,22 +184,17 @@ func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.Work
 			return workOrderPatientQuery.Error
 		}
 
-		barcode, err := r.specimentRepo.GenerateBarcode(trx.Statement.Context)
-		if err != nil {
-			return err
-		}
-
 		specimen := entity.Specimen{
 			PatientID:      int(patientID),
 			OrderID:        int(workOrder.ID),
 			Type:           defaultSerumType, // TODO: Change it so it not be hardcoded
-			Barcode:        barcode,
+			Barcode:        r.specimentRepo.GenerateBarcode(trx.Statement.Context),
 			CollectionDate: time.Now().Format(time.RFC3339),
 		}
 		specimenQuery := trx.Clauses(clause.OnConflict{
 			DoNothing: true,
 		}).Create(&specimen)
-		err = specimenQuery.Error
+		err := specimenQuery.Error
 		if err != nil {
 			return err
 		}

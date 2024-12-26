@@ -235,5 +235,5 @@ func provideValidator() *validator.Validate {
 }
 
 func provideCache() *cache.Cache {
-	return cache.New(time.Hour, cache.NoExpiration)
+	return cache.New(time.Hour, 5*time.Minute)
 }
