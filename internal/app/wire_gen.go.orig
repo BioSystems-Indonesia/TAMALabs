@@ -45,13 +45,18 @@ func InitRestApp(config2 *config.Schema) server.RestServer {
 	specimenHandler := rest.NewSpecimenHandler(config2, specimenUseCase)
 	workOrderRepository := workOrderrepo.NewWorkOrderRepository(db, config2)
 	workOrderUseCase := workOrderuc.NewWorkOrderUseCase(config2, workOrderRepository, validate)
-	workOrderHandler := rest.NewWorkOrderHandler(config2, workOrderUseCase, db)
+	workOrderHandler := rest.NewWorkOrderHandler(config2, workOrderUseCase)
 	featureListHandler := rest.NewFeatureListHandler()
+<<<<<<< HEAD
 	observationRequestUseCase := observation_requestuc.NewObservationRequestUseCase(config2, observation_requestRepository, validate)
 	observationRequestHandler := rest.NewObservationRequestHandler(config2, observationRequestUseCase)
 	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler)
+	restServer := provideRestServer(config2, handler, validate)
+=======
+	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler)
 	deviceHandler := rest.NewDeviceHandler(db)
 	restServer := provideRestServer(config2, handler, validate, deviceHandler)
+>>>>>>> ecea4d8 (adding device resources)
 	return restServer
 }
 

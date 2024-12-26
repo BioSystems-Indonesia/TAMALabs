@@ -53,6 +53,9 @@ func (c *Client) Write(message []byte) error {
 func (c *Client) ReadAll() ([]byte, error) {
 	b, err := c.r.ReadByte()
 	if err != nil {
+		if err == io.EOF {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("cannot read the first byte of mllp message, %w", err)
 	}
 	if b != mllpStartBlock {

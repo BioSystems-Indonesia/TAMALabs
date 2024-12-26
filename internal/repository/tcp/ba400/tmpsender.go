@@ -14,7 +14,7 @@ import (
 
 // SendToBA400 is a function to send message to BA400 for now its singleton view
 // this is temporary function because it need device entity..
-func SendToBA400(ctx context.Context, patients []entity.Patient) error {
+func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.Device) error {
 	encoder := hl7.NewEncoder(&hl7.EncodeOption{
 		TrimTrailingSeparator: true,
 	})
@@ -34,8 +34,8 @@ func SendToBA400(ctx context.Context, patients []entity.Patient) error {
 	}
 
 	sender := Sender{
-		host:     "192.168.33.68:2050",
-		deadline: time.Second * 5,
+		host:     device.IPAddress,
+		deadline: time.Second * 120,
 	}
 	messageToSend := buf.Bytes()
 	resp, err := sender.SendRaw(messageToSend)

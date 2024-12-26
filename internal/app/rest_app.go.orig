@@ -38,8 +38,11 @@ var (
 		rest.NewSpecimenHandler,
 		rest.NewWorkOrderHandler,
 		rest.NewFeatureListHandler,
+<<<<<<< HEAD
 		rest.NewObservationRequestHandler,
+=======
 		rest.NewDeviceHandler,
+>>>>>>> ecea4d8 (adding device resources)
 		provideTCP,
 		provideRestHandler,
 		provideRestServer,

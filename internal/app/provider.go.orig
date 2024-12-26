@@ -25,9 +25,8 @@ func provideTCP(config *config.Schema) *ba400.TCP {
 }
 
 func provideTCPServer(config *config.Schema, handler *tcp.Handler) server.TCPServer {
-	serv := server.NewTCP("1024")
-	tcp.RegisterRotes2(serv, handler)
-	//tcp.RegisterRoutes(serv.GetClient(), handler)
+	serv := server.NewTCP("5678")
+	tcp.RegisterRoutes(serv.GetClient(), handler)
 	return serv
 }
 
@@ -112,9 +111,13 @@ func InitDatabase() (*gorm.DB, error) {
 		&entity.ObservationResult{},
 		&entity.Patient{},
 		&entity.Specimen{},
+<<<<<<< HEAD
 		&entity.WorkOrder{},
 		&entity.WorkOrderPatient{},
+=======
+		&entity.ObservationRequest{},
 		&entity.Device{},
+>>>>>>> ecea4d8 (adding device resources)
 	}
 
 	for _, model := range autoMigrate {
