@@ -47,6 +47,17 @@ func (r PatientRepository) FindAll(ctx context.Context, req *entity.GetManyReque
 		})
 	}
 
+	offset := 0
+	if req.Start > 0 {
+		offset = req.Start
+	}
+
+	limit := 10
+	if req.End > 0 {
+		limit = req.End - offset
+	}
+	db = db.Offset(offset).Limit(limit)
+
 	err := db.Find(&patients).Error
 	if err != nil {
 		return nil, fmt.Errorf("error finding patients: %w", err)
