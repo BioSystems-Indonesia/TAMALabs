@@ -14,12 +14,14 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
+	test_type2 "github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
@@ -50,7 +52,10 @@ func InitRestApp(config2 *config.Schema) server.RestServer {
 	featureListHandler := rest.NewFeatureListHandler()
 	observationRequestUseCase := observation_requestuc.NewObservationRequestUseCase(config2, observation_requestRepository, validate)
 	observationRequestHandler := rest.NewObservationRequestHandler(config2, observationRequestUseCase)
-	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler)
+	test_typeRepository := test_type.NewRepository(db, config2)
+	test_typeUsecase := test_type2.NewUsecase(test_typeRepository)
+	testTypeHandler := rest.NewTestTypeHandler(config2, test_typeUsecase)
+	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler)
 	deviceHandler := rest.NewDeviceHandler(db)
 	restServer := provideRestServer(config2, handler, validate, deviceHandler)
 	return restServer
