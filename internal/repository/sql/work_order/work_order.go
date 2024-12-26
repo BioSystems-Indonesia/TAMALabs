@@ -166,6 +166,25 @@ func (r WorkOrderRepository) deleteUnusedRelation(tx *gorm.DB, workOrder *entity
 		}
 	}
 
+	toDeleteObservationRequest, _ := util.CompareSlices(
+		oldWorkOrder.ObservationRequests,
+		workOrder.ObservationRequests,
+	)
+	for _, observationRequestID := range toDeleteObservationRequest {
+		var specimentIDs []int64
+		err = tx.Model(entity.Specimen{}).Where("order_id = ?", workOrder.ID).Pluck("id", &specimentIDs).Error
+		if err != nil {
+			return fmt.Errorf("error finding specimen work_order:%d: %w", workOrder.ID, err)
+		}
+
+		err := tx.Model(&entity.ObservationRequest{}).
+			Where("specimen_id in (?) AND test_code = ?", specimentIDs, observationRequestID).
+			Delete(&entity.ObservationRequest{}).Error
+		if err != nil {
+			return fmt.Errorf("error deleting observationRequest %v: %w", observationRequestID, err)
+		}
+	}
+
 	return nil
 }
 

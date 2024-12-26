@@ -18,6 +18,7 @@ import {
 import WorkOrderForm, { WorkOrderSaveButton } from "./Form.tsx";
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
 import { useMutation } from "@tanstack/react-query";
+import { Stack } from "@mui/material";
 //import React from "react";
 //import {Simulate} from "react-dom/test-utils";
 
@@ -31,7 +32,11 @@ const WorkOrderAction = () => {
 
 export function WorkOrderCreate() {
     return (
-        <Create redirect={"show"} actions={<WorkOrderAction />}>
+        <Create redirect={"show"} actions={<WorkOrderAction />} sx={{
+            "& .RaCreate-card": {
+                overflow: "visible",
+            }
+        }}>
             <WorkOrderForm mode={"CREATE"} />
         </Create>
     )
@@ -39,7 +44,11 @@ export function WorkOrderCreate() {
 
 export function WorkOrderEdit() {
     return (
-        <Edit mutationMode={"pessimistic"} actions={<WorkOrderAction />}>
+        <Edit mutationMode={"pessimistic"} actions={<WorkOrderAction />} sx={{
+            "& .RaEdit-card": {
+                overflow: "visible",
+            }
+        }}>
             <WorkOrderForm mode={"EDIT"} />
         </Edit>
     )

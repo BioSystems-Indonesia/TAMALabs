@@ -46,8 +46,14 @@ type WorkOrderFormProps = {
 const observationRequestField = "observation_requests";
 
 const TestFilterSidebar = () => (
-    <Card sx={{ order: -1, mr: 1, mt: 2, width: 200, minWidth: 200 }}>
-        <CardContent>
+    <Card sx={{
+        order: -1, mr: 1, mt: 2, width: 200, minWidth: 200,
+        overflow: "visible",
+    }}>
+        <CardContent sx={{
+            position: "sticky",
+            top: 96,
+        }}>
             <SavedQueriesList />
             <FilterLiveSearch onSubmit={(event) => event.preventDefault()} />
         </CardContent>
@@ -128,7 +134,7 @@ function TestTable(props: WorkOrderFormProps) {
 function TestInput(props: WorkOrderFormProps) {
 
     return (<List resource={"feature-list-observation-type"} exporter={false} aside={<TestFilterSidebar />}
-        perPage={25}
+        perPage={999999}
         storeKey={false}
         disableSyncWithLocation
         sx={{
@@ -140,7 +146,10 @@ function TestInput(props: WorkOrderFormProps) {
 }
 
 const PatientFilterSidebar = () => (
-    <Card sx={{ order: -1, mr: 2, mt: 2, width: 200, minWidth: 200 }}>
+    <Card sx={{
+        order: -1, mr: 2, mt: 2, width: 200, minWidth: 200,
+
+    }}>
         <CardContent>
             <FilterLiveSearch />
             <FilterListSection label="Birth Date" icon={<CalendarMonthIcon />}>
@@ -299,31 +308,50 @@ export const WorkOrderSaveButton = () => {
     };
 
 
-    return <SaveButton type="button" onClick={handleClick} alwaysEnable />
+    return <SaveButton type="button" onClick={handleClick} alwaysEnable size="small" />
 }
 
 const WorkOrderToolbar = () => {
     return (
-        <Toolbar sx={{
-            gap: 2
-        }}>
-            <DeleteButton variant="contained" size="small" />
-            <WorkOrderSaveButton />
-        </Toolbar>
+        <Stack width={"100%"}
+            sx={{
+                position: "sticky",
+                top: 48,
+                borderBottom: "1px solid #ccc",
+                zIndex: 2147483647,
+                marginBottom: 1,
+            }}
+        >
+            <Toolbar sx={{
+                gap: 2,
+                width: "100%",
+                display: "flex",
+                justifyContent: "flex-end",
+            }}>
+                <DeleteButton variant="contained" size="small" />
+                <WorkOrderSaveButton />
+            </Toolbar>
+        </Stack>
     )
 };
 
 export default function WorkOrderForm(props: WorkOrderFormProps) {
     return (
-        <TabbedForm toolbar={<WorkOrderToolbar />}>
+        <TabbedForm toolbar={false} >
             <TabbedForm.Tab label="Patient">
+                <WorkOrderToolbar />
                 <PatientInput {...props} />
             </TabbedForm.Tab>
-            <TabbedForm.Tab label="Test">
+            <TabbedForm.Tab label="Test" sx={{
+                position: "relative",
+                overflow: "visible",
+            }}>
+                <WorkOrderToolbar />
                 <TestInput {...props} />
             </TabbedForm.Tab>
             {props.mode !== Action.CREATE && (
                 <TabbedForm.Tab label="Detail">
+                    <WorkOrderToolbar />
                     <div>
                         <TextInput source={"id"} readOnly={true} size={"small"} />
                         <DateTimeInput source={"created_at"} readOnly={true} size={"small"} />
