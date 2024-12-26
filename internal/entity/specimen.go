@@ -1,11 +1,7 @@
 package entity
 
 import (
-	"fmt"
 	"time"
-
-	"github.com/labstack/gommon/log"
-	"github.com/oibacidem/lims-hl-seven/internal/util"
 )
 
 type Specimen struct {
@@ -20,7 +16,7 @@ type Specimen struct {
 	Condition      string    `json:"condition" gorm:"not null"` // SPM-25
 	Method         string    `json:"method" gorm:"not null"`    // SPM-10
 	Comments       string    `json:"comments" gorm:"not null"`  // SPM-26
-	Barcode        string    `json:"barcode" gorm:"not null"`
+	Barcode        string    `json:"barcode" gorm:"not null;index:specimen_barcode_uniq,unique"`
 	CreatedAt      time.Time `json:"created_at" gorm:"not null"`
 	UpdatedAt      time.Time `json:"updated_at" gorm:"not null"`
 
@@ -29,18 +25,6 @@ type Specimen struct {
 	ObservationRequest []ObservationRequest `json:"observation_requests" gorm:"foreignKey:SpecimenID;->" validate:"-"`
 	WorkOrder          WorkOrder            `json:"work_order" gorm:"foreignKey:OrderID;->" validate:"-"`
 	Patient            Patient              `json:"patient" gorm:"foreignKey:PatientID;->" validate:"-"`
-}
-
-func GenerateBarcode() string {
-	randomDigits, err := util.GenerateRandomDigits(4)
-	if err != nil {
-		log.Errorj(map[string]interface{}{
-			"message": "error generating barcode",
-			"error":   err,
-		})
-	}
-
-	return fmt.Sprintf("%s%s", time.Now().Format("20060102"), randomDigits)
 }
 
 type SpecimenGetManyRequest struct {

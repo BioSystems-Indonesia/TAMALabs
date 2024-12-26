@@ -21,6 +21,7 @@ var (
 	restAppSet = wire.NewSet(
 		provideValidator,
 		provideDB,
+		provideCache,
 		hlsRepo.NewRepository,
 		patientrepo.NewPatientRepository,
 		workOrderrepo.NewWorkOrderRepository,

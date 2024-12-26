@@ -1,6 +1,7 @@
 // in src/admin/index.tsx
 import { Admin, Resource } from "react-admin";
 import jsonServerProvider from "ra-data-json-server";
+import LanIcon from '@mui/icons-material/Lan';
 import { DefaultLayout } from "./layout.tsx";
 import { PatientCreate, PatientEdit, PatientList, PatientShow } from "./patient";
 import UserIcon from '@mui/icons-material/Person';
@@ -44,7 +45,7 @@ const App = () => {
             hasCreate={true}
             hasEdit={true}
             hasShow={true}
-            icon={UserIcon}
+            icon={LanIcon}
             recordRepresentation={record => `#${record.id} - ${record.name}`}
         />
         <Resource name="observation-request" list={ObservationRequestList} show={ObservationRequestShow}

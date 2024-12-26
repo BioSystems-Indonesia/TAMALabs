@@ -6,20 +6,23 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/labstack/gommon/log"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
 	"github.com/oibacidem/lims-hl-seven/internal/util"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type WorkOrderRepository struct {
-	db  *gorm.DB
-	cfg *config.Schema
+	db            *gorm.DB
+	cfg           *config.Schema
+	specimentRepo *specimen.Repository
 }
 
-func NewWorkOrderRepository(db *gorm.DB, cfg *config.Schema) *WorkOrderRepository {
-	return &WorkOrderRepository{db: db, cfg: cfg}
+func NewWorkOrderRepository(db *gorm.DB, cfg *config.Schema, specimentRepo *specimen.Repository) *WorkOrderRepository {
+	return &WorkOrderRepository{db: db, cfg: cfg, specimentRepo: specimentRepo}
 }
 
 func (r WorkOrderRepository) FindAll(ctx context.Context, req *entity.WorkOrderGetManyRequest) ([]entity.WorkOrder, error) {
@@ -181,27 +184,55 @@ func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.Work
 			return workOrderPatientQuery.Error
 		}
 
+		barcode, err := r.specimentRepo.GenerateBarcode(trx.Statement.Context)
+		if err != nil {
+			return err
+		}
+
 		specimen := entity.Specimen{
 			PatientID:      int(patientID),
 			OrderID:        int(workOrder.ID),
 			Type:           defaultSerumType, // TODO: Change it so it not be hardcoded
-			Barcode:        entity.GenerateBarcode(),
+			Barcode:        barcode,
 			CollectionDate: time.Now().Format(time.RFC3339),
 		}
 		specimenQuery := trx.Clauses(clause.OnConflict{
 			DoNothing: true,
 		}).Create(&specimen)
-		err := specimenQuery.Error
+		err = specimenQuery.Error
 		if err != nil {
 			return err
 		}
 
-		if specimenQuery.RowsAffected == 0 {
-			err = trx.Find(&specimen).
-				Where("patient_id = ? AND order_id = ? AND type = ?", patientID, workOrder.ID, defaultSerumType).Error
+		log.Debugj(map[string]interface{}{
+			"message":     "specimen insert",
+			"patientID":   patientID,
+			"specimenID":  specimen.ID,
+			"type":        defaultSerumType,
+			"rowAffected": specimenQuery.RowsAffected,
+		})
+
+		if specimenQuery.RowsAffected != 0 {
+			err := r.specimentRepo.IncrementBarcodeSequence(trx.Statement.Context)
 			if err != nil {
 				return err
 			}
+		}
+
+		if specimenQuery.RowsAffected == 0 {
+			err = trx.Where("patient_id = ? AND order_id = ? AND type = ?", patientID, workOrder.ID, defaultSerumType).
+				Find(&specimen).Error
+			if err != nil {
+				return err
+			}
+
+			log.Debugj(map[string]interface{}{
+				"message":     "specimen find",
+				"patientID":   patientID,
+				"specimenID":  specimen.ID,
+				"type":        defaultSerumType,
+				"rowAffected": specimenQuery.RowsAffected,
+			})
 		}
 
 		for _, observationRequestID := range workOrder.ObservationRequests {
@@ -223,6 +254,14 @@ func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.Work
 				return err
 			}
 
+			log.Debugj(map[string]interface{}{
+				"message":         "observation request insert",
+				"testCode":        observationType.ID,
+				"testDescription": observationType.Name,
+				"patientID":       patientID,
+				"specimenID":      specimen.ID,
+				"rowAffected":     observationRequestQuery.RowsAffected,
+			})
 			if observationRequestQuery.RowsAffected == 0 {
 				continue
 			}
