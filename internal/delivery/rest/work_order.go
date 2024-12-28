@@ -70,7 +70,20 @@ func (h *WorkOrderHandler) DeleteWorkOrder(c echo.Context) error {
 	})
 }
 
-func (h *WorkOrderHandler) UpdateWorkOrder(c echo.Context) error {
+func (h *WorkOrderHandler) CreateWorkOrder(c echo.Context) error {
+	var req entity.WorkOrder
+	if err := bindAndValidate(c, &req); err != nil {
+		return handleError(c, err)
+	}
+
+	if err := h.workOrderUsecase.Create(&req); err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusCreated, req)
+}
+
+func (h *WorkOrderHandler) AddTestWorkOrder(c echo.Context) error {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
@@ -81,20 +94,7 @@ func (h *WorkOrderHandler) UpdateWorkOrder(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	if err := h.workOrderUsecase.Update(&req); err != nil {
-		return handleError(c, err)
-	}
-
-	return c.JSON(http.StatusOK, req)
-}
-
-func (h *WorkOrderHandler) CreateWorkOrder(c echo.Context) error {
-	var req entity.WorkOrder
-	if err := bindAndValidate(c, &req); err != nil {
-		return handleError(c, err)
-	}
-
-	if err := h.workOrderUsecase.Create(&req); err != nil {
+	if err := h.workOrderUsecase.AddTest(&req); err != nil {
 		return handleError(c, err)
 	}
 
@@ -130,5 +130,26 @@ func (h *WorkOrderHandler) RunWorkOrder(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "ok",
+	})
+}
+
+func (h *WorkOrderHandler) DeleteTestWorkOrder(c echo.Context) error {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	patientID, err := strconv.ParseInt(c.Param("patient_id"), 10, 64)
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	err = h.workOrderUsecase.DeleteTest(id, patientID)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, entity.WorkOrder{
+		ID: id,
 	})
 }

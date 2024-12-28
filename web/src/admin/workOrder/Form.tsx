@@ -20,9 +20,12 @@ import {
     useListContext,
     useNotify,
     useRecordContext,
-    useSaveContext
+    useSaveContext,
+    type Identifier,
+    useGetOne
 } from "react-admin";
 import { useFormContext } from "react-hook-form";
+import { useSearchParams, useParams } from "react-router-dom";
 import { Action, ActionKeys } from "../../types/props.ts";
 import FeatureList from "../../component/FeatureList.tsx";
 import Divider from "@mui/material/Divider";
@@ -34,12 +37,15 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { CircularProgress } from "@mui/material";
 
+
+type WorkOrderActionKeys = ActionKeys | "ADD_TEST";
 
 type WorkOrderFormProps = {
     readonly?: boolean
-    mode?: ActionKeys
+    mode: WorkOrderActionKeys
 }
 
 
@@ -94,14 +100,34 @@ function TestTable(props: WorkOrderFormProps) {
     const { selectedIds, onSelect } = useListContext();
     const { setValue } = useFormContext();
 
-    const data = useRecordContext()
+    const { id } = useParams()
+    const { data, isLoading } = useGetOne('work-order', { id: id });
+    const [searchParams] = useSearchParams();
+
     useEffect(() => {
-        if (data) {
-            console.debug("setDataToValue", data[observationRequestField]);
-            onSelect(data[observationRequestField])
-            setValue(observationRequestField, data[observationRequestField]);
+        if (data && searchParams.getAll("patient_id").length > 0) {
+            const patientIDs = searchParams.getAll("patient_id")!.map(id => parseInt(id));
+            const patients = data.patient_list.filter((patient: any) => {
+                return patientIDs.includes(patient.id);
+            })
+            const observationRequestCodeList = patients.map((patient: any) => {
+                return patient.specimen_list.map((specimen: any) => {
+                    return specimen.observation_requests.map((observationRequest: any) => {
+                        return observationRequest.test_code;
+                    })
+                }).flat()
+            }) as string[][]
+            if (observationRequestCodeList.length === 0) {
+                return;
+            }
+
+            const observationRequestCodesLongest = observationRequestCodeList.reduce((acc, cur) => {
+                return acc.length > cur.length ? acc : cur;
+            }, observationRequestCodeList[0]);
+            onSelect(observationRequestCodesLongest);
+            setValue(observationRequestField, observationRequestCodesLongest);
         }
-    }, [data]);
+    }, [data, searchParams]);
 
     useEffect(() => {
         console.debug("test selected ids", selectedIds);
@@ -119,6 +145,7 @@ function TestTable(props: WorkOrderFormProps) {
             <Datagrid width={"100%"}
                 bulkActionButtons={<BulkActionButtons />}
                 rowClick={"toggleSelection"}
+                isLoading={isLoading}
             >
                 <TextField label={"ID"} source={"id"} />
                 <TextField label={"Name"} source={"name"} />
@@ -136,6 +163,8 @@ function TestInput(props: WorkOrderFormProps) {
     return (<List resource={"feature-list-observation-type"} exporter={false} aside={<TestFilterSidebar />}
         perPage={999999}
         storeKey={false}
+        title={false}
+        pagination={false}
         disableSyncWithLocation
         sx={{
             width: "100%"
@@ -214,15 +243,19 @@ function PatientTable(props: WorkOrderFormProps) {
     };
     const { selectedIds, onSelect } = useListContext();
     const { setValue } = useFormContext();
-    const data = useRecordContext()
+    const [searchParams] = useSearchParams();
+    const [havePatientIDsInQueryParam, setHavePatientIDsInQueryParam] = useState(false);
 
     useEffect(() => {
-        if (data) {
-            console.debug("setDataToValue", data[patientIDsField]);
-            onSelect(data[patientIDsField])
-            setValue(patientIDsField, data[patientIDsField]);
+        if (searchParams.get("patient_id")) {
+            const patientIDs = searchParams.getAll("patient_id")!.map(id => parseInt(id));
+            console.debug("patientIDs", patientIDs);
+            onSelect(patientIDs);
+            setValue(patientIDsField, patientIDs);
+            setHavePatientIDsInQueryParam(true);
         }
-    }, [data]);
+    }, [searchParams]);
+
 
     useEffect(() => {
         console.debug("test selected ids", selectedIds);
@@ -233,6 +266,18 @@ function PatientTable(props: WorkOrderFormProps) {
     return <Grid container spacing={2}>
         <Grid item xs={12} md={8}>
             <Datagrid rowClick={"toggleSelection"} bulkActionButtons={<BulkActionButtons />}
+
+                // Disable selection when have patient IDs in query param
+                isRowSelectable={(record: any) => {
+                    if (havePatientIDsInQueryParam) {
+                        const patientIDs = searchParams.getAll("patient_id")!.map(id => parseInt(id));
+                        return patientIDs.includes(record.id);
+                    }
+
+                    return true
+                }}
+                onToggleItem={!havePatientIDsInQueryParam ? undefined : () => { }}
+                onSelect={!havePatientIDsInQueryParam ? undefined : () => { }}
             >
                 <TextField source="id" />
                 <TextField source="first_name" />
@@ -260,6 +305,7 @@ function PatientInput(props: WorkOrderFormProps) {
         <List aside={<PatientFilterSidebar />} resource={"patient"}
             actions={<PatientListActions />}
             exporter={false}
+            title={false}
             perPage={25}
             sx={{
                 width: "100%"
@@ -335,7 +381,9 @@ const WorkOrderToolbar = () => {
     )
 };
 
+const showDetailOnMode: Array<WorkOrderActionKeys> = ["SHOW", "EDIT"];
 export default function WorkOrderForm(props: WorkOrderFormProps) {
+
     return (
         <TabbedForm toolbar={false} >
             <TabbedForm.Tab label="Patient">
@@ -349,7 +397,7 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
                 <WorkOrderToolbar />
                 <TestInput {...props} />
             </TabbedForm.Tab>
-            {props.mode !== Action.CREATE && (
+            {showDetailOnMode.includes(props.mode) && (
                 <TabbedForm.Tab label="Detail">
                     <WorkOrderToolbar />
                     <div>

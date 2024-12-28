@@ -1,28 +1,46 @@
 import {
     ArrayField,
     Button,
+    ChipField,
+    CreateButton,
     Datagrid,
     DateField,
+    DeleteButton,
     EditButton,
+    Labeled,
+    Link,
     ReferenceField,
     ReferenceManyField,
     Show,
+    SimpleList,
     SimpleShowLayout,
+    SingleFieldList,
+    TabbedShowLayout,
     TextField,
     TopToolbar,
+    useDeleteMany,
+    useGetRecordId,
+    useListContext,
     useNotify,
     useRecordContext,
+    useRefresh,
     WithRecord,
-    WrapperField
+    WrapperField,
+    type ButtonProps
 } from "react-admin";
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import PrintIcon from '@mui/icons-material/Print';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import Stack from "@mui/material/Stack";
 import Barcode from "react-barcode";
 import React from "react";
-import {useReactToPrint} from "react-to-print";
+import { useReactToPrint } from "react-to-print";
 import Typography from "@mui/material/Typography";
-import {useMutation} from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
+import AddIcon from '@mui/icons-material/Add';
+import { Card, CardContent } from "@mui/material";
 
 const barcodePageStyle = `
 @media all {
@@ -61,7 +79,7 @@ const barcodePageStyle = `
 `
 
 
-const PrintBarcodeButton = ({barcodeRef}: { barcodeRef: React.RefObject<any> }) => {
+const PrintBarcodeButton = ({ barcodeRef }: { barcodeRef: React.RefObject<any> }) => {
     const reactToPrint = useReactToPrint({
         contentRef: barcodeRef,
         pageStyle: barcodePageStyle,
@@ -75,139 +93,244 @@ const PrintBarcodeButton = ({barcodeRef}: { barcodeRef: React.RefObject<any> }) 
 
     return (
         <Button label="Print Barcode" onClick={handleClick}>
-            <PrintIcon/>
+            <PrintIcon />
         </Button>
     );
 }
 
 const RunSingleWorkOrderButton = () => {
-        const notify = useNotify();
-        const data = useRecordContext()
-        const {mutate, isPending} = useMutation({
-            mutationFn: async (data: any) => {
-                const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data),
-                });
-
-                if (!response.ok) {
-                    const responseJson = await response.json();
-                    throw new Error(responseJson.error);
-                }
-
-                return response.json();
-            },
-            onSuccess: () => {
-                notify('Success run');
-            },
-            onError: (error) => {
-                notify('Error:' + error.message, {
-                    type: 'error',
-                });
-            },
-        })
-
-        const handleClick = () => {
-            mutate({
-                work_order_ids: [data?.id]
+    const notify = useNotify();
+    const data = useRecordContext()
+    const { mutate, isPending } = useMutation({
+        mutationFn: async (data: any) => {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
             });
+
+            if (!response.ok) {
+                const responseJson = await response.json();
+                throw new Error(responseJson.error);
+            }
+
+            return response.json();
+        },
+        onSuccess: () => {
+            notify('Success run');
+        },
+        onError: (error) => {
+            notify('Error:' + error.message, {
+                type: 'error',
+            });
+        },
+    })
+
+    const handleClick = () => {
+        mutate({
+            work_order_ids: [data?.id]
+        });
+    }
+
+    return (
+        <Button label="Run Work Order" onClick={handleClick} disabled={isPending}>
+            <PlayCircleFilledIcon />
+        </Button>
+    );
+}
+
+const AddTestButton = (props: ButtonProps) => {
+    const record = useRecordContext();
+
+    return (
+        <Link to={`/work-order/${record?.id}/add-test`}>
+            <Button label="Add Test" {...props}>
+                <AddIcon />
+            </Button>
+        </Link>
+    );
+}
+
+const BulkEditButton = ({ patientIDs, workOrderID }: { patientIDs?: number[], workOrderID?: number }) => {
+    const recordId = workOrderID ?? useGetRecordId();
+
+    const generateUrl = (patientIDs?: number[]) => {
+        const urlParams = new URLSearchParams();
+        if (patientIDs) {
+            patientIDs.forEach(id => urlParams.append('patient_id', id.toString()));
         }
 
-        return (
-            <Button label="Run Work Order" onClick={handleClick} disabled={isPending}>
-                <PlayCircleFilledIcon/>
-            </Button>
-        );
+        return `/work-order/${recordId}/add-test/1?${urlParams.toString()}`;
     }
-;
 
-function WorkOrderShowActions({barcodeRef}: { barcodeRef: React.RefObject<any> }) {
+    return (
+        <Link to={generateUrl(patientIDs)}>
+            <Button label="Edit" color="secondary" variant="contained">
+                <EditIcon />
+            </Button>
+        </Link>
+    );
+}
+
+const BulkDeleteButton = ({ patientIDs, workOrderID }: { patientIDs?: number[], workOrderID?: number }) => {
+    const recordId = workOrderID ?? useGetRecordId();
+    const notify = useNotify();
+    const refresh = useRefresh();
+
+    const [deleteMany, { isPending, error }] = useDeleteMany(`work-order/${recordId}/test`, { ids: patientIDs }, {
+        onError: (error: Error) => {
+            notify('Error:' + error.message, {
+                type: 'error',
+            });
+        },
+        onSuccess: () => {
+            refresh();
+            notify('Success delete', {
+                type: 'success',
+            });
+        },
+    });
+
+    return (
+        <Button label="Delete" onClick={() => {
+            deleteMany();
+        }} disabled={isPending} color="error" variant="contained">
+            <DeleteIcon />
+        </Button>
+    );
+}
+
+
+function WorkOrderShowActions({ barcodeRef }: { barcodeRef: React.RefObject<any> }) {
     return (
         <TopToolbar>
-            <RunSingleWorkOrderButton/>
-            <PrintBarcodeButton barcodeRef={barcodeRef}/>
-            <EditButton/>
+            <RunSingleWorkOrderButton />
+            <PrintBarcodeButton barcodeRef={barcodeRef} />
+            <AddTestButton />
         </TopToolbar>
+    )
+}
+
+function PatientListBulkAction() {
+    const { selectedIds } = useListContext();
+
+    return (
+        <>
+            <BulkEditButton patientIDs={selectedIds} />
+            <BulkDeleteButton patientIDs={selectedIds} />
+        </>
+    )
+}
+
+const PatientTestEmpty = () => {
+    return (
+        <Card>
+            <CardContent sx={{
+                display: "flex",
+                justifyContent: "center",
+                flexDirection: "column",
+                gap: 2,
+            }}>
+                <Typography fontSize={24} >No patient test found</Typography>
+                <AddTestButton variant="contained" color="primary" />
+            </CardContent>
+        </Card>
     )
 }
 
 export function WorkOrderShow() {
     const barcodeRef = React.useRef<any>(null);
+    const workOrderID = useGetRecordId();
 
     return (
-        <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef}/>}>
-            <SimpleShowLayout>
-                <TextField source="id"/>
-                <TextField source="status"/>
-                <TextField source="created_at"/>
-                <TextField source="updated_at"/>
-                <ReferenceManyField reference={"feature-list-observation-type"} target={"id"}
-                                    source={"observation_requests"}>
-                    <Datagrid bulkActionButtons={false}>
-                        <TextField source="id"/>
-                        <TextField source="name"/>
-                        <TextField source="additional_info.type"/>
-                    </Datagrid>
-                </ReferenceManyField>
-                <ArrayField source={"specimen_list"} label={"Specimens"}>
-                    <Datagrid bulkActionButtons={false}>
-                        <TextField source="id"/>
-                        <ReferenceField reference={"patient"} source={"patient_id"}/>
-                        <TextField source="type"/>
-                        <WrapperField source={"barcode"} label={"Barcode"} textAlign={"center"}>
-                            <Stack>
+        <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef} />}>
+            <TabbedShowLayout>
+                <TabbedShowLayout.Tab label="Test">
+                    <ArrayField source={"patient_list"} label={"Patient Test"} >
+                        <Datagrid rowClick={false} bulkActionButtons={<PatientListBulkAction />} empty={<PatientTestEmpty />}>
+                            <ReferenceField reference={"patient"} source={"id"} label={"Patient"} textAlign="center" />
+                            <ArrayField source={"specimen_list"} label={"Specimen"} textAlign="center" >
+                                <Datagrid bulkActionButtons={false} rowClick={false} hover={false}>
+                                    <ChipField source={"type"} textAlign={"center"} />
+                                    <WrapperField source={"barcode"} label={"Barcode"} textAlign={"center"}>
+                                        <Stack>
+                                            <WithRecord render={(record: any) => {
+                                                return (
+                                                    <Stack gap={0} justifyContent={"center"} alignItems={"center"}>
+                                                        <Barcode value={record.barcode} displayValue={false} />
+                                                        <Typography
+                                                            className={"barcode-text"}
+                                                            fontSize={12}
+                                                            sx={{
+                                                                margin: 0,
+                                                            }}>{record.barcode}</Typography>
+                                                    </Stack>
+                                                )
+                                            }} />
+                                        </Stack>
+                                    </WrapperField>
+                                    <ArrayField source={"observation_requests"} label={`Observation Requests`} textAlign="center">
+                                        <SingleFieldList linkType="false" sx={{
+                                            maxHeight: "200px",
+                                            overflow: "scroll",
+                                        }}>
+                                            <ChipField source={"test_code"} textAlign={"center"} clickable={false} />
+                                        </SingleFieldList>
+                                    </ArrayField>
+                                </Datagrid>
+                            </ArrayField>
+                            <DateField source="updated_at" showTime textAlign="center" />
+                            <WrapperField label="Actions">
                                 <WithRecord render={(record: any) => {
                                     return (
-                                        <Stack gap={0} justifyContent={"center"} alignItems={"center"}>
-                                            <Barcode value={record.barcode} displayValue={false}/>
+                                        <Stack gap={1}>
+                                            <BulkEditButton patientIDs={[record.id]} workOrderID={Number(workOrderID)} />
+                                            <BulkDeleteButton patientIDs={[record.id]} workOrderID={Number(workOrderID)} />
+                                        </Stack>
+                                    )
+                                }} />
+                            </WrapperField>
+                        </Datagrid>
+                    </ArrayField>
+                    {/*Below is a barcode component for printing only, it will be hidden on the screen*/}
+                    <WithRecord render={(record: any) => {
+                        return (
+                            <Stack ref={barcodeRef} sx={{
+                                display: "none",
+                            }}>
+                                {record?.specimen_list?.map((specimen: any) => {
+                                    return (
+                                        <Stack gap={0} justifyContent={"center"} alignItems={"center"}
+                                            className={"barcode-container"}>
                                             <Typography
                                                 className={"barcode-text"}
                                                 fontSize={12}
                                                 sx={{
                                                     margin: 0,
-                                                }}>{record.barcode}</Typography>
+                                                }}>{specimen.patient.first_name} {specimen.patient.last_name}</Typography>
+                                            <Barcode value={specimen.barcode} displayValue={false} />
+                                            <Typography
+                                                className={"barcode-text"}
+                                                fontSize={12}
+                                                sx={{
+                                                    margin: 0,
+                                                }}>{specimen.barcode}</Typography>
                                         </Stack>
                                     )
-                                }}/>
+                                })}
                             </Stack>
-                        </WrapperField>
-                        <DateField source="created_at"/>
-                        <DateField source="updated_at"/>
-                    </Datagrid>
-                </ArrayField>
-                {/*Below is a barcode component for printing only, it will be hidden on the screen*/}
-                <WithRecord render={(record: any) => {
-                    return (
-                        <Stack ref={barcodeRef} sx={{
-                            display: "none",
-                        }}>
-                            {record?.specimen_list?.map((specimen: any) => {
-                                return (
-                                    <Stack gap={0} justifyContent={"center"} alignItems={"center"}
-                                           className={"barcode-container"}>
-                                        <Typography
-                                            className={"barcode-text"}
-                                            fontSize={12}
-                                            sx={{
-                                                margin: 0,
-                                            }}>{specimen.patient.first_name} {specimen.patient.last_name}</Typography>
-                                        <Barcode value={specimen.barcode} displayValue={false}/>
-                                        <Typography
-                                            className={"barcode-text"}
-                                            fontSize={12}
-                                            sx={{
-                                                margin: 0,
-                                            }}>{specimen.barcode}</Typography>
-                                    </Stack>
-                                )
-                            })}
-                        </Stack>
-                    )
-                }}/>
-            </SimpleShowLayout>
+                        )
+                    }} />
+                </TabbedShowLayout.Tab>
+                <TabbedShowLayout.Tab label="Detail">
+                    <TextField source="id" />
+                    <ChipField source="status" />
+                    <DateField source="created_at" showTime />
+                    <DateField source="updated_at" showTime />
+                </TabbedShowLayout.Tab>
+            </TabbedShowLayout>
         </Show>
     )
 }

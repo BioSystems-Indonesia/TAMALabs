@@ -45,10 +45,14 @@ func (p WorkOrderUseCase) Create(req *entity.WorkOrder) error {
 	return p.workOrderRepo.Create(req)
 }
 
-func (p WorkOrderUseCase) Update(req *entity.WorkOrder) error {
-	return p.workOrderRepo.Update(req)
+func (p WorkOrderUseCase) AddTest(req *entity.WorkOrder) error {
+	return p.workOrderRepo.AddTest(req)
 }
 
 func (p WorkOrderUseCase) Delete(id int64) error {
 	return p.workOrderRepo.Delete(id)
+}
+
+func (p WorkOrderUseCase) DeleteTest(workOrderID int64, patientID int64) error {
+	return p.workOrderRepo.DeleteTest(workOrderID, patientID)
 }
