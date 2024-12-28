@@ -72,3 +72,19 @@ func CompareSlices[T comparable](old, new []T) (toDelete []T, toCreate []T) {
 
 	return toDelete, toCreate
 }
+
+func Map[T any, U any](input []T, transform func(T) U) []U {
+	var result []U
+	for _, v := range input {
+		result = append(result, transform(v))
+	}
+	return result
+}
+
+func Flatten[T any](input [][]T) []T {
+	var result []T
+	for _, subArray := range input {
+		result = append(result, subArray...)
+	}
+	return result
+}

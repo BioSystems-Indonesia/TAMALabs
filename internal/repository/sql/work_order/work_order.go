@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/labstack/gommon/log"
@@ -68,10 +69,10 @@ func (r WorkOrderRepository) FindManyByID(ctx context.Context, id []int64) ([]en
 func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
 	var workOrder entity.WorkOrder
 	err := r.db.Where("id = ?", id).
-		Preload("Specimen").
-		Preload("Specimen.ObservationRequest").
-		Preload("Specimen.Patient").
-		Preload("Patient").First(&workOrder).Error
+		Preload("Patient").
+		Preload("Patient.Specimen", "order_id = ?", id).
+		Preload("Patient.Specimen.ObservationRequest").
+		First(&workOrder).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return entity.WorkOrder{}, entity.ErrNotFound
 	}
@@ -79,20 +80,6 @@ func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
 	if err != nil {
 		return entity.WorkOrder{}, fmt.Errorf("error finding workOrder: %w", err)
 	}
-
-	workOrder.PatientIDs = make([]int64, len(workOrder.Patient))
-	for i, patient := range workOrder.Patient {
-		workOrder.PatientIDs[i] = patient.ID
-	}
-	workOrder.PatientIDs = util.Unique(workOrder.PatientIDs)
-
-	workOrder.ObservationRequests = make([]string, 0)
-	for _, specimen := range workOrder.Specimen {
-		for _, observationRequest := range specimen.ObservationRequest {
-			workOrder.ObservationRequests = append(workOrder.ObservationRequests, observationRequest.TestCode)
-		}
-	}
-	workOrder.ObservationRequests = util.Unique(workOrder.ObservationRequests)
 
 	return workOrder, nil
 }
@@ -112,7 +99,7 @@ func (r WorkOrderRepository) Create(workOrder *entity.WorkOrder) error {
 	})
 }
 
-func (r WorkOrderRepository) Update(workOrder *entity.WorkOrder) error {
+func (r WorkOrderRepository) AddTest(workOrder *entity.WorkOrder) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		err := r.deleteUnusedRelation(tx, workOrder)
 		if err != nil {
@@ -124,7 +111,8 @@ func (r WorkOrderRepository) Update(workOrder *entity.WorkOrder) error {
 			return err
 		}
 
-		err = tx.Save(workOrder).Error
+		err = tx.Model(entity.WorkOrder{}).Where("id = ?", workOrder.ID).
+			Update("status", entity.WorkOrderStatusPending).Error
 		if err != nil {
 			return err
 		}
@@ -139,45 +127,31 @@ func (r WorkOrderRepository) deleteUnusedRelation(tx *gorm.DB, workOrder *entity
 		return err
 	}
 
-	toDeletePatient, _ := util.CompareSlices(oldWorkOrder.PatientIDs, workOrder.PatientIDs)
-	for _, patientID := range toDeletePatient {
-		var specimens []entity.Specimen
-		err = tx.Find(&specimens, "order_id = ? AND patient_id = ?", workOrder.ID, patientID).Error
-		if err != nil {
-			return fmt.Errorf("error finding specimen work_order:%d patient:%d: %w", workOrder.ID, patientID, err)
-		}
-
-		for _, s := range specimens {
-			err = tx.Delete(&entity.Specimen{}, "id = ?", s.ID).Error
-			if err != nil {
-				return fmt.Errorf("error deleting specimen specimen:%d: %w", s.ID, err)
-			}
-
-			var observationRequests []entity.ObservationRequest
-			err = tx.Delete(&observationRequests, "specimen_id = ?", s.ID).Error
-			if err != nil {
-				return fmt.Errorf("error deleting observationRequest specimen:%d: %w", s.ID, err)
-			}
-		}
-
-		err = tx.Delete(&entity.WorkOrderPatient{}, "work_order_id = ? AND patient_id = ?", workOrder.ID, patientID).Error
-		if err != nil {
-			return fmt.Errorf("error deleting workOrderPatient work_order:%d patient:%d: %w", workOrder.ID, patientID, err)
-		}
-	}
+	selectedPatient := util.Filter(oldWorkOrder.Patient, func(patient entity.Patient) bool {
+		return slices.Contains(workOrder.PatientIDs, patient.ID)
+	})
+	selectedPatientObservationRequestCodes := util.Unique(util.Flatten(
+		util.Map(selectedPatient, func(patient entity.Patient) []string {
+			return util.Flatten(util.Map(patient.Specimen, func(specimen entity.Specimen) []string {
+				return util.Map(specimen.ObservationRequest, func(observationRequest entity.ObservationRequest) string {
+					return observationRequest.TestCode
+				})
+			}))
+		})))
 
 	toDeleteObservationRequest, _ := util.CompareSlices(
-		oldWorkOrder.ObservationRequests,
+		selectedPatientObservationRequestCodes,
 		workOrder.ObservationRequests,
 	)
 	for _, observationRequestID := range toDeleteObservationRequest {
 		var specimentIDs []int64
-		err = tx.Model(entity.Specimen{}).Where("order_id = ?", workOrder.ID).Pluck("id", &specimentIDs).Error
+		err = tx.Model(entity.Specimen{}).Where("order_id = ? and patient_id in (?)", workOrder.ID, workOrder.PatientIDs).
+			Pluck("id", &specimentIDs).Error
 		if err != nil {
 			return fmt.Errorf("error finding specimen work_order:%d: %w", workOrder.ID, err)
 		}
 
-		err := tx.Model(&entity.ObservationRequest{}).
+		err = tx.Model(&entity.ObservationRequest{}).
 			Where("specimen_id in (?) AND test_code = ?", specimentIDs, observationRequestID).
 			Delete(&entity.ObservationRequest{}).Error
 		if err != nil {
@@ -296,4 +270,31 @@ func (r WorkOrderRepository) Delete(id int64) error {
 	}
 
 	return nil
+}
+
+func (r WorkOrderRepository) DeleteTest(workOrderID int64, patientID int64) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		err := tx.Where("patient_id = ? and work_order_id = ?", patientID, workOrderID).
+			Delete(&entity.WorkOrderPatient{}).Error
+		if err != nil {
+			return fmt.Errorf("error updating workOrderPatient: %w", err)
+		}
+
+		err = tx.Where("order_id = ? and patient_id = ?", workOrderID, patientID).
+			Delete(&entity.Specimen{}).Error
+		if err != nil {
+			return fmt.Errorf("error updating specimen: %w", err)
+		}
+
+		queryGetSpecimenID := tx.Model(entity.Specimen{}).Where("order_id = ? and patient_id = ?", workOrderID, patientID).
+			Select("id")
+		err = tx.
+			Where("specimen_id in (?)", queryGetSpecimenID).
+			Delete(&entity.ObservationRequest{}).Error
+		if err != nil {
+			return fmt.Errorf("error updating observationRequest: %w", err)
+		}
+
+		return nil
+	})
 }

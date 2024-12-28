@@ -1,6 +1,7 @@
 package util
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -191,4 +192,104 @@ func TestCompareSlicesEdgeCases(t *testing.T) {
 		assert.ElementsMatch(t, []int{1}, toDelete)
 		assert.ElementsMatch(t, []int{2}, toCreate)
 	})
+}
+
+// TestMap tests the Map function with different use cases
+func TestMap(t *testing.T) {
+	// Test 1: Transforming a slice of integers to their squares
+	ints := []int{1, 2, 3, 4, 5}
+	expectedSquares := []int{1, 4, 9, 16, 25}
+	squares := Map(ints, func(n int) int {
+		return n * n
+	})
+	for i, v := range squares {
+		if v != expectedSquares[i] {
+			t.Errorf("Test 1: Expected %d, got %d", expectedSquares[i], v)
+		}
+	}
+
+	// Test 2: Transforming a slice of strings to uppercase
+	strs := []string{"go", "is", "awesome"}
+	expectedUppercase := []string{"GO", "IS", "AWESOME"}
+	uppercased := Map(strs, func(s string) string {
+		return strings.ToUpper(s)
+	})
+	for i, v := range uppercased {
+		if v != expectedUppercase[i] {
+			t.Errorf("Test 2: Expected %s, got %s", expectedUppercase[i], v)
+		}
+	}
+
+	// Test 3: Transforming an empty slice
+	empty := []int{}
+	expectedEmpty := []int{}
+	emptyResult := Map(empty, func(n int) int {
+		return n * n
+	})
+	if len(emptyResult) != len(expectedEmpty) {
+		t.Errorf("Test 3: Expected %v, got %v", expectedEmpty, emptyResult)
+	}
+
+	// Test 4: Transforming a slice of strings (edge case)
+	strsEdge := []string{"a", "b", "c"}
+	expectedEdge := []string{"A", "B", "C"}
+	edgeResult := Map(strsEdge, func(s string) string {
+		return strings.ToUpper(s)
+	})
+	for i, v := range edgeResult {
+		if v != expectedEdge[i] {
+			t.Errorf("Test 4: Expected %s, got %s", expectedEdge[i], v)
+		}
+	}
+}
+
+func TestFlatten(t *testing.T) {
+	// Test 1: Flatten a 2D slice of integers
+	ints := [][]int{
+		{1, 2, 3},
+		{4, 5, 6},
+		{7, 8},
+	}
+	expectedInts := []int{1, 2, 3, 4, 5, 6, 7, 8}
+	flattenedInts := Flatten(ints)
+	for i, v := range flattenedInts {
+		if v != expectedInts[i] {
+			t.Errorf("Test 1: Expected %d, got %d", expectedInts[i], v)
+		}
+	}
+
+	// Test 2: Flatten a 2D slice of strings
+	strs := [][]string{
+		{"hello", "world"},
+		{"go", "is", "awesome"},
+	}
+	expectedStrs := []string{"hello", "world", "go", "is", "awesome"}
+	flattenedStrs := Flatten(strs)
+	for i, v := range flattenedStrs {
+		if v != expectedStrs[i] {
+			t.Errorf("Test 2: Expected %s, got %s", expectedStrs[i], v)
+		}
+	}
+
+	// Test 3: Flatten an empty 2D slice
+	empty := [][]int{}
+	expectedEmpty := []int{}
+	flattenedEmpty := Flatten(empty)
+	if len(flattenedEmpty) != len(expectedEmpty) {
+		t.Errorf("Test 3: Expected %v, got %v", expectedEmpty, flattenedEmpty)
+	}
+
+	// Test 4: Flatten a 2D slice with empty inner slices
+	withEmptySubArrays := [][]int{
+		{1, 2},
+		{},
+		{3, 4},
+	}
+	expectedWithEmptySubArrays := []int{1, 2, 3, 4}
+	flattenedWithEmptySubArrays := Flatten(withEmptySubArrays)
+	for i, v := range flattenedWithEmptySubArrays {
+		if v != expectedWithEmptySubArrays[i] {
+			t.Errorf("Test 4: Expected %d, got %d", expectedWithEmptySubArrays[i], v)
+		}
+	}
 }
