@@ -8,6 +8,7 @@ import { PatientCreate, PatientEdit, PatientList, PatientShow } from "./patient"
 import UserIcon from '@mui/icons-material/Person';
 import ScienceIcon from '@mui/icons-material/Science';
 import BiotechIcon from '@mui/icons-material/Biotech';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import { WorkOrderAddTest, WorkOrderCreate, WorkOrderEdit, WorkOrderList } from "./workOrder";
 import { ObservationRequestList, ObservationRequestShow } from "./observationRequest";
 import { SpecimenList, SpecimenShow } from "./specimen";
@@ -35,6 +36,13 @@ const App = () => {
         >
             <Route path="/:id/add-test*" element={<WorkOrderAddTest />} />
         </Resource>
+        <Resource name="result" list={SpecimenList} show={SpecimenShow}
+                  hasCreate={false}
+                  hasEdit={false}
+                  hasShow={true}
+                  icon={AssessmentIcon}
+                  recordRepresentation={record => `#${record.id} - ${record.type}`}
+        />
         <Resource name="patient" list={PatientList} show={PatientShow} edit={PatientEdit} create={PatientCreate}
             hasCreate={true}
             hasEdit={true}

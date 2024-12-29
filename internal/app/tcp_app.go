@@ -3,11 +3,23 @@ package app
 import (
 	"github.com/google/wire"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
+	"github.com/oibacidem/lims-hl-seven/internal/repository"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
-	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
-	hlsUC "github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase"
+	analyzerUC "github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
+)
+
+var tcpUsecaseSet = wire.NewSet(
+	analyzerUC.NewUsecase,
+	wire.Bind(new(usecase.Analyzer), new(*analyzerUC.Usecase)),
+)
+
+var tcpRepositorySet = wire.NewSet(
+	observation_result.NewRepository,
+	wire.Bind(new(repository.ObservationResult), new(*observation_result.Repository)),
+	observation_request.NewRepository,
+	wire.Bind(new(repository.ObservationRequest), new(*observation_request.Repository)),
 )
 
 var (
@@ -16,11 +28,11 @@ var (
 		provideValidator,
 		provideDB,
 		provideCache,
-		hlsRepo.NewRepository,
-		observation_result.NewRepository,
-		observation_request.NewRepository,
-		specimen.NewRepository,
-		hlsUC.NewUsecase,
+
+		tcpRepositorySet,
+
+		tcpUsecaseSet,
+
 		tcp.NewHlSevenHandler,
 		provideTCP,
 		provideTCPHandler,

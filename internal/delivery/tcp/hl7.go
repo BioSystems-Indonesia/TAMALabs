@@ -9,16 +9,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h251"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 )
 
 // HlSevenHandler is a struct that contains the handler of the REST server.
 type HlSevenHandler struct {
-	AnalyzerUsecase *analyzer.Usecase
+	AnalyzerUsecase usecase.Analyzer
 }
 
 // NewHlSevenHandler creates a new instance of HlSevenHandler.
-func NewHlSevenHandler(analyzerUsecase *analyzer.Usecase) *HlSevenHandler {
+func NewHlSevenHandler(analyzerUsecase usecase.Analyzer) *HlSevenHandler {
 	return &HlSevenHandler{
 		AnalyzerUsecase: analyzerUsecase,
 	}

@@ -19,6 +19,7 @@ type Handler struct {
 	*FeatureListHandler
 	*ObservationRequestHandler
 	*TestTypeHandler
+	*ResultHandler
 }
 
 func RegisterMiddleware(e *echo.Echo) {
@@ -113,7 +114,13 @@ func RegisterRoutes(e *echo.Echo, handler *Handler, deviceHandler *DeviceHandler
 
 	testType := v1.Group("/test-type")
 	{
-		testType.GET("", handler.FindTestType)
+		testType.GET("", handler.ListTestType)
+	}
+
+	result := v1.Group("/result")
+	{
+		result.GET("", handler.ListResult)
+		result.GET("/:barcode", handler.GetResult)
 	}
 
 	handler.RegisterFeatureList(v1)

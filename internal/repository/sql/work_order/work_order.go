@@ -66,6 +66,20 @@ func (r WorkOrderRepository) FindManyByID(ctx context.Context, id []int64) ([]en
 	}
 	return workOrders, nil
 }
+
+func (r WorkOrderRepository) FindByStatus(ctx context.Context, status entity.WorkOrderStatus) ([]entity.WorkOrder, error) {
+	var workOrder []entity.WorkOrder
+	err := r.db.Where("status = ?", status).
+		Preload("Patient").
+		Preload("Patient.Specimen").
+		Preload("Patient.Specimen.ObservationResult").
+		Find(&workOrder).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	return workOrder, nil
+}
+
 func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
 	var workOrder entity.WorkOrder
 	err := r.db.Where("id = ?", id).

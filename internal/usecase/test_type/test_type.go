@@ -3,14 +3,14 @@ package test_type
 import (
 	"context"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
+	"github.com/oibacidem/lims-hl-seven/internal/repository"
 )
 
 type Usecase struct {
-	TestTypeRepository *test_type.Repository
+	TestTypeRepository repository.TestType
 }
 
-func NewUsecase(testTypeRepository *test_type.Repository) *Usecase {
+func NewUsecase(testTypeRepository repository.TestType) *Usecase {
 	return &Usecase{TestTypeRepository: testTypeRepository}
 }
 

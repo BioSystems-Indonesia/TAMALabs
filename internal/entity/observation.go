@@ -27,19 +27,21 @@ func (o ObservationRequest) GetOrderControlNode() string {
 }
 
 type ObservationResult struct {
-	ID             int64     `json:"id" gorm:"primaryKey;autoIncrement"`
-	SpecimenID     int64     `json:"specimen_id"`
-	Code           string    `json:"code"`
-	Description    string    `json:"description"`
-	Values         []string  `json:"values" gorm:"type:json"` // Using JSON for the slice
-	Type           string    `json:"type"`
-	Unit           string    `json:"unit"`
-	ReferenceRange string    `json:"reference_range"`
-	Date           time.Time `json:"date"`
-	AbnormalFlag   []string  `json:"abnormal_flag" gorm:"type:json"` // Using JSON for the slice
-	Comments       string    `json:"comments"`
-	CreatedAt      time.Time `json:"created_at" gorm:"not null"`
-	UpdatedAt      time.Time `json:"updated_at" gorm:"not null"`
+	ID             int64           `json:"id" gorm:"primaryKey;autoIncrement"`
+	SpecimenID     int64           `json:"specimen_id"`
+	Code           string          `json:"code"`
+	Description    string          `json:"description"`
+	Values         JSONStringArray `json:"values" gorm:"type:json"` // Using JSON for the slice
+	Type           string          `json:"type"`
+	Unit           string          `json:"unit"`
+	ReferenceRange string          `json:"reference_range"`
+	Date           time.Time       `json:"date"`
+	AbnormalFlag   JSONStringArray `json:"abnormal_flag" gorm:"type:json"` // Using JSON for the slice
+	Comments       string          `json:"comments"`
+	CreatedAt      time.Time       `json:"created_at" gorm:"not null"`
+	UpdatedAt      time.Time       `json:"updated_at" gorm:"not null"`
+
+	TestType TestType `json:"test_type" gorm:"foreignKey:Code;references:Code" validate:"required"`
 }
 
 type ObservationRequestGetManyRequest struct {
