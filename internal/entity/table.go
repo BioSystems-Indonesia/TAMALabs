@@ -177,10 +177,17 @@ var TableObservationType = Tables{
 	{ID: "URIC ACID", Name: "URIC ACID", AdditionalInfo: ObservationInfo{Type: ObservationTestTypeStandard}},
 }
 
+var TableDeviceType = Tables{
+	{ID: "BA400", Name: "BA400"},
+	{ID: "BA200", Name: "BA200"},
+	{ID: "OTHER", Name: "OTHER"},
+}
+
 var TableList = map[string]Tables{
 	"sex":               TableSex,
 	"specimen-type":     TableSpecimenType,
 	"specimen-test":     TableSpecimenTest,
 	"observation-type":  TableObservationType,
 	"work-order-status": TableWorkOrderStatus,
+	"device-type":       TableDeviceType,
 }

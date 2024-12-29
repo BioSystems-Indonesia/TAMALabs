@@ -56,3 +56,7 @@ func (p WorkOrderUseCase) Delete(id int64) error {
 func (p WorkOrderUseCase) DeleteTest(workOrderID int64, patientID int64) error {
 	return p.workOrderRepo.DeleteTest(workOrderID, patientID)
 }
+
+func (p WorkOrderUseCase) Update(workOrder *entity.WorkOrder) error {
+	return p.workOrderRepo.Update(workOrder)
+}

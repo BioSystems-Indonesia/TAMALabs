@@ -30,7 +30,7 @@ func NewOML_O33_Specimens(sepeciments []entity.Specimen, date time.Time) []h251.
 func NewOML_O33_Specimen(index int, s entity.Specimen, obr []entity.ObservationRequest, date time.Time) h251.OML_O33_Specimen {
 	var orders = []h251.OML_O33_Order{}
 	for i, o := range obr {
-		orders = append(orders, NewOrder(strconv.Itoa(i+1), date, o.TestCode))
+		orders = append(orders, NewOrder(strconv.Itoa(i+1), date, o.TestCode, o.GetOrderControlNode()))
 	}
 
 	return h251.OML_O33_Specimen{
@@ -112,10 +112,10 @@ func NewOBRUniversalID(id string) h251.CE {
 	}
 }
 
-func NewOrder(setID string, date time.Time, testID string) h251.OML_O33_Order {
+func NewOrder(setID string, date time.Time, testID string, orderControl string) h251.OML_O33_Order {
 	return h251.OML_O33_Order{
 		ORC: &h251.ORC{
-			OrderControl:          "NW",
+			OrderControl:          orderControl,
 			DateTimeOfTransaction: date,
 		},
 		ObservationRequest: &h251.OML_O33_ObservationRequest{
