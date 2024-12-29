@@ -298,3 +298,16 @@ func (r WorkOrderRepository) DeleteTest(workOrderID int64, patientID int64) erro
 		return nil
 	})
 }
+
+func (r WorkOrderRepository) Update(workOrder *entity.WorkOrder) error {
+	res := r.db.Save(workOrder)
+	if res.Error != nil {
+		return fmt.Errorf("error deleting workOrder: %w", res.Error)
+	}
+
+	if res.RowsAffected == 0 {
+		return entity.ErrNotFound
+	}
+
+	return nil
+}

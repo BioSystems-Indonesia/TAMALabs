@@ -83,56 +83,6 @@ export function WorkOrderEdit() {
     )
 }
 
-const RunWorkOrderButton = () => {
-    const { selectedIds } = useListContext();
-    const refresh = useRefresh();
-    const notify = useNotify();
-    const unselectAll = useUnselectAll('posts');
-
-    const { mutate, isPending } = useMutation({
-        mutationFn: async (data: any) => {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
-
-            if (!response.ok) {
-                const responseJson = await response.json();
-                throw new Error(responseJson.error);
-            }
-
-            return response.json();
-        },
-        onSuccess: () => {
-            notify('Success run');
-            unselectAll();
-        },
-        onError: (error) => {
-            notify('Error:' + error.message, {
-                type: 'error',
-            });
-            refresh();
-        },
-    })
-
-    const handleClick = () => {
-        mutate({
-            work_order_ids: selectedIds
-        });
-    }
-
-    return (
-        <Button label="Run Work Order" onClick={handleClick} disabled={isPending}>
-            <PlayCircleFilledIcon />
-        </Button>
-    );
-}
-    ;
-
-
 export const WorkOrderList = () => (
     <List>
         <Datagrid bulkActionButtons={false}>

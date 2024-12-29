@@ -26,7 +26,12 @@ import {
     useRefresh,
     WithRecord,
     WrapperField,
-    type ButtonProps
+    type ButtonProps,
+    ReferenceInput,
+    AutocompleteInput,
+    Form,
+    required,
+    InputHelperText
 } from "react-admin";
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -40,7 +45,10 @@ import Typography from "@mui/material/Typography";
 import { useMutation } from "@tanstack/react-query";
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import AddIcon from '@mui/icons-material/Add';
-import { Card, CardContent } from "@mui/material";
+import { Autocomplete, TextField as MuiTextField, Card, CardContent, Grid } from "@mui/material";
+import { DeviceCreate, DeviceForm } from "../device";
+import { WorkOrderStatusChipField } from "./ChipFieldStatus";
+import CancelIcon from '@mui/icons-material/Cancel';
 
 const barcodePageStyle = `
 @media all {
@@ -99,43 +107,9 @@ const PrintBarcodeButton = ({ barcodeRef }: { barcodeRef: React.RefObject<any> }
 }
 
 const RunSingleWorkOrderButton = () => {
-    const notify = useNotify();
-    const data = useRecordContext()
-    const { mutate, isPending } = useMutation({
-        mutationFn: async (data: any) => {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
-
-            if (!response.ok) {
-                const responseJson = await response.json();
-                throw new Error(responseJson.error);
-            }
-
-            return response.json();
-        },
-        onSuccess: () => {
-            notify('Success run');
-        },
-        onError: (error) => {
-            notify('Error:' + error.message, {
-                type: 'error',
-            });
-        },
-    })
-
-    const handleClick = () => {
-        mutate({
-            work_order_ids: [data?.id]
-        });
-    }
 
     return (
-        <Button label="Run Work Order" onClick={handleClick} disabled={isPending}>
+        <Button label="Run Work Order" onClick={handleClick} disabled={isPending} variant="contained" type="submit">
             <PlayCircleFilledIcon />
         </Button>
     );
@@ -202,11 +176,55 @@ const BulkDeleteButton = ({ patientIDs, workOrderID }: { patientIDs?: number[], 
     );
 }
 
+const CancelButton = ({ workOrderID }: { workOrderID: number }) => {
+    const notify = useNotify();
+    const refresh = useRefresh();
+    const { mutate, isPending } = useMutation({
+        mutationFn: async (data: any) => {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+            if (!response.ok) {
+                const responseJson = await response.json();
+                throw new Error(responseJson.error);
+            }
+            return response.json();
+        },
+        onSuccess: () => {
+            notify('Success cancel', {
+                type: 'success',
+            });
+            refresh()
+        },
+        onError: (error) => {
+            notify('Error:' + error.message, {
+                type: 'error',
+            });
+        },
+    })
+    return (
+        <Button label="Cancel" onClick={() => {
+            mutate({
+                work_order_id: workOrderID
+            });
+        }} disabled={isPending} color="error" variant="contained">
+            <CancelIcon />
+        </Button>
+    );
+}
 
-function WorkOrderShowActions({ barcodeRef }: { barcodeRef: React.RefObject<any> }) {
+
+function WorkOrderShowActions({ barcodeRef, workOrderID }: { barcodeRef: React.RefObject<any>, workOrderID: number }) {
+    const data = useRecordContext()
     return (
         <TopToolbar>
-            <RunSingleWorkOrderButton />
+            {data?.status === "PENDING" &&
+                <CancelButton workOrderID={workOrderID} />
+            }
             <PrintBarcodeButton barcodeRef={barcodeRef} />
             <AddTestButton />
         </TopToolbar>
@@ -245,9 +263,20 @@ export function WorkOrderShow() {
     const workOrderID = useGetRecordId();
 
     return (
-        <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef} />}>
+        <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef} workOrderID={Number(workOrderID)} />}>
             <TabbedShowLayout>
                 <TabbedShowLayout.Tab label="Test">
+                    <Card>
+                        <CardContent sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            flexDirection: "column",
+                            gap: 2,
+                        }}>
+                            <WorkOrderStatusChipField />
+                            <RunWorkOrderForm />
+                        </CardContent>
+                    </Card>
                     <ArrayField source={"patient_list"} label={"Patient Test"} >
                         <Datagrid rowClick={false} bulkActionButtons={<PatientListBulkAction />} empty={<PatientTestEmpty />}>
                             <ReferenceField reference={"patient"} source={"id"} label={"Patient"} textAlign="center" />
@@ -326,12 +355,93 @@ export function WorkOrderShow() {
                 </TabbedShowLayout.Tab>
                 <TabbedShowLayout.Tab label="Detail">
                     <TextField source="id" />
-                    <ChipField source="status" />
                     <DateField source="created_at" showTime />
                     <DateField source="updated_at" showTime />
                 </TabbedShowLayout.Tab>
             </TabbedShowLayout>
         </Show>
     )
+}
+
+function RunWorkOrderForm() {
+    const notify = useNotify();
+    const refresh = useRefresh();
+    const { mutate, isPending } = useMutation({
+        mutationFn: async (data: any) => {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                const responseJson = await response.json();
+                throw new Error(responseJson.error);
+            }
+
+            return response.json();
+        },
+        onSuccess: () => {
+            notify('Success run', {
+                type: 'success',
+            });
+            refresh()
+        },
+        onError: (error) => {
+            notify('Error:' + error.message, {
+                type: 'error',
+            });
+        },
+    })
+
+    const onSubmit = (data: any) => {
+        if (!data.device_id) {
+            notify('Please select device to run', {
+                type: 'error',
+            });
+            return;
+        }
+
+        mutate({
+            work_order_id: data.id,
+            device_id: data.device_id
+        });
+    }
+
+    return <Form disabled={isPending} onSubmit={onSubmit}>
+        <Grid direction={"row"} sx={{
+            width: "100%",
+        }} container>
+            <Grid item xs={12} md={9} sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+            }}>
+                <Stack width={"100%"}>
+                    <ReferenceInput source={"device_id"} reference={"device"}>
+                        <AutocompleteInput source={"device_id"} validate={[required()]} create={<DeviceForm />} sx={{
+                            margin: 0,
+                        }} helperText={
+                            <Link to={"/device/create"} target="_blank" rel="noopener noreferrer">
+                                <InputHelperText helperText="Create new device"></InputHelperText>
+                            </Link>
+                        }
+                        />
+                    </ReferenceInput>
+                </Stack>
+            </Grid>
+            <Grid item xs={12} md={3} sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+            }}>
+                <Button label="Run Work Order" disabled={isPending} variant="contained" type="submit">
+                    <PlayCircleFilledIcon />
+                </Button>
+            </Grid>
+        </Grid>
+    </Form>;
 }
 

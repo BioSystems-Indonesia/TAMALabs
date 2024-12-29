@@ -1,6 +1,10 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	"github.com/oibacidem/lims-hl-seven/internal/constant"
+)
 
 type ObservationRequest struct {
 	ID              int64     `json:"id" gorm:"primaryKey;autoIncrement"`
@@ -11,6 +15,15 @@ type ObservationRequest struct {
 	SpecimenID      int64     `json:"specimen_id" gorm:"not null;index:observation_request_uniq,unique,priority:1" validate:"required"`
 	CreatedAt       time.Time `json:"created_at" gorm:"not null"`
 	UpdatedAt       time.Time `json:"updated_at" gorm:"not null"`
+}
+
+func (o ObservationRequest) GetOrderControlNode() string {
+	switch o.ResultStatus {
+	case string(constant.ResultStatusDelete):
+		return string(constant.OrderControlNodeCA)
+	default:
+		return string(constant.OrderControlNodeNW)
+	}
 }
 
 type ObservationResult struct {

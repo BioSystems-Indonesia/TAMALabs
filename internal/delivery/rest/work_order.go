@@ -1,12 +1,13 @@
 package rest
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/oibacidem/lims-hl-seven/config"
+	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	workOrderuc "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
@@ -107,23 +108,32 @@ func (h *WorkOrderHandler) RunWorkOrder(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	workOrders, err := h.workOrderUsecase.FindManyByID(c.Request().Context(), req.WorkOrderID)
+	querySpeciment := h.db.Model(entity.Specimen{}).Where("order_id = ?", req.WorkOrderID).Select("id")
+	err := h.db.Model(entity.ObservationRequest{}).Where("specimen_id in (?)", querySpeciment).
+		Update("result_status", constant.ResultStatusSpecimenPending).Error
 	if err != nil {
 		return handleError(c, err)
 	}
 
-	if len(workOrders) == 0 {
-		return handleError(c, entity.ErrNotFound.WithInternal(errors.New("work order not found")))
+	workOrders, err := h.workOrderUsecase.FindOneByID(req.WorkOrderID)
+	if err != nil {
+		return handleError(c, err)
 	}
 
 	device := entity.Device{}
-	tx := h.db.First(&device)
+	tx := h.db.First(&device, req.DeviceID)
 	if tx.Error != nil {
-		return handleError(c, tx.Error)
+		return handleError(c, fmt.Errorf("error finding device: %w", tx.Error))
 	}
 
-	// TODO: Support multiple work order by merge the patient
-	err = ba400.SendToBA400(c.Request().Context(), workOrders[0].Patient, device)
+	err = ba400.SendToBA400(c.Request().Context(), workOrders.Patient, device)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	workOrders.Status = entity.WorkOrderStatusPending
+	workOrders.DeviceID = int64(device.ID)
+	err = h.workOrderUsecase.Update(&workOrders)
 	if err != nil {
 		return handleError(c, err)
 	}
@@ -151,5 +161,45 @@ func (h *WorkOrderHandler) DeleteTestWorkOrder(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, entity.WorkOrder{
 		ID: id,
+	})
+}
+
+func (h *WorkOrderHandler) CancelOrder(c echo.Context) error {
+	var req entity.WorkOrderCancelRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return handleError(c, err)
+	}
+
+	querySpeciment := h.db.Model(entity.Specimen{}).Where("order_id = ?", req.WorkOrderID).Select("id")
+	err := h.db.Model(entity.ObservationRequest{}).Where("specimen_id in (?)", querySpeciment).
+		Update("result_status", constant.ResultStatusDelete).Error
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	workOrders, err := h.workOrderUsecase.FindOneByID(req.WorkOrderID)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	device := entity.Device{}
+	tx := h.db.First(&device, workOrders.DeviceID)
+	if tx.Error != nil {
+		return handleError(c, fmt.Errorf("error finding device: %w", tx.Error))
+	}
+
+	workOrders.Status = entity.WorkOrderCancelled
+	err = ba400.SendToBA400(c.Request().Context(), workOrders.Patient, device)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	err = h.workOrderUsecase.Update(&workOrders)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "ok",
 	})
 }
