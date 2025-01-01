@@ -1,54 +1,46 @@
+import AddIcon from '@mui/icons-material/Add';
+import CancelIcon from '@mui/icons-material/Cancel';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
+import PrintIcon from '@mui/icons-material/Print';
+import { Card, CardContent, Grid } from "@mui/material";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import { useMutation } from "@tanstack/react-query";
+import React from "react";
 import {
     ArrayField,
+    AutocompleteInput,
     Button,
     ChipField,
-    CreateButton,
     Datagrid,
     DateField,
-    DeleteButton,
-    EditButton,
-    Labeled,
+    Form,
+    InputHelperText,
     Link,
     ReferenceField,
-    ReferenceManyField,
+    ReferenceInput,
     Show,
-    SimpleList,
-    SimpleShowLayout,
     SingleFieldList,
     TabbedShowLayout,
     TextField,
     TopToolbar,
+    WithRecord,
+    WrapperField,
+    required,
     useDeleteMany,
     useGetRecordId,
     useListContext,
     useNotify,
     useRecordContext,
     useRefresh,
-    WithRecord,
-    WrapperField,
-    type ButtonProps,
-    ReferenceInput,
-    AutocompleteInput,
-    Form,
-    required,
-    InputHelperText
+    type ButtonProps
 } from "react-admin";
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import PrintIcon from '@mui/icons-material/Print';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import Stack from "@mui/material/Stack";
 import Barcode from "react-barcode";
-import React from "react";
 import { useReactToPrint } from "react-to-print";
-import Typography from "@mui/material/Typography";
-import { useMutation } from "@tanstack/react-query";
-import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
-import AddIcon from '@mui/icons-material/Add';
-import { Autocomplete, TextField as MuiTextField, Card, CardContent, Grid } from "@mui/material";
-import { DeviceCreate, DeviceForm } from "../device";
+import { DeviceForm } from "../device";
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
-import CancelIcon from '@mui/icons-material/Cancel';
 
 const barcodePageStyle = `
 @media all {

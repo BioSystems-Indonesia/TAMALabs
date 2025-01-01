@@ -1,3 +1,12 @@
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Chip from "@mui/material/Chip";
+import Divider from "@mui/material/Divider";
+import Grid from "@mui/material/Grid";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import { useEffect, useState } from "react";
 import {
     CreateButton,
     Datagrid,
@@ -17,28 +26,16 @@ import {
     Toolbar,
     TopToolbar,
     useGetMany,
+    useGetOne,
     useListContext,
     useNotify,
-    useRecordContext,
-    useSaveContext,
-    type Identifier,
-    useGetOne
+    useSaveContext
 } from "react-admin";
 import { useFormContext } from "react-hook-form";
-import { useSearchParams, useParams } from "react-router-dom";
-import { Action, ActionKeys } from "../../types/props.ts";
-import FeatureList from "../../component/FeatureList.tsx";
-import Divider from "@mui/material/Divider";
-import Card from "@mui/material/Card";
-import Chip from "@mui/material/Chip";
-import Grid from "@mui/material/Grid";
-import CardContent from "@mui/material/CardContent";
-import Typography from "@mui/material/Typography";
-import Stack from "@mui/material/Stack";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import { useParams, useSearchParams } from "react-router-dom";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
-import { useEffect, useState } from "react";
-import { CircularProgress } from "@mui/material";
+import FeatureList from "../../component/FeatureList.tsx";
+import { ActionKeys } from "../../types/props.ts";
 
 
 type WorkOrderActionKeys = ActionKeys | "ADD_TEST";
@@ -95,7 +92,7 @@ const PickedTest = () => {
 
 const patientIDsField = "patient_ids";
 
-// eslint-disable-next-line no-unused-vars
+ 
 function TestTable(props: WorkOrderFormProps) {
     const { selectedIds, onSelect } = useListContext();
     const { setValue } = useFormContext();
@@ -234,7 +231,7 @@ function PickedPatient() {
     )
 }
 
-// eslint-disable-next-line no-unused-vars
+ 
 function PatientTable(props: WorkOrderFormProps) {
     const BulkActionButtons = () => {
         return (
