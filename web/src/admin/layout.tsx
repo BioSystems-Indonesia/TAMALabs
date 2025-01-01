@@ -1,7 +1,16 @@
-import Box from '@mui/material/Box';
+import SettingsIcon from '@mui/icons-material/Settings';
+import IconButton from '@mui/material/IconButton';
 import { type ReactNode } from 'react';
-import { AppBar, CheckForApplicationUpdate, Layout, TitlePortal } from 'react-admin';
+import { AppBar, CheckForApplicationUpdate, Layout, Link, LoadingIndicator, LocalesMenuButton, TitlePortal, ToggleThemeButton } from 'react-admin';
 import { useLocation } from "react-router-dom";
+
+const SettingsButton = () => (
+    <Link to="/settings" color={"inherit"} LinkComponent={Link}>
+        <IconButton color="inherit" LinkComponent={Link}>
+            <SettingsIcon />
+        </IconButton>
+    </Link>
+);
 
 const MyAppBar = () => {
     const location = useLocation()
@@ -16,9 +25,16 @@ const MyAppBar = () => {
     return (
         <AppBar color="primary" sx={{
             position: 'fixed',
-        }} alwaysOn={appBarAlwaysOn()}>
+        }} alwaysOn={appBarAlwaysOn()}
+            toolbar={
+                <>
+                    <SettingsButton />
+                    <ToggleThemeButton />
+                    <LoadingIndicator />
+                </>
+            }
+        >
             <TitlePortal />
-            <Box flex="1" />
         </AppBar>
     )
 };

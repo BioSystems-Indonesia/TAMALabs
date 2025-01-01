@@ -81,7 +81,12 @@ func (h *WorkOrderHandler) CreateWorkOrder(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	return c.JSON(http.StatusCreated, req)
+	workOrder, err := h.workOrderUsecase.FindOneByID(req.ID)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusCreated, workOrder)
 }
 
 func (h *WorkOrderHandler) AddTestWorkOrder(c echo.Context) error {

@@ -1,5 +1,5 @@
 // in src/admin/index.tsx
-import { Admin, Resource } from "react-admin";
+import { Admin, CustomRoutes, Resource } from "react-admin";
 import { Route } from "react-router-dom";
 import jsonServerProvider from "ra-data-json-server";
 import LanIcon from '@mui/icons-material/Lan';
@@ -15,11 +15,15 @@ import ListIcon from '@mui/icons-material/List';
 import { WorkOrderShow } from "./workOrder/Show.tsx";
 import { DeviceCreate, DeviceEdit, DeviceList, DeviceShow } from "./device/index.tsx";
 import { TestTypeList, TestTypeShow } from "./testType";
+import Settings from "./settings/index.tsx";
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
 const App = () => {
     return (<Admin dataProvider={dataProvider} layout={DefaultLayout}>
+        <CustomRoutes>
+            <Route path="/settings*" element={<Settings />} />
+        </CustomRoutes>
         <Resource name="work-order" list={WorkOrderList}
             edit={WorkOrderEdit}
             create={WorkOrderCreate}

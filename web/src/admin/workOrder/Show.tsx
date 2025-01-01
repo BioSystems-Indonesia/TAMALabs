@@ -4,7 +4,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import PrintIcon from '@mui/icons-material/Print';
-import { Card, CardContent, Grid } from "@mui/material";
+import { Card, CardContent, Grid, type SxProps, type Theme } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMutation } from "@tanstack/react-query";
@@ -35,14 +35,17 @@ import {
     useNotify,
     useRecordContext,
     useRefresh,
-    type ButtonProps
+    type ButtonProps,
+    useStore
 } from "react-admin";
 import Barcode from "react-barcode";
 import { useReactToPrint } from "react-to-print";
 import { DeviceForm } from "../device";
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
+import type { Size } from '../../types/general';
+import useSettings from '../../hooks/useSettings';
 
-const barcodePageStyle = `
+const barcodePageStyle = (size: Size) => `
 @media all {
   .page-break {
     display: none;
@@ -57,7 +60,7 @@ const barcodePageStyle = `
 
 @media print {
     @page {
-        size: 60mm 45mm;
+        size: ${size.width} ${size.height};
         margin: 0;
         text-align: center;
     }
@@ -75,14 +78,16 @@ const barcodePageStyle = `
         font-size: 12px;
         margin: 0;
     }
-}
-`
+}`
 
-
-const PrintBarcodeButton = ({ barcodeRef }: { barcodeRef: React.RefObject<any> }) => {
+const PrintBarcodeButton = ({ barcodeRef}: { barcodeRef: React.RefObject<any>}) => {
+    const [settings] = useSettings();
     const reactToPrint = useReactToPrint({
         contentRef: barcodeRef,
-        pageStyle: barcodePageStyle,
+        pageStyle: barcodePageStyle({
+            width: `${settings.barcode_size_width}mm`,
+            height: `${settings.barcode_size_height}mm`,
+        }),
         documentTitle: "Barcode",
         ignoreGlobalStyles: true,
     });
@@ -94,15 +99,6 @@ const PrintBarcodeButton = ({ barcodeRef }: { barcodeRef: React.RefObject<any> }
     return (
         <Button label="Print Barcode" onClick={handleClick}>
             <PrintIcon />
-        </Button>
-    );
-}
-
-const RunSingleWorkOrderButton = () => {
-
-    return (
-        <Button label="Run Work Order" onClick={handleClick} disabled={isPending} variant="contained" type="submit">
-            <PlayCircleFilledIcon />
         </Button>
     );
 }
@@ -250,12 +246,14 @@ const PatientTestEmpty = () => {
     )
 }
 
+
 export function WorkOrderShow() {
     const barcodeRef = React.useRef<any>(null);
     const workOrderID = useGetRecordId();
+    const [settings] = useSettings();
 
     return (
-        <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef} workOrderID={Number(workOrderID)} />}>
+        <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef} workOrderID={Number(workOrderID)}  />}>
             <TabbedShowLayout>
                 <TabbedShowLayout.Tab label="Test">
                     <Card>
@@ -315,35 +313,6 @@ export function WorkOrderShow() {
                             </WrapperField>
                         </Datagrid>
                     </ArrayField>
-                    {/*Below is a barcode component for printing only, it will be hidden on the screen*/}
-                    <WithRecord render={(record: any) => {
-                        return (
-                            <Stack ref={barcodeRef} sx={{
-                                display: "none",
-                            }}>
-                                {record?.specimen_list?.map((specimen: any) => {
-                                    return (
-                                        <Stack gap={0} justifyContent={"center"} alignItems={"center"}
-                                            className={"barcode-container"}>
-                                            <Typography
-                                                className={"barcode-text"}
-                                                fontSize={12}
-                                                sx={{
-                                                    margin: 0,
-                                                }}>{specimen.patient.first_name} {specimen.patient.last_name}</Typography>
-                                            <Barcode value={specimen.barcode} displayValue={false} />
-                                            <Typography
-                                                className={"barcode-text"}
-                                                fontSize={12}
-                                                sx={{
-                                                    margin: 0,
-                                                }}>{specimen.barcode}</Typography>
-                                        </Stack>
-                                    )
-                                })}
-                            </Stack>
-                        )
-                    }} />
                 </TabbedShowLayout.Tab>
                 <TabbedShowLayout.Tab label="Detail">
                     <TextField source="id" />
@@ -351,6 +320,41 @@ export function WorkOrderShow() {
                     <DateField source="updated_at" showTime />
                 </TabbedShowLayout.Tab>
             </TabbedShowLayout>
+            {/*Below is a barcode component for printing only, it will be hidden on the screen*/}
+            <WithRecord render={(record: any) => {
+                return (
+                    <Stack ref={barcodeRef}>
+                        {record?.patient_list?.map((patient: any) => {
+                            return patient?.specimen_list?.map((specimen: any) => {
+                                // The width of the barcode paper is approximately 3.91 cm.
+                                // The height of the barcode paper is approximately 2.93 cm.
+                                return (
+                                    <Stack gap={0} justifyContent={"center"} alignItems={"center"}
+                                        className={"barcode-container"} sx={{
+                                            display: "none",
+                                            width: `${settings.barcode_size_width}mm`,
+                                            height: `${settings.barcode_size_height}mm`,
+                                        }}>
+                                        <Typography
+                                            className={"barcode-text"}
+                                            fontSize={12}
+                                            sx={{
+                                                margin: 0,
+                                            }}>{patient.first_name} {patient.last_name}</Typography>
+                                        <Barcode value={specimen.barcode} displayValue={false} />
+                                        <Typography
+                                            className={"barcode-text"}
+                                            fontSize={12}
+                                            sx={{
+                                                margin: 0,
+                                            }}>{specimen.barcode}</Typography>
+                                    </Stack>
+                                )
+                            })
+                        })}
+                    </Stack>
+                )
+            }} />
         </Show>
     )
 }
