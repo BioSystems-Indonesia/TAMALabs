@@ -49,6 +49,7 @@ func provideRestHandler(
 	featureListHandler *rest.FeatureListHandler,
 	observationRequest *rest.ObservationRequestHandler,
 	testTypeHandler *rest.TestTypeHandler,
+	resultHandler *rest.ResultHandler,
 ) *rest.Handler {
 	return &rest.Handler{
 		hlSevenHandler,
@@ -59,6 +60,7 @@ func provideRestHandler(
 		featureListHandler,
 		observationRequest,
 		testTypeHandler,
+		resultHandler,
 	}
 }
 

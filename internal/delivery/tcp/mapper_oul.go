@@ -92,8 +92,8 @@ func mapOULSpecimenToSpecimenEntity(specimen h251.OUL_R22_Specimen) entity.Speci
 	return specimenResult
 }
 
-func mapObservationValueToValues(values []h251.VARIES) []string {
-	var results []string
+func mapObservationValueToValues(values []h251.VARIES) entity.JSONStringArray {
+	var results entity.JSONStringArray
 	for i := range values {
 		results = append(results, fmt.Sprintf("%v", values[i]))
 	}

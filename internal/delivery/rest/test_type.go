@@ -1,25 +1,25 @@
 package rest
 
 import (
+	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
 )
 
 type TestTypeHandler struct {
 	cfg             *config.Schema
-	TestTypeUsecase *test_type.Usecase
+	TestTypeUsecase usecase.TestType
 }
 
-func NewTestTypeHandler(cfg *config.Schema, TestTypeUsecase *test_type.Usecase) *TestTypeHandler {
+func NewTestTypeHandler(cfg *config.Schema, TestTypeUsecase usecase.TestType) *TestTypeHandler {
 	return &TestTypeHandler{cfg: cfg, TestTypeUsecase: TestTypeUsecase}
 }
 
-func (h *TestTypeHandler) FindTestType(c echo.Context) error {
+func (h *TestTypeHandler) ListTestType(c echo.Context) error {
 	var req entity.TestTypeGetManyRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return handleError(c, err)

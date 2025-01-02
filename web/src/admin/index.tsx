@@ -8,14 +8,16 @@ import { PatientCreate, PatientEdit, PatientList, PatientShow } from "./patient"
 import UserIcon from '@mui/icons-material/Person';
 import ScienceIcon from '@mui/icons-material/Science';
 import BiotechIcon from '@mui/icons-material/Biotech';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import { WorkOrderAddTest, WorkOrderCreate, WorkOrderEdit, WorkOrderList } from "./workOrder";
 import { ObservationRequestList, ObservationRequestShow } from "./observationRequest";
 import { SpecimenList, SpecimenShow } from "./specimen";
 import ListIcon from '@mui/icons-material/List';
 import { WorkOrderShow } from "./workOrder/Show.tsx";
 import { DeviceCreate, DeviceEdit, DeviceList, DeviceShow } from "./device/index.tsx";
-import { TestTypeList, TestTypeShow } from "./testType";
 import Settings from "./settings/index.tsx";
+import {TestTypeList, TestTypeShow} from "./testType";
+import {ResultList} from "./result";
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
@@ -35,6 +37,14 @@ const App = () => {
         >
             <Route path="/:id/add-test*" element={<WorkOrderAddTest />} />
         </Resource>
+
+        <Resource name="result" list={ResultList}
+                  hasCreate={false}
+                  hasEdit={false}
+                  hasShow={true}
+                  icon={AssessmentIcon}
+                  recordRepresentation={record => `#${record.barcode}}`}
+        />
         <Resource name="patient" list={PatientList} show={PatientShow} edit={PatientEdit} create={PatientCreate}
             hasCreate={true}
             hasEdit={true}
