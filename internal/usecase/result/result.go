@@ -64,6 +64,7 @@ func (u *Usecase) mapListResult(worksOrders []entity.WorkOrder) []entity.Result 
 				continue
 			}
 			results = append(results, entity.Result{
+				ID:          patient.Specimen[0].Barcode,
 				Date:        workOrder.CreatedAt,
 				Barcode:     patient.Specimen[0].Barcode,
 				PatientName: patient.FirstName + " " + patient.LastName,

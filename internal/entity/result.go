@@ -3,6 +3,8 @@ package entity
 import "time"
 
 type Result struct {
+	// ID is same as barcode
+	ID          string       `json:"id"`
 	Date        time.Time    `json:"date"`
 	Barcode     string       `json:"barcode"`
 	PatientName string       `json:"patient_name"`

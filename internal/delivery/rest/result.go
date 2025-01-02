@@ -1,7 +1,9 @@
 package rest
 
 import (
+	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/oibacidem/lims-hl-seven/config"
@@ -26,6 +28,7 @@ func (h *ResultHandler) ListResult(c echo.Context) error {
 		return handleError(c, err)
 	}
 
+	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(len(results)))
 	return c.JSON(http.StatusOK, results)
 }
 
