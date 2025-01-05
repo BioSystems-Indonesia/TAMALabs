@@ -6,10 +6,20 @@ import (
 )
 
 func main() {
+	go main_tcp()
 	cfg, err := config.New()
 	if err != nil {
 		panic(err)
 	}
 	server := app.InitRestApp(&cfg)
+	server.Serve()
+}
+
+func main_tcp() {
+	cfg, err := config.New()
+	if err != nil {
+		panic(err)
+	}
+	server := app.InitTCPApp(&cfg)
 	server.Serve()
 }
