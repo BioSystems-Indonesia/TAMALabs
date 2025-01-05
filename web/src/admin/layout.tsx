@@ -1,7 +1,7 @@
 import SettingsIcon from '@mui/icons-material/Settings';
 import IconButton from '@mui/material/IconButton';
 import { type ReactNode } from 'react';
-import { AppBar, CheckForApplicationUpdate, Layout, Link, LoadingIndicator, LocalesMenuButton, TitlePortal, ToggleThemeButton } from 'react-admin';
+import { AppBar, CheckForApplicationUpdate, Layout, Link, LoadingIndicator, TitlePortal, ToggleThemeButton } from 'react-admin';
 import { useLocation } from "react-router-dom";
 
 const SettingsButton = () => (

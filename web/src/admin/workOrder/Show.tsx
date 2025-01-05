@@ -4,7 +4,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import PrintIcon from '@mui/icons-material/Print';
-import { Card, CardContent, Grid, type SxProps, type Theme } from "@mui/material";
+import { Card, CardContent, Grid } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMutation } from "@tanstack/react-query";
@@ -35,9 +35,7 @@ import {
     useNotify,
     useRecordContext,
     useRefresh,
-    type ButtonProps,
-    useStore
-} from "react-admin";
+    type ButtonProps} from "react-admin";
 import Barcode from "react-barcode";
 import { useReactToPrint } from "react-to-print";
 import { DeviceForm } from "../device";
@@ -141,7 +139,7 @@ const BulkDeleteButton = ({ patientIDs, workOrderID }: { patientIDs?: number[], 
     const notify = useNotify();
     const refresh = useRefresh();
 
-    const [deleteMany, { isPending, error }] = useDeleteMany(`work-order/${recordId}/test`, { ids: patientIDs }, {
+    const [deleteMany, { isPending }] = useDeleteMany(`work-order/${recordId}/test`, { ids: patientIDs }, {
         onError: (error: Error) => {
             notify('Error:' + error.message, {
                 type: 'error',

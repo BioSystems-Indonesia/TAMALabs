@@ -1,9 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import Stack from "@mui/material/Stack";
 import { useEffect, useState } from "react";
-import { Labeled, NumberInput, SaveButton, TabbedForm, Toolbar, required, useStoreContext, type SaveHandler, type SaveHandlerCallbacks, useNotify } from "react-admin";
+import { Labeled, NumberInput, SaveButton, TabbedForm, Toolbar, required, useStoreContext, type SaveHandler, useNotify } from "react-admin";
 import { settingSchema, Settings, settingsStoreKey, defaultSettings } from "../../types/setting";
-import { set } from 'zod';
 import CircularProgress from '@mui/material/CircularProgress';
 
 
