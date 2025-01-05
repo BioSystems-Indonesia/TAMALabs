@@ -42,10 +42,10 @@ import Barcode from "react-barcode";
 import { useReactToPrint } from "react-to-print";
 import { DeviceForm } from "../device";
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
-import type { Size } from '../../types/general';
+import type { BarcodeStyle } from '../../types/general';
 import useSettings from '../../hooks/useSettings';
 
-const barcodePageStyle = (size: Size) => `
+const barcodePageStyle = (style: BarcodeStyle) => `
 @media all {
   .page-break {
     display: none;
@@ -60,7 +60,7 @@ const barcodePageStyle = (size: Size) => `
 
 @media print {
     @page {
-        size: ${size.width} ${size.height};
+        size: ${style.width} ${style.height};
         margin: 0;
         text-align: center;
     }
@@ -72,6 +72,7 @@ const barcodePageStyle = (size: Size) => `
         flex-direction: column;
         justify-content: center;
         align-items: center;
+        transform: rotate(${style.rotate});
     }
     
     .barcode-text {
@@ -80,13 +81,14 @@ const barcodePageStyle = (size: Size) => `
     }
 }`
 
-const PrintBarcodeButton = ({ barcodeRef}: { barcodeRef: React.RefObject<any>}) => {
+const PrintBarcodeButton = ({ barcodeRef }: { barcodeRef: React.RefObject<any> }) => {
     const [settings] = useSettings();
     const reactToPrint = useReactToPrint({
         contentRef: barcodeRef,
         pageStyle: barcodePageStyle({
             width: `${settings.barcode_size_width}mm`,
             height: `${settings.barcode_size_height}mm`,
+            rotate: `${settings.barcode_orientation === "portrait" ? "-90" : "0"}deg`,
         }),
         documentTitle: "Barcode",
         ignoreGlobalStyles: true,
@@ -253,7 +255,7 @@ export function WorkOrderShow() {
     const [settings] = useSettings();
 
     return (
-        <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef} workOrderID={Number(workOrderID)}  />}>
+        <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef} workOrderID={Number(workOrderID)} />}>
             <TabbedShowLayout>
                 <TabbedShowLayout.Tab label="Test">
                     <Card>
@@ -332,8 +334,6 @@ export function WorkOrderShow() {
                                     <Stack gap={0} justifyContent={"center"} alignItems={"center"}
                                         className={"barcode-container"} sx={{
                                             display: "none",
-                                            width: `${settings.barcode_size_width}mm`,
-                                            height: `${settings.barcode_size_height}mm`,
                                         }}>
                                         <Typography
                                             className={"barcode-text"}

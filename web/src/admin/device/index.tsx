@@ -17,9 +17,8 @@ import {
     TextField,
     TextInput
 } from "react-admin";
-import { Action, ActionKeys } from "../../types/props.ts";
 import FeatureList from "../../component/FeatureList.tsx";
-import { ipAddress } from "../../helper/validation.ts";
+import { Action, ActionKeys } from "../../types/props.ts";
 
 type DeviceFormProps = {
     readonly?: boolean
@@ -50,7 +49,7 @@ export function DeviceForm(props: DeviceFormProps) {
             <FeatureList source={"type"} types={"device-type"}>
                 <AutocompleteInput source={"type"} readOnly={props.readonly} validate={[required()]} />
             </FeatureList>
-            <TextInput source="ip_address" validate={[required(), ipAddress()]} readOnly={props.readonly} />
+            <TextInput source="ip_address" validate={[required()]} readOnly={props.readonly} />
             <NumberInput source="port" validate={[required()]} readOnly={props.readonly} />
         </SimpleForm>
     )

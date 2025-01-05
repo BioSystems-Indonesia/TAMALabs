@@ -6,8 +6,10 @@ import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import {
+    Button,
     CreateButton,
     Datagrid,
     DateField,
@@ -16,6 +18,7 @@ import {
     FilterListSection,
     FilterLiveForm,
     FilterLiveSearch,
+    Link,
     List,
     RadioButtonGroupInput,
     SaveButton,
@@ -31,11 +34,12 @@ import {
     useNotify,
     useSaveContext
 } from "react-admin";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, UseFormWatch, FieldValues } from "react-hook-form";
 import { useParams, useSearchParams } from "react-router-dom";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
 import FeatureList from "../../component/FeatureList.tsx";
 import { ActionKeys } from "../../types/props.ts";
+import { set } from "zod";
 
 
 type WorkOrderActionKeys = ActionKeys | "ADD_TEST";
@@ -92,7 +96,7 @@ const PickedTest = () => {
 
 const patientIDsField = "patient_ids";
 
- 
+
 function TestTable(props: WorkOrderFormProps) {
     const { selectedIds, onSelect } = useListContext();
     const { setValue } = useFormContext();
@@ -231,7 +235,7 @@ function PickedPatient() {
     )
 }
 
- 
+
 function PatientTable(props: WorkOrderFormProps) {
     const BulkActionButtons = () => {
         return (
@@ -316,7 +320,7 @@ function PatientInput(props: WorkOrderFormProps) {
     )
 }
 
-export const WorkOrderSaveButton = () => {
+export const WorkOrderSaveButton = ({disabled}: {disabled?: boolean}) => {
     const { getValues } = useFormContext();
     const { save } = useSaveContext();
     const notify = useNotify();
@@ -351,10 +355,16 @@ export const WorkOrderSaveButton = () => {
     };
 
 
-    return <SaveButton type="button" onClick={handleClick} alwaysEnable size="small" />
+    return <SaveButton type="button" onClick={handleClick} alwaysEnable size="small"/>
+}
+
+const validForm = (watch: UseFormWatch<FieldValues>): boolean => {
+    return (!!watch(observationRequestField) && watch(observationRequestField).length !== 0)
+        && (!!watch(patientIDsField) && watch(patientIDsField).length !== 0)
 }
 
 const WorkOrderToolbar = () => {
+    const { watch } = useFormContext();
     return (
         <Stack width={"100%"}
             sx={{
@@ -372,7 +382,7 @@ const WorkOrderToolbar = () => {
                 justifyContent: "flex-end",
             }}>
                 <DeleteButton variant="contained" size="small" />
-                <WorkOrderSaveButton />
+                {validForm(watch) && <WorkOrderSaveButton disabled={!validForm(watch)} /> }
             </Toolbar>
         </Stack>
     )
@@ -380,7 +390,6 @@ const WorkOrderToolbar = () => {
 
 const showDetailOnMode: Array<WorkOrderActionKeys> = ["SHOW", "EDIT"];
 export default function WorkOrderForm(props: WorkOrderFormProps) {
-
     return (
         <TabbedForm toolbar={false} >
             <TabbedForm.Tab label="Patient">

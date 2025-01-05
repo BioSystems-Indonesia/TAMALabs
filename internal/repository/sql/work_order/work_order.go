@@ -126,7 +126,7 @@ func (r WorkOrderRepository) AddTest(workOrder *entity.WorkOrder) error {
 		}
 
 		err = tx.Model(entity.WorkOrder{}).Where("id = ?", workOrder.ID).
-			Update("status", entity.WorkOrderStatusPending).Error
+			Update("updated_at", time.Now()).Error
 		if err != nil {
 			return err
 		}

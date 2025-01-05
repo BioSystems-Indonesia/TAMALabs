@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import Stack from "@mui/material/Stack";
 import { useEffect, useState } from "react";
-import { Labeled, NumberInput, SaveButton, TabbedForm, Toolbar, required, useStoreContext, type SaveHandler, type SaveHandlerCallbacks, useNotify } from "react-admin";
-import { settingSchema, Settings, settingsStoreKey, defaultSettings } from "../../types/setting";
+import { Labeled, NumberInput, SaveButton, TabbedForm, Toolbar, required, useStoreContext, type SaveHandler, type SaveHandlerCallbacks, useNotify, RadioButtonGroupInput } from "react-admin";
+import { settingSchema, Settings, settingsStoreKey, defaultSettings, orientationChoices } from "../../types/setting";
 import { set } from 'zod';
 import CircularProgress from '@mui/material/CircularProgress';
 
@@ -66,17 +66,20 @@ export default function SettingsPage() {
         <TabbedForm onSubmit={onSubmit} toolbar={<SettingsToolbar />} resolver={zodResolver(settingSchema)} record={settings}
         >
             <TabbedForm.Tab label="Personal">
-                <Labeled label="Barcode Size" source="barcode_size_width" >
-                    <Stack direction={"row"} gap={1} sx={{
-                        xs: {
-                            width: "100%",
-                        },
-                        md: {
-                            width: "50%",
-                        },
-                    }} >
-                        <NumberInput source="barcode_size_width" label="Width (mm)" validate={[required()]} />
-                        <NumberInput source="barcode_size_height" label="Height (mm)" validate={[required()]} />
+                <Labeled label="Barcode">
+                    <Stack>
+                        <Stack direction={"row"} gap={1} sx={{
+                            xs: {
+                                width: "100%",
+                            },
+                            md: {
+                                width: "50%",
+                            },
+                        }} >
+                            <NumberInput source="barcode_size_width" label="Width (mm)" validate={[required()]} />
+                            <NumberInput source="barcode_size_height" label="Height (mm)" validate={[required()]} />
+                        </Stack>
+                        <RadioButtonGroupInput choices={[...orientationChoices]} source="barcode_orientation" label="Orientation" validate={[required()]} />
                     </Stack>
                 </Labeled>
             </TabbedForm.Tab>
