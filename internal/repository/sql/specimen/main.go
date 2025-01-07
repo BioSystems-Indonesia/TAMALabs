@@ -100,7 +100,7 @@ func (r *Repository) GetBarcodeSequence(ctx context.Context) int64 {
 	seq, ok := r.cache.Get(constant.KeySpecimenBarcodeSequence)
 	if !ok {
 		now := time.Now()
-		tomorrowMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, constant.LocationJakarta)
+		tomorrowMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, constant.IndonesiaWesternStandardTimezone)
 		expire := tomorrowMidnight.Sub(now)
 		r.cache.Set(constant.KeySpecimenBarcodeSequence, 1, expire)
 
@@ -121,8 +121,8 @@ func (r *Repository) IncrementBarcodeSequence(ctx context.Context) error {
 
 func (r *Repository) SyncBarcodeSequence(ctx context.Context) error {
 	now := time.Now()
-	currentDayMidnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, constant.LocationJakarta)
-	tomorrowMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, constant.LocationJakarta)
+	currentDayMidnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, constant.IndonesiaWesternStandardTimezone)
+	tomorrowMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, constant.IndonesiaWesternStandardTimezone)
 
 	var count int64
 	err := r.db.Model(entity.Specimen{}).
