@@ -82,7 +82,7 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 		msh.MessageType = h251.MSG{
 			HL7:              h251.HL7Name{},
 			MessageCode:      "ACK",
-			TriggerEvent:     "OUL_R22",
+			TriggerEvent:     "OUL",
 			MessageStructure: "ACK",
 		}
 	default:
@@ -99,7 +99,7 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 			MessageType: h251.MSG{
 				HL7:              h251.HL7Name{},
 				MessageCode:      "ACK",
-				TriggerEvent:     "OUL_R22",
+				TriggerEvent:     "OUL",
 				MessageStructure: "ACK",
 			},
 			MessageControlID:                    msgControlID,
