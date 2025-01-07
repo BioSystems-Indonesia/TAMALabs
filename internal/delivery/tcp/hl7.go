@@ -59,42 +59,55 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 	}
 
 	// MSH segment
-	msh := h251.MSH{
-		HL7:                  h251.HL7Name{},
-		FieldSeparator:       "|",
-		EncodingCharacters:   "^~\\&",
-		SendingApplication:   simpleHD("BioLIS"),
-		SendingFacility:      simpleHD("Lab1"),
-		ReceivingApplication: simpleHD("BA200"),
-		ReceivingFacility:    simpleHD("Lab1"),
-		DateTimeOfMessage:    time.Now(),
-		Security:             "",
-		MessageType: h251.MSG{
+	// TODO: FIXME
+	var msh *h251.MSH
+	switch headerNew := header.(type) {
+	case h251.OUL_R22:
+		msh = headerNew.MSH
+		msh.MessageType = h251.MSG{
 			HL7:              h251.HL7Name{},
 			MessageCode:      "ACK",
 			TriggerEvent:     "OUL_R22",
 			MessageStructure: "ACK",
-		},
-		MessageControlID:                    uuid.NewString(),
-		ProcessingID:                        h251.PT{ProcessingID: "P"},
-		VersionID:                           h251.VID{VersionID: "2.5.1"},
-		SequenceNumber:                      "",
-		ContinuationPointer:                 "",
-		AcceptAcknowledgmentType:            "ER",
-		ApplicationAcknowledgmentType:       "AL",
-		CountryCode:                         "ID",
-		CharacterSet:                        []string{"UNICODE UTF-8"},
-		PrincipalLanguageOfMessage:          &h251.CE{},
-		AlternateCharacterSetHandlingScheme: "",
-		MessageProfileIdentifier: []h251.EI{
-			{
+		}
+	default:
+		msh = &h251.MSH{
+			HL7:                  h251.HL7Name{},
+			FieldSeparator:       "|",
+			EncodingCharacters:   "^~\\&",
+			SendingApplication:   simpleHD("BioLIS"),
+			SendingFacility:      simpleHD("Lab1"),
+			ReceivingApplication: simpleHD("BA200"),
+			ReceivingFacility:    simpleHD("Lab1"),
+			DateTimeOfMessage:    time.Now(),
+			Security:             "",
+			MessageType: h251.MSG{
 				HL7:              h251.HL7Name{},
-				EntityIdentifier: "LAB-28",
-				NamespaceID:      "IHE",
-				UniversalID:      "",
-				UniversalIDType:  "",
+				MessageCode:      "ACK",
+				TriggerEvent:     "OUL_R22",
+				MessageStructure: "ACK",
 			},
-		},
+			MessageControlID:                    uuid.New().String(),
+			ProcessingID:                        h251.PT{ProcessingID: "P"},
+			VersionID:                           h251.VID{VersionID: "2.5.1"},
+			SequenceNumber:                      "",
+			ContinuationPointer:                 "",
+			AcceptAcknowledgmentType:            "ER",
+			ApplicationAcknowledgmentType:       "AL",
+			CountryCode:                         "ID",
+			CharacterSet:                        []string{"UNICODE UTF-8"},
+			PrincipalLanguageOfMessage:          &h251.CE{},
+			AlternateCharacterSetHandlingScheme: "",
+			MessageProfileIdentifier: []h251.EI{
+				{
+					HL7:              h251.HL7Name{},
+					EntityIdentifier: "LAB-28",
+					NamespaceID:      "IHE",
+					UniversalID:      "",
+					UniversalIDType:  "",
+				},
+			},
+		}
 	}
 
 	msa := h251.MSA{
@@ -105,7 +118,7 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 
 	ackMsg := h251.ACK{
 		HL7: h251.HL7Name{},
-		MSH: &msh,
+		MSH: msh,
 		SFT: nil,
 		MSA: &msa,
 		ERR: nil,
