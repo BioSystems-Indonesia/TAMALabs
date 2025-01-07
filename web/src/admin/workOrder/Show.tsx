@@ -35,13 +35,14 @@ import {
     useNotify,
     useRecordContext,
     useRefresh,
-    type ButtonProps} from "react-admin";
+    type ButtonProps
+} from "react-admin";
 import Barcode from "react-barcode";
 import { useReactToPrint } from "react-to-print";
+import useSettings from '../../hooks/useSettings';
+import type { BarcodeStyle } from '../../types/general';
 import { DeviceForm } from "../device";
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
-import type { BarcodeStyle } from '../../types/general';
-import useSettings from '../../hooks/useSettings';
 
 const barcodePageStyle = (style: BarcodeStyle) => `
 @media all {
@@ -250,7 +251,6 @@ const PatientTestEmpty = () => {
 export function WorkOrderShow() {
     const barcodeRef = React.useRef<any>(null);
     const workOrderID = useGetRecordId();
-    const [settings] = useSettings();
 
     return (
         <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef} workOrderID={Number(workOrderID)} />}>
