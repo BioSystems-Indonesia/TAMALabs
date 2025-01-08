@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/glebarez/sqlite"
@@ -107,6 +108,9 @@ func InitSQLiteDB() (*gorm.DB, error) {
 	return db, nil
 }
 
+var initDBOnce sync.Once
+var db *gorm.DB
+
 func InitDatabase() (*gorm.DB, error) {
 	db, err := InitSQLiteDB()
 	if err != nil {
@@ -122,6 +126,7 @@ func InitDatabase() (*gorm.DB, error) {
 		&entity.WorkOrderPatient{},
 		&entity.Device{},
 		&entity.TestType{},
+		&entity.Config{},
 	}
 
 	for _, model := range autoMigrate {
@@ -142,46 +147,7 @@ func InitDatabase() (*gorm.DB, error) {
 }
 
 func seedTestData(db *gorm.DB) error {
-	patient := []entity.Patient{
-		{
-			ID:          1,
-			FirstName:   "Pasien",
-			LastName:    "Pertama",
-			Birthdate:   time.Date(1995, time.January, 1, 0, 0, 0, 0, time.UTC),
-			Sex:         "M",
-			PhoneNumber: "",
-			Location:    "",
-			Address:     "",
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		},
-		{
-			ID:          2,
-			FirstName:   "Pasien",
-			LastName:    "Kedua",
-			Birthdate:   time.Date(2002, time.October, 23, 0, 0, 0, 0, time.UTC),
-			Sex:         "F",
-			PhoneNumber: "",
-			Location:    "",
-			Address:     "",
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		},
-		{
-			ID:          3,
-			FirstName:   "Pasien",
-			LastName:    "Ketiga",
-			Birthdate:   time.Date(1998, time.February, 20, 0, 0, 0, 0, time.UTC),
-			Sex:         "F",
-			PhoneNumber: "",
-			Location:    "",
-			Address:     "",
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		},
-	}
-
-	for _, p := range patient {
+	for _, p := range seedPatient {
 		err := db.Clauses(clause.OnConflict{
 			DoNothing: true,
 		}).Create(&p).Error
@@ -190,7 +156,16 @@ func seedTestData(db *gorm.DB) error {
 		}
 	}
 
-	for _, testType := range entity.SeedDataTestType {
+	for _, config := range seedConfig {
+		err := db.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(&config).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, testType := range seedDataTestType {
 		err := db.Clauses(clause.OnConflict{
 			DoNothing: true,
 		}).Create(&testType).Error
@@ -202,11 +177,15 @@ func seedTestData(db *gorm.DB) error {
 	return nil
 }
 
-func provideDB(config *config.Schema) *gorm.DB {
-	db, err := InitDatabase()
-	if err != nil {
-		panic(err)
-	}
+func provideDB() *gorm.DB {
+	var err error
+
+	initDBOnce.Do(func() {
+		db, err = InitDatabase()
+		if err != nil {
+			panic(err)
+		}
+	})
 
 	return db
 }
@@ -250,4 +229,12 @@ func provideValidator() *validator.Validate {
 
 func provideCache() *cache.Cache {
 	return cache.New(time.Hour, 5*time.Minute)
+}
+
+func provideConfig(db *gorm.DB) *config.Schema {
+	cfg, err := config.New(db)
+	if err != nil {
+		panic(err)
+	}
+	return &cfg
 }

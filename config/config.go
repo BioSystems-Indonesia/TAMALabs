@@ -3,40 +3,51 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/gommon/log"
+	"github.com/oibacidem/lims-hl-seven/internal/constant"
+	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/spf13/viper"
+	"gorm.io/gorm"
 )
 
-const (
-	defaultConfigFolder  = "./deployment/development"
-	modifiedConfigFolder = "./development"
-)
+func New(db *gorm.DB) (Schema, error) {
+	log.Info("Loading config from file")
 
-func New() (Schema, error) {
-	log.Info("Loading config")
-
-	var cfg Schema
-
-	viper.AddConfigPath(defaultConfigFolder)
-	viper.SetConfigName("config")
-	viper.SetConfigType("json")
-	err := viper.ReadInConfig()
+	var configs []entity.Config
+	err := db.Find(&configs).Error
 	if err != nil {
-		return cfg, fmt.Errorf("error reading config: %w", err)
+		return Schema{}, err
 	}
 
-	err = viper.Unmarshal(&cfg)
-	if err != nil {
-		return cfg, fmt.Errorf("error unmarshalling config: %w", err)
+	v := viper.New()
+
+	var mapping = map[string]string{}
+	for _, config := range configs {
+		mapping[config.Key] = config.Value
+		v.Set(config.Key, config.Value)
 	}
+
+	cfg := Schema{}
+	err = v.Unmarshal(&cfg)
+	if err != nil {
+		return Schema{}, fmt.Errorf("error unmarshalling config: %w", err)
+	}
+
+	InjectRuntime(&cfg)
 
 	validate := validator.New()
 	err = validate.Struct(&cfg)
 	if err != nil {
-		return cfg, fmt.Errorf("error validating config: %w", err)
+		return Schema{}, fmt.Errorf("error validating config: %w", err)
 	}
 
 	return cfg, nil
+}
+
+func InjectRuntime(cfg *Schema) {
+	cfg.Version = constant.AppVersion
+	cfg.Revision = time.Now().Format("20060102_150405")
 }

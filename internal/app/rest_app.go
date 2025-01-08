@@ -46,6 +46,7 @@ var (
 	restAppSet = wire.NewSet(
 		provideValidator,
 		provideDB,
+		provideConfig,
 		provideCache,
 
 		restRepositorySet,

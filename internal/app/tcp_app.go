@@ -27,6 +27,7 @@ var (
 	tcpAppSet = wire.NewSet(
 		provideValidator,
 		provideDB,
+		provideConfig,
 		provideCache,
 
 		tcpRepositorySet,

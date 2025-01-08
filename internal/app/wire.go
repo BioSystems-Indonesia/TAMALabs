@@ -7,17 +7,16 @@ package app
 
 import (
 	"github.com/google/wire"
-	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
 
 // InitRestApp is a Wire provider function that returns a RestServer.
-func InitRestApp(config *config.Schema) server.RestServer {
+func InitRestApp() server.RestServer {
 	wire.Build(restAppSet)
 	return &server.Rest{}
 }
 
-func InitTCPApp(config *config.Schema) server.TCPServer {
+func InitTCPApp() server.TCPServer {
 	wire.Build(tcpAppSet)
 	return &server.TCP{}
 }

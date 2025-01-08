@@ -7,27 +7,18 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/app"
 )
 
 func main() {
 	go main_tcp()
-	cfg, err := config.New()
-	if err != nil {
-		panic(err)
-	}
-	server := app.InitRestApp(&cfg)
+	server := app.InitRestApp()
 	go openb()
 	server.Serve()
 }
 
 func main_tcp() {
-	cfg, err := config.New()
-	if err != nil {
-		panic(err)
-	}
-	server := app.InitTCPApp(&cfg)
+	server := app.InitTCPApp()
 	server.Serve()
 }
 
@@ -35,7 +26,6 @@ func openb() {
 	time.Sleep(3 * time.Second)
 	openbrowser("http://127.0.0.1:8322")
 }
-
 
 func openbrowser(url string) {
 	var err error

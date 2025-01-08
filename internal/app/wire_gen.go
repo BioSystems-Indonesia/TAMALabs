@@ -7,7 +7,6 @@
 package app
 
 import (
-	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
@@ -34,46 +33,48 @@ import (
 // Injectors from wire.go:
 
 // InitRestApp is a Wire provider function that returns a RestServer.
-func InitRestApp(config2 *config.Schema) server.RestServer {
-	db := provideDB(config2)
-	repository := observation_result.NewRepository(db, config2)
-	observation_requestRepository := observation_request.NewRepository(db, config2)
+func InitRestApp() server.RestServer {
+	db := provideDB()
+	schema := provideConfig(db)
+	repository := observation_result.NewRepository(db, schema)
+	observation_requestRepository := observation_request.NewRepository(db, schema)
 	usecase := analyzer.NewUsecase(repository, observation_requestRepository)
 	hlSevenHandler := rest.NewHlSevenHandler(usecase)
-	healthCheckHandler := rest.NewHealthCheckHandler(config2)
-	patientRepository := patientrepo.NewPatientRepository(db, config2)
+	healthCheckHandler := rest.NewHealthCheckHandler(schema)
+	patientRepository := patientrepo.NewPatientRepository(db, schema)
 	validate := provideValidator()
-	patientUseCase := patientuc.NewPatientUseCase(config2, patientRepository, validate)
-	patientHandler := rest.NewPatientHandler(config2, patientUseCase)
+	patientUseCase := patientuc.NewPatientUseCase(schema, patientRepository, validate)
+	patientHandler := rest.NewPatientHandler(schema, patientUseCase)
 	cache := provideCache()
-	specimenRepository := specimen.NewRepository(db, config2, cache)
-	specimenUseCase := specimenuc.NewSpecimenUseCase(config2, specimenRepository, validate)
-	specimenHandler := rest.NewSpecimenHandler(config2, specimenUseCase)
-	workOrderRepository := workOrderrepo.NewWorkOrderRepository(db, config2, specimenRepository)
-	workOrderUseCase := workOrderuc.NewWorkOrderUseCase(config2, workOrderRepository, validate)
-	workOrderHandler := rest.NewWorkOrderHandler(config2, workOrderUseCase, db)
+	specimenRepository := specimen.NewRepository(db, schema, cache)
+	specimenUseCase := specimenuc.NewSpecimenUseCase(schema, specimenRepository, validate)
+	specimenHandler := rest.NewSpecimenHandler(schema, specimenUseCase)
+	workOrderRepository := workOrderrepo.NewWorkOrderRepository(db, schema, specimenRepository)
+	workOrderUseCase := workOrderuc.NewWorkOrderUseCase(schema, workOrderRepository, validate)
+	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, db)
 	featureListHandler := rest.NewFeatureListHandler()
-	observationRequestUseCase := observation_requestuc.NewObservationRequestUseCase(config2, observation_requestRepository, validate)
-	observationRequestHandler := rest.NewObservationRequestHandler(config2, observationRequestUseCase)
-	test_typeRepository := test_type.NewRepository(db, config2)
+	observationRequestUseCase := observation_requestuc.NewObservationRequestUseCase(schema, observation_requestRepository, validate)
+	observationRequestHandler := rest.NewObservationRequestHandler(schema, observationRequestUseCase)
+	test_typeRepository := test_type.NewRepository(db, schema)
 	test_typeUsecase := test_type2.NewUsecase(test_typeRepository)
-	testTypeHandler := rest.NewTestTypeHandler(config2, test_typeUsecase)
-	resultRepository := result.NewRepository(db, config2)
+	testTypeHandler := rest.NewTestTypeHandler(schema, test_typeUsecase)
+	resultRepository := result.NewRepository(db, schema)
 	resultUsecase := result2.NewUsecase(resultRepository, workOrderRepository, specimenRepository)
-	resultHandler := rest.NewResultHandler(config2, resultUsecase)
+	resultHandler := rest.NewResultHandler(schema, resultUsecase)
 	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler)
 	deviceHandler := rest.NewDeviceHandler(db)
-	restServer := provideRestServer(config2, handler, validate, deviceHandler)
+	restServer := provideRestServer(schema, handler, validate, deviceHandler)
 	return restServer
 }
 
-func InitTCPApp(config2 *config.Schema) server.TCPServer {
-	db := provideDB(config2)
-	repository := observation_result.NewRepository(db, config2)
-	observation_requestRepository := observation_request.NewRepository(db, config2)
+func InitTCPApp() server.TCPServer {
+	db := provideDB()
+	schema := provideConfig(db)
+	repository := observation_result.NewRepository(db, schema)
+	observation_requestRepository := observation_request.NewRepository(db, schema)
 	usecase := analyzer.NewUsecase(repository, observation_requestRepository)
 	hlSevenHandler := tcp.NewHlSevenHandler(usecase)
 	handler := provideTCPHandler(hlSevenHandler)
-	tcpServer := provideTCPServer(config2, handler)
+	tcpServer := provideTCPServer(schema, handler)
 	return tcpServer
 }
