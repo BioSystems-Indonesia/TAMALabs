@@ -16,8 +16,10 @@ import ListIcon from '@mui/icons-material/List';
 import { WorkOrderShow } from "./workOrder/Show.tsx";
 import { DeviceCreate, DeviceEdit, DeviceList, DeviceShow } from "./device/index.tsx";
 import Settings from "./settings/index.tsx";
-import {TestTypeList, TestTypeShow} from "./testType";
-import {ResultList} from "./result";
+import { TestTypeCreate, TestTypeEdit, TestTypeList, TestTypeShow } from "./testType";
+import { ResultList } from "./result";
+import BuildIcon from '@mui/icons-material/Build';
+import { ConfigEdit, ConfigList } from "./config/config.tsx";
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
@@ -39,11 +41,11 @@ const App = () => {
         </Resource>
 
         <Resource name="result" list={ResultList}
-                  hasCreate={false}
-                  hasEdit={false}
-                  hasShow={true}
-                  icon={AssessmentIcon}
-                  recordRepresentation={record => `#${record.barcode}}`}
+            hasCreate={false}
+            hasEdit={false}
+            hasShow={true}
+            icon={AssessmentIcon}
+            recordRepresentation={record => `#${record.barcode}}`}
         />
         <Resource name="patient" list={PatientList} show={PatientShow} edit={PatientEdit} create={PatientCreate}
             hasCreate={true}
@@ -59,9 +61,18 @@ const App = () => {
             icon={ScienceIcon}
             recordRepresentation={record => `#${record.id} - ${record.type}`}
         />
-        <Resource name="test-type" list={TestTypeList} show={TestTypeShow}
+        <Resource name="observation-request" list={ObservationRequestList} show={ObservationRequestShow}
             hasCreate={false}
             hasEdit={false}
+            hasShow={true}
+            icon={ListIcon}
+            recordRepresentation={record => `#${record.id} - ${record.type}`}
+        />
+        <Resource name="test-type" list={TestTypeList} show={TestTypeShow}
+            create={TestTypeCreate}
+            edit={TestTypeEdit}
+            hasCreate={true}
+            hasEdit={true}
             hasShow={true}
             icon={BiotechIcon}
             recordRepresentation={record => `#${record.id} - ${record.code}`}
@@ -74,11 +85,10 @@ const App = () => {
             icon={LanIcon}
             recordRepresentation={record => `#${record.id} - ${record.name}`}
         />
-        <Resource name="observation-request" list={ObservationRequestList} show={ObservationRequestShow}
+        <Resource name="config" list={ConfigList} edit={ConfigEdit}
             hasCreate={false}
-            hasEdit={false}
-            hasShow={true}
-            icon={ListIcon}
+            hasEdit={true}
+            icon={BuildIcon}
             recordRepresentation={record => `#${record.id} - ${record.type}`}
         />
     </Admin>)

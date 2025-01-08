@@ -1,17 +1,18 @@
-import {Datagrid, FilterLiveSearch, List, Show, TextField} from "react-admin";
+import { Create, Datagrid, Edit, FilterLiveSearch, List, NumberInput, Show, SimpleForm, TextField, TextInput } from "react-admin";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Box from "@mui/material/Box";
+import type { ActionKeys } from "../../types/props";
 
 export const TestTypeList = () => (
-    <List aside={<TestTypeFilterSidebar/>}>
-        <Datagrid>
-            <TextField source="name"/>
-            <TextField source="code"/>
+    <List aside={<TestTypeFilterSidebar />}>
+        <Datagrid bulkActionButtons={false}>
+            <TextField source="name" />
+            <TextField source="code" />
             <TextField source="category" />
             <TextField source="sub_category" />
-            <TextField source="low_ref_range" label="low"/>
-            <TextField source="high_ref_range" label="high"/>
+            <TextField source="low_ref_range" label="low" />
+            <TextField source="high_ref_range" label="high" />
             <TextField source="unit" />
             <TextField source="description" />
         </Datagrid>
@@ -19,24 +20,64 @@ export const TestTypeList = () => (
 );
 
 const TestTypeFilterSidebar = () => (
-    <Card sx={{order: -1, mr: 2, mt: 2, width: 300}}>
+    <Card sx={{ order: -1, mr: 2, mt: 2, width: 300 }}>
         <CardContent>
-            <FilterLiveSearch/>
+            <FilterLiveSearch />
         </CardContent>
     </Card>
 );
 
 function ReferenceSection() {
     return (
-        <Box sx={{width: "100%"}}>
+        <Box sx={{ width: "100%" }}>
         </Box>
+    )
+}
+
+type TestTypeFormProps = {
+    readonly?: boolean
+    mode?: ActionKeys
+}
+
+function TestTypeForm(props: TestTypeFormProps) {
+    return (
+        <SimpleForm>
+            <TextInput source="name" readOnly={props.readonly} />
+            <TextInput source="code" readOnly={props.readonly} />
+            <TextInput source="category" readOnly={props.readonly} />
+            <TextInput source="sub_category" readOnly={props.readonly} />
+            <NumberInput source="low_ref_range" label="low" readOnly={props.readonly} />
+            <NumberInput  source="high_ref_range" label="high" readOnly={props.readonly} />
+            <TextInput source="unit" readOnly={props.readonly} />
+            <TextInput source="description" readOnly={props.readonly} />
+        </SimpleForm>
+    )
+}
+
+
+export function TestTypeEdit() {
+    return (
+        <Edit mutationMode="pessimistic">
+            <TestTypeForm readonly={false} mode={"EDIT"} />
+            <ReferenceSection />
+        </Edit>
+    )
+}
+
+export function TestTypeCreate() {
+    return (
+        <Create>
+            <TestTypeForm readonly={false} mode={"CREATE"} />
+            <ReferenceSection />
+        </Create>
     )
 }
 
 export function TestTypeShow() {
     return (
         <Show>
-            <ReferenceSection/>
+            <TestTypeForm readonly mode={"SHOW"} />
+            <ReferenceSection />
         </Show>
     )
 }

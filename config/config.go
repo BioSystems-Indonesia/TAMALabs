@@ -26,8 +26,8 @@ func New(db *gorm.DB) (Schema, error) {
 
 	var mapping = map[string]string{}
 	for _, config := range configs {
-		mapping[config.Key] = config.Value
-		v.Set(config.Key, config.Value)
+		mapping[config.ID] = config.Value
+		v.Set(config.ID, config.Value)
 	}
 
 	cfg := Schema{}
