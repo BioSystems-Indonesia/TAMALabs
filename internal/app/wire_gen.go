@@ -9,6 +9,7 @@ package app
 import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
@@ -17,6 +18,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/config"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	result2 "github.com/oibacidem/lims-hl-seven/internal/usecase/result"
@@ -34,44 +36,47 @@ import (
 
 // InitRestApp is a Wire provider function that returns a RestServer.
 func InitRestApp() server.RestServer {
-	db := provideDB()
-	schema := provideConfig(db)
-	repository := observation_result.NewRepository(db, schema)
-	observation_requestRepository := observation_request.NewRepository(db, schema)
+	gormDB := provideDB()
+	schema := provideConfig(gormDB)
+	repository := observation_result.NewRepository(gormDB, schema)
+	observation_requestRepository := observation_request.NewRepository(gormDB, schema)
 	usecase := analyzer.NewUsecase(repository, observation_requestRepository)
 	hlSevenHandler := rest.NewHlSevenHandler(usecase)
 	healthCheckHandler := rest.NewHealthCheckHandler(schema)
-	patientRepository := patientrepo.NewPatientRepository(db, schema)
+	patientRepository := patientrepo.NewPatientRepository(gormDB, schema)
 	validate := provideValidator()
 	patientUseCase := patientuc.NewPatientUseCase(schema, patientRepository, validate)
 	patientHandler := rest.NewPatientHandler(schema, patientUseCase)
 	cache := provideCache()
-	specimenRepository := specimen.NewRepository(db, schema, cache)
+	specimenRepository := specimen.NewRepository(gormDB, schema, cache)
 	specimenUseCase := specimenuc.NewSpecimenUseCase(schema, specimenRepository, validate)
 	specimenHandler := rest.NewSpecimenHandler(schema, specimenUseCase)
-	workOrderRepository := workOrderrepo.NewWorkOrderRepository(db, schema, specimenRepository)
+	workOrderRepository := workOrderrepo.NewWorkOrderRepository(gormDB, schema, specimenRepository)
 	workOrderUseCase := workOrderuc.NewWorkOrderUseCase(schema, workOrderRepository, validate)
-	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, db)
+	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, gormDB)
 	featureListHandler := rest.NewFeatureListHandler()
 	observationRequestUseCase := observation_requestuc.NewObservationRequestUseCase(schema, observation_requestRepository, validate)
 	observationRequestHandler := rest.NewObservationRequestHandler(schema, observationRequestUseCase)
-	test_typeRepository := test_type.NewRepository(db, schema)
+	test_typeRepository := test_type.NewRepository(gormDB, schema)
 	test_typeUsecase := test_type2.NewUsecase(test_typeRepository)
 	testTypeHandler := rest.NewTestTypeHandler(schema, test_typeUsecase)
-	resultRepository := result.NewRepository(db, schema)
+	resultRepository := result.NewRepository(gormDB, schema)
 	resultUsecase := result2.NewUsecase(resultRepository, workOrderRepository, specimenRepository)
 	resultHandler := rest.NewResultHandler(schema, resultUsecase)
-	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler)
-	deviceHandler := rest.NewDeviceHandler(db)
+	configrepoRepository := configrepo.NewRepository(gormDB, schema)
+	configUseCase := configuc.NewConfigUseCase(schema, configrepoRepository, validate)
+	configHandler := rest.NewConfigHandler(schema, configUseCase)
+	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler)
+	deviceHandler := rest.NewDeviceHandler(gormDB)
 	restServer := provideRestServer(schema, handler, validate, deviceHandler)
 	return restServer
 }
 
 func InitTCPApp() server.TCPServer {
-	db := provideDB()
-	schema := provideConfig(db)
-	repository := observation_result.NewRepository(db, schema)
-	observation_requestRepository := observation_request.NewRepository(db, schema)
+	gormDB := provideDB()
+	schema := provideConfig(gormDB)
+	repository := observation_result.NewRepository(gormDB, schema)
+	observation_requestRepository := observation_request.NewRepository(gormDB, schema)
 	usecase := analyzer.NewUsecase(repository, observation_requestRepository)
 	hlSevenHandler := tcp.NewHlSevenHandler(usecase)
 	handler := provideTCPHandler(hlSevenHandler)

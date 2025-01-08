@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/internal/app"
+	"github.com/oibacidem/lims-hl-seven/internal/util"
 )
 
 func main() {
@@ -23,6 +24,10 @@ func main_tcp() {
 }
 
 func openb() {
+	if util.IsDevelopment() {
+		return
+	}
+
 	time.Sleep(3 * time.Second)
 	openbrowser("http://127.0.0.1:8322")
 }

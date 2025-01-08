@@ -5,6 +5,7 @@ import (
 	"github.com/google/wire"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/repository"
+	configrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
@@ -15,6 +16,7 @@ import (
 	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	hlsUC "github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
+	configuc "github.com/oibacidem/lims-hl-seven/internal/usecase/config"
 	observation_requestuc "github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	resultUC "github.com/oibacidem/lims-hl-seven/internal/usecase/result"
@@ -25,14 +27,12 @@ import (
 
 var restUsecaseSet = wire.NewSet(
 	testTypeUC.NewUsecase,
-	wire.Bind(new(usecase.TestType), new(*testTypeUC.Usecase)),
 	resultUC.NewUsecase,
 	wire.Bind(new(usecase.Result), new(*resultUC.Usecase)),
 )
 
 var restRepositorySet = wire.NewSet(
 	testTypeRepo.NewRepository,
-	wire.Bind(new(repository.TestType), new(*testTypeRepo.Repository)),
 	observation_result.NewRepository,
 	wire.Bind(new(repository.ObservationResult), new(*observation_result.Repository)),
 	observation_request.NewRepository,
@@ -54,6 +54,7 @@ var (
 		patientrepo.NewPatientRepository,
 		workOrderrepo.NewWorkOrderRepository,
 		specimen.NewRepository,
+		configrepo.NewRepository,
 
 		restUsecaseSet,
 		hlsUC.NewUsecase,
@@ -61,6 +62,7 @@ var (
 		specimenuc.NewSpecimenUseCase,
 		workOrderuc.NewWorkOrderUseCase,
 		observation_requestuc.NewObservationRequestUseCase,
+		configuc.NewConfigUseCase,
 
 		rest.NewHlSevenHandler,
 		rest.NewHealthCheckHandler,
@@ -72,6 +74,7 @@ var (
 		rest.NewDeviceHandler,
 		rest.NewTestTypeHandler,
 		rest.NewResultHandler,
+		rest.NewConfigHandler,
 		provideTCP,
 		provideRestHandler,
 		provideRestServer,

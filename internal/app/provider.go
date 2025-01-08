@@ -51,6 +51,7 @@ func provideRestHandler(
 	observationRequest *rest.ObservationRequestHandler,
 	testTypeHandler *rest.TestTypeHandler,
 	resultHandler *rest.ResultHandler,
+	configHandler *rest.ConfigHandler,
 ) *rest.Handler {
 	return &rest.Handler{
 		hlSevenHandler,
@@ -62,6 +63,7 @@ func provideRestHandler(
 		observationRequest,
 		testTypeHandler,
 		resultHandler,
+		configHandler,
 	}
 }
 
@@ -169,6 +171,15 @@ func seedTestData(db *gorm.DB) error {
 		err := db.Clauses(clause.OnConflict{
 			DoNothing: true,
 		}).Create(&testType).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, device := range seedDevice {
+		err := db.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(&device).Error
 		if err != nil {
 			return err
 		}

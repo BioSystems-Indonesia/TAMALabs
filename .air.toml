@@ -13,9 +13,9 @@ cmd = "go build -o bin/app cmd/rest/main.go"
 # Array of commands to run after ^C
 post_cmd = ["echo 'hello air'"]
 # Binary file yields from `cmd`.
-bin = "./bin/app"
+#bin = ""
 # Customize binary, can setup environment variables when run your app.
-#full_bin = "APP_ENV=dev APP_USER=air ./bin/app"
+full_bin = "LIMS_ENV=development ./bin/app"
 # Add additional arguments when running binary (bin/full_bin). Will run './tmp/main hello world'.
 #args_bin = ["hello", "world"]
 # Watch these filename extensions.

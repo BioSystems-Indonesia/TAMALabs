@@ -20,6 +20,7 @@ type Handler struct {
 	*ObservationRequestHandler
 	*TestTypeHandler
 	*ResultHandler
+	*ConfigHandler
 }
 
 func RegisterMiddleware(e *echo.Echo) {
@@ -115,12 +116,22 @@ func RegisterRoutes(e *echo.Echo, handler *Handler, deviceHandler *DeviceHandler
 	testType := v1.Group("/test-type")
 	{
 		testType.GET("", handler.ListTestType)
+		testType.GET("/:id", handler.GetOneTestType)
+		testType.POST("", handler.CreateTestType)
+		testType.PUT("/:id", handler.UpdateTestType)
 	}
 
 	result := v1.Group("/result")
 	{
 		result.GET("", handler.ListResult)
 		result.GET("/:barcode", handler.GetResult)
+	}
+
+	config := v1.Group("/config")
+	{
+		config.GET("", handler.ListConfig)
+		config.GET("/:key", handler.GetConfig)
+		config.PUT("/:key", handler.EditConfig)
 	}
 
 	handler.RegisterFeatureList(v1)

@@ -163,15 +163,24 @@ var seedDataTestType = []entity.TestType{
 
 var seedConfig = []entity.Config{
 	{
-		Key:   "Name",
+		ID:    "Name",
 		Value: "Biosystem Lims",
 	},
 	{
-		Key:   "Port",
+		ID:    "Port",
 		Value: "8322",
 	},
 	{
-		Key:   "LogLevel",
+		ID:    "LogLevel",
 		Value: "info",
+	},
+}
+
+var seedDevice = []entity.Device{
+	{
+		ID:        1,
+		Name:      "Test Device",
+		IPAddress: "192.168.1.100",
+		Port:      5000,
 	},
 }
