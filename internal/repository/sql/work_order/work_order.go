@@ -237,15 +237,15 @@ func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.Work
 			})
 		}
 
-		for _, observationRequestID := range workOrder.ObservationRequests {
-			observationType, ok := entity.TableObservationType.Find(observationRequestID)
-			if !ok {
-				return fmt.Errorf("observation request: %w", entity.ErrBadRequest)
-			}
+		testTypes, err := r.getTestType(trx, workOrder.ObservationRequests)
+		if err != nil {
+			return fmt.Errorf("error getting test type: %w", err)
+		}
 
+		for _, testType := range testTypes {
 			observationRequest := entity.ObservationRequest{
-				TestCode:        observationType.ID,
-				TestDescription: observationType.Name,
+				TestCode:        testType.Code,
+				TestDescription: testType.Name,
 				SpecimenID:      int64(specimen.ID),
 				RequestedDate:   time.Now(),
 			}
@@ -258,8 +258,8 @@ func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.Work
 
 			log.Debugj(map[string]interface{}{
 				"message":         "observation request insert",
-				"testCode":        observationType.ID,
-				"testDescription": observationType.Name,
+				"testCode":        testType.Code,
+				"testDescription": testType.Name,
 				"patientID":       patientID,
 				"specimenID":      specimen.ID,
 				"rowAffected":     observationRequestQuery.RowsAffected,
@@ -271,6 +271,16 @@ func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.Work
 	}
 
 	return nil
+}
+
+func (r WorkOrderRepository) getTestType(trx *gorm.DB, observationRequest []string) ([]entity.TestType, error) {
+	var testTypes []entity.TestType
+	err := trx.Where("code in (?)", observationRequest).Find(&testTypes).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return testTypes, nil
 }
 
 func (r WorkOrderRepository) Delete(id int64) error {

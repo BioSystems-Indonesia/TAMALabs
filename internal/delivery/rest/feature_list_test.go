@@ -21,9 +21,9 @@ func TestFeatureListHandler_filterTables(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				feature: entity.TableObservationType,
+				feature: entity.TableSex,
 				req: entity.GetManyRequest{
-					Query: "Cal",
+					Query: "M",
 				},
 			},
 		},
