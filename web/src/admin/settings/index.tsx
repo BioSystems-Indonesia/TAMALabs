@@ -4,6 +4,7 @@ import Stack from "@mui/material/Stack";
 import { useEffect, useState } from "react";
 import { Labeled, NumberInput, RadioButtonGroupInput, SaveButton, TabbedForm, Toolbar, required, useNotify, useStoreContext, type SaveHandler } from "react-admin";
 import { Settings, defaultSettings, orientationChoices, settingSchema, settingsStoreKey } from "../../types/setting";
+import useSettings from '../../hooks/useSettings';
 
 
 function SettingsToolbar() {
@@ -19,7 +20,7 @@ function SettingsToolbar() {
 export default function SettingsPage() {
     const store = useStoreContext();
     const [loading, setLoading] = useState(true);
-    const [settings, setSettings] = useState<Settings>(defaultSettings);
+    const [settings, setSettings] = useSettings();
 
     useEffect(() => {
         setLoading(true);
@@ -75,8 +76,19 @@ export default function SettingsPage() {
                                 width: "50%",
                             },
                         }} >
-                            <NumberInput source="barcode_size_width" label="Width (mm)" validate={[required()]} />
-                            <NumberInput source="barcode_size_height" label="Height (mm)" validate={[required()]} />
+                            <NumberInput source="barcode_page_width" label="Page Width (mm)" validate={[required()]} />
+                            <NumberInput source="barcode_page_height" label="Page Height (mm)" validate={[required()]} />
+                        </Stack>
+                        <Stack direction={"row"} gap={1} sx={{
+                            xs: {
+                                width: "100%",
+                            },
+                            md: {
+                                width: "50%",
+                            },
+                        }} >
+                            <NumberInput source="barcode_width" label="Width" validate={[required()]} />
+                            <NumberInput source="barcode_height" label="Height" validate={[required()]} />
                         </Stack>
                         <RadioButtonGroupInput choices={[...orientationChoices]} source="barcode_orientation" label="Orientation" validate={[required()]} />
                     </Stack>

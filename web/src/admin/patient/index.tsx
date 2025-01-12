@@ -25,6 +25,7 @@ import FeatureList from "../../component/FeatureList.tsx";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
+import useRefererRedirect from "../../hooks/useReferer.ts";
 
 type PatientFormProps = {
     readonly?: boolean
@@ -78,8 +79,10 @@ function PatientForm(props: PatientFormProps) {
 }
 
 export function PatientCreate() {
+    const redirect = useRefererRedirect("show");
+
     return (
-        <Create redirect={"list"}>
+        <Create redirect={redirect}>
             <PatientForm mode={"CREATE"}/>
         </Create>
     )
