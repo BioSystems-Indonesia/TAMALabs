@@ -64,23 +64,36 @@ const TestFilterSidebar = () => (
 );
 
 const PickedTest = () => {
-    const { selectedIds } = useListContext();
+    const { selectedIds, data } = useListContext();
+    const [selectedData, setSelectedData] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!data) {
+            return;
+        }
+
+        const selectedData = data.filter((v: any) => {
+            return selectedIds.includes(v.id);
+        });
+
+        setSelectedData(selectedData);
+    }, [selectedIds, data]);
 
     if (selectedIds.length === 0) {
         return (
-            <Typography fontSize={16}>Please select observation request</Typography>
+            <Typography fontSize={16}>Please select test to run</Typography>
         )
     }
 
     return (
         <Stack spacing={2}>
-            <Typography fontSize={16}>Selected observation requests</Typography>
+            <Typography fontSize={16}>Selected test</Typography>
             <Grid container spacing={1}>
                 {
-                    selectedIds.map((v: any) => {
+                    selectedData.map((v: any) => {
                         return (
-                            <Grid item key={v}>
-                                <Chip label={v} />
+                            <Grid item key={v.id}>
+                                <Chip label={v.code} />
                             </Grid>
                         )
                     })
@@ -94,7 +107,7 @@ const patientIDsField = "patient_ids";
 
 
 function TestTable(props: WorkOrderFormProps) {
-    const { selectedIds, onSelect } = useListContext();
+    const { selectedIds, onSelect, data: testList } = useListContext();
     const { setValue } = useFormContext();
 
     const { id } = useParams()
@@ -103,6 +116,11 @@ function TestTable(props: WorkOrderFormProps) {
 
     useEffect(() => {
         if (data && searchParams.getAll("patient_id").length > 0) {
+            if (!testList){
+                console.error("testList is undefined");
+                return
+            }
+
             const patientIDs = searchParams.getAll("patient_id")!.map(id => parseInt(id));
             const patients = data.patient_list.filter((patient: any) => {
                 return patientIDs.includes(patient.id);
@@ -121,15 +139,28 @@ function TestTable(props: WorkOrderFormProps) {
             const observationRequestCodesLongest = observationRequestCodeList.reduce((acc, cur) => {
                 return acc.length > cur.length ? acc : cur;
             }, observationRequestCodeList[0]);
-            onSelect(observationRequestCodesLongest);
+            console.debug("observationRequestCodesLongest", observationRequestCodesLongest);
             setValue(observationRequestField, observationRequestCodesLongest);
+
+
+            const observationRequestIDs = testList.filter((test: any) => {
+                return observationRequestCodesLongest.includes(test?.code);
+            }).map((test: any) => {
+                return test?.id
+            })
+            console.debug("observationRequestIDs", observationRequestIDs);
+            onSelect(observationRequestIDs);
         }
-    }, [data, searchParams]);
+    }, [data, searchParams, testList]);
 
     useEffect(() => {
-        console.debug("test selected ids", selectedIds);
-        setValue(observationRequestField, selectedIds);
-    }, [selectedIds]);
+        console.debug("selected ids", selectedIds);
+        const observationRequest = testList?.filter((test: any) => {
+            return selectedIds.includes(test?.id);
+        }).map((test: any) => test?.code)
+        console.debug("observationRequest", observationRequest);
+        setValue(observationRequestField, observationRequest);
+    }, [selectedIds, testList]);
 
     const BulkActionButtons = () => {
         return (
@@ -144,9 +175,9 @@ function TestTable(props: WorkOrderFormProps) {
                 rowClick={"toggleSelection"}
                 isLoading={isLoading}
             >
-                <TextField label={"ID"} source={"id"} />
                 <TextField label={"Name"} source={"name"} />
-                <TextField label={"Type"} source={"additional_info.type"} />
+                <TextField label={"Code"} source={"code"} />
+                <TextField label={"Category"} source={"category"} />
             </Datagrid>
         </Grid>
         <Grid item xs={12} md={4}>
@@ -157,7 +188,7 @@ function TestTable(props: WorkOrderFormProps) {
 
 function TestInput(props: WorkOrderFormProps) {
 
-    return (<List resource={"feature-list-observation-type"} exporter={false} aside={<TestFilterSidebar />}
+    return (<List resource={"test-type"} exporter={false} aside={<TestFilterSidebar />}
         perPage={999999}
         storeKey={false}
         title={false}
@@ -316,7 +347,7 @@ function PatientInput(props: WorkOrderFormProps) {
     )
 }
 
-export const WorkOrderSaveButton = ({disabled}: {disabled?: boolean}) => {
+export const WorkOrderSaveButton = ({ disabled }: { disabled?: boolean }) => {
     const { getValues } = useFormContext();
     const { save } = useSaveContext();
     const notify = useNotify();
@@ -351,7 +382,7 @@ export const WorkOrderSaveButton = ({disabled}: {disabled?: boolean}) => {
     };
 
 
-    return <SaveButton type="button" onClick={handleClick} alwaysEnable size="small"/>
+    return <SaveButton type="button" onClick={handleClick} alwaysEnable size="small" />
 }
 
 const validForm = (watch: UseFormWatch<FieldValues>): boolean => {
@@ -378,7 +409,7 @@ const WorkOrderToolbar = () => {
                 justifyContent: "flex-end",
             }}>
                 <DeleteButton variant="contained" size="small" />
-                {validForm(watch) && <WorkOrderSaveButton disabled={!validForm(watch)} /> }
+                {validForm(watch) && <WorkOrderSaveButton disabled={!validForm(watch)} />}
             </Toolbar>
         </Stack>
     )
