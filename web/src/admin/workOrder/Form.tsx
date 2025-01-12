@@ -5,6 +5,7 @@ import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
+import { useLocation } from "react-router-dom";
 import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
 import {
@@ -36,6 +37,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
 import FeatureList from "../../component/FeatureList.tsx";
 import { ActionKeys } from "../../types/props.ts";
+import { getRefererParam } from "../../helper/location.ts";
 
 
 type WorkOrderActionKeys = ActionKeys | "ADD_TEST";
@@ -116,7 +118,7 @@ function TestTable(props: WorkOrderFormProps) {
 
     useEffect(() => {
         if (data && searchParams.getAll("patient_id").length > 0) {
-            if (!testList){
+            if (!testList) {
                 console.error("testList is undefined");
                 return
             }
@@ -321,11 +323,15 @@ function PatientTable(props: WorkOrderFormProps) {
     </Grid>;
 }
 
-const PatientListActions = () => (
-    <TopToolbar>
-        <CreateButton target={"_blank"} rel={"noopener"} />
-    </TopToolbar>
-);
+const PatientListActions = () => {
+    const location = useLocation();
+
+    return (
+        <TopToolbar>
+            <CreateButton to={`/patient/create?${getRefererParam(location.pathname)}`} />
+        </TopToolbar>
+    )
+};
 
 function PatientInput(props: WorkOrderFormProps) {
 

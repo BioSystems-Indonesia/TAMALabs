@@ -46,3 +46,27 @@ export function arrayToRecord<T extends { id: string | number }>(array: T[]): Re
         return record;
     }, {} as Record<string, T>);
 }
+
+
+export function trimName(name: string, length: number): string {
+    if (name.length <= length) {
+        return name;
+    }
+
+    const words = name.split(" ");
+    if (words.length === 1) {
+        return name.substring(0, length);
+    }
+
+    let trimmed = "";
+
+    for (const word of words) {
+        if ((trimmed + word).length + (trimmed ? 1 : 0) <= length) {
+            trimmed += (trimmed ? " " : "") + word;
+        } else {
+            break;
+        }
+    }
+
+    return trimmed;
+}

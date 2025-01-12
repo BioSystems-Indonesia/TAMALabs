@@ -43,6 +43,7 @@ import useSettings from '../../hooks/useSettings';
 import type { BarcodeStyle } from '../../types/general';
 import { DeviceForm } from "../device";
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
+import { trimName } from '../../helper/format';
 
 const barcodePageStyle = (style: BarcodeStyle) => `
 @media all {
@@ -58,6 +59,10 @@ const barcodePageStyle = (style: BarcodeStyle) => `
 }
 
 @media print {
+    body {
+        margin: 0;
+    }
+
     @page {
         size: ${style.width} ${style.height};
         margin: 0;
@@ -66,7 +71,6 @@ const barcodePageStyle = (style: BarcodeStyle) => `
     
     .barcode-container {
         display: flex;
-        padding-top: 5px;
         page-break-before: always;
         flex-direction: column;
         justify-content: center;
@@ -75,7 +79,7 @@ const barcodePageStyle = (style: BarcodeStyle) => `
     }
     
     .barcode-text {
-        font-size: 12px;
+        font-size: 8px;
         margin: 0;
     }
 }`
@@ -85,8 +89,8 @@ const PrintBarcodeButton = ({ barcodeRef }: { barcodeRef: React.RefObject<any> }
     const reactToPrint = useReactToPrint({
         contentRef: barcodeRef,
         pageStyle: barcodePageStyle({
-            width: `${settings.barcode_size_width}mm`,
-            height: `${settings.barcode_size_height}mm`,
+            width: `${settings.barcode_page_width}mm`,
+            height: `${settings.barcode_page_height}mm`,
             rotate: `${settings.barcode_orientation === "portrait" ? "-90" : "0"}deg`,
         }),
         documentTitle: "Barcode",
@@ -251,6 +255,7 @@ const PatientTestEmpty = () => {
 export function WorkOrderShow() {
     const barcodeRef = React.useRef<any>(null);
     const workOrderID = useGetRecordId();
+    const [settings] = useSettings();
 
     return (
         <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef} workOrderID={Number(workOrderID)} />}>
@@ -326,8 +331,6 @@ export function WorkOrderShow() {
                     <Stack ref={barcodeRef}>
                         {record?.patient_list?.map((patient: any) => {
                             return patient?.specimen_list?.map((specimen: any) => {
-                                // The width of the barcode paper is approximately 3.91 cm.
-                                // The height of the barcode paper is approximately 2.93 cm.
                                 return (
                                     <Stack gap={0} justifyContent={"center"} alignItems={"center"}
                                         className={"barcode-container"} sx={{
@@ -335,17 +338,11 @@ export function WorkOrderShow() {
                                         }}>
                                         <Typography
                                             className={"barcode-text"}
-                                            fontSize={12}
+                                            fontSize={8}
                                             sx={{
                                                 margin: 0,
-                                            }}>{patient.first_name} {patient.last_name}</Typography>
-                                        <Barcode value={specimen.barcode} displayValue={false} />
-                                        <Typography
-                                            className={"barcode-text"}
-                                            fontSize={12}
-                                            sx={{
-                                                margin: 0,
-                                            }}>{specimen.barcode}</Typography>
+                                            }}>{trimName(`${patient.first_name} ${patient.last_name}`, 14)} | {specimen.barcode}</Typography>
+                                        <Barcode value={specimen.barcode} displayValue={false} height={settings.barcode_height} margin={0} width={settings.barcode_width} />
                                     </Stack>
                                 )
                             })
