@@ -3,6 +3,12 @@ package constant
 const (
 	// MSH (message header) is the first segment of an HL7 message
 	MSH = "MSH"
+
+	// ThisApplication are name of this application that will be used in MSH-3
+	ThisApplication = "LIS"
+
+	// ThisFacility are name of this facility that will be used in MSH-4
+	ThisFacility = "Lab01"
 )
 
 type AcknowledgmentCode string
