@@ -77,6 +77,7 @@ func (r Repository) FindByBarcode(ctx context.Context, barcode string) ([]entity
 	err := r.db.Where("barcode = ?", barcode).
 		Preload("ObservationResult").
 		Preload("ObservationResult.TestType").
+		Preload("WorkOrder").
 		Find(&specimens).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, entity.ErrNotFound

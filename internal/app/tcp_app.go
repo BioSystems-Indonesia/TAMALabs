@@ -7,6 +7,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
+	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	analyzerUC "github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
 )
@@ -33,6 +34,7 @@ var (
 
 		tcpRepositorySet,
 		specimen.NewRepository,
+		workOrderrepo.NewWorkOrderRepository,
 
 		tcpUsecaseSet,
 
