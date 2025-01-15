@@ -6,6 +6,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	analyzerUC "github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
 )
@@ -31,6 +32,7 @@ var (
 		provideCache,
 
 		tcpRepositorySet,
+		specimen.NewRepository,
 
 		tcpUsecaseSet,
 
