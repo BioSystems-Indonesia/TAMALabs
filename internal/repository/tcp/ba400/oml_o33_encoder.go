@@ -6,14 +6,15 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kardianos/hl7/h251"
+	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
-func NewOML_O33(patient entity.Patient) h251.OML_O33 {
+func NewOML_O33(patient entity.Patient, device entity.Device) h251.OML_O33 {
 	msgControlID := uuid.New()
 	date := time.Now()
 	return h251.OML_O33{
-		MSH:      NewOML_O33_MSH(msgControlID.String(), date),
+		MSH:      NewOML_O33_MSH(msgControlID.String(), device, date),
 		Patient:  NewOML_O33_Patient(patient),
 		Specimen: NewOML_O33_Specimens(patient.Specimen, date),
 	}
@@ -61,15 +62,15 @@ func SimpleHD(id string) *h251.HD {
 	}
 }
 
-func NewOML_O33_MSH(id string, date time.Time) *h251.MSH {
+func NewOML_O33_MSH(id string, device entity.Device, date time.Time) *h251.MSH {
 	return &h251.MSH{
 		HL7:                                 h251.HL7Name{},
 		FieldSeparator:                      "|",
 		EncodingCharacters:                  "^~\\&",
-		SendingApplication:                  SimpleHD("BioLIS"),
-		SendingFacility:                     SimpleHD("Lab1"),
-		ReceivingApplication:                SimpleHD("BA200"),
-		ReceivingFacility:                   SimpleHD("Lab1"),
+		SendingApplication:                  SimpleHD(constant.ThisApplication),
+		SendingFacility:                     SimpleHD(constant.ThisFacility),
+		ReceivingApplication:                SimpleHD(device.Name),
+		ReceivingFacility:                   SimpleHD(device.IPAddress), // TODO maybe need device location
 		DateTimeOfMessage:                   date,
 		Security:                            "",
 		MessageType:                         OML_O33_MessageType,

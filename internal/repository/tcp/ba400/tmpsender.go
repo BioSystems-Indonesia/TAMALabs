@@ -14,7 +14,6 @@ import (
 )
 
 // SendToBA400 is a function to send message to BA400 for now its singleton view
-// this is temporary function because it need device entity..
 func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.Device) error {
 	encoder := hl7.NewEncoder(&hl7.EncodeOption{
 		TrimTrailingSeparator: true,
@@ -22,56 +21,7 @@ func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.D
 
 	buf := bytes.Buffer{}
 	for _, p := range patients {
-		o := NewOML_O33(p)
-
-		b, err := encoder.Encode(o)
-		if err != nil {
-			return fmt.Errorf("failed to encode oml_33: %w", err)
-		}
-
-		buf.Write(b)
-		buf.Write([]byte{constant.FileSeparator, constant.CarriageReturn})
-		buf.Write([]byte{constant.VerticalTab})
-	}
-
-	sender := Sender{
-		host:     fmt.Sprintf("%s:%d", device.IPAddress, device.Port),
-		deadline: time.Second * 120,
-	}
-	messageToSend := buf.Bytes()
-	resp, err := sender.SendRaw(messageToSend)
-	if err != nil {
-		log.Errorj(map[string]interface{}{
-			"message": "sending to BA400 failed",
-			"raw":     string(messageToSend),
-			"resp":    string(resp),
-		})
-		return fmt.Errorf("failed to send raw: %w", err)
-	}
-
-	log.Infoj(map[string]interface{}{
-		"message": "sending to BA400",
-		"raw":     string(messageToSend),
-	})
-
-	err = receiveResponse(resp)
-	if err != nil {
-		return fmt.Errorf("failed to receive response: %w", err)
-	}
-
-	return nil
-}
-
-// SendToBA400 is a function to send message to BA400 for now its singleton view
-// this is temporary function because it need device entity..
-func CancelOrderBA400(ctx context.Context, patients []entity.Patient, device entity.Device) error {
-	encoder := hl7.NewEncoder(&hl7.EncodeOption{
-		TrimTrailingSeparator: true,
-	})
-
-	buf := bytes.Buffer{}
-	for _, p := range patients {
-		o := NewOML_O33(p)
+		o := NewOML_O33(p, device)
 
 		b, err := encoder.Encode(o)
 		if err != nil {
@@ -134,13 +84,13 @@ func receiveResponse(resp []byte) error {
 		case h251.ID(constant.ApplicationAccept), h251.ID(constant.CommitAccept):
 			return handleAccept(s)
 		default:
-			return fmt.Errorf("Got failed or reject acknowledgment code: %s", s.MSA.AcknowledgmentCode)
+			return fmt.Errorf("got failed or reject acknowledgment code: %s", s.MSA.AcknowledgmentCode)
 		}
 	default:
 		return fmt.Errorf("unsupported message type: %T", m)
 	}
 }
 
-func handleAccept(s h251.ORL_O34) error {
+func handleAccept(_ h251.ORL_O34) error {
 	return nil
 }

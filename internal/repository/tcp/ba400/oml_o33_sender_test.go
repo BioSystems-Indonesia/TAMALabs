@@ -28,8 +28,13 @@ func TestEncode(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
+	device := entity.Device{
+		Name:      "BA200",
+		IPAddress: "localhost",
+	}
+
 	o := h251.OML_O33{
-		MSH:     NewOML_O33_MSH(msgControlID, date),
+		MSH:     NewOML_O33_MSH(msgControlID, device, date),
 		Patient: NewOML_O33_Patient(patient),
 		Specimen: []h251.OML_O33_Specimen{
 			{
@@ -80,7 +85,7 @@ func TestEncode(t *testing.T) {
 		t.Error(err)
 	}
 
-	expected := "MSH|^~\\&|BioLIS|Lab1|BA200|Lab1|20130129102030||OML^O33^OML_O33|69F2746D24014F21AD7139756F64CAD8|P|2.5.1|||ER|AL|ID|UNICODE UTF-8|||LAB-28^IHE\rPID|1||123456||John^Doe||19800101|M\rSPM|1|78901||SER^Serum^HL70369|||||||P\rORC|NW|ORDER123|||||||20241209220000\rOBR|1|78901||BUN^BUN^BA200\r"
+	expected := "MSH|^~\\&|LIS|Lab01|BA200|localhost|20130129102030||OML^O33^OML_O33|69F2746D24014F21AD7139756F64CAD8|P|2.5.1|||ER|AL|ID|UNICODE UTF-8|||LAB-28^IHE\rPID|1||123456||John^Doe||19800101|M\rSPM|1|78901||SER^Serum^HL70369|||||||P\rORC|NW|ORDER123|||||||20241209220000\rOBR|1|78901||BUN^BUN^BA200\r"
 	exp := strings.Split(expected, "\r")
 	got := strings.Split(string(b), "\r")
 
@@ -91,9 +96,9 @@ func TestEncode(t *testing.T) {
 	assert.Equal(t, exp[4], got[4])
 
 	/*
-	s := Sender{host: "localhost:5000"}
-	d, err := s.SendRaw(b)
-	t.Error(err)
-	t.Error(string(d))
+		s := Sender{host: "localhost:5000"}
+		d, err := s.SendRaw(b)
+		t.Error(err)
+		t.Error(string(d))
 	*/
 }
