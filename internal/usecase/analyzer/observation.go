@@ -9,6 +9,7 @@ import (
 
 func (u *Usecase) ProcessOULR22(ctx context.Context, data entity.OUL_R22) error {
 	specimens := data.Specimens
+	var uniqueWorkOrder map[int64]struct{}
 	for i := range specimens {
 		spEntities, err := u.SpecimenRepository.FindByBarcode(ctx, specimens[i].HL7ID)
 		if err != nil {
@@ -21,13 +22,6 @@ func (u *Usecase) ProcessOULR22(ctx context.Context, data entity.OUL_R22) error 
 			spEntity = spEntities[0]
 		}
 
-		//if specimens[i].ObservationRequest != nil {
-		//	err := u.ObservationRequestRepository.CreateMany(ctx, specimens[i].ObservationRequest)
-		//	if err != nil {
-		//		return err
-		//	}
-		//}
-		//
 		if specimens[i].ObservationResult != nil {
 			for j := range specimens[i].ObservationResult {
 				specimens[i].ObservationResult[j].SpecimenID = int64(spEntity.ID)
@@ -37,6 +31,19 @@ func (u *Usecase) ProcessOULR22(ctx context.Context, data entity.OUL_R22) error 
 				return err
 			}
 		}
+
+		_, ok := uniqueWorkOrder[spEntity.WorkOrder.ID]
+		if !ok {
+			workOrder := spEntity.WorkOrder
+			workOrder.Status = entity.WorkOrderStatusCompleted
+			err := u.WorkOrderRepository.Update(&workOrder)
+			if err != nil {
+				return err
+			}
+
+			uniqueWorkOrder[spEntity.WorkOrder.ID] = struct{}{}
+		}
+
 	}
 	return nil
 }

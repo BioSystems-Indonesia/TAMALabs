@@ -3,6 +3,7 @@ package result
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -36,6 +37,7 @@ func (u *Usecase) Results(ctx context.Context, req *entity.ResultGetManyRequest)
 		return nil, err
 	}
 
+	log.Println(worksOrders)
 	return u.mapListResult(worksOrders), nil
 }
 
@@ -61,6 +63,7 @@ func (u *Usecase) mapListResult(worksOrders []entity.WorkOrder) []entity.Result 
 	for _, workOrder := range worksOrders {
 		for _, patient := range workOrder.Patient {
 			if u.isPatientAlreadyExist(patient.ID, results) {
+				log.Println(patient)
 				continue
 			}
 			results = append(results, entity.Result{
