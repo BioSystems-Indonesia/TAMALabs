@@ -140,3 +140,9 @@ var Serum h251.CWE = h251.CWE{
 	Text:               "Serum",
 	NameOfCodingSystem: "HL70369",
 }
+
+var Urine h251.CWE = h251.CWE{
+	Identifier:         "URI",
+	Text:               "Urine",
+	NameOfCodingSystem: "HL70369",
+}
