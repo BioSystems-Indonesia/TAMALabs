@@ -3,10 +3,11 @@ package tcp
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"log"
+	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h251"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
@@ -26,29 +27,43 @@ func NewHlSevenHandler(analyzerUsecase usecase.Analyzer) *HlSevenHandler {
 
 // HL7Handler handles the HL7 message.
 func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string, error) {
+	if message != "" {
+		logMsg := strings.ReplaceAll(message, "\r", "\n")
+		log.Println("Received message: ", logMsg)
+	}
+
+	// don't do anything if the message is empty
+	if message == "" {
+		return "", nil
+	}
+
 	msgByte := []byte(message)
 	headerDecoder := hl7.NewDecoder(h251.Registry, &hl7.DecodeOption{HeaderOnly: true})
 	header, err := headerDecoder.Decode(msgByte)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("decode header failed: %w", err)
 	}
+
+	msgControlID := ""
 
 	switch m := header.(type) {
 	case h251.OUL_R22:
+		msgControlID = m.MSH.MessageControlID
 		d := hl7.NewDecoder(h251.Registry, nil)
 		msgByte = h.deleteSegment(msgByte, "ORC")
 		msg, err := d.Decode(msgByte)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("decode failed: %w", err)
 		}
 		oul22 := msg.(h251.OUL_R22)
 		data, err := MapOULR22ToEntity(&oul22)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("mapping failed: %w", err)
 		}
+		log.Printf("%#v", data)
 		err = h.AnalyzerUsecase.ProcessOULR22(ctx, data)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("process failed: %w", err)
 		}
 	case h251.OUL_R21:
 		log.Println(m)
@@ -87,7 +102,7 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 				TriggerEvent:     "OUL_R22",
 				MessageStructure: "ACK",
 			},
-			MessageControlID:                    uuid.New().String(),
+			MessageControlID:                    msgControlID,
 			ProcessingID:                        h251.PT{ProcessingID: "P"},
 			VersionID:                           h251.VID{VersionID: "2.5.1"},
 			SequenceNumber:                      "",
@@ -130,7 +145,10 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 	if err != nil {
 		return "", err
 	}
-	bb = bytes.ReplaceAll(bb, []byte{'\r'}, []byte{'\n'})
+
+	bbLog := bytes.ReplaceAll(bb, []byte{'\r'}, []byte{'\n'})
+	log.Println("Sending message: ", string(bbLog))
+	//bb = bytes.ReplaceAll(bb, []byte{'\r'}, []byte{'\n'})
 
 	// Encode the message
 
