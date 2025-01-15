@@ -56,7 +56,13 @@ func RegisterRoutes(conn *net.TCPConn, handler *Handler) {
 }
 
 func RegisterRotes2(s server.TCPServer, handler *Handler) {
-	go func () {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Println("Recovered in f", r)
+			}
+		}()
+
 		for {
 			c := s.GetClient()
 			mc := mllp.NewClient(c)
@@ -67,6 +73,9 @@ func RegisterRotes2(s server.TCPServer, handler *Handler) {
 				}
 			}
 			res, err := handler.HL7Handler(context.Background(), string(b))
+			if err != nil {
+				log.Println(err)
+			}
 			mc.Write([]byte(res))
 
 			c.Close()
