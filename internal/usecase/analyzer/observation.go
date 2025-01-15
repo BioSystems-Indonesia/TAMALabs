@@ -9,7 +9,7 @@ import (
 
 func (u *Usecase) ProcessOULR22(ctx context.Context, data entity.OUL_R22) error {
 	specimens := data.Specimens
-	var uniqueWorkOrder map[int64]struct{}
+	uniqueWorkOrder := map[int64]struct{}{}
 	for i := range specimens {
 		spEntities, err := u.SpecimenRepository.FindByBarcode(ctx, specimens[i].HL7ID)
 		if err != nil {
@@ -43,7 +43,7 @@ func (u *Usecase) ProcessOULR22(ctx context.Context, data entity.OUL_R22) error 
 
 			uniqueWorkOrder[spEntity.WorkOrder.ID] = struct{}{}
 		}
-
 	}
+
 	return nil
 }
