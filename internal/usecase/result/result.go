@@ -31,7 +31,7 @@ func NewUsecase(
 
 func (u *Usecase) Results(ctx context.Context, req *entity.ResultGetManyRequest) ([]entity.Result, error) {
 	// it should be one table that handle the result of the patient with multiple work orders
-	worksOrders, err := u.workOrderRepository.FindByStatus(ctx, entity.WorkOrderStatusNew)
+	worksOrders, err := u.workOrderRepository.FindAll(ctx, &entity.WorkOrderGetManyRequest{})
 	if err != nil {
 		return nil, err
 	}
