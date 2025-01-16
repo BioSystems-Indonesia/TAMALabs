@@ -21,10 +21,10 @@ func NewPatientRepository(db *gorm.DB, cfg *config.Schema) *PatientRepository {
 	return &PatientRepository{db: db, cfg: cfg}
 }
 
-func (r PatientRepository) FindAll(ctx context.Context, req *entity.GetManyRequestPatient) ([]entity.Patient, error) {
+func (r PatientRepository) FindAll(ctx context.Context, req *entity.GetManyRequestPatient) (entity.PatientPaginationResponse, error) {
 	var patients []entity.Patient
 
-	db := r.db.WithContext(ctx)
+	db := r.db.WithContext(ctx).Model(&entity.Patient{})
 
 	if req.Query != "" {
 		db = db.Where("first_name like ? or last_name like ?", req.Query+"%", req.Query+"%")
@@ -58,11 +58,23 @@ func (r PatientRepository) FindAll(ctx context.Context, req *entity.GetManyReque
 	}
 	db = db.Offset(offset).Limit(limit)
 
-	err := db.Find(&patients).Error
+	var count int64
+	err := db.Count(&count).Error
 	if err != nil {
-		return nil, fmt.Errorf("error finding patients: %w", err)
+		return entity.PatientPaginationResponse{}, fmt.Errorf("error counting patients: %w", err)
 	}
-	return patients, nil
+
+	err = db.Find(&patients).Error
+	if err != nil {
+		return entity.PatientPaginationResponse{}, fmt.Errorf("error finding patients: %w", err)
+	}
+
+	return entity.PatientPaginationResponse{
+		Patients: patients,
+		PaginationResponse: entity.PaginationResponse{
+			Total: count,
+		},
+	}, nil
 }
 
 func (r PatientRepository) FindOne(id int64) (entity.Patient, error) {

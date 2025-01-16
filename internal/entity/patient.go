@@ -43,3 +43,8 @@ type GetManyRequestPatient struct {
 
 	BirthDate time.Time `query:"birthdate"`
 }
+
+type PatientPaginationResponse struct {
+	Patients []Patient `json:"patients"`
+	PaginationResponse
+}

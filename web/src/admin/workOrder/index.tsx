@@ -61,17 +61,6 @@ export function WorkOrderAddTest() {
     )
 }
 
-export function WorkOrderEdit() {
-    return (
-        <Edit mutationMode={"pessimistic"} actions={<WorkOrderAction />} sx={{
-            "& .RaEdit-card": {
-                overflow: "visible",
-            }
-        }}>
-            <WorkOrderForm mode={"EDIT"} />
-        </Edit>
-    )
-}
 
 export const WorkOrderList = () => (
     <List>

@@ -12,6 +12,11 @@ type Result struct {
 	Detail      ResultDetail `json:"detail,omitempty"`
 }
 
+type ResultPaginationResponse struct {
+	Data []Result `json:"data"`
+	PaginationResponse
+}
+
 type ResultDetail struct {
 	Hematology   []ResultTest `json:"hematology"`
 	Biochemistry []ResultTest `json:"biochemistry"`

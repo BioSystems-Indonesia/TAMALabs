@@ -2,18 +2,22 @@ package analyzer
 
 import (
 	"context"
-	"log"
+	"errors"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/oibacidem/lims-hl-seven/internal/util"
+
+	"github.com/labstack/gommon/log"
 )
 
 func (u *Usecase) ProcessOULR22(ctx context.Context, data entity.OUL_R22) error {
 	specimens := data.Specimens
+	var errs []error
 	uniqueWorkOrder := map[int64]struct{}{}
 	for i := range specimens {
 		spEntities, err := u.SpecimenRepository.FindByBarcode(ctx, specimens[i].HL7ID)
 		if err != nil {
-			log.Println(err)
+			errs = append(errs, err)
 			continue
 		}
 		var spEntity entity.Specimen
@@ -28,7 +32,8 @@ func (u *Usecase) ProcessOULR22(ctx context.Context, data entity.OUL_R22) error 
 			}
 			err := u.ObservationResultRepository.CreateMany(ctx, specimens[i].ObservationResult)
 			if err != nil {
-				return err
+				errs = append(errs, err)
+				continue
 			}
 		}
 
@@ -38,11 +43,22 @@ func (u *Usecase) ProcessOULR22(ctx context.Context, data entity.OUL_R22) error 
 			workOrder.Status = entity.WorkOrderStatusCompleted
 			err := u.WorkOrderRepository.Update(&workOrder)
 			if err != nil {
-				return err
+				errs = append(errs, err)
+				continue
 			}
 
 			uniqueWorkOrder[spEntity.WorkOrder.ID] = struct{}{}
 		}
+	}
+
+	err := errors.Join(errs...)
+	if err != nil {
+		log.Errorj(log.JSON{
+			"error": err,
+			"specimen": util.Map(specimens, func(s entity.Specimen) int {
+				return s.ID
+			}),
+		})
 	}
 
 	return nil

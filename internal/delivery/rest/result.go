@@ -1,9 +1,10 @@
 package rest
 
 import (
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"net/http"
 	"strconv"
+
+	"github.com/oibacidem/lims-hl-seven/internal/entity"
 
 	"github.com/labstack/echo/v4"
 	"github.com/oibacidem/lims-hl-seven/config"
