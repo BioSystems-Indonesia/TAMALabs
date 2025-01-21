@@ -4,7 +4,6 @@ import IconButton from '@mui/material/IconButton';
 import { useEffect, type ReactNode, useState } from 'react';
 import { AppBar, CheckForApplicationUpdate, Layout, Link, LoadingIndicator, TitlePortal, ToggleThemeButton } from 'react-admin';
 import { useLocation } from "react-router-dom";
-import MUILink from '@mui/material/Link';
 import { toTitleCase } from '../helper/format';
 
 
