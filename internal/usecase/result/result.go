@@ -72,6 +72,7 @@ func (u *Usecase) mapListResult(worksOrders []entity.WorkOrder) []entity.Result 
 				Barcode:     patient.Specimen[0].Barcode,
 				PatientName: patient.FirstName + " " + patient.LastName,
 				PatientID:   patient.ID,
+				Request:     patient.Specimen[0].ObservationRequest,
 			})
 		}
 	}

@@ -40,7 +40,7 @@ const App = () => {
 
         <Resource name="result" list={ResultList}
             hasCreate={false}
-            hasEdit={false}
+            hasEdit={true}
             hasShow={true}
             icon={AssessmentIcon}
             recordRepresentation={record => `#${record.barcode}}`}

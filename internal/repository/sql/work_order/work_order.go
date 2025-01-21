@@ -50,6 +50,7 @@ func (r WorkOrderRepository) FindAll(ctx context.Context, req *entity.WorkOrderG
 	err := db.
 		Preload("Patient").
 		Preload("Patient.Specimen").
+		Preload("Patient.Specimen.ObservationRequest").
 		Preload("Patient.Specimen.ObservationResult").
 		Find(&workOrders).Error
 	if err != nil {
