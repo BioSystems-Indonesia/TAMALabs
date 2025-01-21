@@ -13,6 +13,7 @@
     "@hookform/resolvers": "^3.9.1",
     "@mui/material": "^5.16.12",
     "@mui/x-date-pickers": "^7.23.2",
+    "@react-pdf/renderer": "^4.1.6",
     "dayjs": "^1.11.13",
     "ra-data-json-server": "^5.4.1",
     "react": "^18.3.1",

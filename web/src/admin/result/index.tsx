@@ -3,7 +3,7 @@ import Stack from "@mui/material/Stack";
 import Barcode from "react-barcode";
 import Typography from "@mui/material/Typography";
 import CustomShowDialog from "../../component/CustomDialog.tsx";
-
+import PrintMCU from "../../component/PrintReport.tsx";
 
 
 export const ResultList = () => (
@@ -30,7 +30,10 @@ export const ResultList = () => (
             </WrapperField>
             <TextField source="date" />
             <WithRecord render={(record: any) => (
-                <CustomShowDialog resource="result" recordId={record.barcode} />
+                <>
+                    <CustomShowDialog resource="result" recordId={record.barcode}/>
+                    <PrintMCU/>
+                </>
             )} />
         </Datagrid>
     </List>
