@@ -9,7 +9,7 @@ import UserIcon from '@mui/icons-material/Person';
 import ScienceIcon from '@mui/icons-material/Science';
 import BiotechIcon from '@mui/icons-material/Biotech';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import { WorkOrderAddTest, WorkOrderCreate, WorkOrderEdit, WorkOrderList } from "./workOrder";
+import { WorkOrderAddTest, WorkOrderCreate, WorkOrderList } from "./workOrder";
 import { ObservationRequestList, ObservationRequestShow } from "./observationRequest";
 import { SpecimenList, SpecimenShow } from "./specimen";
 import ListIcon from '@mui/icons-material/List';
@@ -29,11 +29,9 @@ const App = () => {
             <Route path="/settings*" element={<Settings />} />
         </CustomRoutes>
         <Resource name="work-order" list={WorkOrderList}
-            edit={WorkOrderEdit}
             create={WorkOrderCreate}
             show={WorkOrderShow}
             hasCreate={true}
-            hasEdit={true}
             hasShow={true}
             icon={BiotechIcon}
         >

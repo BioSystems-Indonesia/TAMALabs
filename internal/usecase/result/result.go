@@ -59,7 +59,7 @@ func (u *Usecase) ResultDetail(ctx context.Context, barcode string) (entity.Resu
 }
 
 func (u *Usecase) mapListResult(worksOrders []entity.WorkOrder) []entity.Result {
-	var results []entity.Result
+	results := []entity.Result{}
 	for _, workOrder := range worksOrders {
 		for _, patient := range workOrder.Patient {
 			if u.isPatientAlreadyExist(patient.ID, results) {

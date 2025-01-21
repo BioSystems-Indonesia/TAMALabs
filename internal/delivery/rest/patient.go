@@ -25,7 +25,7 @@ func (h *PatientHandler) FindPatients(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	patients, err := h.patientUsecase.FindAll(
+	result, err := h.patientUsecase.FindAll(
 		c.Request().Context(),
 		&req,
 	)
@@ -33,8 +33,8 @@ func (h *PatientHandler) FindPatients(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(len(patients)))
-	return c.JSON(http.StatusOK, patients)
+	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(int(result.Total)))
+	return c.JSON(http.StatusOK, result.Patients)
 }
 
 func (h *PatientHandler) GetOnePatient(c echo.Context) error {
