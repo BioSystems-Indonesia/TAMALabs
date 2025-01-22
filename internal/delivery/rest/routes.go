@@ -1,11 +1,11 @@
 package rest
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 	"github.com/oibacidem/lims-hl-seven/web"
 )
 
@@ -24,7 +24,7 @@ type Handler struct {
 }
 
 func RegisterMiddleware(e *echo.Echo) {
-	log.Info("Registering middleware")
+	slog.Info("Registering middleware")
 
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:     true,
@@ -32,19 +32,15 @@ func RegisterMiddleware(e *echo.Echo) {
 		LogHost:    true,
 		LogLatency: true,
 		LogError:   true,
+		LogMethod:  true,
 		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
-
-			json := log.JSON{
-				"method":  values.Method,
-				"uri":     values.URI,
-				"status":  values.Status,
-				"latency": values.Latency,
-			}
-			if values.Error != nil {
-				json["error"] = values.Error.Error()
-			}
-
-			log.Infoj(json)
+			slog.Info("request",
+				"method", values.Method,
+				"uri", values.URI,
+				"status", values.Status,
+				"latency", values.Latency,
+				"error", values.Error,
+			)
 
 			return nil
 		},
@@ -63,7 +59,7 @@ func RegisterMiddleware(e *echo.Echo) {
 
 // RegisterRoutes registers the routes of the REST server.
 func RegisterRoutes(e *echo.Echo, handler *Handler, deviceHandler *DeviceHandler) {
-	log.Info("Registering routes")
+	slog.Info("Registering routes")
 
 	registerFrontendPath(e)
 

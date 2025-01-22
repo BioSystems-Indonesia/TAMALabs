@@ -7,7 +7,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/util"
 
-	"github.com/labstack/gommon/log"
+	"log/slog"
 )
 
 func (u *Usecase) ProcessOULR22(ctx context.Context, data entity.OUL_R22) error {
@@ -53,12 +53,10 @@ func (u *Usecase) ProcessOULR22(ctx context.Context, data entity.OUL_R22) error 
 
 	err := errors.Join(errs...)
 	if err != nil {
-		log.Errorj(log.JSON{
-			"error": err,
-			"specimen": util.Map(specimens, func(s entity.Specimen) int {
-				return s.ID
-			}),
+		specimenIDs := util.Map(specimens, func(s entity.Specimen) int {
+			return s.ID
 		})
+		slog.Error("error processing OUL_R22", "error", err, "specimen", specimenIDs)
 	}
 
 	return nil
