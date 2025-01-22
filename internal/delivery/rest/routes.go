@@ -98,7 +98,7 @@ func RegisterRoutes(e *echo.Echo, handler *Handler, deviceHandler *DeviceHandler
 		workOrder.POST("", handler.CreateWorkOrder)
 		workOrder.POST("/run", handler.RunWorkOrder)
 		workOrder.POST("/cancel", handler.CancelOrder)
-		workOrder.POST("/:id/add-test", handler.AddTestWorkOrder)
+		workOrder.POST("/:id/show/add-test", handler.AddTestWorkOrder)
 		workOrder.GET("/:id", handler.GetOneWorkOrder)
 		workOrder.DELETE("/:id/test/:patient_id", handler.DeleteTestWorkOrder)
 		workOrder.DELETE("/:id", handler.DeleteWorkOrder)

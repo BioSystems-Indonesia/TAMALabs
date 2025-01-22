@@ -1,25 +1,21 @@
 // in src/admin/index.tsx
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import BiotechIcon from '@mui/icons-material/Biotech';
+import BuildIcon from '@mui/icons-material/Build';
+import LanIcon from '@mui/icons-material/Lan';
+import UserIcon from '@mui/icons-material/Person';
+import jsonServerProvider from "ra-data-json-server";
 import { Admin, CustomRoutes, Resource } from "react-admin";
 import { Route } from "react-router-dom";
-import jsonServerProvider from "ra-data-json-server";
-import LanIcon from '@mui/icons-material/Lan';
+import { ConfigEdit, ConfigList } from "./config/config.tsx";
+import { DeviceCreate, DeviceEdit, DeviceList, DeviceShow } from "./device/index.tsx";
 import { DefaultLayout } from "./layout.tsx";
 import { PatientCreate, PatientEdit, PatientList, PatientShow } from "./patient";
-import UserIcon from '@mui/icons-material/Person';
-import ScienceIcon from '@mui/icons-material/Science';
-import BiotechIcon from '@mui/icons-material/Biotech';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import { WorkOrderAddTest, WorkOrderCreate, WorkOrderList } from "./workOrder";
-import { ObservationRequestList, ObservationRequestShow } from "./observationRequest";
-import { SpecimenList, SpecimenShow } from "./specimen";
-import ListIcon from '@mui/icons-material/List';
-import { WorkOrderShow } from "./workOrder/Show.tsx";
-import { DeviceCreate, DeviceEdit, DeviceList, DeviceShow } from "./device/index.tsx";
+import { ResultList } from "./result";
 import Settings from "./settings/index.tsx";
 import { TestTypeCreate, TestTypeEdit, TestTypeList, TestTypeShow } from "./testType";
-import { ResultList } from "./result";
-import BuildIcon from '@mui/icons-material/Build';
-import { ConfigEdit, ConfigList } from "./config/config.tsx";
+import { WorkOrderAddTest, WorkOrderCreate, WorkOrderList } from "./workOrder";
+import { WorkOrderShow } from "./workOrder/Show.tsx";
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
@@ -35,7 +31,9 @@ const App = () => {
             hasShow={true}
             icon={BiotechIcon}
         >
-            <Route path="/:id/add-test*" element={<WorkOrderAddTest />} />
+            <Route path="/:id/show/add-test*" element={<WorkOrderAddTest />} />
+            <Route path="/:id/show/patient/create" element={<PatientCreate />} />
+            <Route path="/:id/show/device/create" element={<DeviceCreate />} />
         </Resource>
 
         <Resource name="result" list={ResultList}
@@ -52,7 +50,7 @@ const App = () => {
             icon={UserIcon}
             recordRepresentation={record => `#${record.id} - ${record.first_name} ${record.last_name}`}
         />
-        <Resource name="specimen" list={SpecimenList} show={SpecimenShow}
+        {/* <Resource name="specimen" list={SpecimenList} show={SpecimenShow}
             hasCreate={false}
             hasEdit={false}
             hasShow={true}
@@ -65,7 +63,7 @@ const App = () => {
             hasShow={true}
             icon={ListIcon}
             recordRepresentation={record => `#${record.id} - ${record.type}`}
-        />
+        /> */}
         <Resource name="test-type" list={TestTypeList} show={TestTypeShow}
             create={TestTypeCreate}
             edit={TestTypeEdit}

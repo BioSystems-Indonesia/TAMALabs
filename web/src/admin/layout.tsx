@@ -1,9 +1,10 @@
 import SettingsIcon from '@mui/icons-material/Settings';
-import { Breadcrumbs } from '@mui/material';
+import { Breadcrumbs, Stack } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import { useEffect, type ReactNode, useState } from 'react';
-import { AppBar, CheckForApplicationUpdate, Layout, Link, LoadingIndicator, TitlePortal, ToggleThemeButton } from 'react-admin';
-import { useLocation } from "react-router-dom";
+import { useEffect, useState, type ReactNode } from 'react';
+import { AppBar, Button, CheckForApplicationUpdate, Layout, Link, LoadingIndicator, TitlePortal, ToggleThemeButton } from 'react-admin';
+import { useLocation, useNavigate } from "react-router-dom";
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { toTitleCase } from '../helper/format';
 
 
@@ -87,10 +88,23 @@ const DynamicBreadcrumbs = () => {
     )
 }
 
-export const DefaultLayout = ({ children }: { children: ReactNode }) => (
-    <Layout sx={{}} appBar={MyAppBar}>
-        <DynamicBreadcrumbs />
-        {children}
-        <CheckForApplicationUpdate />
-    </Layout>
-);
+export const DefaultLayout = ({ children }: { children: ReactNode }) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    return (
+        <Layout sx={{}} appBar={MyAppBar}>
+            <Stack direction={"row"} gap={2}>
+                <Button label='Back' variant='contained' onClick={() => navigate(-1)} sx={{
+                    display: location.pathname.split("/").length > 2 ? 'flex' : 'none'
+                }}>
+                    <ArrowBackIcon />
+                </Button>
+
+                <DynamicBreadcrumbs />
+            </Stack>
+            {children}
+            <CheckForApplicationUpdate />
+        </Layout>
+    )
+};

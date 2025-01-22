@@ -19,6 +19,7 @@ import {
 } from "react-admin";
 import FeatureList from "../../component/FeatureList.tsx";
 import { Action, ActionKeys } from "../../types/props.ts";
+import { useRefererRedirect } from "../../hooks/useReferer.ts";
 
 type DeviceFormProps = {
     readonly?: boolean
@@ -57,7 +58,7 @@ export function DeviceForm(props: DeviceFormProps) {
 
 export function DeviceCreate() {
     return (
-        <Create redirect={"list"}>
+        <Create redirect={useRefererRedirect("list")} resource="device">
             <DeviceForm mode={"CREATE"} />
         </Create>
     )
@@ -65,7 +66,7 @@ export function DeviceCreate() {
 
 export function DeviceShow() {
     return (
-        <Show>
+        <Show resource="device">
             <DeviceForm readonly mode={"SHOW"} />
             <ReferenceSection />
         </Show>
@@ -74,7 +75,7 @@ export function DeviceShow() {
 
 export function DeviceEdit() {
     return (
-        <Edit mutationMode={"pessimistic"}>
+        <Edit mutationMode={"pessimistic"} resource="device">
             <DeviceForm mode={"EDIT"} />
         </Edit>
     )
@@ -90,7 +91,7 @@ const DeviceFilterSidebar = () => (
 
 
 export const DeviceList = () => (
-    <List aside={<DeviceFilterSidebar />}>
+    <List aside={<DeviceFilterSidebar />} resource="device">
         <Datagrid>
             <TextField source="id" />
             <TextField source="name" />
