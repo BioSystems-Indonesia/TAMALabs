@@ -4,9 +4,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import PrintIcon from '@mui/icons-material/Print';
-import { Card, CardContent, Grid } from "@mui/material";
+import { Card, CardContent, CircularProgress, FormHelperText, Grid } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useFormContext } from 'react-hook-form'
 import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import {
@@ -44,6 +45,7 @@ import type { BarcodeStyle } from '../../types/general';
 import { DeviceForm } from "../device";
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
 import { trimName } from '../../helper/format';
+import { getRefererParam } from '../../hooks/useReferer';
 
 const barcodePageStyle = (style: BarcodeStyle) => `
 @media all {
@@ -112,7 +114,7 @@ const AddTestButton = (props: ButtonProps) => {
     const record = useRecordContext();
 
     return (
-        <Link to={`/work-order/${record?.id}/add-test`}>
+        <Link to={`/work-order/${record?.id}/show/add-test`}>
             <Button label="Add Test" {...props}>
                 <AddIcon />
             </Button>
@@ -129,7 +131,7 @@ const BulkEditButton = ({ patientIDs, workOrderID }: { patientIDs?: number[], wo
             patientIDs.forEach(id => urlParams.append('patient_id', id.toString()));
         }
 
-        return `/work-order/${recordId}/add-test/1?${urlParams.toString()}`;
+        return `/work-order/${recordId}/show/add-test/1?${urlParams.toString()}`;
     }
 
     return (
@@ -411,11 +413,11 @@ function RunWorkOrderForm() {
                 alignItems: "center",
             }}>
                 <Stack width={"100%"}>
-                    <ReferenceInput source={"device_id"} reference={"device"}>
+                    <ReferenceInput source={"device_id"} reference={"device"} disabled={isPending} >
                         <AutocompleteInput source={"device_id"} validate={[required()]} create={<DeviceForm />} sx={{
                             margin: 0,
-                        }} helperText={
-                            <Link to={"/device/create"} target="_blank" rel="noopener noreferrer">
+                        }} disabled={isPending} helperText={
+                            <Link to={"device/create?" + getRefererParam()}>
                                 <InputHelperText helperText="Create new device"></InputHelperText>
                             </Link>
                         }
@@ -425,14 +427,29 @@ function RunWorkOrderForm() {
             </Grid>
             <Grid item xs={12} md={3} sx={{
                 display: "flex",
-                justifyContent: "center",
+                paddingLeft: "24px",
+                justifyContent: "start",
                 alignItems: "center",
             }}>
-                <Button label="Run Work Order" disabled={isPending} variant="contained" type="submit">
-                    <PlayCircleFilledIcon />
-                </Button>
+                <RunWorkOrderSubmit isPending={isPending} />
             </Grid>
         </Grid>
     </Form>;
+}
+
+function RunWorkOrderSubmit({ isPending }: { isPending: boolean }) {
+    const { watch } = useFormContext()
+
+
+    return (
+        <Stack >
+            <Button label="Run Work Order" disabled={isPending || !watch("device_id")} variant="contained" type='submit' sx={{
+                cursor: "pointer"
+            }}>
+                {isPending ? <CircularProgress size={12} variant='indeterminate' color='primary' /> : <PlayCircleFilledIcon />}
+            </Button>
+            {!isPending && !watch("device_id") && <Typography color='error' fontSize={12}>Please pick device to run</Typography>}
+        </Stack>
+    );
 }
 

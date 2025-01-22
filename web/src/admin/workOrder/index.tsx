@@ -54,7 +54,7 @@ export function WorkOrderAddTest() {
                 "& .RaCreate-card": {
                     overflow: "visible",
                 }
-            }} resource={`work-order/${id}/add-test`}>
+            }} resource={`work-order/${id}/show/add-test`}>
             <WorkOrderForm mode={"ADD_TEST"} />
         </Create>
     )

@@ -37,7 +37,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
 import FeatureList from "../../component/FeatureList.tsx";
 import { ActionKeys } from "../../types/props.ts";
-import { getRefererParam } from "../../helper/location.ts";
+import { getRefererParam } from "../../hooks/useReferer.ts";
 
 
 type WorkOrderActionKeys = ActionKeys | "ADD_TEST";
@@ -193,10 +193,12 @@ function TestInput(props: WorkOrderFormProps) {
     return (<List resource={"test-type"} exporter={false} aside={<TestFilterSidebar />}
         perPage={999999}
         storeKey={false}
+        actions={false}
         title={false}
         pagination={false}
         disableSyncWithLocation
         sx={{
+            marginTop: "48px",
             width: "100%"
         }}
     >
@@ -324,11 +326,11 @@ function PatientTable(props: WorkOrderFormProps) {
 }
 
 const PatientListActions = () => {
-    const location = useLocation();
+    const location = useLocation()
 
     return (
         <TopToolbar>
-            <CreateButton to={`/patient/create?${getRefererParam(location.pathname)}`} />
+            <CreateButton to={`${location.pathname}/patient/create?${getRefererParam()}`} label="Create Patient" />
         </TopToolbar>
     )
 };
