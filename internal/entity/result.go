@@ -10,6 +10,8 @@ type Result struct {
 	PatientName string       `json:"patient_name"`
 	PatientID   int64        `json:"patient_id"`
 	Detail      ResultDetail `json:"detail,omitempty"`
+
+	Request []ObservationRequest `json:"observation_request"`
 }
 
 type ResultPaginationResponse struct {
