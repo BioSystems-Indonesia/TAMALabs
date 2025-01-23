@@ -10,12 +10,20 @@ import (
 )
 
 type DeviceHandler struct {
-	db *gorm.DB
+	DB *gorm.DB
+}
+
+func (h *DeviceHandler) RegisterRoute(device *echo.Group) {
+	device.GET("", h.ListDevices)
+	device.POST("", h.CreateDevice)
+	device.GET("/:id", h.GetDevice)
+	device.PUT("/:id", h.UpdateDevice)
+	device.DELETE("/:id", h.DeleteDevice)
 }
 
 func (h *DeviceHandler) ListDevices(c echo.Context) error {
 	var devices []entity.Device
-	if err := h.db.Find(&devices).Error; err != nil {
+	if err := h.DB.Find(&devices).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(len(devices)))
@@ -28,7 +36,7 @@ func (h *DeviceHandler) CreateDevice(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err)
 	}
 
-	if err := h.db.Create(device).Error; err != nil {
+	if err := h.DB.Create(device).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
@@ -37,7 +45,7 @@ func (h *DeviceHandler) CreateDevice(c echo.Context) error {
 
 func (h *DeviceHandler) GetDevice(c echo.Context) error {
 	var device entity.Device
-	if err := h.db.First(&device, c.Param("id")).Error; err != nil {
+	if err := h.DB.First(&device, c.Param("id")).Error; err != nil {
 		return c.JSON(http.StatusNotFound, err)
 	}
 
@@ -50,7 +58,7 @@ func (h *DeviceHandler) UpdateDevice(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err)
 	}
 
-	if err := h.db.Save(device).Error; err != nil {
+	if err := h.DB.Save(device).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
@@ -58,13 +66,9 @@ func (h *DeviceHandler) UpdateDevice(c echo.Context) error {
 }
 
 func (h *DeviceHandler) DeleteDevice(c echo.Context) error {
-	if err := h.db.Delete(&entity.Device{}, c.Param("id")).Error; err != nil {
+	if err := h.DB.Delete(&entity.Device{}, c.Param("id")).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
-}
-
-func NewDeviceHandler(db *gorm.DB) *DeviceHandler {
-	return &DeviceHandler{db: db}
 }

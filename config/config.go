@@ -14,7 +14,7 @@ import (
 )
 
 func New(db *gorm.DB) (Schema, error) {
-	slog.Info("Loading config from file")
+	slog.Info("loading config")
 
 	var configs []entity.Config
 	err := db.Find(&configs).Error

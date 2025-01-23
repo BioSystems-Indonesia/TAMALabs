@@ -28,16 +28,28 @@ func provideTCP(config *config.Schema) *ba400.TCP {
 	return tcpEr
 }
 
-func provideTCPServer(config *config.Schema, handler *tcp.Handler) server.TCPServer {
-	serv := server.NewTCP("1024")
-	tcp.Loop(serv, handler)
-	return serv
+func provideTCPServer(config *config.Schema, handler *tcp.HlSevenHandler) *server.TCP {
+	s := server.NewTCP("1024")
+	s.SetHandler(handler)
+	err := s.Start()
+	if err != nil {
+		log.Println(err)
+	}
+	go s.Serve()
+	return s
 }
 
-func provideRestServer(config *config.Schema, handlers *rest.Handler, validate *validator.Validate, deviceHandler *rest.DeviceHandler) server.RestServer {
+func provideRestServer(
+	config *config.Schema,
+	handlers *rest.Handler,
+	validate *validator.Validate,
+	deviceHandler *rest.DeviceHandler,
+	serverControllerHandler *rest.ServerControllerHandler,
+
+) server.RestServer {
 	serv := server.NewRest(config.Port, validate)
 	rest.RegisterMiddleware(serv.GetClient())
-	rest.RegisterRoutes(serv.GetClient(), handlers, deviceHandler)
+	rest.RegisterRoutes(serv.GetClient(), handlers, deviceHandler, serverControllerHandler)
 	return serv
 }
 
@@ -55,25 +67,16 @@ func provideRestHandler(
 	testTemplateHandler *rest.TestTemplateHandler,
 ) *rest.Handler {
 	return &rest.Handler{
-		hlSevenHandler,
-		healthCheck,
-		patientHandler,
-		specimenHandler,
-		workOrder,
-		featureListHandler,
-		observationRequest,
-		testTypeHandler,
-		resultHandler,
-		configHandler,
-		testTemplateHandler,
-	}
-}
-
-func provideTCPHandler(
-	HlSevenHHandler *tcp.HlSevenHandler,
-) *tcp.Handler {
-	return &tcp.Handler{
-		HlSevenHandler: HlSevenHHandler,
+		HlSevenHandler:            hlSevenHandler,
+		HealthCheckHandler:        healthCheck,
+		PatientHandler:            patientHandler,
+		SpecimenHandler:           specimenHandler,
+		WorkOrderHandler:          workOrder,
+		FeatureListHandler:        featureListHandler,
+		ObservationRequestHandler: observationRequest,
+		TestTypeHandler:           testTypeHandler,
+		ResultHandler:             resultHandler,
+		ConfigHandler:             configHandler,
 	}
 }
 
@@ -136,7 +139,7 @@ func InitDatabase() (*gorm.DB, error) {
 	}
 
 	for _, model := range autoMigrate {
-		log.Printf("AutoMigrate: %T", model)
+		log.Printf("auto migrate: %T", model)
 
 		err = db.AutoMigrate(model)
 		if err != nil {

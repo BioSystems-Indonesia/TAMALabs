@@ -1,7 +1,10 @@
 import SettingsIcon from '@mui/icons-material/Settings';
+import WifiIcon from '@mui/icons-material/Wifi';
+import WifiOffIcon from '@mui/icons-material/WifiOff';
 import { Breadcrumbs, Stack } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import { useEffect, useState, type ReactNode } from 'react';
+import Tooltip from '@mui/material/Tooltip';
+import { useEffect, useState, type ReactNode, useRef } from 'react';
 import { AppBar, Button, CheckForApplicationUpdate, Layout, Link, LoadingIndicator, TitlePortal, ToggleThemeButton } from 'react-admin';
 import { useLocation, useNavigate } from "react-router-dom";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -15,6 +18,50 @@ const SettingsButton = () => (
         </IconButton>
     </Link>
 );
+
+const AppIndicator = () => {
+    var [state, setState] = useState("loading");
+    var [detailState, setDetailState] = useState({});
+    var timer = useRef(0);
+    const fetchData = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/server/status`);
+            const data = await response.json();
+            setDetailState(data);
+            setState("online");
+        } catch {
+            setState("offline")
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+        timer.current = setInterval(fetchData, 5000);
+        console.log(timer.current)
+        return () => { if (timer.current != 0) clearInterval(timer.current) }
+    }, [])
+
+    const icon = () => {
+        switch(state) {
+            case "online": return <WifiIcon />
+            case "offline": return <WifiOffIcon />
+            case "loading": return <WifiOffIcon />
+            default: <WifiOffIcon />
+        };
+    }
+
+    const tooltipTitle = () => {
+        return "server: " + detailState.rest + " " + "hl7tcp: " + detailState.hl7tcp;
+    }
+
+    return (
+        <Tooltip title={tooltipTitle()}>
+            <IconButton color="inherit">
+                {icon()}
+            </IconButton>
+        </Tooltip>
+    )
+}
 
 const MyAppBar = () => {
     const location = useLocation()
@@ -37,6 +84,7 @@ const MyAppBar = () => {
             toolbar={
                 <>
                     <SettingsButton />
+                    <AppIndicator />
                     <ToggleThemeButton />
                     <LoadingIndicator />
                 </>

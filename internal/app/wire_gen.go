@@ -30,10 +30,6 @@ import (
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
 
-import (
-	_ "unsafe"
-)
-
 // Injectors from wire.go:
 
 // InitRestApp is a Wire provider function that returns a RestServer.
@@ -72,22 +68,15 @@ func InitRestApp() server.RestServer {
 	test_template_ucUsecase := test_template_uc.NewUsecase(test_templateRepository)
 	testTemplateHandler := rest.NewTestTemplateHandler(schema, test_template_ucUsecase)
 	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler, testTemplateHandler)
-	deviceHandler := rest.NewDeviceHandler(gormDB)
-	restServer := provideRestServer(schema, handler, validate, deviceHandler)
+	deviceHandler := &rest.DeviceHandler{
+		DB: gormDB,
+	}
+	tcpHlSevenHandler := tcp.NewHlSevenHandler(usecase)
+	serverTCP := provideTCPServer(schema, tcpHlSevenHandler)
+	serverControllerHandler := &rest.ServerControllerHandler{
+		Cfg:       configrepoRepository,
+		TCPServer: serverTCP,
+	}
+	restServer := provideRestServer(schema, handler, validate, deviceHandler, serverControllerHandler)
 	return restServer
-}
-
-func InitTCPApp() server.TCPServer {
-	gormDB := provideDB()
-	schema := provideConfig(gormDB)
-	repository := observation_result.NewRepository(gormDB, schema)
-	observation_requestRepository := observation_request.NewRepository(gormDB, schema)
-	cache := provideCache()
-	specimenRepository := specimen.NewRepository(gormDB, schema, cache)
-	workOrderRepository := workOrderrepo.NewWorkOrderRepository(gormDB, schema, specimenRepository)
-	usecase := analyzer.NewUsecase(repository, observation_requestRepository, specimenRepository, workOrderRepository)
-	hlSevenHandler := tcp.NewHlSevenHandler(usecase)
-	handler := provideTCPHandler(hlSevenHandler)
-	tcpServer := provideTCPServer(schema, handler)
-	return tcpServer
 }

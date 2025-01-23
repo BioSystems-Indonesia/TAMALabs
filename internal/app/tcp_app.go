@@ -40,7 +40,6 @@ var (
 
 		tcp.NewHlSevenHandler,
 		provideTCP,
-		provideTCPHandler,
 		provideTCPServer,
 	)
 )

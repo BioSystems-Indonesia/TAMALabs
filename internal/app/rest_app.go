@@ -1,9 +1,9 @@
 package app
 
-import "C"
 import (
 	"github.com/google/wire"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/repository"
 	configrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
@@ -16,7 +16,6 @@ import (
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
-	hlsUC "github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
 	configuc "github.com/oibacidem/lims-hl-seven/internal/usecase/config"
 	observation_requestuc "github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
@@ -25,6 +24,7 @@ import (
 	test_template_uc "github.com/oibacidem/lims-hl-seven/internal/usecase/test_template"
 	testTypeUC "github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
 	workOrderuc "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
+	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
 
 var restUsecaseSet = wire.NewSet(
@@ -60,7 +60,8 @@ var (
 		test_template.NewRepository,
 
 		restUsecaseSet,
-		hlsUC.NewUsecase,
+		tcpUsecaseSet,
+
 		patientuc.NewPatientUseCase,
 		specimenuc.NewSpecimenUseCase,
 		workOrderuc.NewWorkOrderUseCase,
@@ -75,12 +76,19 @@ var (
 		rest.NewWorkOrderHandler,
 		rest.NewFeatureListHandler,
 		rest.NewObservationRequestHandler,
-		rest.NewDeviceHandler,
 		rest.NewTestTypeHandler,
 		rest.NewResultHandler,
 		rest.NewConfigHandler,
+		wire.Struct(new(rest.DeviceHandler), "*"),
+
 		rest.NewTestTemplateHandler,
 		provideTCP,
+
+		tcp.NewHlSevenHandler,
+		provideTCPServer,
+		wire.Bind(new(rest.TCPServerController), new(*server.TCP)),
+		wire.Struct(new(rest.ServerControllerHandler), "*"),
+
 		provideRestHandler,
 		provideRestServer,
 	)

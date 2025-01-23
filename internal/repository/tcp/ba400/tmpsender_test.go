@@ -9,6 +9,7 @@ import (
 )
 
 func TestSendToBA400(t *testing.T) {
+	t.Skip("need device")
 	err := SendToBA400(context.Background(), []entity.Patient{
 		{
 			ID:          1,

@@ -25,7 +25,7 @@ type Handler struct {
 }
 
 func RegisterMiddleware(e *echo.Echo) {
-	slog.Info("Registering middleware")
+	slog.Info("registering middleware")
 
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:     true,
@@ -59,8 +59,13 @@ func RegisterMiddleware(e *echo.Echo) {
 }
 
 // RegisterRoutes registers the routes of the REST server.
-func RegisterRoutes(e *echo.Echo, handler *Handler, deviceHandler *DeviceHandler) {
-	slog.Info("Registering routes")
+func RegisterRoutes(
+	e *echo.Echo,
+	handler *Handler,
+	deviceHandler *DeviceHandler,
+	serverControllerHandler *ServerControllerHandler,
+) {
+	slog.Info("registering routes")
 
 	registerFrontendPath(e)
 
@@ -101,14 +106,9 @@ func RegisterRoutes(e *echo.Echo, handler *Handler, deviceHandler *DeviceHandler
 		workOrder.DELETE("/:id", handler.DeleteWorkOrder)
 	}
 
-	device := v1.Group("/device")
-	{
-		device.GET("", deviceHandler.ListDevices)
-		device.POST("", deviceHandler.CreateDevice)
-		device.GET("/:id", deviceHandler.GetDevice)
-		device.PUT("/:id", deviceHandler.UpdateDevice)
-		device.DELETE("/:id", deviceHandler.DeleteDevice)
-	}
+	deviceHandler.RegisterRoute(v1.Group("/device"))
+
+	serverControllerHandler.RegisterRoute(v1.Group("/server"))
 
 	testType := v1.Group("/test-type")
 	{

@@ -15,8 +15,3 @@ func InitRestApp() server.RestServer {
 	wire.Build(restAppSet)
 	return &server.Rest{}
 }
-
-func InitTCPApp() server.TCPServer {
-	wire.Build(tcpAppSet)
-	return &server.TCP{}
-}

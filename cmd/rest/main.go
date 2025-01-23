@@ -18,14 +18,8 @@ func main() {
 	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
 	slog.SetDefault(l)
 
-	go main_tcp()
 	server := app.InitRestApp()
 	go openb()
-	server.Serve()
-}
-
-func main_tcp() {
-	server := app.InitTCPApp()
 	server.Serve()
 }
 
