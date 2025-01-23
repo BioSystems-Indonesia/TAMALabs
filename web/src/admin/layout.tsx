@@ -21,7 +21,10 @@ const SettingsButton = () => (
 
 const AppIndicator = () => {
     var [state, setState] = useState("loading");
-    var [detailState, setDetailState] = useState({});
+    var [detailState, setDetailState] = useState({
+        rest: "",
+        hl7tcp: "",
+    });
     var timer = useRef(0);
     const fetchData = async () => {
         try {
