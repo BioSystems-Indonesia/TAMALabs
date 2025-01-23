@@ -11,6 +11,7 @@ import (
 	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
 	resultRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_template"
 	testTypeRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
@@ -21,6 +22,7 @@ import (
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	resultUC "github.com/oibacidem/lims-hl-seven/internal/usecase/result"
 	specimenuc "github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
+	test_template_uc "github.com/oibacidem/lims-hl-seven/internal/usecase/test_template"
 	testTypeUC "github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
 	workOrderuc "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
 )
@@ -55,6 +57,7 @@ var (
 		workOrderrepo.NewWorkOrderRepository,
 		specimen.NewRepository,
 		configrepo.NewRepository,
+		test_template.NewRepository,
 
 		restUsecaseSet,
 		hlsUC.NewUsecase,
@@ -63,6 +66,7 @@ var (
 		workOrderuc.NewWorkOrderUseCase,
 		observation_requestuc.NewObservationRequestUseCase,
 		configuc.NewConfigUseCase,
+		test_template_uc.NewUsecase,
 
 		rest.NewHlSevenHandler,
 		rest.NewHealthCheckHandler,
@@ -75,6 +79,7 @@ var (
 		rest.NewTestTypeHandler,
 		rest.NewResultHandler,
 		rest.NewConfigHandler,
+		rest.NewTestTemplateHandler,
 		provideTCP,
 		provideRestHandler,
 		provideRestServer,

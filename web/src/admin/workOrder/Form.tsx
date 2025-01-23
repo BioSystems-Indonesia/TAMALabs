@@ -1,19 +1,24 @@
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import CategoryIcon from '@mui/icons-material/Category';
+import PagesIcon from '@mui/icons-material/Pages';
+import SegmentIcon from '@mui/icons-material/Segment';
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
-import { useLocation } from "react-router-dom";
 import Typography from "@mui/material/Typography";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+    Button,
     CreateButton,
     Datagrid,
     DateField,
     DateTimeInput,
     DeleteButton,
+    FilterList,
+    FilterListItem,
     FilterListSection,
     FilterLiveForm,
     FilterLiveSearch,
@@ -26,6 +31,7 @@ import {
     TextInput,
     Toolbar,
     TopToolbar,
+    useGetList,
     useGetMany,
     useGetOne,
     useListContext,
@@ -33,11 +39,12 @@ import {
     useSaveContext
 } from "react-admin";
 import { FieldValues, UseFormWatch, useFormContext } from "react-hook-form";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
 import FeatureList from "../../component/FeatureList.tsx";
-import { ActionKeys } from "../../types/props.ts";
 import { getRefererParam } from "../../hooks/useReferer.ts";
+import { ActionKeys } from "../../types/props.ts";
+import { ListItem, ListItemText } from "@mui/material";
 
 
 type WorkOrderActionKeys = ActionKeys | "ADD_TEST";
@@ -50,23 +57,154 @@ type WorkOrderFormProps = {
 
 const observationRequestField = "observation_requests";
 
-const TestFilterSidebar = () => (
-    <Card sx={{
-        order: -1, mr: 1, mt: 2, width: 200, minWidth: 200,
-        overflow: "visible",
-    }}>
-        <CardContent sx={{
-            position: "sticky",
-            top: 96,
+const TestFilterSidebar = () => {
+    const list = useListContext();
+    const [dataUniqueCategory, setDataUniqueCategory] = useState<Array<any>>([])
+    const [dataUniqueSubCategory, setDataUniqueSubCategory] = useState<Array<any>>([])
+    const hasRunEffect = useRef(false); // Ref to track if the effect has run
+
+    useEffect(() => {
+        if (!list.data || hasRunEffect.current) {
+            return;
+        }
+
+
+        // Use Map to ensure uniqueness by 'id'
+        const uniqueCategoryMap = new Map<string, any>();
+        list.data.forEach((item: any) => {
+            uniqueCategoryMap.set(item.category, item);
+        });
+        const uniqueCategoryArray = Array.from(uniqueCategoryMap.values());
+        setDataUniqueCategory(uniqueCategoryArray)
+
+        const uniqueSubCategoryMap = new Map<string, any>();
+        list.data.forEach((item: any) => {
+            uniqueSubCategoryMap.set(item.sub_category, item);
+        });
+        const uniqueSubCategoryArray = Array.from(uniqueSubCategoryMap.values());
+        setDataUniqueSubCategory(uniqueSubCategoryArray)
+
+        hasRunEffect.current = true;
+    }, [list.data])
+
+    const isCategorySelected = (value: any, filters: any) => {
+        const categories = filters.categories || [];
+        return categories.includes(value.category);
+    };
+
+    const toggleCategoryFilter = (value: any, filters: any) => {
+        const categories = filters.categories || [];
+        return {
+            ...filters,
+            categories: categories.includes(value.category)
+                // Remove the category if it was already present
+                ? categories.filter((v: any) => v !== value.category)
+                // Add the category if it wasn't already present
+                : [...categories, value.category],
+        };
+    };
+
+
+    const isSubCategorySelected = (value: any, filters: any) => {
+        const subCategories = filters.subCategories || [];
+        return subCategories.includes(value.sub_category);
+    };
+
+    const toggleSubCategoryFilter = (value: any, filters: any) => {
+        const subCategories = filters.subCategories || [];
+        return {
+            ...filters,
+            subCategories: subCategories.includes(value.sub_category)
+                // Remove the category if it was already present
+                ? subCategories.filter((v: any) => v !== value.sub_category)
+                // Add the category if it wasn't already present
+                : [...subCategories, value.sub_category],
+        };
+    };
+
+    const { data, total, isPending, error } = useGetList(
+        'test-template',
+        {
+            pagination: { page: 1, perPage: 1000 },
+            sort: { field: 'id', order: 'DESC' }
+        }
+    );
+
+    const isTemplateSelected = (value: any, filters: any) => {
+        const templates = filters.templates || [];
+        return templates.includes(value.template.id);
+    };
+
+    const toggleTemplateFilter = (value: any, filters: any) => {
+
+        const templates = filters.templates || [];
+        const removeTemplate = (value: any, templates: any[]) => {
+            console.log("removeTemplate", value, templates);
+            const filteredIds = list.selectedIds.filter((v: any) => !value.template.test_type_id.includes(v))
+            list.onSelect(filteredIds)
+            return templates.filter((v: any) => v !== value.template.id)
+        }
+
+        const addTemplate = (value: any, templates: any[]) => {
+            console.log("addTemplate", value, templates);
+            list.onSelect(value.template.test_type_id)
+            return [...templates, value.template.id]
+        }
+
+        return {
+            ...filters,
+            templates: templates.includes(value.template.id)
+                // Remove the category if it was already present
+                ? removeTemplate(value, templates)
+                // Add the category if it wasn't already present
+                : addTemplate(value, templates),
+        };
+    };
+
+    return (
+        <Card sx={{
+            order: -1, mr: 1, mt: 2, width: 200, minWidth: 200,
+            overflow: "visible",
         }}>
-            <SavedQueriesList />
-            <FilterLiveSearch onSubmit={(event) => event.preventDefault()} />
-        </CardContent>
-    </Card>
-);
+            <CardContent sx={{
+                position: "sticky",
+                top: 96,
+            }}>
+                <SavedQueriesList />
+                <FilterLiveSearch onSubmit={(event) => event.preventDefault()} />
+                <FilterList label="Template" icon={<PagesIcon />} >
+                    {data?.map((val: any, i) => {
+                        return (
+                            <FilterListItem key={i} label={val.name} value={{ template: val }}
+                                toggleFilter={toggleTemplateFilter} isSelected={isTemplateSelected} />
+                        )
+                    })}
+                </FilterList>
+                <Divider sx={{ marginY: 1 }} />
+                <FilterList label="Category" icon={<CategoryIcon />}>
+                    {dataUniqueCategory.map((val: any, i) => {
+                        return (
+                            <FilterListItem key={i} label={val.category} value={{ category: val.category }}
+                                toggleFilter={toggleCategoryFilter} isSelected={isCategorySelected} />
+                        )
+                    })}
+                </FilterList>
+                <FilterList label="Sub Category" icon={<SegmentIcon />}>
+                    {dataUniqueSubCategory.map((val: any, i) => {
+                        return (
+                            <FilterListItem key={i} label={val.sub_category} value={{ sub_category: val.sub_category }}
+                                toggleFilter={toggleSubCategoryFilter} isSelected={isSubCategorySelected} />
+                        )
+                    })}
+                </FilterList>
+            </CardContent>
+        </Card>
+    )
+};
 
 const PickedTest = () => {
-    const { selectedIds, data } = useListContext();
+    const { data } = useListContext();
+    const { watch } = useFormContext()
     const [selectedData, setSelectedData] = useState<any[]>([]);
 
     useEffect(() => {
@@ -75,13 +213,13 @@ const PickedTest = () => {
         }
 
         const selectedData = data.filter((v: any) => {
-            return selectedIds.includes(v.id);
+            return watch(observationRequestField)?.includes(v.code);
         });
 
         setSelectedData(selectedData);
-    }, [selectedIds, data]);
+    }, [watch(observationRequestField), data]);
 
-    if (selectedIds.length === 0) {
+    if (watch(observationRequestField)?.length === 0) {
         return (
             <Typography fontSize={16}>Please select test to run</Typography>
         )
@@ -89,7 +227,7 @@ const PickedTest = () => {
 
     return (
         <Stack spacing={2}>
-            <Typography fontSize={16}>Selected test</Typography>
+            <Typography fontSize={16}>Selected Test</Typography>
             <Grid container spacing={1}>
                 {
                     selectedData.map((v: any) => {

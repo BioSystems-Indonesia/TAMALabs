@@ -23,6 +23,10 @@ const MyAppBar = () => {
             return true;
         }
 
+        if (location.pathname.includes('/test-template/')) {
+            return true;
+        }
+
         return false
     }
 

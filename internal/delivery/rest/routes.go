@@ -21,6 +21,7 @@ type Handler struct {
 	*TestTypeHandler
 	*ResultHandler
 	*ConfigHandler
+	*TestTemplateHandler
 }
 
 func RegisterMiddleware(e *echo.Echo) {
@@ -119,6 +120,16 @@ func RegisterRoutes(e *echo.Echo, handler *Handler, deviceHandler *DeviceHandler
 		testType.GET("/:id", handler.GetOneTestType)
 		testType.POST("", handler.CreateTestType)
 		testType.PUT("/:id", handler.UpdateTestType)
+		testType.DELETE("/:id", handler.DeleteTestType)
+	}
+
+	testTemplate := v1.Group("/test-template")
+	{
+		testTemplate.GET("", handler.ListTestTemplate)
+		testTemplate.GET("/:id", handler.GetOneTestTemplate)
+		testTemplate.POST("", handler.CreateTestTemplate)
+		testTemplate.PUT("/:id", handler.UpdateTestTemplate)
+		testTemplate.DELETE("/:id", handler.DeleteTestTemplate)
 	}
 
 	result := v1.Group("/result")
