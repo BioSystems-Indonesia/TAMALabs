@@ -2,13 +2,14 @@ package app
 
 import (
 	"fmt"
+	"log"
+	"log/slog"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/glebarez/sqlite"
 	"github.com/go-playground/validator/v10"
-	"github.com/labstack/gommon/log"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
@@ -29,8 +30,7 @@ func provideTCP(config *config.Schema) *ba400.TCP {
 
 func provideTCPServer(config *config.Schema, handler *tcp.Handler) server.TCPServer {
 	serv := server.NewTCP("1024")
-	tcp.RegisterRotes2(serv, handler)
-	//tcp.RegisterRoutes(serv.GetClient(), handler)
+	tcp.Loop(serv, handler)
 	return serv
 }
 
@@ -88,9 +88,9 @@ func fileExists(filename string) bool {
 }
 func InitSQLiteDB() (*gorm.DB, error) {
 	if fileExists(dbFileName) {
-		log.Info("db is existed already")
+		slog.Info("db is existed already")
 	} else {
-		log.Info("db is not exists, start create and migrate db")
+		slog.Info("db is not exists, start create and migrate db")
 		err := os.MkdirAll("./tmp", 0755)
 		if err != nil {
 			return nil, err
@@ -136,7 +136,7 @@ func InitDatabase() (*gorm.DB, error) {
 	}
 
 	for _, model := range autoMigrate {
-		log.Infof("AutoMigrate: %T", model)
+		log.Printf("AutoMigrate: %T", model)
 
 		err = db.AutoMigrate(model)
 		if err != nil {

@@ -3,10 +3,10 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/labstack/gommon/log"
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/spf13/viper"
@@ -14,7 +14,7 @@ import (
 )
 
 func New(db *gorm.DB) (Schema, error) {
-	log.Info("Loading config from file")
+	slog.Info("Loading config from file")
 
 	var configs []entity.Config
 	err := db.Find(&configs).Error

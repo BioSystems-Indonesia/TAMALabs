@@ -3,11 +3,11 @@ package rest
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"maps"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
@@ -47,20 +47,14 @@ func logError(
 	payload entity.ErrorPayload,
 ) {
 	extraInfo := payload.ExtraInfo
-	logPayload := log.JSON{
+	logPayload := map[string]any{
 		"path":        payload.Path,
 		"error":       payload.Error,
 		"status_code": payload.StatusCode,
 	}
 	maps.Copy(logPayload, extraInfo)
 
-	log.Errorj(logPayload)
-}
-
-func responseOK(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "ok",
-	})
+	slog.Error("http error", "data", logPayload)
 }
 
 func bindAndValidate(c echo.Context, v interface{}) error {

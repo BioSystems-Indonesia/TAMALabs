@@ -5,7 +5,6 @@ import (
 	"context"
 	"io"
 	"log"
-	"net"
 	"strings"
 
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
@@ -19,43 +18,7 @@ type Handler struct {
 
 const EOT = "\r"
 
-func RegisterRoutes(conn *net.TCPConn, handler *Handler) {
-	reader := bufio.NewReader(conn)
-	writer := bufio.NewWriter(conn)
-
-	var messageBuilder strings.Builder
-
-	for {
-		// Read the next line
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			if messageBuilder.Len() > 0 {
-				// Process the remaining message if there's partial data
-				processMessage(messageBuilder.String(), handler, writer)
-			}
-			log.Printf("Connection closed or read error: %v", err)
-			return
-		}
-
-		line = strings.TrimSpace(line)
-
-		// Accumulate lines into a complete message
-		if strings.HasPrefix(line, constant.MSH) {
-			// Start a new message
-			messageBuilder.Reset()
-		}
-		messageBuilder.WriteString(line + "\r")
-
-		// Check if this is the end of the message
-		if strings.HasSuffix(line, EOT) || len(line) == 0 {
-			// Process the complete message
-			processMessage(messageBuilder.String(), handler, writer)
-			messageBuilder.Reset()
-		}
-	}
-}
-
-func RegisterRotes2(s server.TCPServer, handler *Handler) {
+func Loop(s server.TCPServer, handler *Handler) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
