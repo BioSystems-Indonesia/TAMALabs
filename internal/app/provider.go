@@ -52,6 +52,7 @@ func provideRestHandler(
 	testTypeHandler *rest.TestTypeHandler,
 	resultHandler *rest.ResultHandler,
 	configHandler *rest.ConfigHandler,
+	testTemplateHandler *rest.TestTemplateHandler,
 ) *rest.Handler {
 	return &rest.Handler{
 		hlSevenHandler,
@@ -64,6 +65,7 @@ func provideRestHandler(
 		testTypeHandler,
 		resultHandler,
 		configHandler,
+		testTemplateHandler,
 	}
 }
 
@@ -129,6 +131,8 @@ func InitDatabase() (*gorm.DB, error) {
 		&entity.Device{},
 		&entity.TestType{},
 		&entity.Config{},
+		&entity.TestTemplate{},
+		&entity.TestTemplateTestType{},
 	}
 
 	for _, model := range autoMigrate {

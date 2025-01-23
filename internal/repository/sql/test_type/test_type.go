@@ -38,6 +38,18 @@ func (r *Repository) FindAll(ctx context.Context, req *entity.TestTypeGetManyReq
 			Or("description like ?", "%"+req.Search+"%")
 	}
 
+	if req.Code != "" {
+		query = query.Where("code like ?", "%"+req.Code+"%")
+	}
+
+	if len(req.Categories) != 0 {
+		query = query.Where("category in (?)", req.Categories)
+	}
+
+	if len(req.SubCategories) != 0 {
+		query = query.Where("sub_category in (?)", req.SubCategories)
+	}
+
 	if err := query.Find(&data).Error; err != nil {
 		return nil, err
 	}
@@ -61,6 +73,13 @@ func (r *Repository) Create(ctx context.Context, req *entity.TestType) (entity.T
 
 func (r *Repository) Update(ctx context.Context, req *entity.TestType) (entity.TestType, error) {
 	if err := r.DB.Save(req).Error; err != nil {
+		return entity.TestType{}, err
+	}
+	return *req, nil
+}
+
+func (r *Repository) Delete(ctx context.Context, req *entity.TestType) (entity.TestType, error) {
+	if err := r.DB.Delete(req).Error; err != nil {
 		return entity.TestType{}, err
 	}
 	return *req, nil

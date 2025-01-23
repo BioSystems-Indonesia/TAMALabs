@@ -15,6 +15,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_template"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
@@ -23,6 +24,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	result2 "github.com/oibacidem/lims-hl-seven/internal/usecase/result"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/test_template"
 	test_type2 "github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
@@ -66,7 +68,10 @@ func InitRestApp() server.RestServer {
 	configrepoRepository := configrepo.NewRepository(gormDB, schema)
 	configUseCase := configuc.NewConfigUseCase(schema, configrepoRepository, validate)
 	configHandler := rest.NewConfigHandler(schema, configUseCase)
-	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler)
+	test_templateRepository := test_template.NewRepository(gormDB, schema)
+	test_template_ucUsecase := test_template_uc.NewUsecase(test_templateRepository)
+	testTemplateHandler := rest.NewTestTemplateHandler(schema, test_template_ucUsecase)
+	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler, testTemplateHandler)
 	deviceHandler := rest.NewDeviceHandler(gormDB)
 	restServer := provideRestServer(schema, handler, validate, deviceHandler)
 	return restServer

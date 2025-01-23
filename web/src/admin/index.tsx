@@ -4,6 +4,7 @@ import BiotechIcon from '@mui/icons-material/Biotech';
 import BuildIcon from '@mui/icons-material/Build';
 import LanIcon from '@mui/icons-material/Lan';
 import UserIcon from '@mui/icons-material/Person';
+import TableViewIcon from '@mui/icons-material/TableView';
 import jsonServerProvider from "ra-data-json-server";
 import { Admin, CustomRoutes, Resource } from "react-admin";
 import { Route } from "react-router-dom";
@@ -16,6 +17,7 @@ import Settings from "./settings/index.tsx";
 import { TestTypeCreate, TestTypeEdit, TestTypeList, TestTypeShow } from "./testType";
 import { WorkOrderAddTest, WorkOrderCreate, WorkOrderList } from "./workOrder";
 import { WorkOrderShow } from "./workOrder/Show.tsx";
+import { TestTemplateCreate, TestTemplateEdit, TestTemplateList} from './testTemplate/index.tsx';
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
@@ -72,6 +74,15 @@ const App = () => {
             hasShow={true}
             icon={BiotechIcon}
             recordRepresentation={record => `#${record.id} - ${record.code}`}
+        />
+        <Resource name="test-template" list={TestTemplateList} 
+            create={TestTemplateCreate}
+            edit={TestTemplateEdit}
+            hasCreate={true}
+            hasEdit={true}
+            hasShow={false}
+            icon={TableViewIcon}
+            recordRepresentation={record => `${record.name}`}
         />
         <Resource name="device" list={DeviceList} show={DeviceShow} edit={DeviceEdit}
             create={DeviceCreate}
