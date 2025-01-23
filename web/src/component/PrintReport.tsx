@@ -10,6 +10,7 @@ import {
     Svg,
     Line,
 } from '@react-pdf/renderer';
+import { Button } from '@mui/material';
 
 // Optional: Register custom fonts if required
 Font.register({
@@ -88,13 +89,11 @@ const PrintMCU: React.FC = () => {
     ];
 
     return (
-        <div style={{ textAlign: 'center', marginTop: '50px' }}>
-            <h1>Generate Your MCU Report</h1>
             <BlobProvider document={<MCUReport data={mockData} />}>
                 {({ url, loading, error }) => {
                     if (loading) {
                         return (
-                            <button
+                            <Button
                                 disabled
                                 style={{
                                     padding: '10px',
@@ -106,7 +105,7 @@ const PrintMCU: React.FC = () => {
                                 }}
                             >
                                 Generating PDF...
-                            </button>
+                            </Button>
                         );
                     }
 
@@ -117,48 +116,29 @@ const PrintMCU: React.FC = () => {
                     return (
                         <div>
                             {/* Download PDF Button */}
-                            <a
+                            <Button 
+			        variant="outlined"
                                 href={url || ''}
                                 download="MCU_Result.pdf"
-                                style={{
-                                    display: 'inline-block',
-                                    padding: '10px',
-                                    fontSize: '14px',
-                                    backgroundColor: '#007bff',
-                                    color: '#fff',
-                                    textDecoration: 'none',
-                                    borderRadius: '5px',
-                                    marginRight: '10px',
-                                    cursor: 'pointer',
-                                }}
+				style={{marginRight: '10px'}}
                             >
                                 Download PDF
-                            </a>
+                            </Button>
 
                             {/* Print PDF Button */}
-                            <button
+                            <Button variant="outlined" 
                                 onClick={() => {
                                     if (url) {
                                         window.open(url, '_blank')?.focus();
                                     }
                                 }}
-                                style={{
-                                    padding: '10px',
-                                    fontSize: '14px',
-                                    backgroundColor: '#28a745',
-                                    color: '#fff',
-                                    border: 'none',
-                                    borderRadius: '5px',
-                                    cursor: 'pointer',
-                                }}
                             >
                                 Print PDF
-                            </button>
+                            </Button>
                         </div>
                     );
                 }}
             </BlobProvider>
-        </div>
     );
 };
 
