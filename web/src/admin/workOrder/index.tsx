@@ -62,7 +62,10 @@ export function WorkOrderAddTest() {
 
 
 export const WorkOrderList = () => (
-    <List>
+    <List sort={{
+        field: "id",
+        order: "DESC"
+    }}>
         <Datagrid bulkActionButtons={false}>
             <TextField source="id" />
             <ChipField source="status" />

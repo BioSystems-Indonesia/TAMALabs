@@ -64,10 +64,7 @@ func InitRestApp() server.RestServer {
 	configrepoRepository := configrepo.NewRepository(gormDB, schema)
 	configUseCase := configuc.NewConfigUseCase(schema, configrepoRepository, validate)
 	configHandler := rest.NewConfigHandler(schema, configUseCase)
-	test_templateRepository := test_template.NewRepository(gormDB, schema)
-	test_template_ucUsecase := test_template_uc.NewUsecase(test_templateRepository)
-	testTemplateHandler := rest.NewTestTemplateHandler(schema, test_template_ucUsecase)
-	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler, testTemplateHandler)
+	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler)
 	deviceHandler := &rest.DeviceHandler{
 		DB: gormDB,
 	}
@@ -77,6 +74,9 @@ func InitRestApp() server.RestServer {
 		Cfg:       configrepoRepository,
 		TCPServer: serverTCP,
 	}
-	restServer := provideRestServer(schema, handler, validate, deviceHandler, serverControllerHandler)
+	test_templateRepository := test_template.NewRepository(gormDB, schema)
+	test_template_ucUsecase := test_template_uc.NewUsecase(test_templateRepository)
+	testTemplateHandler := rest.NewTestTemplateHandler(schema, test_template_ucUsecase)
+	restServer := provideRestServer(schema, handler, validate, deviceHandler, serverControllerHandler, testTemplateHandler)
 	return restServer
 }

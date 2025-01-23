@@ -298,11 +298,11 @@ export function WorkOrderShow() {
                                         </Stack>
                                     </WrapperField>
                                     <ArrayField source={"observation_requests"} label={`Observation Requests`} textAlign="center">
-                                        <SingleFieldList linkType="false" sx={{
+                                        <SingleFieldList linkType={false} sx={{
                                             maxHeight: "200px",
                                             overflow: "scroll",
                                         }}>
-                                            <ChipField source={"test_code"} textAlign={"center"} clickable={false} />
+                                            <ChipField source={"test_code"} textAlign={"center"} />
                                         </SingleFieldList>
                                     </ArrayField>
                                 </Datagrid>

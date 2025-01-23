@@ -14,7 +14,7 @@ import { DefaultLayout } from "./layout.tsx";
 import { PatientCreate, PatientEdit, PatientList, PatientShow } from "./patient";
 import { ResultList } from "./result";
 import Settings from "./settings/index.tsx";
-import { TestTypeCreate, TestTypeEdit, TestTypeList, TestTypeShow } from "./testType";
+import { TestTypeCreate, TestTypeEdit, TestTypeList} from "./testType";
 import { WorkOrderAddTest, WorkOrderCreate, WorkOrderList } from "./workOrder";
 import { WorkOrderShow } from "./workOrder/Show.tsx";
 import { TestTemplateCreate, TestTemplateEdit, TestTemplateList} from './testTemplate/index.tsx';
@@ -66,12 +66,11 @@ const App = () => {
             icon={ListIcon}
             recordRepresentation={record => `#${record.id} - ${record.type}`}
         /> */}
-        <Resource name="test-type" list={TestTypeList} show={TestTypeShow}
+        <Resource name="test-type" list={TestTypeList} 
             create={TestTypeCreate}
             edit={TestTypeEdit}
             hasCreate={true}
             hasEdit={true}
-            hasShow={true}
             icon={BiotechIcon}
             recordRepresentation={record => `#${record.id} - ${record.code}`}
         />

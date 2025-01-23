@@ -21,7 +21,6 @@ type Handler struct {
 	*TestTypeHandler
 	*ResultHandler
 	*ConfigHandler
-	*TestTemplateHandler
 }
 
 func RegisterMiddleware(e *echo.Echo) {
@@ -64,6 +63,7 @@ func RegisterRoutes(
 	handler *Handler,
 	deviceHandler *DeviceHandler,
 	serverControllerHandler *ServerControllerHandler,
+	testTemplateHandler *TestTemplateHandler,
 ) {
 	slog.Info("registering routes")
 
@@ -121,11 +121,11 @@ func RegisterRoutes(
 
 	testTemplate := v1.Group("/test-template")
 	{
-		testTemplate.GET("", handler.ListTestTemplate)
-		testTemplate.GET("/:id", handler.GetOneTestTemplate)
-		testTemplate.POST("", handler.CreateTestTemplate)
-		testTemplate.PUT("/:id", handler.UpdateTestTemplate)
-		testTemplate.DELETE("/:id", handler.DeleteTestTemplate)
+		testTemplate.GET("", testTemplateHandler.ListTestTemplate)
+		testTemplate.GET("/:id", testTemplateHandler.GetOneTestTemplate)
+		testTemplate.POST("", testTemplateHandler.CreateTestTemplate)
+		testTemplate.PUT("/:id", testTemplateHandler.UpdateTestTemplate)
+		testTemplate.DELETE("/:id", testTemplateHandler.DeleteTestTemplate)
 	}
 
 	result := v1.Group("/result")

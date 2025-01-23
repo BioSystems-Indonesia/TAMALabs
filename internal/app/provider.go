@@ -45,11 +45,11 @@ func provideRestServer(
 	validate *validator.Validate,
 	deviceHandler *rest.DeviceHandler,
 	serverControllerHandler *rest.ServerControllerHandler,
-
+	testTemplateHandler *rest.TestTemplateHandler,
 ) server.RestServer {
 	serv := server.NewRest(config.Port, validate)
 	rest.RegisterMiddleware(serv.GetClient())
-	rest.RegisterRoutes(serv.GetClient(), handlers, deviceHandler, serverControllerHandler)
+	rest.RegisterRoutes(serv.GetClient(), handlers, deviceHandler, serverControllerHandler, testTemplateHandler)
 	return serv
 }
 
@@ -64,7 +64,6 @@ func provideRestHandler(
 	testTypeHandler *rest.TestTypeHandler,
 	resultHandler *rest.ResultHandler,
 	configHandler *rest.ConfigHandler,
-	testTemplateHandler *rest.TestTemplateHandler,
 ) *rest.Handler {
 	return &rest.Handler{
 		HlSevenHandler:            hlSevenHandler,

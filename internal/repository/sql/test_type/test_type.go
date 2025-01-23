@@ -6,6 +6,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository struct {
@@ -48,6 +49,15 @@ func (r *Repository) FindAll(ctx context.Context, req *entity.TestTypeGetManyReq
 
 	if len(req.SubCategories) != 0 {
 		query = query.Where("sub_category in (?)", req.SubCategories)
+	}
+
+	if req.Sort != "" {
+		query = query.Order(clause.OrderByColumn{
+			Column: clause.Column{
+				Name: req.Sort,
+			},
+			Desc: req.IsSortDesc(),
+		})
 	}
 
 	if err := query.Find(&data).Error; err != nil {
