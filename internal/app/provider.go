@@ -2,13 +2,14 @@ package app
 
 import (
 	"fmt"
+	"log"
+	"log/slog"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/glebarez/sqlite"
 	"github.com/go-playground/validator/v10"
-	"github.com/labstack/gommon/log"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
@@ -27,17 +28,28 @@ func provideTCP(config *config.Schema) *ba400.TCP {
 	return tcpEr
 }
 
-func provideTCPServer(config *config.Schema, handler *tcp.Handler) server.TCPServer {
-	serv := server.NewTCP("1024")
-	tcp.RegisterRotes2(serv, handler)
-	//tcp.RegisterRoutes(serv.GetClient(), handler)
-	return serv
+func provideTCPServer(config *config.Schema, handler *tcp.HlSevenHandler) *server.TCP {
+	s := server.NewTCP("1024")
+	s.SetHandler(handler)
+	err := s.Start()
+	if err != nil {
+		log.Println(err)
+	}
+	go s.Serve()
+	return s
 }
 
-func provideRestServer(config *config.Schema, handlers *rest.Handler, validate *validator.Validate, deviceHandler *rest.DeviceHandler) server.RestServer {
+func provideRestServer(
+	config *config.Schema,
+	handlers *rest.Handler,
+	validate *validator.Validate,
+	deviceHandler *rest.DeviceHandler,
+	serverControllerHandler *rest.ServerControllerHandler,
+
+) server.RestServer {
 	serv := server.NewRest(config.Port, validate)
 	rest.RegisterMiddleware(serv.GetClient())
-	rest.RegisterRoutes(serv.GetClient(), handlers, deviceHandler)
+	rest.RegisterRoutes(serv.GetClient(), handlers, deviceHandler, serverControllerHandler)
 	return serv
 }
 
@@ -52,26 +64,19 @@ func provideRestHandler(
 	testTypeHandler *rest.TestTypeHandler,
 	resultHandler *rest.ResultHandler,
 	configHandler *rest.ConfigHandler,
+	testTemplateHandler *rest.TestTemplateHandler,
 ) *rest.Handler {
 	return &rest.Handler{
-		hlSevenHandler,
-		healthCheck,
-		patientHandler,
-		specimenHandler,
-		workOrder,
-		featureListHandler,
-		observationRequest,
-		testTypeHandler,
-		resultHandler,
-		configHandler,
-	}
-}
-
-func provideTCPHandler(
-	HlSevenHHandler *tcp.HlSevenHandler,
-) *tcp.Handler {
-	return &tcp.Handler{
-		HlSevenHandler: HlSevenHHandler,
+		HlSevenHandler:            hlSevenHandler,
+		HealthCheckHandler:        healthCheck,
+		PatientHandler:            patientHandler,
+		SpecimenHandler:           specimenHandler,
+		WorkOrderHandler:          workOrder,
+		FeatureListHandler:        featureListHandler,
+		ObservationRequestHandler: observationRequest,
+		TestTypeHandler:           testTypeHandler,
+		ResultHandler:             resultHandler,
+		ConfigHandler:             configHandler,
 	}
 }
 
@@ -86,9 +91,9 @@ func fileExists(filename string) bool {
 }
 func InitSQLiteDB() (*gorm.DB, error) {
 	if fileExists(dbFileName) {
-		log.Info("db is existed already")
+		slog.Info("db is existed already")
 	} else {
-		log.Info("db is not exists, start create and migrate db")
+		slog.Info("db is not exists, start create and migrate db")
 		err := os.MkdirAll("./tmp", 0755)
 		if err != nil {
 			return nil, err
@@ -129,10 +134,12 @@ func InitDatabase() (*gorm.DB, error) {
 		&entity.Device{},
 		&entity.TestType{},
 		&entity.Config{},
+		&entity.TestTemplate{},
+		&entity.TestTemplateTestType{},
 	}
 
 	for _, model := range autoMigrate {
-		log.Infof("AutoMigrate: %T", model)
+		log.Printf("auto migrate: %T", model)
 
 		err = db.AutoMigrate(model)
 		if err != nil {

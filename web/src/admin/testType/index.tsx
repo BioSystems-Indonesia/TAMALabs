@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import type { ActionKeys } from "../../types/props";
 
 export const TestTypeList = () => (
-    <List aside={<TestTypeFilterSidebar />}>
+    <List aside={<TestTypeFilterSidebar />} title="Test Type">
         <Datagrid bulkActionButtons={false}>
             <TextField source="name" />
             <TextField source="code" />
@@ -57,7 +57,7 @@ function TestTypeForm(props: TestTypeFormProps) {
 
 export function TestTypeEdit() {
     return (
-        <Edit mutationMode="pessimistic">
+        <Edit mutationMode="pessimistic" title="Edit Test Type">
             <TestTypeForm readonly={false} mode={"EDIT"} />
             <ReferenceSection />
         </Edit>
@@ -66,7 +66,7 @@ export function TestTypeEdit() {
 
 export function TestTypeCreate() {
     return (
-        <Create>
+        <Create title="Create Test Type">
             <TestTypeForm readonly={false} mode={"CREATE"} />
             <ReferenceSection />
         </Create>
@@ -75,7 +75,7 @@ export function TestTypeCreate() {
 
 export function TestTypeShow() {
     return (
-        <Show>
+        <Show title="Show Test Type">
             <TestTypeForm readonly mode={"SHOW"} />
             <ReferenceSection />
         </Show>

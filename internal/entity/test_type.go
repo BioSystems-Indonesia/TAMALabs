@@ -15,5 +15,7 @@ type TestType struct {
 type TestTypeGetManyRequest struct {
 	GetManyRequest
 
-	Code string `json:"code"`
+	Code          string   `query:"code"`
+	Categories    []string `query:"categories"`
+	SubCategories []string `query:"subCategories"`
 }

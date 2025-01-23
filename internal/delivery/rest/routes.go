@@ -1,11 +1,11 @@
 package rest
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 	"github.com/oibacidem/lims-hl-seven/web"
 )
 
@@ -21,10 +21,11 @@ type Handler struct {
 	*TestTypeHandler
 	*ResultHandler
 	*ConfigHandler
+	*TestTemplateHandler
 }
 
 func RegisterMiddleware(e *echo.Echo) {
-	log.Info("Registering middleware")
+	slog.Info("registering middleware")
 
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:     true,
@@ -32,19 +33,15 @@ func RegisterMiddleware(e *echo.Echo) {
 		LogHost:    true,
 		LogLatency: true,
 		LogError:   true,
+		LogMethod:  true,
 		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
-
-			json := log.JSON{
-				"method":  values.Method,
-				"uri":     values.URI,
-				"status":  values.Status,
-				"latency": values.Latency,
-			}
-			if values.Error != nil {
-				json["error"] = values.Error.Error()
-			}
-
-			log.Infoj(json)
+			slog.Info("request",
+				"method", values.Method,
+				"uri", values.URI,
+				"status", values.Status,
+				"latency", values.Latency,
+				"error", values.Error,
+			)
 
 			return nil
 		},
@@ -62,8 +59,13 @@ func RegisterMiddleware(e *echo.Echo) {
 }
 
 // RegisterRoutes registers the routes of the REST server.
-func RegisterRoutes(e *echo.Echo, handler *Handler, deviceHandler *DeviceHandler) {
-	log.Info("Registering routes")
+func RegisterRoutes(
+	e *echo.Echo,
+	handler *Handler,
+	deviceHandler *DeviceHandler,
+	serverControllerHandler *ServerControllerHandler,
+) {
+	slog.Info("registering routes")
 
 	registerFrontendPath(e)
 
@@ -104,14 +106,9 @@ func RegisterRoutes(e *echo.Echo, handler *Handler, deviceHandler *DeviceHandler
 		workOrder.DELETE("/:id", handler.DeleteWorkOrder)
 	}
 
-	device := v1.Group("/device")
-	{
-		device.GET("", deviceHandler.ListDevices)
-		device.POST("", deviceHandler.CreateDevice)
-		device.GET("/:id", deviceHandler.GetDevice)
-		device.PUT("/:id", deviceHandler.UpdateDevice)
-		device.DELETE("/:id", deviceHandler.DeleteDevice)
-	}
+	deviceHandler.RegisterRoute(v1.Group("/device"))
+
+	serverControllerHandler.RegisterRoute(v1.Group("/server"))
 
 	testType := v1.Group("/test-type")
 	{
@@ -119,6 +116,16 @@ func RegisterRoutes(e *echo.Echo, handler *Handler, deviceHandler *DeviceHandler
 		testType.GET("/:id", handler.GetOneTestType)
 		testType.POST("", handler.CreateTestType)
 		testType.PUT("/:id", handler.UpdateTestType)
+		testType.DELETE("/:id", handler.DeleteTestType)
+	}
+
+	testTemplate := v1.Group("/test-template")
+	{
+		testTemplate.GET("", handler.ListTestTemplate)
+		testTemplate.GET("/:id", handler.GetOneTestTemplate)
+		testTemplate.POST("", handler.CreateTestTemplate)
+		testTemplate.PUT("/:id", handler.UpdateTestTemplate)
+		testTemplate.DELETE("/:id", handler.DeleteTestTemplate)
 	}
 
 	result := v1.Group("/result")

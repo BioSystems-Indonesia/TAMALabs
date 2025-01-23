@@ -7,7 +7,7 @@ require (
 	github.com/google/wire v0.6.0
 	github.com/kardianos/hl7 v1.1.2
 	github.com/labstack/echo/v4 v4.13.0
-	github.com/labstack/gommon v0.4.2
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
 	gorm.io/gorm v1.25.12
@@ -16,7 +16,7 @@ require (
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/glebarez/go-sqlite v1.21.2 // indirect
-	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
+	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	modernc.org/libc v1.22.5 // indirect
 	modernc.org/mathutil v1.5.0 // indirect

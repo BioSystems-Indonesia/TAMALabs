@@ -15,6 +15,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_template"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
@@ -23,13 +24,10 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	result2 "github.com/oibacidem/lims-hl-seven/internal/usecase/result"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/test_template"
 	test_type2 "github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
-)
-
-import (
-	_ "unsafe"
 )
 
 // Injectors from wire.go:
@@ -66,23 +64,19 @@ func InitRestApp() server.RestServer {
 	configrepoRepository := configrepo.NewRepository(gormDB, schema)
 	configUseCase := configuc.NewConfigUseCase(schema, configrepoRepository, validate)
 	configHandler := rest.NewConfigHandler(schema, configUseCase)
-	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler)
-	deviceHandler := rest.NewDeviceHandler(gormDB)
-	restServer := provideRestServer(schema, handler, validate, deviceHandler)
+	test_templateRepository := test_template.NewRepository(gormDB, schema)
+	test_template_ucUsecase := test_template_uc.NewUsecase(test_templateRepository)
+	testTemplateHandler := rest.NewTestTemplateHandler(schema, test_template_ucUsecase)
+	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler, testTemplateHandler)
+	deviceHandler := &rest.DeviceHandler{
+		DB: gormDB,
+	}
+	tcpHlSevenHandler := tcp.NewHlSevenHandler(usecase)
+	serverTCP := provideTCPServer(schema, tcpHlSevenHandler)
+	serverControllerHandler := &rest.ServerControllerHandler{
+		Cfg:       configrepoRepository,
+		TCPServer: serverTCP,
+	}
+	restServer := provideRestServer(schema, handler, validate, deviceHandler, serverControllerHandler)
 	return restServer
-}
-
-func InitTCPApp() server.TCPServer {
-	gormDB := provideDB()
-	schema := provideConfig(gormDB)
-	repository := observation_result.NewRepository(gormDB, schema)
-	observation_requestRepository := observation_request.NewRepository(gormDB, schema)
-	cache := provideCache()
-	specimenRepository := specimen.NewRepository(gormDB, schema, cache)
-	workOrderRepository := workOrderrepo.NewWorkOrderRepository(gormDB, schema, specimenRepository)
-	usecase := analyzer.NewUsecase(repository, observation_requestRepository, specimenRepository, workOrderRepository)
-	hlSevenHandler := tcp.NewHlSevenHandler(usecase)
-	handler := provideTCPHandler(hlSevenHandler)
-	tcpServer := provideTCPServer(schema, handler)
-	return tcpServer
 }

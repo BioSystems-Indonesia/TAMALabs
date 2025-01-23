@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"log/slog"
+	"os"
 	"os/exec"
 	"runtime"
 	"time"
@@ -12,14 +14,12 @@ import (
 )
 
 func main() {
-	go main_tcp()
+	//l := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{ AddSource: true, }))
+	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
+	slog.SetDefault(l)
+
 	server := app.InitRestApp()
 	go openb()
-	server.Serve()
-}
-
-func main_tcp() {
-	server := app.InitTCPApp()
 	server.Serve()
 }
 

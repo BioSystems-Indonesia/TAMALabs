@@ -4,13 +4,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log"
+	"net"
+	"runtime/debug"
 	"strings"
 	"time"
 
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h251"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
+	"github.com/oibacidem/lims-hl-seven/pkg/mllp"
 )
 
 // HlSevenHandler is a struct that contains the handler of the REST server.
@@ -25,11 +29,35 @@ func NewHlSevenHandler(analyzerUsecase usecase.Analyzer) *HlSevenHandler {
 	}
 }
 
+func (h *HlSevenHandler) Handle(conn *net.TCPConn) {
+	defer func() {
+		if r := recover(); r != nil {
+			debug.PrintStack()
+			log.Println("panic: recovered in processing connection", r)
+		}
+	}()
+
+	mc := mllp.NewClient(conn)
+	b, err := mc.ReadAll()
+	if err != nil {
+		if err != io.EOF {
+			log.Println(err)
+		}
+	}
+
+	res, err := h.HL7Handler(context.Background(), string(b))
+	if err != nil {
+		log.Println(err)
+	}
+
+	mc.Write([]byte(res))
+}
+
 // HL7Handler handles the HL7 message.
 func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string, error) {
 	if message != "" {
 		logMsg := strings.ReplaceAll(message, "\r", "\n")
-		log.Println("Received message: ", logMsg)
+		log.Println("received message: ", logMsg)
 	}
 
 	// don't do anything if the message is empty
@@ -55,12 +83,13 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 		if err != nil {
 			return "", fmt.Errorf("decode failed: %w", err)
 		}
+
 		oul22 := msg.(h251.OUL_R22)
 		data, err := MapOULR22ToEntity(&oul22)
 		if err != nil {
 			return "", fmt.Errorf("mapping failed: %w", err)
 		}
-		log.Printf("%#v", data)
+
 		err = h.AnalyzerUsecase.ProcessOULR22(ctx, data)
 		if err != nil {
 			return "", fmt.Errorf("process failed: %w", err)

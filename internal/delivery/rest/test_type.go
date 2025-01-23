@@ -85,3 +85,22 @@ func (h *TestTypeHandler) UpdateTestType(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, testType)
 }
+
+func (h *TestTypeHandler) DeleteTestType(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	req, err := h.testTypeUsecase.FindOneByID(c.Request().Context(), id)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	testType, err := h.testTypeUsecase.Delete(c.Request().Context(), &req)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, testType)
+}

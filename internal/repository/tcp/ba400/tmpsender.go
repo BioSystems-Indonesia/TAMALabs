@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h251"
-	"github.com/labstack/gommon/log"
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
@@ -40,18 +40,16 @@ func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.D
 	messageToSend := buf.Bytes()
 	resp, err := sender.SendRaw(messageToSend)
 	if err != nil {
-		log.Errorj(map[string]interface{}{
-			"message": "sending to BA400 failed",
-			"raw":     string(messageToSend),
-			"resp":    string(resp),
-		})
+		slog.Error("sending to BA400 failed",
+			"raw", string(messageToSend),
+			"resp", string(resp),
+		)
 		return fmt.Errorf("failed to send raw: %w", err)
 	}
 
-	log.Infoj(map[string]interface{}{
-		"message": "sending to BA400",
-		"raw":     string(messageToSend),
-	})
+	slog.Info("sending to BA400",
+		"raw", string(messageToSend),
+	)
 
 	err = receiveResponse(resp)
 	if err != nil {
@@ -74,10 +72,9 @@ func receiveResponse(resp []byte) error {
 
 	switch m := msg.(type) {
 	case h251.ORL_O34:
-		log.Infoj(map[string]interface{}{
-			"message": "receive response",
-			"resp":    fmt.Sprintf("%v", m),
-		})
+		slog.Info("receive response",
+			"resp", fmt.Sprintf("%v", m),
+		)
 		s := msg.(h251.ORL_O34)
 
 		switch s.MSA.AcknowledgmentCode {

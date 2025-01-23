@@ -101,9 +101,16 @@ func mapObservationValueToValues(values []h251.VARIES) entity.JSONStringArray {
 }
 
 func mapOBRToObservationRequestEntity(obr *h251.OBR) entity.ObservationRequest {
+	if obr == nil {
+		return entity.ObservationRequest{}
+	}
+
+	TestCode := obr.UniversalServiceIdentifier.Identifier
+	TestDescription := obr.UniversalServiceIdentifier.Text
+
 	return entity.ObservationRequest{
-		TestCode:        obr.UniversalServiceIdentifier.Identifier,
-		TestDescription: obr.UniversalServiceIdentifier.Text,
+		TestCode:        TestCode,
+		TestDescription: TestDescription,
 		RequestedDate:   obr.RequestedDateTime,
 		ResultStatus:    obr.ResultStatus,
 	}

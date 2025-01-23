@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"time"
 
-	"github.com/labstack/gommon/log"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
@@ -210,13 +210,12 @@ func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.Work
 			return err
 		}
 
-		log.Debugj(map[string]interface{}{
-			"message":     "specimen insert",
-			"patientID":   patientID,
-			"specimenID":  specimen.ID,
-			"type":        defaultSerumType,
-			"rowAffected": specimenQuery.RowsAffected,
-		})
+		slog.Debug("specimen insert",
+			"patientID", patientID,
+			"specimenID", specimen.ID,
+			"type", defaultSerumType,
+			"rowAffected", specimenQuery.RowsAffected,
+		)
 
 		if specimenQuery.RowsAffected != 0 {
 			err := r.specimentRepo.IncrementBarcodeSequence(trx.Statement.Context)
@@ -232,13 +231,12 @@ func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.Work
 				return err
 			}
 
-			log.Debugj(map[string]interface{}{
-				"message":     "specimen find",
-				"patientID":   patientID,
-				"specimenID":  specimen.ID,
-				"type":        defaultSerumType,
-				"rowAffected": specimenQuery.RowsAffected,
-			})
+			slog.Debug("specimen find",
+				"patientID", patientID,
+				"specimenID", specimen.ID,
+				"type", defaultSerumType,
+				"rowAffected", specimenQuery.RowsAffected,
+			)
 		}
 
 		testTypes, err := r.getTestType(trx, workOrder.ObservationRequests)
@@ -260,14 +258,13 @@ func (r WorkOrderRepository) upsertRelation(trx *gorm.DB, workOrder *entity.Work
 				return err
 			}
 
-			log.Debugj(map[string]interface{}{
-				"message":         "observation request insert",
-				"testCode":        testType.Code,
-				"testDescription": testType.Name,
-				"patientID":       patientID,
-				"specimenID":      specimen.ID,
-				"rowAffected":     observationRequestQuery.RowsAffected,
-			})
+			slog.Debug("observation request insert",
+				"testCode", testType.Code,
+				"testDescription", testType.Name,
+				"patientID", patientID,
+				"specimenID", specimen.ID,
+				"rowAffected", observationRequestQuery.RowsAffected,
+			)
 			if observationRequestQuery.RowsAffected == 0 {
 				continue
 			}

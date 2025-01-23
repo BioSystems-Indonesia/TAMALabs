@@ -7,6 +7,8 @@ import {
     StyleSheet,
     BlobProvider,
     Font,
+    Svg,
+    Line,
 } from '@react-pdf/renderer';
 
 // Optional: Register custom fonts if required
@@ -37,17 +39,20 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 20,
     },
-    section: {
-        margin: 10,
-        padding: 10,
-        borderBottom: '1px solid #ccc',
+    tableContainer: {
+        display: "flex",
+        flexDirection: "row",
+        flexWrap: "wrap",
+        width: "100%",
     },
-    label: {
-        fontSize: 12,
-        fontWeight: 'bold',
+    headRow: {
+        flex: 1,
+        fontSize: 14,
+        fontWeight: "heavy",
     },
     value: {
         fontSize: 12,
+        flex: 1
     },
 });
 
@@ -56,11 +61,19 @@ const MCUReport: React.FC<MCUReportProps> = ({ data }) => (
     <Document>
         <Page size="A4" style={styles.page}>
             <Text style={styles.header}>MCU Result</Text>
+            <View key={-1} style={styles.tableContainer}>
+                <Text style={styles.headRow}>Parameter</Text>
+                <Text style={styles.headRow}>Result</Text>
+                <Text style={styles.headRow}>Reference</Text>
+            </View>
+            <Svg height="10" width="100%">
+                <Line x1="0" y1="5" x2="580" y2="5" strokeWidth={2} stroke="rgb(0,0,0)" />
+            </Svg>
             {data.map((item, index) => (
-                <View key={index} style={styles.section}>
-                    <Text style={styles.label}>Parameter: {item.parameter}</Text>
-                    <Text style={styles.value}>Result: {item.result}</Text>
-                    <Text style={styles.value}>Reference: {item.reference}</Text>
+                <View key={index} style={styles.tableContainer}>
+                    <Text style={styles.value}>{item.parameter}</Text>
+                    <Text style={styles.value}>{item.result}</Text>
+                    <Text style={styles.value}>{item.reference}</Text>
                 </View>
             ))}
         </Page>

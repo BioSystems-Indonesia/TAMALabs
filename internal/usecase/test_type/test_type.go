@@ -30,3 +30,7 @@ func (u *Usecase) Create(ctx context.Context, req *entity.TestType) (entity.Test
 func (u *Usecase) Update(ctx context.Context, req *entity.TestType) (entity.TestType, error) {
 	return u.repository.Update(ctx, req)
 }
+
+func (u *Usecase) Delete(ctx context.Context, req *entity.TestType) (entity.TestType, error) {
+	return u.repository.Delete(ctx, req)
+}
