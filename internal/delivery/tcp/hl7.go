@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -31,6 +32,7 @@ func NewHlSevenHandler(analyzerUsecase usecase.Analyzer) *HlSevenHandler {
 func (h *HlSevenHandler) Handle(conn *net.TCPConn) {
 	defer func() {
 		if r := recover(); r != nil {
+			debug.PrintStack()
 			log.Println("panic: recovered in processing connection", r)
 		}
 	}()
@@ -81,12 +83,13 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 		if err != nil {
 			return "", fmt.Errorf("decode failed: %w", err)
 		}
+
 		oul22 := msg.(h251.OUL_R22)
 		data, err := MapOULR22ToEntity(&oul22)
 		if err != nil {
 			return "", fmt.Errorf("mapping failed: %w", err)
 		}
-		log.Printf("%#v", data)
+
 		err = h.AnalyzerUsecase.ProcessOULR22(ctx, data)
 		if err != nil {
 			return "", fmt.Errorf("process failed: %w", err)

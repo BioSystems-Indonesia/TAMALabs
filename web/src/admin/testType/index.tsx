@@ -1,4 +1,4 @@
-import { Create, Datagrid, Edit, FilterLiveSearch, List, NumberInput, Show, SimpleForm, TextField, TextInput, Title } from "react-admin";
+import { Create, Datagrid, Edit, FilterLiveSearch, List, NumberInput, Show, SimpleForm, TextField, TextInput } from "react-admin";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Box from "@mui/material/Box";

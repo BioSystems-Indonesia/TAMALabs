@@ -11,7 +11,6 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useEffect, useRef, useState } from "react";
 import {
-    Button,
     CreateButton,
     Datagrid,
     DateField,
@@ -44,7 +43,6 @@ import CustomDateInput from "../../component/CustomDateInput.tsx";
 import FeatureList from "../../component/FeatureList.tsx";
 import { getRefererParam } from "../../hooks/useReferer.ts";
 import { ActionKeys } from "../../types/props.ts";
-import { ListItem, ListItemText } from "@mui/material";
 
 
 type WorkOrderActionKeys = ActionKeys | "ADD_TEST";
@@ -122,7 +120,7 @@ const TestFilterSidebar = () => {
         };
     };
 
-    const { data, total, isPending, error } = useGetList(
+    const { data } = useGetList(
         'test-template',
         {
             pagination: { page: 1, perPage: 1000 },

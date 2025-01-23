@@ -1,10 +1,10 @@
 import { CircularProgress, Stack, Typography } from "@mui/material";
 import { useQuery } from '@tanstack/react-query';
-import { Datagrid, Edit, List, SimpleForm, TextField, TextInput, useGetOne } from "react-admin";
+import { Datagrid, Edit, List, SimpleForm, TextField, TextInput } from "react-admin";
 import MUITextField from "@mui/material/TextField";
 
 export const ConfigList = () => {
-    const { data, isPending, error } = useQuery({
+    const { data, isPending } = useQuery({
         queryKey: ['server-info'],
         queryFn: async ({ signal }) => {
             const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/ping`)
