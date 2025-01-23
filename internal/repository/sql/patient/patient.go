@@ -50,13 +50,13 @@ func (r PatientRepository) FindAll(ctx context.Context, req *entity.GetManyReque
 	offset := 0
 	if req.Start > 0 {
 		offset = req.Start
+		db = db.Offset(offset)
 	}
 
-	limit := 10
 	if req.End > 0 {
-		limit = req.End - offset
+		limit := req.End - offset
+		db = db.Limit(limit)
 	}
-	db = db.Offset(offset).Limit(limit)
 
 	var count int64
 	err := db.Count(&count).Error
