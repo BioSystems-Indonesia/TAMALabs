@@ -13,7 +13,6 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_template"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
@@ -22,7 +21,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/config"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
-	result2 "github.com/oibacidem/lims-hl-seven/internal/usecase/result"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/test_template"
 	test_type2 "github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
@@ -58,8 +57,7 @@ func InitRestApp() server.RestServer {
 	test_typeRepository := test_type.NewRepository(gormDB, schema)
 	test_typeUsecase := test_type2.NewUsecase(test_typeRepository)
 	testTypeHandler := rest.NewTestTypeHandler(schema, test_typeUsecase)
-	resultRepository := result.NewRepository(gormDB, schema)
-	resultUsecase := result2.NewUsecase(resultRepository, workOrderRepository, specimenRepository)
+	resultUsecase := result.NewUsecase(repository, workOrderRepository, specimenRepository)
 	resultHandler := rest.NewResultHandler(schema, resultUsecase)
 	configrepoRepository := configrepo.NewRepository(gormDB, schema)
 	configUseCase := configuc.NewConfigUseCase(schema, configrepoRepository, validate)

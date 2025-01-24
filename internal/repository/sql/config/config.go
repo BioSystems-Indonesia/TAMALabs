@@ -6,8 +6,8 @@ import (
 
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type Repository struct {
@@ -19,40 +19,18 @@ func NewRepository(db *gorm.DB, cfg *config.Schema) *Repository {
 	return &Repository{DB: db, cfg: cfg}
 }
 
-func (r *Repository) FindAll(ctx context.Context, req *entity.ConfigGetManyRequest) (entity.ConfigPaginationResponse, error) {
-	var configs []entity.Config
-
+func (r *Repository) FindAll(
+	ctx context.Context, req *entity.ConfigGetManyRequest,
+) (entity.PaginationResponse[entity.Config], error) {
 	db := r.DB.WithContext(ctx)
-	if len(req.ID) > 0 {
-		db = db.Where("key in (?)", req.ID)
-	}
-
-	if req.Sort != "" {
-		db = db.Order(clause.OrderByColumn{
-			Column: clause.Column{
-				Name: req.Sort,
+	db = sql.ProcessGetMany(db, req.GetManyRequest,
+		sql.Modify{
+			ProcessSearch: func(db *gorm.DB, query string) *gorm.DB {
+				return db.Where("key like ?", "%"+query+"%")
 			},
-			Desc: req.IsSortDesc(),
 		})
-	}
 
-	err := db.Find(&configs).Error
-	if err != nil {
-		return entity.ConfigPaginationResponse{}, fmt.Errorf("error finding Configs: %w", err)
-	}
-
-	var total int64
-	err = db.Model(&entity.Config{}).Count(&total).Error
-	if err != nil {
-		return entity.ConfigPaginationResponse{}, fmt.Errorf("error counting Configs: %w", err)
-	}
-
-	return entity.ConfigPaginationResponse{
-		Data: configs,
-		PaginationResponse: entity.PaginationResponse{
-			Total: total,
-		},
-	}, nil
+	return sql.GetWithPaginationResponse[entity.Config](db, req.GetManyRequest)
 }
 
 func (r *Repository) FindOne(ctx context.Context, id string) (entity.Config, error) {

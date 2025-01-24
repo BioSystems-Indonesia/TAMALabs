@@ -16,7 +16,7 @@ type Result struct {
 
 type ResultPaginationResponse struct {
 	Data []Result `json:"data"`
-	PaginationResponse
+	// PaginationResponse
 }
 
 type ResultDetail struct {

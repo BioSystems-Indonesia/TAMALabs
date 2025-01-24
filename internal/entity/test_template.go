@@ -21,8 +21,3 @@ type TestTemplateTestType struct {
 type TestTemplateGetManyRequest struct {
 	GetManyRequest
 }
-
-type TestTemplatePaginationResponse struct {
-	TestTemplates []TestTemplate `json:"test_templates"`
-	PaginationResponse
-}

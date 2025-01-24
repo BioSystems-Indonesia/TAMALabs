@@ -26,7 +26,7 @@ func (h *TestTypeHandler) ListTestType(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	TestTypes, err := h.testTypeUsecase.FindAll(
+	resp, err := h.testTypeUsecase.FindAll(
 		c.Request().Context(),
 		&req,
 	)
@@ -34,8 +34,7 @@ func (h *TestTypeHandler) ListTestType(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(len(TestTypes)))
-	return c.JSON(http.StatusOK, TestTypes)
+	return successPaginationResponse(c, resp)
 }
 
 func (h *TestTypeHandler) GetOneTestType(c echo.Context) error {

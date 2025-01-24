@@ -25,7 +25,7 @@ func NewObservationRequestUseCase(
 
 func (p ObservationRequestUseCase) FindAll(
 	ctx context.Context, req *entity.ObservationRequestGetManyRequest,
-) ([]entity.ObservationRequest, error) {
+) (entity.PaginationResponse[entity.ObservationRequest], error) {
 	return p.ObservationRequestRepo.FindAll(ctx, req)
 }
 

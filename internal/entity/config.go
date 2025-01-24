@@ -8,8 +8,3 @@ type Config struct {
 type ConfigGetManyRequest struct {
 	GetManyRequest
 }
-
-type ConfigPaginationResponse struct {
-	Data []Config `json:"data"`
-	PaginationResponse
-}

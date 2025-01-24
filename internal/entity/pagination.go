@@ -1,5 +1,6 @@
 package entity
 
-type PaginationResponse struct {
+type PaginationResponse[T any] struct {
+	Data  []T   `json:"data"`
 	Total int64 `json:"total"`
 }

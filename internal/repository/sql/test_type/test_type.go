@@ -5,8 +5,8 @@ import (
 
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type Repository struct {
@@ -19,51 +19,32 @@ func NewRepository(db *gorm.DB, cfg *config.Schema) *Repository {
 	return &Repository{DB: db, cfg: cfg}
 }
 
-// FindAll returns all test types
-func (r *Repository) FindAll(ctx context.Context, req *entity.TestTypeGetManyRequest) ([]entity.TestType, error) {
-	var data []entity.TestType
-	query := r.DB
-	if len(req.ID) != 0 {
-		query = query.Where("id in (?)", req.ID)
-	}
-
-	if req.Query != "" {
-		query = query.Where("name like ?", "%"+req.Query+"%").
-			Or("code like ?", "%"+req.Query+"%").
-			Or("description like ?", "%"+req.Query+"%")
-	}
-
-	if req.Search != "" {
-		query = query.Where("name like ?", "%"+req.Search+"%").
-			Or("code like ?", "%"+req.Search+"%").
-			Or("description like ?", "%"+req.Search+"%")
-	}
+// FindAll returns all test types.
+func (r *Repository) FindAll(
+	ctx context.Context, req *entity.TestTypeGetManyRequest,
+) (entity.PaginationResponse[entity.TestType], error) {
+	db := r.DB
+	db = sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{
+		ProcessSearch: func(db *gorm.DB, query string) *gorm.DB {
+			return db.Where("name like ?", "%"+query+"%").
+				Or("code like ?", "%"+query+"%").
+				Or("description like ?", "%"+query+"%")
+		},
+	})
 
 	if req.Code != "" {
-		query = query.Where("code like ?", "%"+req.Code+"%")
+		db = db.Where("code like ?", "%"+req.Code+"%")
 	}
 
 	if len(req.Categories) != 0 {
-		query = query.Where("category in (?)", req.Categories)
+		db = db.Where("category in (?)", req.Categories)
 	}
 
 	if len(req.SubCategories) != 0 {
-		query = query.Where("sub_category in (?)", req.SubCategories)
+		db = db.Where("sub_category in (?)", req.SubCategories)
 	}
 
-	if req.Sort != "" {
-		query = query.Order(clause.OrderByColumn{
-			Column: clause.Column{
-				Name: req.Sort,
-			},
-			Desc: req.IsSortDesc(),
-		})
-	}
-
-	if err := query.Find(&data).Error; err != nil {
-		return nil, err
-	}
-	return data, nil
+	return sql.GetWithPaginationResponse[entity.TestType](db, req.GetManyRequest)
 }
 
 func (r *Repository) FindOneByID(ctx context.Context, id int) (entity.TestType, error) {

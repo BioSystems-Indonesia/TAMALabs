@@ -25,7 +25,7 @@ func NewPatientUseCase(
 
 func (p PatientUseCase) FindAll(
 	ctx context.Context, req *entity.GetManyRequestPatient,
-) (entity.PatientPaginationResponse, error) {
+) (entity.PaginationResponse[entity.Patient], error) {
 	return p.patientRepo.FindAll(ctx, req)
 }
 

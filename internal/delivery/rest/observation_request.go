@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
+	observation_requestuc "github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 )
 
 type ObservationRequestHandler struct {
@@ -26,7 +26,7 @@ func (h *ObservationRequestHandler) FindObservationRequests(c echo.Context) erro
 		return handleError(c, err)
 	}
 
-	ObservationRequests, err := h.ObservationRequestUsecase.FindAll(
+	resp, err := h.ObservationRequestUsecase.FindAll(
 		c.Request().Context(),
 		&req,
 	)
@@ -34,8 +34,7 @@ func (h *ObservationRequestHandler) FindObservationRequests(c echo.Context) erro
 		return handleError(c, err)
 	}
 
-	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(len(ObservationRequests)))
-	return c.JSON(http.StatusOK, ObservationRequests)
+	return successPaginationResponse(c, resp)
 }
 
 func (h *ObservationRequestHandler) GetOneObservationRequest(c echo.Context) error {

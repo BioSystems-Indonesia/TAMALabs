@@ -6,8 +6,8 @@ import (
 
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type Repository struct {
@@ -27,32 +27,17 @@ func (r *Repository) CreateMany(ctx context.Context, data []entity.ObservationRe
 	return r.DB.Save(data).Error
 }
 
-func (r *Repository) FindAll(ctx context.Context, req *entity.ObservationRequestGetManyRequest) ([]entity.ObservationRequest, error) {
-	var ObservationRequests []entity.ObservationRequest
-
+func (r *Repository) FindAll(
+	ctx context.Context, req *entity.ObservationRequestGetManyRequest,
+) (entity.PaginationResponse[entity.ObservationRequest], error) {
 	db := r.DB.WithContext(ctx)
-	if len(req.ID) > 0 {
-		db = db.Where("id in (?)", req.ID)
-	}
+	db = sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{})
 
 	if len(req.SpecimenID) > 0 {
 		db = db.Where("specimen_id in (?)", req.SpecimenID)
 	}
 
-	if req.Sort != "" {
-		db = db.Order(clause.OrderByColumn{
-			Column: clause.Column{
-				Name: req.Sort,
-			},
-			Desc: req.IsSortDesc(),
-		})
-	}
-
-	err := db.Find(&ObservationRequests).Error
-	if err != nil {
-		return nil, fmt.Errorf("error finding ObservationRequests: %w", err)
-	}
-	return ObservationRequests, nil
+	return sql.GetWithPaginationResponse[entity.ObservationRequest](db, req.GetManyRequest)
 }
 
 func (r *Repository) FindOne(ctx context.Context, id int64) (entity.ObservationRequest, error) {

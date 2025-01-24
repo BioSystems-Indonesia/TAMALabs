@@ -2,7 +2,6 @@ package rest
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	configuc "github.com/oibacidem/lims-hl-seven/internal/usecase/config"
@@ -37,8 +36,7 @@ func (h *ConfigHandler) ListConfig(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(int(result.Total)))
-	return c.JSON(http.StatusOK, result.Data)
+	return successPaginationResponse(c, result)
 }
 
 func (h *ConfigHandler) GetConfig(c echo.Context) error {

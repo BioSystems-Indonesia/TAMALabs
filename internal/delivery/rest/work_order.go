@@ -30,7 +30,7 @@ func (h *WorkOrderHandler) FindWorkOrders(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	workOrders, err := h.workOrderUsecase.FindAll(
+	resp, err := h.workOrderUsecase.FindAll(
 		c.Request().Context(),
 		&req,
 	)
@@ -38,8 +38,7 @@ func (h *WorkOrderHandler) FindWorkOrders(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(len(workOrders)))
-	return c.JSON(http.StatusOK, workOrders)
+	return successPaginationResponse(c, resp)
 }
 
 func (h *WorkOrderHandler) GetOneWorkOrder(c echo.Context) error {

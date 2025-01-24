@@ -25,7 +25,7 @@ func NewWorkOrderUseCase(
 
 func (p WorkOrderUseCase) FindAll(
 	ctx context.Context, req *entity.WorkOrderGetManyRequest,
-) ([]entity.WorkOrder, error) {
+) (entity.PaginationResponse[entity.WorkOrder], error) {
 	return p.workOrderRepo.FindAll(ctx, req)
 }
 

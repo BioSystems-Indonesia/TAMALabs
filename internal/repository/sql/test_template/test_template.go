@@ -5,6 +5,7 @@ import (
 
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql"
 	"github.com/oibacidem/lims-hl-seven/internal/util"
 	"gorm.io/gorm"
 )
@@ -20,44 +21,29 @@ func NewRepository(db *gorm.DB, cfg *config.Schema) *Repository {
 }
 
 // FindAll returns all test types.
-func (r *Repository) FindAll(ctx context.Context, req *entity.TestTemplateGetManyRequest) (entity.TestTemplatePaginationResponse, error) {
-	var data []entity.TestTemplate
-	query := r.DB
-	if len(req.ID) != 0 {
-		query = query.Where("id in (?)", req.ID)
+func (r *Repository) FindAll(
+	_ context.Context,
+	req *entity.TestTemplateGetManyRequest,
+) (entity.PaginationResponse[entity.TestTemplate], error) {
+	db := r.DB
+	sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{
+		ProcessSearch: func(db *gorm.DB, query string) *gorm.DB {
+			return db.Where("name like ?", "%"+query+"%").
+				Or("description like ?", "%"+query+"%")
+		}})
+
+	resp, err := sql.GetWithPaginationResponse[entity.TestTemplate](db, req.GetManyRequest)
+	if err != nil {
+		return entity.PaginationResponse[entity.TestTemplate]{}, err
 	}
 
-	if req.Query != "" {
-		query = query.Where("name like ?", "%"+req.Query+"%").
-			Or("description like ?", "%"+req.Query+"%")
-	}
-
-	if req.Search != "" {
-		query = query.Where("name like ?", "%"+req.Search+"%").
-			Or("description like ?", "%"+req.Search+"%")
-	}
-
-	var total int64
-	if err := query.Model(entity.TestTemplate{}).Count(&total).Error; err != nil {
-		return entity.TestTemplatePaginationResponse{}, err
-	}
-
-	if err := query.Preload("TestType").Find(&data).Error; err != nil {
-		return entity.TestTemplatePaginationResponse{}, err
-	}
-
-	for i := range data {
-		data[i].TestTypeID = util.Map(data[i].TestType, func(t entity.TestType) int {
+	for i := range resp.Data {
+		resp.Data[i].TestTypeID = util.Map(resp.Data[i].TestType, func(t entity.TestType) int {
 			return t.ID
 		})
 	}
 
-	return entity.TestTemplatePaginationResponse{
-		TestTemplates: data,
-		PaginationResponse: entity.PaginationResponse{
-			Total: total,
-		},
-	}, nil
+	return resp, nil
 }
 
 func (r *Repository) FindOneByID(ctx context.Context, id int) (entity.TestTemplate, error) {

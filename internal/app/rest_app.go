@@ -4,12 +4,10 @@ import (
 	"github.com/google/wire"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
-	"github.com/oibacidem/lims-hl-seven/internal/repository"
 	configrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
-	resultRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_template"
 	testTypeRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
@@ -36,11 +34,7 @@ var restUsecaseSet = wire.NewSet(
 var restRepositorySet = wire.NewSet(
 	testTypeRepo.NewRepository,
 	observation_result.NewRepository,
-	wire.Bind(new(repository.ObservationResult), new(*observation_result.Repository)),
 	observation_request.NewRepository,
-	wire.Bind(new(repository.ObservationRequest), new(*observation_request.Repository)),
-	resultRepo.NewRepository,
-	wire.Bind(new(repository.Result), new(*resultRepo.Repository)),
 )
 
 var (

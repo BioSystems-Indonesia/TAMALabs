@@ -33,8 +33,7 @@ func (h *PatientHandler) FindPatients(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(int(result.Total)))
-	return c.JSON(http.StatusOK, result.Patients)
+	return successPaginationResponse(c, result)
 }
 
 func (h *PatientHandler) GetOnePatient(c echo.Context) error {

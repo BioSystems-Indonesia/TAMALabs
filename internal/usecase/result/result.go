@@ -7,19 +7,19 @@ import (
 	"strconv"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	specimenRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
 	workOrderRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 )
 
 type Usecase struct {
-	resultRepository    repository.Result
+	resultRepository    *observation_result.Repository
 	workOrderRepository *workOrderRepo.WorkOrderRepository
 	specimenRepository  *specimenRepo.Repository
 }
 
 func NewUsecase(
-	resultRepository repository.Result,
+	resultRepository *observation_result.Repository,
 	workOrderRepository *workOrderRepo.WorkOrderRepository,
 	specimenRepository *specimenRepo.Repository,
 ) *Usecase {
@@ -30,15 +30,17 @@ func NewUsecase(
 	}
 }
 
-func (u *Usecase) Results(ctx context.Context, req *entity.ResultGetManyRequest) ([]entity.Result, error) {
+func (u *Usecase) Results(
+	ctx context.Context,
+	req *entity.ResultGetManyRequest,
+) ([]entity.Result, error) {
 	// it should be one table that handle the result of the patient with multiple work orders
-	worksOrders, err := u.workOrderRepository.FindAll(ctx, &entity.WorkOrderGetManyRequest{})
+	resp, err := u.workOrderRepository.FindAll(ctx, &entity.WorkOrderGetManyRequest{})
 	if err != nil {
 		return nil, err
 	}
 
-	log.Println(worksOrders)
-	return u.mapListResult(worksOrders), nil
+	return u.mapListResult(resp.Data), nil
 }
 
 func (u *Usecase) ResultDetail(ctx context.Context, barcode string) (entity.Result, error) {
@@ -51,6 +53,10 @@ func (u *Usecase) ResultDetail(ctx context.Context, barcode string) (entity.Resu
 	specimens, err := u.specimenRepository.FindByBarcode(ctx, barcode)
 	if err != nil {
 		return result, err
+	}
+
+	if len(specimens) == 0 {
+		return result, entity.ErrNotFound
 	}
 
 	result.Detail = u.processResultDetail(specimens)

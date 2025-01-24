@@ -15,7 +15,7 @@ func NewUsecase(testTypeRepository *test_type.Repository) *Usecase {
 	return &Usecase{repository: testTypeRepository}
 }
 
-func (u *Usecase) FindAll(ctx context.Context, req *entity.TestTypeGetManyRequest) ([]entity.TestType, error) {
+func (u *Usecase) FindAll(ctx context.Context, req *entity.TestTypeGetManyRequest) (entity.PaginationResponse[entity.TestType], error) {
 	return u.repository.FindAll(ctx, req)
 }
 

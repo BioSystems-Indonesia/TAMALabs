@@ -34,8 +34,7 @@ func (h *TestTemplateHandler) ListTestTemplate(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(int(resp.Total)))
-	return c.JSON(http.StatusOK, resp.TestTemplates)
+	return successPaginationResponse(c, resp)
 }
 
 func (h *TestTemplateHandler) GetOneTestTemplate(c echo.Context) error {

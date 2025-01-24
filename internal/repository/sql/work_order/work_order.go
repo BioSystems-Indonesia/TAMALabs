@@ -10,6 +10,7 @@ import (
 
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
 	"github.com/oibacidem/lims-hl-seven/internal/util"
 	"gorm.io/gorm"
@@ -26,37 +27,21 @@ func NewWorkOrderRepository(db *gorm.DB, cfg *config.Schema, specimentRepo *spec
 	return &WorkOrderRepository{db: db, cfg: cfg, specimentRepo: specimentRepo}
 }
 
-func (r WorkOrderRepository) FindAll(ctx context.Context, req *entity.WorkOrderGetManyRequest) ([]entity.WorkOrder, error) {
-	var workOrders []entity.WorkOrder
-
+func (r WorkOrderRepository) FindAll(ctx context.Context, req *entity.WorkOrderGetManyRequest) (entity.PaginationResponse[entity.WorkOrder], error) {
 	db := r.db.WithContext(ctx)
-	if len(req.ID) > 0 {
-		db = db.Where("id in (?)", req.ID)
-	}
+	db = sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{})
 
 	if len(req.SpecimenIDs) > 0 {
 		db = db.Joins("join work_order_Specimens on work_order_Specimens.work_order_id = work_orders.id and work_order_Specimens.Specimen_id in (?)", req.SpecimenIDs)
 	}
 
-	if req.Sort != "" {
-		db = db.Order(clause.OrderByColumn{
-			Column: clause.Column{
-				Name: req.Sort,
-			},
-			Desc: req.IsSortDesc(),
-		})
-	}
-
-	err := db.
+	db = db.
 		Preload("Patient").
 		Preload("Patient.Specimen").
 		Preload("Patient.Specimen.ObservationRequest").
-		Preload("Patient.Specimen.ObservationResult").
-		Find(&workOrders).Error
-	if err != nil {
-		return nil, fmt.Errorf("error finding workOrders: %w", err)
-	}
-	return workOrders, nil
+		Preload("Patient.Specimen.ObservationResult")
+
+	return sql.GetWithPaginationResponse[entity.WorkOrder](db, req.GetManyRequest)
 }
 
 func (r WorkOrderRepository) FindManyByID(ctx context.Context, id []int64) ([]entity.WorkOrder, error) {

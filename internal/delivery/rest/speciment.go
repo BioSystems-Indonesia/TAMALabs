@@ -33,8 +33,7 @@ func (h *SpecimenHandler) FindSpecimens(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(len(Specimens)))
-	return c.JSON(http.StatusOK, Specimens)
+	return successPaginationResponse(c, Specimens)
 }
 
 func (h *SpecimenHandler) GetOneSpecimen(c echo.Context) error {

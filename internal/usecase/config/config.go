@@ -25,7 +25,7 @@ func NewConfigUseCase(
 
 func (p ConfigUseCase) FindAll(
 	ctx context.Context, req *entity.ConfigGetManyRequest,
-) (entity.ConfigPaginationResponse, error) {
+) (entity.PaginationResponse[entity.Config], error) {
 	return p.configRepo.FindAll(ctx, req)
 }
 

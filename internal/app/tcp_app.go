@@ -3,7 +3,6 @@ package app
 import (
 	"github.com/google/wire"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
-	"github.com/oibacidem/lims-hl-seven/internal/repository"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
@@ -19,9 +18,7 @@ var tcpUsecaseSet = wire.NewSet(
 
 var tcpRepositorySet = wire.NewSet(
 	observation_result.NewRepository,
-	wire.Bind(new(repository.ObservationResult), new(*observation_result.Repository)),
 	observation_request.NewRepository,
-	wire.Bind(new(repository.ObservationRequest), new(*observation_request.Repository)),
 )
 
 var (

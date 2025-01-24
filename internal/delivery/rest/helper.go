@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"maps"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -62,4 +63,9 @@ func bindAndValidate(c echo.Context, v interface{}) error {
 		return err
 	}
 	return c.Validate(v)
+}
+
+func successPaginationResponse[T any](c echo.Context, result entity.PaginationResponse[T]) error {
+	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(int(result.Total)))
+	return c.JSON(http.StatusOK, result.Data)
 }
