@@ -1,17 +1,9 @@
 package entity
 
-import "time"
+import "fmt"
 
 type Result struct {
-	// ID is same as barcode
-	ID          string       `json:"id"`
-	Date        time.Time    `json:"date"`
-	Barcode     string       `json:"barcode"`
-	PatientName string       `json:"patient_name"`
-	PatientID   int64        `json:"patient_id"`
-	Detail      ResultDetail `json:"detail,omitempty"`
-
-	Request []ObservationRequest `json:"observation_request"`
+	Specimen
 }
 
 type ResultPaginationResponse struct {
@@ -20,18 +12,52 @@ type ResultPaginationResponse struct {
 }
 
 type ResultDetail struct {
-	Hematology   []ResultTest `json:"hematology"`
-	Biochemistry []ResultTest `json:"biochemistry"`
-	Observation  []ResultTest `json:"observation"`
+	Specimen
+	TestResult map[string][]ResultTest `json:"test_result"`
+}
+
+type UpdateManyResultTestReq struct {
+	Data []ResultTest `json:"data"`
 }
 
 type ResultTest struct {
+	ID             int64          `json:"id"`
 	Test           string         `json:"test"`
 	Result         string         `json:"result"`
 	Unit           string         `json:"unit"`
 	Category       string         `json:"category"`
 	Abnormal       AbnormalResult `json:"abnormal"`
 	ReferenceRange string         `json:"reference_range"`
+}
+
+func (r ResultTest) FromObservationResult(observation ObservationResult) ResultTest {
+	return ResultTest{
+		ID:             observation.ID,
+		Test:           observation.TestType.Name,
+		Result:         observation.Values[0],
+		Unit:           observation.TestType.Unit,
+		Category:       observation.TestType.Category,
+		ReferenceRange: fmt.Sprintf("%.2f - %.2f", observation.TestType.LowRefRange, observation.TestType.HighRefRange),
+	}
+}
+
+func (r ResultTest) ToObservationResult() (ObservationResult, error) {
+	var lowRefRange, highRefRange float64
+
+	_, err := fmt.Sscanf(r.ReferenceRange, "%f - %f", &lowRefRange, &highRefRange)
+	if err != nil {
+		return ObservationResult{}, err
+	}
+
+	return ObservationResult{
+		ID:   r.ID,
+		Code: r.Test,
+		TestType: TestType{
+			Name: r.Test, Unit: r.Unit, Category: r.Category,
+			LowRefRange: lowRefRange, HighRefRange: highRefRange,
+		},
+		Values: []string{r.Result},
+	}, nil
 }
 
 type AbnormalResult int32

@@ -26,6 +26,12 @@ func (o ObservationRequest) GetOrderControlNode() string {
 	}
 }
 
+type ObservationResultCreate struct {
+	SpecimenID int64   `json:"specimen_id" validate:"required"`
+	Code       string  `json:"code" validate:"required"`
+	Value      float64 `json:"value" validate:"required"`
+}
+
 type ObservationResult struct {
 	ID             int64           `json:"id" gorm:"primaryKey;autoIncrement"`
 	SpecimenID     int64           `json:"specimen_id"`

@@ -2,6 +2,8 @@ package observation_result
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"gorm.io/gorm"
@@ -17,9 +19,65 @@ func NewRepository(db *gorm.DB, cfg *config.Schema) *Repository {
 }
 
 func (r *Repository) Create(ctx context.Context, data *entity.ObservationResult) error {
-	return r.DB.Save(data).Error
+	return r.DB.Create(data).Error
 }
 
 func (r *Repository) CreateMany(ctx context.Context, data []entity.ObservationResult) error {
 	return r.DB.Create(data).Error
+}
+
+func (r *Repository) UpdateResultTest(
+	ctx context.Context,
+	data []entity.ResultTest,
+) ([]entity.ResultTest, error) {
+	err := r.DB.Transaction(func(tx *gorm.DB) error {
+		for i, result := range data {
+			newObservationResult, errConv := result.ToObservationResult()
+			if errConv != nil {
+				return fmt.Errorf("error converting result to observation result: %w", errConv)
+			}
+
+			var oldObservationResult entity.ObservationResult
+			err := tx.
+				Where("id = ?", result.ID).
+				First(&oldObservationResult).Error
+			if err != nil {
+				return fmt.Errorf("error finding observation result: %w", err)
+			}
+
+			oldObservationResult.Unit = newObservationResult.Unit
+
+			err = tx.
+				Model([]entity.ObservationResult{}).
+				Where("id = ?", result.ID).
+				Save(&oldObservationResult).Error
+			if err != nil {
+				return fmt.Errorf("error updating observation result: %w", err)
+			}
+
+			data[i] = result
+		}
+
+		return nil
+	})
+	if err != nil {
+		return []entity.ResultTest{}, err
+	}
+
+	return data, nil
+}
+
+func (r *Repository) Delete(context context.Context, id int64) (entity.ObservationResult, error) {
+	var observationResult entity.ObservationResult
+	err := r.DB.Where("id = ?", id).First(&observationResult).Error
+	if err != nil {
+		return entity.ObservationResult{}, err
+	}
+
+	err = r.DB.Delete(&observationResult).Error
+	if err != nil {
+		return entity.ObservationResult{}, err
+	}
+
+	return observationResult, nil
 }
