@@ -13,7 +13,6 @@ import (
 	testTypeRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	configuc "github.com/oibacidem/lims-hl-seven/internal/usecase/config"
 	observation_requestuc "github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
@@ -28,7 +27,6 @@ import (
 var restUsecaseSet = wire.NewSet(
 	testTypeUC.NewUsecase,
 	resultUC.NewUsecase,
-	wire.Bind(new(usecase.Result), new(*resultUC.Usecase)),
 )
 
 var restRepositorySet = wire.NewSet(

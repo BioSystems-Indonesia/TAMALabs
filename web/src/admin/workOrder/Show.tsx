@@ -7,7 +7,6 @@ import PrintIcon from '@mui/icons-material/Print';
 import { Card, CardContent, CircularProgress, Grid } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useFormContext } from 'react-hook-form'
 import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import {
@@ -39,13 +38,14 @@ import {
     type ButtonProps
 } from "react-admin";
 import Barcode from "react-barcode";
+import { useFormContext } from 'react-hook-form';
 import { useReactToPrint } from "react-to-print";
+import { trimName } from '../../helper/format';
+import { getRefererParam } from '../../hooks/useReferer';
 import useSettings from '../../hooks/useSettings';
 import type { BarcodeStyle } from '../../types/general';
 import { DeviceForm } from "../device";
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
-import { trimName } from '../../helper/format';
-import { getRefererParam } from '../../hooks/useReferer';
 
 const barcodePageStyle = (style: BarcodeStyle) => `
 @media all {
@@ -270,7 +270,7 @@ export function WorkOrderShow() {
                             flexDirection: "column",
                             gap: 2,
                         }}>
-                            <WorkOrderStatusChipField />
+                            <WorkOrderStatusChipField source='status' />
                             <RunWorkOrderForm />
                         </CardContent>
                     </Card>

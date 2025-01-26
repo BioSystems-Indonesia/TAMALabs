@@ -3,12 +3,12 @@ package result
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	specimenRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
 	workOrderRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 )
 
@@ -16,117 +16,123 @@ type Usecase struct {
 	resultRepository    *observation_result.Repository
 	workOrderRepository *workOrderRepo.WorkOrderRepository
 	specimenRepository  *specimenRepo.Repository
+	testTypeRepository  *test_type.Repository
 }
 
 func NewUsecase(
 	resultRepository *observation_result.Repository,
 	workOrderRepository *workOrderRepo.WorkOrderRepository,
 	specimenRepository *specimenRepo.Repository,
+	testTypeRepository *test_type.Repository,
 ) *Usecase {
 	return &Usecase{
 		resultRepository:    resultRepository,
 		workOrderRepository: workOrderRepository,
 		specimenRepository:  specimenRepository,
+		testTypeRepository:  testTypeRepository,
 	}
 }
 
 func (u *Usecase) Results(
 	ctx context.Context,
 	req *entity.ResultGetManyRequest,
-) ([]entity.Result, error) {
-	// it should be one table that handle the result of the patient with multiple work orders
-	resp, err := u.workOrderRepository.FindAll(ctx, &entity.WorkOrderGetManyRequest{})
+) (entity.PaginationResponse[entity.Specimen], error) {
+	resp, err := u.specimenRepository.FindAllForResult(ctx, &entity.SpecimenGetManyRequest{
+		GetManyRequest: req.GetManyRequest,
+	})
 	if err != nil {
-		return nil, err
+		return entity.PaginationResponse[entity.Specimen]{}, err
 	}
 
-	return u.mapListResult(resp.Data), nil
+	return resp, nil
 }
 
-func (u *Usecase) ResultDetail(ctx context.Context, barcode string) (entity.Result, error) {
-	// this is bad design because if patient have multiple visit this will query the rest patient visit result
-
-	result := entity.Result{
-		Barcode: barcode,
-	}
-
-	specimens, err := u.specimenRepository.FindByBarcode(ctx, barcode)
+func (u *Usecase) ResultDetail(ctx context.Context, specimenID int64) (entity.ResultDetail, error) {
+	specimen, err := u.specimenRepository.FindOne(ctx, specimenID)
 	if err != nil {
-		return result, err
+		return entity.ResultDetail{}, err
 	}
 
-	if len(specimens) == 0 {
-		return result, entity.ErrNotFound
-	}
-
-	result.Detail = u.processResultDetail(specimens)
-
-	return result, nil
+	return entity.ResultDetail{
+		Specimen:   specimen,
+		TestResult: u.processResultDetail(specimen),
+	}, nil
 }
 
-func (u *Usecase) mapListResult(worksOrders []entity.WorkOrder) []entity.Result {
-	results := []entity.Result{}
-	for _, workOrder := range worksOrders {
-		for _, patient := range workOrder.Patient {
-			if u.isPatientAlreadyExist(patient.ID, results) {
-				log.Println(patient)
-				continue
-			}
-			results = append(results, entity.Result{
-				ID:          patient.Specimen[0].Barcode,
-				Date:        workOrder.CreatedAt,
-				Barcode:     patient.Specimen[0].Barcode,
-				PatientName: patient.FirstName + " " + patient.LastName,
-				PatientID:   patient.ID,
-				Request:     patient.Specimen[0].ObservationRequest,
-			})
+func (u *Usecase) UpdateResult(ctx context.Context, data []entity.ResultTest) ([]entity.ResultTest, error) {
+	testResults, err := u.resultRepository.UpdateResultTest(ctx, data)
+	if err != nil {
+		return []entity.ResultTest{}, err
+	}
+
+	return testResults, nil
+}
+
+func (u *Usecase) CreateResult(
+	ctx context.Context, data entity.ObservationResultCreate,
+) (entity.ObservationResult, error) {
+	testType, err := u.testTypeRepository.FindOneByCode(ctx, data.Code)
+	if err != nil {
+		return entity.ObservationResult{}, err
+	}
+
+	input := entity.ObservationResult{
+		SpecimenID:     data.SpecimenID,
+		Code:           data.Code,
+		Values:         []string{fmt.Sprintf("%v", data.Value)},
+		Unit:           testType.Unit,
+		ReferenceRange: fmt.Sprintf("%.2f - %.2f", testType.LowRefRange, testType.HighRefRange),
+		TestType:       testType,
+	}
+
+	err = u.resultRepository.Create(ctx, &input)
+	if err != nil {
+		return entity.ObservationResult{}, err
+	}
+
+	return input, nil
+}
+
+func (u *Usecase) mapListResult(specimens []entity.Specimen) []entity.Result {
+	results := make([]entity.Result, len(specimens))
+	for i, specimen := range specimens {
+		results[i] = entity.Result{
+			Specimen: specimen,
 		}
 	}
+
 	return results
 }
 
-func (u *Usecase) processResultDetail(specimens []entity.Specimen) entity.ResultDetail {
-	var resultDetail entity.ResultDetail
-	for _, specimen := range specimens {
-		for _, observation := range specimen.ObservationResult {
-			resultTest := entity.ResultTest{
-				Test:           observation.TestType.Name,
-				Result:         observation.Values[0],
-				Unit:           observation.TestType.Unit,
-				Category:       observation.TestType.Category,
-				ReferenceRange: fmt.Sprintf("%v - %v", observation.TestType.LowRefRange, observation.TestType.HighRefRange),
-			}
-			// only process the first value, if the observation have multiple values we need to handle it later
-			result, err := strconv.ParseFloat(resultTest.Result, 64)
-			if err != nil {
-				continue
-			}
+func (u *Usecase) processResultDetail(specimen entity.Specimen) map[string][]entity.ResultTest {
+	var resultTestsCategory = map[string][]entity.ResultTest{}
+	for _, observation := range specimen.ObservationResult {
+		resultTest := entity.ResultTest{}.FromObservationResult(observation)
+		// only process the first value, if the observation have multiple values we need to handle it later
+		result, err := strconv.ParseFloat(resultTest.Result, 64)
+		if err != nil {
+			continue
+		}
 
-			resultTest.Abnormal = entity.NormalResult
-			if result <= observation.TestType.LowRefRange {
-				resultTest.Abnormal = entity.LowResult
-			} else if result >= observation.TestType.HighRefRange {
-				resultTest.Abnormal = entity.HighResult
-			}
+		resultTest.Abnormal = entity.NormalResult
+		if result <= observation.TestType.LowRefRange {
+			resultTest.Abnormal = entity.LowResult
+		} else if result >= observation.TestType.HighRefRange {
+			resultTest.Abnormal = entity.HighResult
+		}
 
-			switch observation.TestType.Category {
-			case "Hematology":
-				resultDetail.Hematology = append(resultDetail.Hematology, resultTest)
-			case "Biochemistry":
-				resultDetail.Biochemistry = append(resultDetail.Biochemistry, resultTest)
-			case "Observation":
-				resultDetail.Observation = append(resultDetail.Observation, resultTest)
-			}
+		categoryName := observation.TestType.Category
+		testResults, ok := resultTestsCategory[categoryName]
+		if ok {
+			resultTestsCategory[categoryName] = append(testResults, resultTest)
+		} else {
+			resultTestsCategory[categoryName] = []entity.ResultTest{resultTest}
 		}
 	}
-	return resultDetail
+
+	return resultTestsCategory
 }
 
-func (u *Usecase) isPatientAlreadyExist(patientID int64, results []entity.Result) bool {
-	for _, result := range results {
-		if result.PatientID == patientID {
-			return true
-		}
-	}
-	return false
+func (u *Usecase) DeleteResult(context context.Context, id int64) (entity.ObservationResult, error) {
+	return u.resultRepository.Delete(context, id)
 }

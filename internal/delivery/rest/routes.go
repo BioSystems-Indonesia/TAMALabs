@@ -131,7 +131,10 @@ func RegisterRoutes(
 	result := v1.Group("/result")
 	{
 		result.GET("", handler.ListResult)
-		result.GET("/:barcode", handler.GetResult)
+		result.POST("", handler.CreateResult)
+		result.PUT("", handler.UpdateResult)
+		result.GET("/:id", handler.GetResult)
+		result.DELETE("/:id", handler.DeleteResult)
 	}
 
 	config := v1.Group("/config")

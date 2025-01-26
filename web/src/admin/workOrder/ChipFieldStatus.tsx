@@ -1,35 +1,44 @@
 import React from "react";
 import { useEffect } from "react"
 import { ChipField, useRecordContext, type ChipFieldProps } from "react-admin"
+import { getNestedValue } from "../../helper/accessor";
 
-export const WorkOrderStatusChipField = (props: Partial<ChipFieldProps>) => {
-    const data = useRecordContext()
+export type WorkOrderStatusChipFieldProps = Partial<ChipFieldProps> & {
+    record?: any
+    source: string
+}
+
+export function WorkOrderChipColorMap(value: string) {
+    switch (value) {
+        case 'NEW':
+            return 'default';
+        case 'PENDING':
+            return 'secondary';
+        case 'SUCCESS':
+            return 'success';
+        case 'CANCELLED':
+            return 'error';
+        default:
+            return 'default';
+    }
+}
+
+export const WorkOrderStatusChipField = (props: WorkOrderStatusChipFieldProps) => {
     const [color, setColor] = React.useState<'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' | undefined>(undefined);
+    const record = props.record ?? useRecordContext();
 
     useEffect(() => {
-        switch (data?.status) {
-            case 'NEW':
-                setColor('default');
-                break;
-            case 'PENDING':
-                setColor('secondary');
-                break;
-            case 'COMPLETED':
-                setColor('success');
-                break;
-            case 'CANCELLED':
-                setColor('error');
-                break
-            default:
-                setColor('default');
-                break;
+        if (record === undefined) {
+            return;
         }
-    }, [data]);
+
+        const value = getNestedValue(record, props.source);
+        const color = WorkOrderChipColorMap(value);
+        setColor(color);
+    }, [record, props.source]);
 
 
     return (
-        <ChipField {...props} sx={{
-
-        }} textAlign="center" color={color} source="status" />
+        <ChipField {...props} sx={{}} textAlign="center" color={color} source={props.source} />
     )
 }

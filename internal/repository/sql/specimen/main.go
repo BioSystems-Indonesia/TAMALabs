@@ -30,7 +30,9 @@ func NewRepository(db *gorm.DB, cfg *config.Schema, cache *cache.Cache) *Reposit
 	return r
 }
 
-func (r Repository) FindAll(ctx context.Context, req *entity.SpecimenGetManyRequest) (entity.PaginationResponse[entity.Specimen], error) {
+func (r Repository) FindAll(
+	ctx context.Context, req *entity.SpecimenGetManyRequest,
+) (entity.PaginationResponse[entity.Specimen], error) {
 	db := r.db.WithContext(ctx).Preload("ObservationRequest")
 	db = sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{})
 
@@ -41,9 +43,32 @@ func (r Repository) FindAll(ctx context.Context, req *entity.SpecimenGetManyRequ
 	return sql.GetWithPaginationResponse[entity.Specimen](db, req.GetManyRequest)
 }
 
+func (r Repository) FindAllForResult(
+	ctx context.Context, req *entity.SpecimenGetManyRequest,
+) (entity.PaginationResponse[entity.Specimen], error) {
+	db := r.db.WithContext(ctx).
+		Preload("ObservationResult").
+		Preload("ObservationRequest").
+		Preload("Patient").
+		Preload("WorkOrder")
+	db = sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{})
+
+	if req.PatientID != 0 {
+		db = db.Where("patient_id = ?", req.PatientID)
+	}
+
+	return sql.GetWithPaginationResponse[entity.Specimen](db, req.GetManyRequest)
+}
+
 func (r Repository) FindOne(ctx context.Context, id int64) (entity.Specimen, error) {
-	var Specimen entity.Specimen
-	err := r.db.Where("id = ?", id).First(&Specimen).Error
+	var specimen entity.Specimen
+	err := r.db.
+		Where("id = ?", id).
+		Preload("ObservationResult").
+		Preload("ObservationResult.TestType").
+		Preload("Patient").
+		Preload("WorkOrder").
+		First(&specimen).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return entity.Specimen{}, entity.ErrNotFound
 	}
@@ -52,7 +77,7 @@ func (r Repository) FindOne(ctx context.Context, id int64) (entity.Specimen, err
 		return entity.Specimen{}, fmt.Errorf("error finding Specimen: %w", err)
 	}
 
-	return Specimen, nil
+	return specimen, nil
 }
 
 func (r Repository) FindByBarcode(ctx context.Context, barcode string) ([]entity.Specimen, error) {

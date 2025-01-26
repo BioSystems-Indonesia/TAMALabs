@@ -55,6 +55,14 @@ func (r *Repository) FindOneByID(ctx context.Context, id int) (entity.TestType, 
 	return data, nil
 }
 
+func (r *Repository) FindOneByCode(ctx context.Context, code string) (entity.TestType, error) {
+	var data entity.TestType
+	if err := r.DB.Where("code = ?", code).First(&data).Error; err != nil {
+		return entity.TestType{}, err
+	}
+	return data, nil
+}
+
 func (r *Repository) Create(ctx context.Context, req *entity.TestType) (entity.TestType, error) {
 	if err := r.DB.Create(req).Error; err != nil {
 		return entity.TestType{}, err
