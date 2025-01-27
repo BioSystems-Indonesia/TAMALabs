@@ -462,11 +462,9 @@ function PatientTable(props: WorkOrderFormProps) {
 }
 
 const PatientListActions = () => {
-    const location = useLocation()
-
     return (
         <TopToolbar>
-            <CreateButton to={`${location.pathname}/patient/create?${getRefererParam()}`} label="Create Patient" />
+            <CreateButton to={`/patient/create?${getRefererParam()}`} label="Create Patient" />
         </TopToolbar>
     )
 };
