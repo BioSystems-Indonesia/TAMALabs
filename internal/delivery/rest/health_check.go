@@ -81,7 +81,6 @@ func (h HealthCheckHandler) Ping(c echo.Context) error {
 
 	return c.JSON(200, map[string]string{
 		"status":   "OK",
-		"name":     h.cfg.Name,
 		"version":  h.cfg.Version,
 		"revision": h.cfg.Revision,
 		"logLevel": h.cfg.LogLevel,

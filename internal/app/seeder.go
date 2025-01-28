@@ -161,21 +161,6 @@ var seedDataTestType = []entity.TestType{
 	{Name: "URIC ACID", Code: "URIC ACID", Unit: "mg/dL", LowRefRange: 3.5, HighRefRange: 7.2, Category: "Biochemistry", SubCategory: "Metabolism", Description: "Uric acid levels in blood."},
 }
 
-var seedConfig = []entity.Config{
-	{
-		ID:    "Name",
-		Value: "Biosystem Lims",
-	},
-	{
-		ID:    "Port",
-		Value: "8322",
-	},
-	{
-		ID:    "LogLevel",
-		Value: "info",
-	},
-}
-
 var seedDevice = []entity.Device{
 	{
 		ID:        1,

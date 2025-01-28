@@ -48,6 +48,7 @@ func (r Repository) FindAllForResult(
 ) (entity.PaginationResponse[entity.Specimen], error) {
 	db := r.db.WithContext(ctx).
 		Preload("ObservationResult").
+		Preload("ObservationResult.TestType").
 		Preload("ObservationRequest").
 		Preload("Patient").
 		Preload("WorkOrder")
