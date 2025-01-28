@@ -38,7 +38,7 @@ import {
     useSaveContext
 } from "react-admin";
 import { FieldValues, UseFormWatch, useFormContext } from "react-hook-form";
-import { useLocation, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
 import FeatureList from "../../component/FeatureList.tsx";
 import { getRefererParam } from "../../hooks/useReferer.ts";
@@ -462,11 +462,9 @@ function PatientTable(props: WorkOrderFormProps) {
 }
 
 const PatientListActions = () => {
-    const location = useLocation()
-
     return (
         <TopToolbar>
-            <CreateButton to={`${location.pathname}/patient/create?${getRefererParam()}`} label="Create Patient" />
+            <CreateButton to={`/patient/create?${getRefererParam()}`} label="Create Patient" />
         </TopToolbar>
     )
 };
