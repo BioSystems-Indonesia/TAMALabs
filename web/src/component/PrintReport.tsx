@@ -1,16 +1,17 @@
-import React from 'react';
+import { CircularProgress, IconButton, Stack } from '@mui/material';
 import {
-    Page,
-    Text,
-    View,
-    Document,
-    StyleSheet,
     BlobProvider,
-    Font,
-    Svg,
-    Line,
+    Font
 } from '@react-pdf/renderer';
-import { Button } from '@mui/material';
+import { ReportDocument } from './ReportFile';
+import { Button, LoadingIndicator, useListContext } from 'react-admin';
+import type { ObservationResult, ReportData, ReportDataAbnormality } from '../types/observation_result';
+import { useEffect, useState } from 'react';
+import PrintIcon from '@mui/icons-material/Print';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import type { Patient } from '../types/patient';
+import type { WorkOrder } from '../types/work_order';
+import dayjs from 'dayjs';
 
 // Optional: Register custom fonts if required
 Font.register({
@@ -18,128 +19,83 @@ Font.register({
     src: 'https://fonts.gstatic.com/s/roboto/v27/KFOmCnqEu92Fr1Me5Q.ttf',
 });
 
-// Define data types for clarity
-interface ReportData {
-    parameter: string;
-    result: string;
-    reference: string;
+type PrintMCUProps = {
+    patient: Patient
+    workOrder: WorkOrder
+    results: ObservationResult[]
 }
 
-interface MCUReportProps {
-    data: ReportData[];
-}
+const PrintMCUButton = (prop: PrintMCUProps) => {
+    const [data, setData] = useState<ReportData[]>([])
+    useEffect(() => {
 
-// Styles for PDF layout
-const styles = StyleSheet.create({
-    page: {
-        padding: 30,
-        fontFamily: 'Roboto',
-    },
-    header: {
-        fontSize: 20,
-        textAlign: 'center',
-        marginBottom: 20,
-    },
-    tableContainer: {
-        display: "flex",
-        flexDirection: "row",
-        flexWrap: "wrap",
-        width: "100%",
-    },
-    headRow: {
-        flex: 1,
-        fontSize: 14,
-        fontWeight: "heavy",
-    },
-    value: {
-        fontSize: 12,
-        flex: 1
-    },
-});
+        setData(prop.results.map(v => {
+            let abnormality = "Normal" as ReportDataAbnormality
+            const value = v.values.length > 0 ? Number.parseFloat(v.values[0]) : null;
+            if (value === null) {
+                abnormality = "No Data"
+            } else {
+                if (value < v.test_type.low_ref_range) {
+                    abnormality = "Low"
+                } else if (value > v.test_type.high_ref_range) {
+                    abnormality = "High"
+                }
+            }
 
-// PDF Document Component
-const MCUReport: React.FC<MCUReportProps> = ({ data }) => (
-    <Document>
-        <Page size="A4" style={styles.page}>
-            <Text style={styles.header}>MCU Result</Text>
-            <View key={-1} style={styles.tableContainer}>
-                <Text style={styles.headRow}>Parameter</Text>
-                <Text style={styles.headRow}>Result</Text>
-                <Text style={styles.headRow}>Reference</Text>
-            </View>
-            <Svg height="10" width="100%">
-                <Line x1="0" y1="5" x2="580" y2="5" strokeWidth={2} stroke="rgb(0,0,0)" />
-            </Svg>
-            {data.map((item, index) => (
-                <View key={index} style={styles.tableContainer}>
-                    <Text style={styles.value}>{item.parameter}</Text>
-                    <Text style={styles.value}>{item.result}</Text>
-                    <Text style={styles.value}>{item.reference}</Text>
-                </View>
-            ))}
-        </Page>
-    </Document>
-);
+            return {
+                category: v.test_type.category,
+                parameter: v.test_type.code,
+                reference: `${v.test_type.low_ref_range} - ${v.test_type.high_ref_range}`,
+                result: value,
+                abnormality: abnormality,
+                subCategory: v.test_type.sub_category,
+            } as ReportData
+        }))
 
-const PrintMCU: React.FC = () => {
-    const mockData: ReportData[] = [
-        { parameter: 'Blood Pressure', result: '120/80', reference: 'Normal' },
-        { parameter: 'Heart Rate', result: '72 bpm', reference: 'Normal' },
-        { parameter: 'Cholesterol', result: '190 mg/dL', reference: 'Desirable' },
-    ];
+    }, [prop.results]);
 
     return (
-            <BlobProvider document={<MCUReport data={mockData} />}>
-                {({ url, loading, error }) => {
-                    if (loading) {
-                        return (
-                            <Button
-                                disabled
-                                style={{
-                                    padding: '10px',
-                                    fontSize: '14px',
-                                    cursor: 'not-allowed',
-                                    backgroundColor: '#ccc',
-                                    border: 'none',
-                                    borderRadius: '5px',
-                                }}
-                            >
-                                Generating PDF...
-                            </Button>
-                        );
-                    }
-
-                    if (error) {
-                        return <span>Error generating PDF: {error.message}</span>;
-                    }
-
+        <BlobProvider document={<ReportDocument data={data} />}>
+            {({ url, loading, error }) => {
+                if (loading) {
                     return (
-                        <div>
-                            {/* Download PDF Button */}
-                            <Button 
-			        variant="outlined"
-                                href={url || ''}
-                                download="MCU_Result.pdf"
-				style={{marginRight: '10px'}}
-                            >
-                                Download PDF
-                            </Button>
-
-                            {/* Print PDF Button */}
-                            <Button variant="outlined" 
-                                onClick={() => {
-                                    if (url) {
-                                        window.open(url, '_blank')?.focus();
-                                    }
-                                }}
-                            >
-                                Print PDF
-                            </Button>
-                        </div>
+                        <CircularProgress size={4} />
                     );
-                }}
-            </BlobProvider>
+                }
+
+                if (error) {
+                    return <span color='red'>Error generating PDF: {error.message}</span>;
+                }
+
+                return (
+                    <Stack gap={1} direction={"row"}>
+                        {/* Download PDF Button */}
+                        <IconButton
+                            onClick={e => e.stopPropagation()}
+                            color='primary'
+                            download={`MCU_Result_${dayjs(prop.workOrder.created_at).format("YYYYMMDD")}_${prop.patient.id}_${prop.patient.first_name}_${prop.patient.last_name}.pdf`}
+                            href={url || ''}
+                        >
+                            <FileDownloadIcon />
+                        </IconButton>
+
+                        {/* Print PDF Button */}
+                        <IconButton
+                            color='secondary'
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                if (url) {
+                                    window.open(url, '_blank')?.focus();
+                                }
+                            }}
+                        >
+                            <PrintIcon />
+                        </IconButton>
+                    </Stack>
+                );
+            }}
+        </BlobProvider>
     );
 };
 
-export default PrintMCU;
+export default PrintMCUButton;

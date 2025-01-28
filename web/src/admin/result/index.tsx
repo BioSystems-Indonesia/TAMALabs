@@ -37,7 +37,7 @@ import { useSearchParams } from "react-router-dom";
 import { useFormContext } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { getRefererParam, useRefererRedirect } from "../../hooks/useReferer";
-import PrintMCU from "../../component/PrintReport";
+import PrintMCUButton from "../../component/PrintReport";
 import BeenhereIcon from '@mui/icons-material/Beenhere';
 import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
 import FeatureList from "../../component/FeatureList";
@@ -70,7 +70,7 @@ export const ResultList = () => (
     <List resource="result" sort={{
         field: "id",
         order: "DESC"
-    }} aside={<ResultFilterSidebar />} >
+    }} aside={<ResultFilterSidebar />} exporter={false} >
         <Datagrid bulkActionButtons={false} >
             <NumberField source="id" />
             <WithRecord label="Patient" render={(record: any) => (
@@ -95,9 +95,9 @@ export const ResultList = () => (
                 </Typography>
             )} />
             <DateField source="created_at" showDate showTime />
-            <WrapperField label="Print Result">
-                <PrintMCU />
-            </WrapperField>
+            <WithRecord label="Print Result" render={(record: any) => (
+                <PrintMCUButton results={record.observation_result} patient={record.patient} workOrder={record.work_order} />
+            )} />
         </Datagrid>
     </List>
 );

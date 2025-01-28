@@ -2,9 +2,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from "@mui/material/Stack";
 import { useEffect, useState } from "react";
-import { Labeled, NumberInput, RadioButtonGroupInput, SaveButton, TabbedForm, Toolbar, required, useNotify, useStoreContext, type SaveHandler } from "react-admin";
-import { Settings, defaultSettings, orientationChoices, settingSchema, settingsStoreKey } from "../../types/setting";
+import { Labeled, NumberInput, RadioButtonGroupInput, SaveButton, TabbedForm, TextInput, Toolbar, required, useNotify, useStoreContext, type SaveHandler } from "react-admin";
 import useSettings from '../../hooks/useSettings';
+import { Settings, defaultSettings, orientationChoices, settingSchema, settingsStoreKey } from "../../types/setting";
 
 
 function SettingsToolbar() {
@@ -63,36 +63,39 @@ export default function SettingsPage() {
     }
 
     return (
-        <TabbedForm onSubmit={onSubmit} toolbar={<SettingsToolbar />} resolver={zodResolver(settingSchema)} record={settings}
-        >
-            <TabbedForm.Tab label="Personal">
-                <Labeled label="Barcode">
-                    <Stack>
-                        <Stack direction={"row"} gap={1} sx={{
-                            xs: {
-                                width: "100%",
-                            },
-                            md: {
-                                width: "50%",
-                            },
-                        }} >
-                            <NumberInput source="barcode_page_width" label="Page Width (mm)" validate={[required()]} />
-                            <NumberInput source="barcode_page_height" label="Page Height (mm)" validate={[required()]} />
-                        </Stack>
-                        <Stack direction={"row"} gap={1} sx={{
-                            xs: {
-                                width: "100%",
-                            },
-                            md: {
-                                width: "50%",
-                            },
-                        }} >
-                            <NumberInput source="barcode_width" label="Width" validate={[required()]} />
-                            <NumberInput source="barcode_height" label="Height" validate={[required()]} />
-                        </Stack>
-                        <RadioButtonGroupInput choices={[...orientationChoices]} source="barcode_orientation" label="Orientation" validate={[required()]} />
+        <TabbedForm onSubmit={onSubmit} toolbar={<SettingsToolbar />} resolver={zodResolver(settingSchema)} record={settings}>
+            <TabbedForm.Tab label="Barcode">
+                <Stack>
+                    <Stack direction={"row"} gap={1} sx={{
+                        xs: {
+                            width: "100%",
+                        },
+                        md: {
+                            width: "50%",
+                        },
+                    }} >
+                        <NumberInput source="barcode_page_width" label="Page Width (mm)" validate={[required()]} />
+                        <NumberInput source="barcode_page_height" label="Page Height (mm)" validate={[required()]} />
                     </Stack>
-                </Labeled>
+                    <Stack direction={"row"} gap={1} sx={{
+                        xs: {
+                            width: "100%",
+                        },
+                        md: {
+                            width: "50%",
+                        },
+                    }} >
+                        <NumberInput source="barcode_width" label="Width" validate={[required()]} />
+                        <NumberInput source="barcode_height" label="Height" validate={[required()]} />
+                    </Stack>
+                    <RadioButtonGroupInput choices={[...orientationChoices]} source="barcode_orientation" label="Orientation" validate={[required()]} />
+                </Stack>
+            </TabbedForm.Tab>
+            <TabbedForm.Tab label="Company">
+                <TextInput source="company_name" label="Name" validate={[required()]} />
+                <TextInput source="company_address" label="Address" validate={[required()]} />
+                <TextInput source="company_contact_email" label="Contact Email" validate={[required()]} />
+                <TextInput source="company_contact_phone" label="Contact Phone" validate={[required()]} />
             </TabbedForm.Tab>
         </TabbedForm>
     )
