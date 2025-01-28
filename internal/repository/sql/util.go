@@ -11,31 +11,41 @@ import (
 type Modify struct {
 	ProcessSearch func(db *gorm.DB, query string) *gorm.DB
 	ProcessID     func(db *gorm.DB, id []string) *gorm.DB
+	// Sometimes, the table name need to be explicitly set. For example, in case of join to avoid ambiguous column name
+	TableName string
 }
 
 func NoSearch(db *gorm.DB, query string) *gorm.DB {
 	return db
 }
 
-func DefaultProcessID(db *gorm.DB, id []string) *gorm.DB {
+func DefaultProcessID(db *gorm.DB, id []string, modify Modify) *gorm.DB {
 	if len(id) > 0 {
-		db = db.Where("id in (?)", id)
+		tableName := modify.TableName
+		if tableName != "" {
+			tableName += "."
+		}
+		query := fmt.Sprintf("%sid in (?)", tableName)
+		db = db.Where(query, id)
 	}
 
 	return db
 }
 
 func ProcessGetMany(db *gorm.DB, req entity.GetManyRequest, modify Modify) *gorm.DB {
-	if modify.ProcessID != nil {
-		db = modify.ProcessID(db, req.ID)
-	} else if modify.ProcessID == nil {
-		db = DefaultProcessID(db, req.ID)
+	if len(req.ID) > 0 {
+		if modify.ProcessID != nil {
+			db = modify.ProcessID(db, req.ID)
+		} else if modify.ProcessID == nil {
+			db = DefaultProcessID(db, req.ID, modify)
+		}
 	}
 
 	if req.Sort != "" {
 		db = db.Order(clause.OrderByColumn{
 			Column: clause.Column{
-				Name: req.Sort,
+				Name:  req.Sort,
+				Table: modify.TableName,
 			},
 			Desc: req.IsSortDesc(),
 		})

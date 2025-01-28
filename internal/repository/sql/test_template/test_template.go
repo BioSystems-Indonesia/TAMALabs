@@ -25,7 +25,7 @@ func (r *Repository) FindAll(
 	_ context.Context,
 	req *entity.TestTemplateGetManyRequest,
 ) (entity.PaginationResponse[entity.TestTemplate], error) {
-	db := r.DB
+	db := r.DB.Preload("TestType")
 	sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{
 		ProcessSearch: func(db *gorm.DB, query string) *gorm.DB {
 			return db.Where("name like ?", "%"+query+"%").

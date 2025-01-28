@@ -37,9 +37,7 @@ func (u *Usecase) Results(
 	ctx context.Context,
 	req *entity.ResultGetManyRequest,
 ) (entity.PaginationResponse[entity.Specimen], error) {
-	resp, err := u.specimenRepository.FindAllForResult(ctx, &entity.SpecimenGetManyRequest{
-		GetManyRequest: req.GetManyRequest,
-	})
+	resp, err := u.specimenRepository.FindAllForResult(ctx, req)
 	if err != nil {
 		return entity.PaginationResponse[entity.Specimen]{}, err
 	}

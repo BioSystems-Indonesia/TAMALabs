@@ -7,10 +7,13 @@ import {
     List,
     ShowButton,
     TextField,
-    TopToolbar
+    TopToolbar,
+    WithRecord
 } from "react-admin";
 import { useParams, useSearchParams } from "react-router-dom";
 import WorkOrderForm from "./Form.tsx";
+import { WorkOrderChipColorMap } from "./ChipFieldStatus.tsx";
+import Chip from "@mui/material/Chip";
 
 const WorkOrderAction = () => {
     return (
@@ -68,7 +71,9 @@ export const WorkOrderList = () => (
     }}>
         <Datagrid bulkActionButtons={false}>
             <TextField source="id" />
-            <ChipField source="status" />
+            <WithRecord render={(record: any) => (
+                <Chip label={`${record.status}`} color={WorkOrderChipColorMap(record.status)} />
+            )} />
             <DateField source="created_at" />
             <DateField source="updated_at" />
             <DeleteButton />

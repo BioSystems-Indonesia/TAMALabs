@@ -12,6 +12,11 @@ type TestType struct {
 	Description  string  `json:"description"`
 }
 
+type TestTypeFilter struct {
+	Categories    []string `json:"categories"`
+	SubCategories []string `json:"sub_categories"`
+}
+
 type TestTypeGetManyRequest struct {
 	GetManyRequest
 

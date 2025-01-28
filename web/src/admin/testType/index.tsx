@@ -3,9 +3,10 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Box from "@mui/material/Box";
 import type { ActionKeys } from "../../types/props";
+import { TestFilterSidebar } from "../workOrder/TestTypeFilter";
 
 export const TestTypeList = () => (
-    <List aside={<TestTypeFilterSidebar />} title="Test Type" sort={{
+    <List aside={<TestFilterSidebar />} title="Test Type" sort={{
         field: "id",
         order: "DESC",
     }}>
@@ -22,6 +23,7 @@ export const TestTypeList = () => (
         </Datagrid>
     </List>
 );
+
 
 const TestTypeFilterSidebar = () => (
     <Card sx={{ order: -1, mr: 2, mt: 2, width: 300 }}>

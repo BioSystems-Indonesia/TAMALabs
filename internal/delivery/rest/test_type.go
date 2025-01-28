@@ -37,6 +37,22 @@ func (h *TestTypeHandler) ListTestType(c echo.Context) error {
 	return successPaginationResponse(c, resp)
 }
 
+func (h *TestTypeHandler) ListTestTypeFilter(c echo.Context) error {
+	var req entity.TestTypeGetManyRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return handleError(c, err)
+	}
+
+	resp, err := h.testTypeUsecase.ListAllFilter(
+		c.Request().Context(),
+	)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
 func (h *TestTypeHandler) GetOneTestType(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

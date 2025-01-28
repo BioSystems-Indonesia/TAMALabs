@@ -19,6 +19,10 @@ func (u *Usecase) FindAll(ctx context.Context, req *entity.TestTypeGetManyReques
 	return u.repository.FindAll(ctx, req)
 }
 
+func (u *Usecase) ListAllFilter(ctx context.Context) (entity.TestTypeFilter, error) {
+	return u.repository.FindAllFilter(ctx)
+}
+
 func (u *Usecase) FindOneByID(ctx context.Context, id int) (entity.TestType, error) {
 	return u.repository.FindOneByID(ctx, id)
 }

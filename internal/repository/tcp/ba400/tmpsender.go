@@ -19,7 +19,7 @@ func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.D
 		TrimTrailingSeparator: true,
 	})
 
-	const batchSend = 5
+	const batchSend = 3
 	buf := bytes.Buffer{}
 	for i, p := range patients {
 		o := NewOML_O33(p, device)
@@ -33,24 +33,26 @@ func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.D
 		buf.Write([]byte{constant.FileSeparator, constant.CarriageReturn})
 		buf.Write([]byte{constant.VerticalTab})
 
-		if i%batchSend == 0 || i == len(patients)-1 {
+		if ((i+1)%batchSend == 0) || i == len(patients)-1 {
 			sender := Sender{
 				host:     fmt.Sprintf("%s:%d", device.IPAddress, device.Port),
 				deadline: time.Second * 120,
 			}
 			messageToSend := buf.Bytes()
+			slog.Info("sending to BA400",
+				"raw", string(messageToSend),
+				"i", i,
+			)
+
 			resp, err := sender.SendRaw(messageToSend)
 			if err != nil {
 				slog.Error("sending to BA400 failed",
 					"raw", string(messageToSend),
 					"resp", string(resp),
+					"i", i,
 				)
 				return fmt.Errorf("failed to send raw: %w", err)
 			}
-
-			slog.Info("sending to BA400",
-				"raw", string(messageToSend),
-			)
 
 			err = receiveResponse(resp)
 			if err != nil {

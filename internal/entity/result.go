@@ -70,4 +70,8 @@ const (
 
 type ResultGetManyRequest struct {
 	GetManyRequest
+	WorkOrderIDs    []int64  `query:"work_order_ids"`
+	PatientIDs      []int64  `query:"patient_ids"`
+	HasResult       bool     `query:"has_result"`
+	WorkOrderStatus []string `query:"work_order_status"`
 }

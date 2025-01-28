@@ -47,6 +47,23 @@ func (r *Repository) FindAll(
 	return sql.GetWithPaginationResponse[entity.TestType](db, req.GetManyRequest)
 }
 
+func (r *Repository) FindAllFilter(ctx context.Context) (entity.TestTypeFilter, error) {
+	var categories []string
+	db := r.DB.Distinct("category").Model(entity.TestType{}).
+		Where("category <> ''").
+		Pluck("category", &categories)
+
+	var subCategories []string
+	db = db.Distinct("sub_category").Model(entity.TestType{}).
+		Where("sub_category <> ''").
+		Pluck("sub_category", &subCategories)
+
+	return entity.TestTypeFilter{
+		Categories:    categories,
+		SubCategories: subCategories,
+	}, nil
+}
+
 func (r *Repository) FindOneByID(ctx context.Context, id int) (entity.TestType, error) {
 	var data entity.TestType
 	if err := r.DB.First(&data, id).Error; err != nil {

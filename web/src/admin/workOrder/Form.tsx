@@ -1,7 +1,4 @@
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import CategoryIcon from '@mui/icons-material/Category';
-import PagesIcon from '@mui/icons-material/Pages';
-import SegmentIcon from '@mui/icons-material/Segment';
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
@@ -9,28 +6,24 @@ import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
     CreateButton,
     Datagrid,
     DateField,
     DateTimeInput,
     DeleteButton,
-    FilterList,
-    FilterListItem,
     FilterListSection,
     FilterLiveForm,
     FilterLiveSearch,
     List,
     RadioButtonGroupInput,
     SaveButton,
-    SavedQueriesList,
     TabbedForm,
     TextField,
     TextInput,
     Toolbar,
     TopToolbar,
-    useGetList,
     useGetMany,
     useGetOne,
     useListContext,
@@ -42,7 +35,10 @@ import { useParams, useSearchParams } from "react-router-dom";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
 import FeatureList from "../../component/FeatureList.tsx";
 import { getRefererParam } from "../../hooks/useReferer.ts";
+import type { ObservationRequest } from "../../types/observation_requests.ts";
 import { ActionKeys } from "../../types/props.ts";
+import type { TestType } from "../../types/test_type.ts";
+import { TestFilterSidebar } from "./TestTypeFilter.tsx";
 
 
 type WorkOrderActionKeys = ActionKeys | "ADD_TEST";
@@ -55,167 +51,23 @@ type WorkOrderFormProps = {
 
 const observationRequestField = "observation_requests";
 
-const TestFilterSidebar = () => {
-    const list = useListContext();
-    const [dataUniqueCategory, setDataUniqueCategory] = useState<Array<any>>([])
-    const [dataUniqueSubCategory, setDataUniqueSubCategory] = useState<Array<any>>([])
-    const hasRunEffect = useRef(false); // Ref to track if the effect has run
 
-    useEffect(() => {
-        if (!list.data || hasRunEffect.current) {
-            return;
-        }
-
-
-        // Use Map to ensure uniqueness by 'id'
-        const uniqueCategoryMap = new Map<string, any>();
-        list.data.forEach((item: any) => {
-            uniqueCategoryMap.set(item.category, item);
-        });
-        const uniqueCategoryArray = Array.from(uniqueCategoryMap.values());
-        setDataUniqueCategory(uniqueCategoryArray)
-
-        const uniqueSubCategoryMap = new Map<string, any>();
-        list.data.forEach((item: any) => {
-            uniqueSubCategoryMap.set(item.sub_category, item);
-        });
-        const uniqueSubCategoryArray = Array.from(uniqueSubCategoryMap.values());
-        setDataUniqueSubCategory(uniqueSubCategoryArray)
-
-        hasRunEffect.current = true;
-    }, [list.data])
-
-    const isCategorySelected = (value: any, filters: any) => {
-        const categories = filters.categories || [];
-        return categories.includes(value.category);
-    };
-
-    const toggleCategoryFilter = (value: any, filters: any) => {
-        const categories = filters.categories || [];
-        return {
-            ...filters,
-            categories: categories.includes(value.category)
-                // Remove the category if it was already present
-                ? categories.filter((v: any) => v !== value.category)
-                // Add the category if it wasn't already present
-                : [...categories, value.category],
-        };
-    };
-
-
-    const isSubCategorySelected = (value: any, filters: any) => {
-        const subCategories = filters.subCategories || [];
-        return subCategories.includes(value.sub_category);
-    };
-
-    const toggleSubCategoryFilter = (value: any, filters: any) => {
-        const subCategories = filters.subCategories || [];
-        return {
-            ...filters,
-            subCategories: subCategories.includes(value.sub_category)
-                // Remove the category if it was already present
-                ? subCategories.filter((v: any) => v !== value.sub_category)
-                // Add the category if it wasn't already present
-                : [...subCategories, value.sub_category],
-        };
-    };
-
-    const { data } = useGetList(
-        'test-template',
-        {
-            pagination: { page: 1, perPage: 1000 },
-            sort: { field: 'id', order: 'DESC' }
-        }
-    );
-
-    const isTemplateSelected = (value: any, filters: any) => {
-        const templates = filters.templates || [];
-        return templates.includes(value.template.id);
-    };
-
-    const toggleTemplateFilter = (value: any, filters: any) => {
-
-        const templates = filters.templates || [];
-        const removeTemplate = (value: any, templates: any[]) => {
-            console.log("removeTemplate", value, templates);
-            const filteredIds = list.selectedIds.filter((v: any) => !value.template.test_type_id.includes(v))
-            list.onSelect(filteredIds)
-            return templates.filter((v: any) => v !== value.template.id)
-        }
-
-        const addTemplate = (value: any, templates: any[]) => {
-            console.log("addTemplate", value, templates);
-            list.onSelect(value.template.test_type_id)
-            return [...templates, value.template.id]
-        }
-
-        return {
-            ...filters,
-            templates: templates.includes(value.template.id)
-                // Remove the category if it was already present
-                ? removeTemplate(value, templates)
-                // Add the category if it wasn't already present
-                : addTemplate(value, templates),
-        };
-    };
-
-    return (
-        <Card sx={{
-            order: -1, mr: 1, mt: 2, width: 200, minWidth: 200,
-            overflow: "visible",
-        }}>
-            <CardContent sx={{
-                position: "sticky",
-                top: 96,
-            }}>
-                <SavedQueriesList />
-                <FilterLiveSearch onSubmit={(event) => event.preventDefault()} />
-                <FilterList label="Template" icon={<PagesIcon />} >
-                    {data?.map((val: any, i) => {
-                        return (
-                            <FilterListItem key={i} label={val.name} value={{ template: val }}
-                                toggleFilter={toggleTemplateFilter} isSelected={isTemplateSelected} />
-                        )
-                    })}
-                </FilterList>
-                <Divider sx={{ marginY: 1 }} />
-                <FilterList label="Category" icon={<CategoryIcon />}>
-                    {dataUniqueCategory.map((val: any, i) => {
-                        return (
-                            <FilterListItem key={i} label={val.category} value={{ category: val.category }}
-                                toggleFilter={toggleCategoryFilter} isSelected={isCategorySelected} />
-                        )
-                    })}
-                </FilterList>
-                <FilterList label="Sub Category" icon={<SegmentIcon />}>
-                    {dataUniqueSubCategory.map((val: any, i) => {
-                        return (
-                            <FilterListItem key={i} label={val.sub_category} value={{ sub_category: val.sub_category }}
-                                toggleFilter={toggleSubCategoryFilter} isSelected={isSubCategorySelected} />
-                        )
-                    })}
-                </FilterList>
-            </CardContent>
-        </Card>
-    )
-};
-
-const PickedTest = () => {
-    const { data } = useListContext();
+const PickedTest = ({ allTestType }: { allTestType: TestType[] }) => {
     const { watch } = useFormContext()
     const [selectedData, setSelectedData] = useState<any[]>([]);
 
     useEffect(() => {
-        if (!data) {
+        if (!allTestType) {
             return;
         }
 
-        const selectedData = data.filter((v: any) => {
-            return watch(observationRequestField)?.includes(v.code);
-        });
+        const testTypes = watch(observationRequestField) as TestType[] | undefined
+        if (!testTypes) {
+            return;
+        }
 
-        setSelectedData(selectedData);
-    }, [watch(observationRequestField), data]);
+        setSelectedData(testTypes);
+    }, [watch(observationRequestField), allTestType]);
 
     if (watch(observationRequestField)?.length === 0) {
         return (
@@ -244,17 +96,33 @@ const PickedTest = () => {
 const patientIDsField = "patient_ids";
 
 
-function TestTable(props: WorkOrderFormProps) {
+function TestTable(props: TestInputProps) {
     const { selectedIds, onSelect, data: testList } = useListContext();
     const { setValue } = useFormContext();
 
     const { id } = useParams()
     const { data, isLoading } = useGetOne('work-order', { id: id });
     const [searchParams] = useSearchParams();
+    const [allTestType, setAllTestType] = useState<TestType[]>([]);
+    const [allTestTypeSet, setAllTestTypeSet] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (props.initSelectedIds) {
+            onSelect(props.initSelectedIds);
+        }
+    }, [props.initSelectedIds])
+
+    // This will store all test type (without filter)
+    useEffect(() => {
+        if ((testList && testList.length > 0) && !allTestTypeSet) {
+            setAllTestTypeSet(true);
+            setAllTestType(testList);
+        }
+    }, [testList])
 
     useEffect(() => {
         if (data && searchParams.getAll("patient_id").length > 0) {
-            if (!testList) {
+            if (!allTestType) {
                 console.error("testList is undefined");
                 return
             }
@@ -265,7 +133,7 @@ function TestTable(props: WorkOrderFormProps) {
             })
             const observationRequestCodeList = patients.map((patient: any) => {
                 return patient.specimen_list.map((specimen: any) => {
-                    return specimen.observation_requests.map((observationRequest: any) => {
+                    return specimen.observation_requests.map((observationRequest: ObservationRequest) => {
                         return observationRequest.test_code;
                     })
                 }).flat()
@@ -281,24 +149,24 @@ function TestTable(props: WorkOrderFormProps) {
             setValue(observationRequestField, observationRequestCodesLongest);
 
 
-            const observationRequestIDs = testList.filter((test: any) => {
-                return observationRequestCodesLongest.includes(test?.code);
+            const observationRequestIDs = allTestType.filter((test: TestType) => {
+                return observationRequestCodesLongest.includes(test.code);
             }).map((test: any) => {
                 return test?.id
             })
             console.debug("observationRequestIDs", observationRequestIDs);
             onSelect(observationRequestIDs);
         }
-    }, [data, searchParams, testList]);
+    }, [data, searchParams, allTestType]);
 
     useEffect(() => {
         console.debug("selected ids", selectedIds);
-        const observationRequest = testList?.filter((test: any) => {
+        const pickedTestType = allTestType?.filter((test: any) => {
             return selectedIds.includes(test?.id);
-        }).map((test: any) => test?.code)
-        console.debug("observationRequest", observationRequest);
-        setValue(observationRequestField, observationRequest);
-    }, [selectedIds, testList]);
+        })
+        console.debug("observationRequest", pickedTestType);
+        setValue(observationRequestField, pickedTestType);
+    }, [selectedIds, allTestType]);
 
     const BulkActionButtons = () => {
         return (
@@ -319,13 +187,16 @@ function TestTable(props: WorkOrderFormProps) {
             </Datagrid>
         </Grid>
         <Grid item xs={12} md={4}>
-            <PickedTest />
+            <PickedTest allTestType={allTestType} />
         </Grid>
     </Grid>;
 }
 
-function TestInput(props: WorkOrderFormProps) {
+type TestInputProps = {
+    initSelectedIds?: number[]
+}
 
+export function TestInput(props: TestInputProps) {
     return (<List resource={"test-type"} exporter={false} aside={<TestFilterSidebar />}
         perPage={999999}
         storeKey={false}
@@ -519,7 +390,13 @@ export const WorkOrderSaveButton = ({ disabled }: { disabled?: boolean }) => {
         }
 
         if (save) {
-            save(data);
+            const observationRequest = data[observationRequestField] as TestType[]
+            save({
+                ...data,
+                observation_requests: observationRequest.map((test: TestType) => {
+                    return test.code
+                })
+            });
         }
     };
 
@@ -570,7 +447,7 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
                 overflow: "visible",
             }}>
                 <WorkOrderToolbar />
-                <TestInput {...props} />
+                <TestInput />
             </TabbedForm.Tab>
             {showDetailOnMode.includes(props.mode) && (
                 <TabbedForm.Tab label="Detail">

@@ -113,6 +113,7 @@ func RegisterRoutes(
 	testType := v1.Group("/test-type")
 	{
 		testType.GET("", handler.ListTestType)
+		testType.GET("/filter", handler.ListTestTypeFilter)
 		testType.GET("/:id", handler.GetOneTestType)
 		testType.POST("", handler.CreateTestType)
 		testType.PUT("/:id", handler.UpdateTestType)

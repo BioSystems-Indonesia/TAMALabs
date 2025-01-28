@@ -44,18 +44,35 @@ func (r Repository) FindAll(
 }
 
 func (r Repository) FindAllForResult(
-	ctx context.Context, req *entity.SpecimenGetManyRequest,
+	ctx context.Context, req *entity.ResultGetManyRequest,
 ) (entity.PaginationResponse[entity.Specimen], error) {
 	db := r.db.WithContext(ctx).
 		Preload("ObservationResult").
 		Preload("ObservationRequest").
 		Preload("Patient").
 		Preload("WorkOrder")
-	db = sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{})
 
-	if req.PatientID != 0 {
-		db = db.Where("patient_id = ?", req.PatientID)
+	if len(req.WorkOrderIDs) > 0 {
+		db = db.Where("specimens.order_id in (?)", req.WorkOrderIDs)
 	}
+	if len(req.PatientIDs) > 0 {
+		db = db.Where("specimens.patient_id in (?)", req.PatientIDs)
+	}
+
+	if len(req.WorkOrderStatus) > 0 {
+		db = db.Joins("join work_orders on specimens.order_id = work_orders.id and work_orders.status in (?)", req.WorkOrderStatus)
+	}
+
+	if req.HasResult {
+		subQuery := r.db.Table("specimens").Select("specimens.id").
+			Joins("join observation_results on specimens.id = observation_results.specimen_id").
+			Where("observation_results.id is not null")
+		db = db.Where("specimens.id in (?)", subQuery)
+	}
+
+	db = sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{
+		TableName: "specimens",
+	})
 
 	return sql.GetWithPaginationResponse[entity.Specimen](db, req.GetManyRequest)
 }

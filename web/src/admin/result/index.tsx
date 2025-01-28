@@ -1,26 +1,35 @@
-import { 
- AutocompleteInput,
- Button,
- Create,
- Datagrid,
- DateField,
- DeleteButton,
- Edit,
- Labeled,
- Link,
- List,
- NumberField,
- NumberInput,
- ReferenceInput,
- SimpleForm,
- TextField,
- WithRecord,
- WrapperField,
- useNotify,
- useRefresh,
+import {
+    AutocompleteArrayInput,
+    AutocompleteInput,
+    BooleanInput,
+    Button,
+    CheckboxGroupInput,
+    Create,
+    Datagrid,
+    DateField,
+    DeleteButton,
+    Edit,
+    FilterList,
+    FilterListItem,
+    FilterListSection,
+    FilterLiveForm,
+    FilterLiveSearch,
+    Labeled,
+    Link,
+    List,
+    NumberField,
+    NumberInput,
+    ReferenceInput,
+    SelectArrayInput,
+    SimpleForm,
+    TextField,
+    WithRecord,
+    WrapperField,
+    useNotify,
+    useRefresh,
 } from "react-admin";
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
-import { Chip, Grid, Stack, Typography } from "@mui/material";
+import { Card, CardContent, Chip, Grid, Stack, Typography } from "@mui/material";
 import { DataGrid as MuiDatagrid, type GridRenderCellParams } from '@mui/x-data-grid';
 import type { ResultColumn } from "../../types/general";
 import AddIcon from '@mui/icons-material/Add';
@@ -29,14 +38,39 @@ import { useFormContext } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { getRefererParam, useRefererRedirect } from "../../hooks/useReferer";
 import PrintMCU from "../../component/PrintReport";
+import BeenhereIcon from '@mui/icons-material/Beenhere';
+import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
+import FeatureList from "../../component/FeatureList";
 
 
+const ResultFilterSidebar = () => {
+    return (
+        <Card sx={{
+            order: -1, mr: 2, mt: 2, width: 200, minWidth: 200,
+        }}>
+            <CardContent>
+                <FilterLiveForm>
+                    <FeatureList source={"work_order_status"} types={"work-order-status"}>
+                        <CheckboxGroupInput />
+                    </FeatureList>
+                    <ReferenceInput source={"work_order_ids"} reference="work-order" label={"Work Order"}>
+                        <AutocompleteArrayInput />
+                    </ReferenceInput>
+                    <ReferenceInput source={"patient_ids"} reference="patient" label={"Patient"}>
+                        <AutocompleteArrayInput />
+                    </ReferenceInput>
+                    <BooleanInput source={"has_result"} label={"Show Only With Result"} />
+                </FilterLiveForm>
+            </CardContent>
+        </Card>
+    )
+}
 
 export const ResultList = () => (
     <List resource="result" sort={{
         field: "id",
         order: "DESC"
-    }}>
+    }} aside={<ResultFilterSidebar />} >
         <Datagrid bulkActionButtons={false} >
             <NumberField source="id" />
             <WithRecord label="Patient" render={(record: any) => (
