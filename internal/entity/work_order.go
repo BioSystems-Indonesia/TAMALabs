@@ -36,5 +36,6 @@ type WorkOrderCancelRequest struct {
 
 type WorkOrderGetManyRequest struct {
 	GetManyRequest
-	SpecimenIDs []int64 `json:"specimen_ids"`
+	PatientIDs  []int64 `query:"patient_ids"`
+	SpecimenIDs []int64 `query:"specimen_ids"`
 }

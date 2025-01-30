@@ -14,7 +14,8 @@ import {
     Show,
     SimpleForm,
     TextField,
-    TextInput
+    TextInput,
+    WithRecord
 } from "react-admin";
 import Divider from "@mui/material/Divider";
 import { Action, ActionKeys } from "../../types/props.ts";
@@ -26,6 +27,9 @@ import CustomDateInput from "../../component/CustomDateInput.tsx";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import { useRefererRedirect } from "../../hooks/useReferer.ts";
+import Chip from "@mui/material/Chip";
+import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus.tsx";
+import { ResultDataGrid } from "../result/index.tsx";
 
 type PatientFormProps = {
     readonly?: boolean
@@ -36,15 +40,9 @@ function ReferenceSection() {
     return (
         <Box sx={{ width: "100%" }}>
             <Divider sx={{ my: "1rem" }} />
-            <Typography variant={"h6"}>Specimens</Typography>
-            <ReferenceManyField label={"Specimens"} reference="Specimen" target="patient_id">
-                <Datagrid>
-                    <TextField source="id" />
-                    <TextField source="barcode" />
-                    <TextField source="type" />
-                    <DateField source="created_at" showTime />
-                    <DateField source="updated_at" showTime />
-                </Datagrid>
+            <Typography variant={"h6"}>Result</Typography>
+            <ReferenceManyField label={"Result"} reference="result" target="patient_ids">
+                <ResultDataGrid />
             </ReferenceManyField>
         </Box>
     )
