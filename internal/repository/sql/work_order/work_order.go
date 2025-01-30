@@ -32,10 +32,14 @@ func (r WorkOrderRepository) FindAll(ctx context.Context, req *entity.WorkOrderG
 	db = sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{})
 
 	if len(req.SpecimenIDs) > 0 {
-		db = db.Joins("join work_order_Specimens on work_order_Specimens.work_order_id = work_orders.id and work_order_Specimens.Specimen_id in (?)", req.SpecimenIDs)
+		db = db.Joins("join work_order_specimens on work_order_Specimens.work_order_id = work_orders.id and work_order_Specimens.Specimen_id in (?)", req.SpecimenIDs)
 	}
 
-	db = db.
+	if len(req.PatientIDs) > 0 {
+		db = db.Joins("join work_order_patients on work_order_patients.work_order_id = work_orders.id and work_order_patients.patient_id in (?)", req.PatientIDs)
+	}
+
+	db = db.Debug().
 		Preload("Patient").
 		Preload("Patient.Specimen").
 		Preload("Patient.Specimen.ObservationRequest").

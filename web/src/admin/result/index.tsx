@@ -1,3 +1,7 @@
+import AddIcon from '@mui/icons-material/Add';
+import { Card, CardContent, Chip, Grid, Stack, Typography } from "@mui/material";
+import { DataGrid as MuiDatagrid, type GridRenderCellParams } from '@mui/x-data-grid';
+import { useEffect, useState } from "react";
 import {
     AutocompleteArrayInput,
     AutocompleteInput,
@@ -9,38 +13,26 @@ import {
     DateField,
     DeleteButton,
     Edit,
-    FilterList,
-    FilterListItem,
-    FilterListSection,
     FilterLiveForm,
-    FilterLiveSearch,
     Labeled,
     Link,
     List,
     NumberField,
     NumberInput,
     ReferenceInput,
-    SelectArrayInput,
     SimpleForm,
     TextField,
     WithRecord,
-    WrapperField,
     useNotify,
-    useRefresh,
+    useRefresh
 } from "react-admin";
-import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
-import { Card, CardContent, Chip, Grid, Stack, Typography } from "@mui/material";
-import { DataGrid as MuiDatagrid, type GridRenderCellParams } from '@mui/x-data-grid';
-import type { ResultColumn } from "../../types/general";
-import AddIcon from '@mui/icons-material/Add';
-import { useSearchParams } from "react-router-dom";
 import { useFormContext } from "react-hook-form";
-import { useEffect, useState } from "react";
-import { getRefererParam, useRefererRedirect } from "../../hooks/useReferer";
-import PrintMCUButton from "../../component/PrintReport";
-import BeenhereIcon from '@mui/icons-material/Beenhere';
-import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
+import { useSearchParams } from "react-router-dom";
 import FeatureList from "../../component/FeatureList";
+import PrintMCUButton from "../../component/PrintReport";
+import { getRefererParam, useRefererRedirect } from "../../hooks/useReferer";
+import type { ResultColumn } from "../../types/general";
+import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
 
 
 const ResultFilterSidebar = () => {
@@ -66,21 +58,18 @@ const ResultFilterSidebar = () => {
     )
 }
 
-export const ResultList = () => (
-    <List resource="result" sort={{
-        field: "id",
-        order: "DESC"
-    }} aside={<ResultFilterSidebar />} exporter={false} >
+export const ResultDataGrid = (props: any) => {
+    return (
         <Datagrid bulkActionButtons={false} >
             <NumberField source="id" />
             <WithRecord label="Patient" render={(record: any) => (
-                <Link to={`/patient/${record.order_id}/show`} resource="patient" label={"Patient"} onClick={e => e.stopPropagation()}>
+                <Link to={`/patient/${record.patient.id}/show`} resource="patient" label={"Patient"} onClick={e => e.stopPropagation()}>
                     #{record.patient.id}-{record.patient.first_name} {record.patient.last_name}
                 </Link>
             )} />
             <WithRecord label="Work Order" render={(record: any) => (
-                <Link to={`/work-order/${record.order_id}/show`} label={"Work Order"} onClick={e => e.stopPropagation()}>
-                    <Chip label={`#${record.order_id} - ${record.work_order.status}`} color={WorkOrderChipColorMap(record.work_order.status)} />
+                <Link to={`/work-order/${record.work_order.id}/show`} label={"Work Order"} onClick={e => e.stopPropagation()}>
+                    <Chip label={`#${record.work_order.id} - ${record.work_order.status}`} color={WorkOrderChipColorMap(record.work_order.status)} />
                 </Link>
             )} />
             <TextField source="barcode" />
@@ -99,6 +88,15 @@ export const ResultList = () => (
                 <PrintMCUButton results={record.observation_result} patient={record.patient} workOrder={record.work_order} />
             )} />
         </Datagrid>
+    )
+}
+
+export const ResultList = () => (
+    <List resource="result" sort={{
+        field: "id",
+        order: "DESC"
+    }} aside={<ResultFilterSidebar />} exporter={false} >
+        <ResultDataGrid />
     </List>
 );
 
