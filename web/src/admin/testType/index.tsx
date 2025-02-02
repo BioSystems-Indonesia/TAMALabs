@@ -1,7 +1,5 @@
-import { Create, Datagrid, Edit, FilterLiveSearch, List, NumberInput, SimpleForm, TextField, TextInput } from "react-admin";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import Box from "@mui/material/Box";
+import { Create, Datagrid, Edit, List, NumberInput, SimpleForm, TextField, TextInput } from "react-admin";
 import type { ActionKeys } from "../../types/props";
 import { TestFilterSidebar } from "../workOrder/TestTypeFilter";
 
@@ -24,14 +22,6 @@ export const TestTypeList = () => (
     </List>
 );
 
-
-const TestTypeFilterSidebar = () => (
-    <Card sx={{ order: -1, mr: 2, mt: 2, width: 300 }}>
-        <CardContent>
-            <FilterLiveSearch />
-        </CardContent>
-    </Card>
-);
 
 function ReferenceSection() {
     return (

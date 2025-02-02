@@ -1,3 +1,9 @@
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Divider from "@mui/material/Divider";
+import Typography from "@mui/material/Typography";
 import {
     Create,
     Datagrid,
@@ -14,21 +20,12 @@ import {
     Show,
     SimpleForm,
     TextField,
-    TextInput,
-    WithRecord
+    TextInput
 } from "react-admin";
-import Divider from "@mui/material/Divider";
-import { Action, ActionKeys } from "../../types/props.ts";
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import FeatureList from "../../component/FeatureList.tsx";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
+import FeatureList from "../../component/FeatureList.tsx";
 import { useRefererRedirect } from "../../hooks/useReferer.ts";
-import Chip from "@mui/material/Chip";
-import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus.tsx";
+import { Action, ActionKeys } from "../../types/props.ts";
 import { ResultDataGrid } from "../result/index.tsx";
 
 type PatientFormProps = {

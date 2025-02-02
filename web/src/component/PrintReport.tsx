@@ -1,17 +1,16 @@
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import PrintIcon from '@mui/icons-material/Print';
 import { CircularProgress, IconButton, Stack } from '@mui/material';
 import {
     BlobProvider,
     Font
 } from '@react-pdf/renderer';
-import { ReportDocument } from './ReportFile';
-import { Button, LoadingIndicator, useListContext } from 'react-admin';
-import type { ObservationResult, ReportData, ReportDataAbnormality } from '../types/observation_result';
+import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import PrintIcon from '@mui/icons-material/Print';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import type { ObservationResult, ReportData, ReportDataAbnormality } from '../types/observation_result';
 import type { Patient } from '../types/patient';
 import type { WorkOrder } from '../types/work_order';
-import dayjs from 'dayjs';
+import { ReportDocument } from './ReportFile';
 
 // Optional: Register custom fonts if required
 Font.register({

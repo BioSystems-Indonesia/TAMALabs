@@ -1,18 +1,12 @@
-import CategoryIcon from '@mui/icons-material/Category';
 import { Divider } from "@mui/material";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import Chip from "@mui/material/Chip";
-import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import { useEffect, useRef, useState } from "react";
-import { Create, Datagrid, DeleteButton, Edit, FilterList, FilterListItem, FilterLiveSearch, List, NumberField, ReferenceArrayField, SaveButton, SavedQueriesList, SimpleForm, TextField, TextInput, Toolbar, required, useListContext, useNotify, useRecordContext, useSaveContext } from "react-admin";
-import SegmentIcon from '@mui/icons-material/Segment';
+import { Create, Datagrid, DeleteButton, Edit, FilterLiveSearch, List, NumberField, ReferenceArrayField, SaveButton, SimpleForm, TextField, TextInput, Toolbar, required, useNotify, useRecordContext, useSaveContext } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import type { ActionKeys } from "../../types/props";
-import { TestInput } from '../workOrder/Form';
 import type { TestType } from '../../types/test_type';
+import { TestInput } from '../workOrder/Form';
 
 export const TestTemplateList = () => (
     <List aside={<TestTemplateFilterSidebar />} title="Test Template">

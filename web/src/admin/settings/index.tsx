@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from "@mui/material/Stack";
 import { useEffect, useState } from "react";
-import { Labeled, NumberInput, RadioButtonGroupInput, SaveButton, TabbedForm, TextInput, Toolbar, required, useNotify, useStoreContext, type SaveHandler } from "react-admin";
+import { NumberInput, RadioButtonGroupInput, SaveButton, TabbedForm, TextInput, Toolbar, required, useNotify, useStoreContext, type SaveHandler } from "react-admin";
 import useSettings from '../../hooks/useSettings';
 import { Settings, defaultSettings, orientationChoices, settingSchema, settingsStoreKey } from "../../types/setting";
 

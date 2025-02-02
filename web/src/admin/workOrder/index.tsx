@@ -1,5 +1,5 @@
+import Chip from "@mui/material/Chip";
 import {
-    ChipField,
     Create,
     Datagrid,
     DateField,
@@ -11,9 +11,8 @@ import {
     WithRecord
 } from "react-admin";
 import { useParams, useSearchParams } from "react-router-dom";
-import WorkOrderForm from "./Form.tsx";
 import { WorkOrderChipColorMap } from "./ChipFieldStatus.tsx";
-import Chip from "@mui/material/Chip";
+import WorkOrderForm from "./Form.tsx";
 
 const WorkOrderAction = () => {
     return (

@@ -1,18 +1,18 @@
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import Divider from "@mui/material/Divider";
 import CategoryIcon from '@mui/icons-material/Category';
 import PagesIcon from '@mui/icons-material/Pages';
 import SegmentIcon from '@mui/icons-material/Segment';
-import { useEffect, useRef, useState } from "react";
-import { FilterList, FilterListItem, FilterLiveSearch, SavedQueriesList, useGetList, useGetOne, useListContext } from "react-admin";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Divider from "@mui/material/Divider";
 import LinearProgress from "@mui/material/LinearProgress";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { FilterList, FilterListItem, FilterLiveSearch, SavedQueriesList, useGetList, useListContext } from "react-admin";
 
 export const TestFilterSidebar = () => {
     const list = useListContext();
-    const [dataUniqueCategory, setDataUniqueCategory] = useState<Array<any>>([])
-    const [dataUniqueSubCategory, setDataUniqueSubCategory] = useState<Array<any>>([])
+    const [_dataUniqueCategory, setDataUniqueCategory] = useState<Array<any>>([])
+    const [_dataUniqueSubCategory, setDataUniqueSubCategory] = useState<Array<any>>([])
     const hasRunEffect = useRef(false); // Ref to track if the effect has run
 
     useEffect(() => {
