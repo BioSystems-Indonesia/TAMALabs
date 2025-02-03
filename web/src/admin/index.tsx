@@ -12,12 +12,12 @@ import { ConfigEdit, ConfigList } from "./config/config.tsx";
 import { DeviceCreate, DeviceEdit, DeviceList, DeviceShow } from "./device/index.tsx";
 import { DefaultLayout } from "./layout.tsx";
 import { PatientCreate, PatientEdit, PatientList, PatientShow } from "./patient";
-import { ResultList, ResultEdit, ObservationResultAdd } from "./result";
+import { ObservationResultAdd, ResultList, ResultShow } from "./result";
 import Settings from "./settings/index.tsx";
+import { TestTemplateCreate, TestTemplateEdit, TestTemplateList } from './testTemplate/index.tsx';
 import { TestTypeCreate, TestTypeEdit, TestTypeList } from "./testType";
 import { WorkOrderAddTest, WorkOrderCreate, WorkOrderList } from "./workOrder";
 import { WorkOrderShow } from "./workOrder/Show.tsx";
-import { TestTemplateCreate, TestTemplateEdit, TestTemplateList } from './testTemplate/index.tsx';
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
@@ -38,14 +38,14 @@ const App = () => {
             <Route path="/:id/show/device/create" element={<DeviceCreate />} />
         </Resource>
 
-        <Resource name="result" list={ResultList} edit={ResultEdit}
+        <Resource name="result" list={ResultList} show={ResultShow}
             hasCreate={false}
-            hasEdit={true}
-            hasShow={false}
+            hasEdit={false}
+            hasShow={true}
             icon={AssessmentIcon}
             recordRepresentation={record => `#${record.barcode}}`}
         >
-            <Route path="/:id/add-result*" element={<ObservationResultAdd />} />
+            <Route path="/:id/show/add-result*" element={<ObservationResultAdd />} />
         </Resource>
         <Resource name="patient" list={PatientList} show={PatientShow} edit={PatientEdit} create={PatientCreate}
             hasCreate={true}
