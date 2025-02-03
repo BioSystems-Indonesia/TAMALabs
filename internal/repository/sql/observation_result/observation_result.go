@@ -45,7 +45,7 @@ func (r *Repository) UpdateResultTest(
 				return fmt.Errorf("error finding observation result: %w", err)
 			}
 
-			oldObservationResult.Unit = newObservationResult.Unit
+			oldObservationResult.Values = newObservationResult.Values
 
 			err = tx.
 				Model([]entity.ObservationResult{}).
