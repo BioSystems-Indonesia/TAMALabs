@@ -1,6 +1,6 @@
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import PrintIcon from '@mui/icons-material/Print';
-import { CircularProgress, IconButton, Stack } from '@mui/material';
+import { CircularProgress, IconButton, Stack, Tooltip } from '@mui/material';
 import {
     BlobProvider,
     Font
@@ -56,12 +56,6 @@ const PrintMCUButton = (prop: PrintMCUProps) => {
     return (
         <BlobProvider document={<ReportDocument data={data} />}>
             {({ url, loading, error }) => {
-                if (loading) {
-                    return (
-                        <CircularProgress size={4} />
-                    );
-                }
-
                 if (error) {
                     return <span color='red'>Error generating PDF: {error.message}</span>;
                 }
@@ -69,27 +63,33 @@ const PrintMCUButton = (prop: PrintMCUProps) => {
                 return (
                     <Stack gap={1} direction={"row"}>
                         {/* Download PDF Button */}
-                        <IconButton
-                            onClick={e => e.stopPropagation()}
-                            color='primary'
-                            download={`MCU_Result_${dayjs(prop.workOrder.created_at).format("YYYYMMDD")}_${prop.patient.id}_${prop.patient.first_name}_${prop.patient.last_name}.pdf`}
-                            href={url || ''}
-                        >
-                            <FileDownloadIcon />
-                        </IconButton>
+                        <Tooltip title={loading ? "Loading..." : "Download PDF"}>
+                            <IconButton
+                                onClick={e => e.stopPropagation()}
+                                color='primary'
+                                download={`MCU_Result_${dayjs(prop.workOrder.created_at).format("YYYYMMDD")}_${prop.patient.id}_${prop.patient.first_name}_${prop.patient.last_name}.pdf`}
+                                href={url || ''}
+                                disabled={loading}
+                            >
+                                <FileDownloadIcon />
+                            </IconButton>
+                        </Tooltip>
 
                         {/* Print PDF Button */}
-                        <IconButton
-                            color='secondary'
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                if (url) {
-                                    window.open(url, '_blank')?.focus();
-                                }
-                            }}
-                        >
-                            <PrintIcon />
-                        </IconButton>
+                        <Tooltip title={loading ? "Loading..." : "Print PDF"}>
+                            <IconButton
+                                color='secondary'
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (url) {
+                                        window.open(url, '_blank')?.focus();
+                                    }
+                                }}
+                                disabled={loading}
+                            >
+                                <PrintIcon />
+                            </IconButton>
+                        </Tooltip>
                     </Stack>
                 );
             }}
