@@ -1,7 +1,6 @@
 import AddIcon from '@mui/icons-material/Add';
 import { Card, CardContent, Chip, Grid, Stack, Typography } from "@mui/material";
 import { DataGrid as MuiDatagrid, type GridRenderCellParams } from '@mui/x-data-grid';
-import { useEffect, useState } from "react";
 import {
     AutocompleteArrayInput,
     AutocompleteInput,
@@ -26,7 +25,6 @@ import {
     useNotify,
     useRefresh
 } from "react-admin";
-import { useFormContext } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
 import FeatureList from "../../component/FeatureList";
 import PrintMCUButton from "../../component/PrintReport";
@@ -353,22 +351,13 @@ export const ResultEdit = () => {
 }
 
 export const ObservationResultAdd = () => {
-
     const FormField = () => {
         const [params] = useSearchParams();
-        const [specimenReadonly, setSpecimenReadonly] = useState(false);
-        const { setValue } = useFormContext()
-
-        useEffect(() => {
-            if (params.get("specimen_id")) {
-                setSpecimenReadonly(true);
-                setValue("specimen_id", Number(params.get("specimen_id")));
-            }
-        }, [params])
+        const specimenID = Number(params.get("specimen_id"));
 
         return (
             <>
-                <NumberInput source="specimen_id" label="Specimen ID" readOnly={specimenReadonly} />
+                <NumberInput source="specimen_id" label="Specimen ID" defaultValue={specimenID} readOnly={true} />
                 <ReferenceInput source="code" reference="test-type" >
                     <AutocompleteInput optionValue="code" optionText={record => `${record.code} - ${record.category}`} />
                 </ReferenceInput >
