@@ -11,7 +11,6 @@ import {
     Datagrid,
     DateField,
     DeleteButton,
-    Edit,
     FilterLiveForm,
     Labeled,
     Link,
@@ -19,7 +18,9 @@ import {
     NumberField,
     NumberInput,
     ReferenceInput,
+    Show,
     SimpleForm,
+    SimpleShowLayout,
     TextField,
     WithRecord,
     useNotify,
@@ -101,7 +102,7 @@ export const ResultList = () => (
 
 
 
-export const ResultEdit = () => {
+export const ResultShow = () => {
     const notify = useNotify();
 
     function onUpdateError(error: any): void {
@@ -143,8 +144,8 @@ export const ResultEdit = () => {
     const refresh = useRefresh();
 
     return (
-        <Edit title="Edit Result">
-            <SimpleForm toolbar={false}>
+        <Show title="Edit Result">
+            <SimpleShowLayout >
                 <Grid sx={{
                     display: "flex",
                     border: "1px solid #ccc",
@@ -302,51 +303,8 @@ export const ResultEdit = () => {
                         </>
                     )
                 }} />
-                {/* <WithRecord label="Test Result" render={(record: any) => (
-                <>
-                    {
-                        Object.entries(record.test_result).map(([category, result]: any) => (
-                            <Stack sx={{
-                                marginY: 2,
-                            }}>
-                                <Typography variant="subtitle1" gutterBottom>
-                                    {category}
-                                </Typography>
-                                <Table>
-                                    <TableHead>
-                                        <TableRow>
-                                            <TableCell>Name</TableCell>
-                                            <TableCell>Result</TableCell>
-                                            <TableCell>Unit</TableCell>
-                                            <TableCell>Reference Range</TableCell>
-                                            <TableCell>Status</TableCell>
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {result.map((test: any, index: number) => (
-                                            <TableRow key={index}>
-                                                <TableCell>{test.test}</TableCell>
-                                                <TableCell>{test.result}</TableCell>
-                                                <TableCell>{test.unit}</TableCell>
-                                                <TableCell>{test.reference_range}</TableCell>
-                                                <TableCell>
-                                                    {test.abnormal === 1 ? (
-                                                        <Typography color="error">Abnormal</Typography>
-                                                    ) : (
-                                                        <Typography color="primary">Normal</Typography>
-                                                    )}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </Stack>
-                        ))
-                    }
-                </>
-            )} /> */}
-            </SimpleForm>
-        </Edit>
+            </SimpleShowLayout>
+        </Show>
     )
 }
 
