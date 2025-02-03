@@ -184,11 +184,22 @@ export const ResultEdit = () => {
                 </Grid>
                 <WithRecord label="Test Result" render={(record: any) => {
                     if (!record?.test_result || Object.keys(record?.test_result).length === 0) {
-                        return <Typography variant="subtitle1" sx={{
+                        return <Stack sx={{
                             width: "100%",
-                            textAlign: "center",
                             marginY: 2,
-                        }}>No Test Result found</Typography>
+                        }} gap={0.5}>
+                            <Typography variant="h5" color={"text.primary"} sx={{
+                                width: "100%",
+                                textAlign: "center",
+                            }}>No Test Result found</Typography>
+                            <Link to={`add-result?specimen_id=${record.id}&${getRefererParam()}`}>
+                                <Button label="Add Result" variant="contained" sx={{
+                                    width: "default",
+                                }}>
+                                    <AddIcon />
+                                </Button>
+                            </Link>
+                        </Stack>
                     }
 
                     return (
