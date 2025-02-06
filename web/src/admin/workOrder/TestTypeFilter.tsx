@@ -128,7 +128,7 @@ export const TestFilterSidebar = () => {
                 top: 96,
             }}>
                 <SavedQueriesList />
-                <FilterLiveSearch onSubmit={(event) => event.preventDefault()} />
+                <FilterLiveSearch onSubmit={(event) => event.preventDefault()} onKeyDown={(e) => { e.key === 'Enter' && e.preventDefault() }}  />
                 <FilterList label="Template" icon={<PagesIcon />} >
                     {data?.map((val: any, i) => {
                         return (
