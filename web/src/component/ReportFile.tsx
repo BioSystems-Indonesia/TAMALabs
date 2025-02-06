@@ -10,6 +10,7 @@ import {
 import useSettings from '../hooks/useSettings';
 import logo from '../assets/elgatama-logo.png'
 import type { ReportData, ReportDataAbnormality } from '../types/observation_result';
+import {Patient} from "../types/patient.ts";
 
 Font.register({
     family: 'Helvetica',
@@ -125,6 +126,13 @@ const Header = () => {
     )
 };
 
+const PatientInfo = ({ patient }: { patient: Patient }) => (
+    <View>
+        <Text>{patient.first_name} {patient.last_name}</Text>
+        <Text>{patient.address}</Text>
+    </View>
+);
+
 const Footer = () => (
     <Text style={styles.footer} fixed render={({ pageNumber, totalPages }) => (
         <Text>Page {pageNumber} of {totalPages}</Text>
@@ -141,13 +149,14 @@ const groupData = (data: ReportData[]) => {
     }, {} as Record<string, Record<string, ReportData[]>>);
 };
 
-export const ReportDocument = ({ data }: { data: ReportData[] }) => {
+export const ReportDocument = ({ data, patientData }: { data: ReportData[], patientData: Patient }) => {
     const groupedData = groupData(data);
 
     return (
         <Document>
             <Page size={"A4"} style={styles.page} wrap >
                 <Header />
+                <PatientInfo patient={patientData} />
                 {Object.entries(groupedData).map(([category, subCategories]) => (
                     <View key={category} wrap>
                         <Text style={styles.category}>{category}</Text>
