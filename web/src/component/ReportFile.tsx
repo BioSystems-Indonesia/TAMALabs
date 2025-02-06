@@ -9,7 +9,8 @@ import {
 } from '@react-pdf/renderer';
 import useSettings from '../hooks/useSettings';
 import logo from '../assets/elgatama-logo.png'
-import type { ReportData, ReportDataAbnormality } from '../types/observation_result';
+import type { ReportData  } from '../types/observation_result';
+import {Patient} from "../types/patient.ts";
 
 Font.register({
     family: 'Helvetica',
@@ -98,7 +99,76 @@ const styles = StyleSheet.create({
     cell: {
         paddingHorizontal: 6,
     },
+    rectangleContainer: {
+        width: '100%', // Set width to 100%
+        borderWidth: 1,
+        borderColor: '#000',
+        padding: 10,
+        borderRadius: 2, // Optional: Adds rounded corners
+    },
+    gridContainer: {
+        flexDirection: 'column', // Stack rows vertically
+    },
+    row: {
+        flexDirection: 'row', // Arrange columns horizontally
+        justifyContent: 'space-between', // Space columns evenly
+    },
+    leftColumn: {
+        flex: 1, // Takes up 50% of the row
+    },
+    rightColumn: {
+        flex: 1, // Takes up 50% of the row
+    },
+    labelValue: {
+        flexDirection: 'row', // Ensure label and value are on the same line
+        alignItems: 'center', // Align text vertically
+    },
+    label: {
+        fontWeight: 'bold', // Makes labels bold
+    },
+    value: {
+        // No additional styling needed
+    },
 });
+
+// Helper function to format birthdate
+const formatBirthdate = (birthdate: string) => {
+    const date = new Date(birthdate);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+};
+
+// Helper function to calculate age
+const calculateAge = (birthdate: string) => {
+    const now = new Date();
+    const birthDate = new Date(birthdate);
+
+    let years = now.getFullYear() - birthDate.getFullYear();
+    let months = now.getMonth() - birthDate.getMonth();
+    let days = now.getDate() - birthDate.getDate();
+
+    // Adjust for negative months or days
+    if (months < 0 || (months === 0 && days < 0)) {
+        years--;
+        months += 12;
+    }
+    if (days < 0) {
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 0);
+        days += lastMonth.getDate();
+        months--;
+    }
+
+    return `${years} year(s), ${months} month(s), ${days} day(s)`;
+};
+
+// Helper function to format gender
+const formatGender = (gender: string) => {
+    if (gender === 'F') return 'Female';
+    if (gender === 'M') return 'Male';
+    return '-';
+};
 
 const Header = () => {
     const [settings] = useSettings();
@@ -125,75 +195,119 @@ const Header = () => {
     )
 };
 
+const PatientInfo = ({ patient }: { patient: Patient }) => (
+    <View style={styles.rectangleContainer}>
+        <View style={styles.gridContainer}>
+            {/* Row 1 */}
+            <View style={styles.row}>
+                <View style={styles.leftColumn}>
+                    <Text style={styles.labelValue}>
+                        <Text style={styles.label}>Barcode No     </Text>
+                        <Text style={styles.value}>: - </Text>
+                    </Text>
+                </View>
+                <View style={styles.rightColumn}>
+                    <Text style={styles.labelValue}>
+                        <Text style={styles.label}>Date of Birth </Text>
+                        <Text style={styles.value}>: {formatBirthdate(patient.birthdate)}</Text>
+                    </Text>
+                </View>
+            </View>
+
+            {/* Row 2 */}
+            <View style={styles.row}>
+                <View style={styles.leftColumn}>
+                    <Text style={styles.labelValue}>
+                        <Text style={styles.label}>Patient Name  </Text>
+                        <Text style={styles.value}>: {patient.first_name} {patient.last_name}</Text>
+                    </Text>
+                </View>
+                <View style={styles.rightColumn}>
+                    <Text style={styles.labelValue}>
+                        <Text style={styles.label}>Age               </Text>
+                        <Text style={styles.value}>: {calculateAge(patient.birthdate)}</Text>
+                    </Text>
+                </View>
+            </View>
+
+            {/* Row 3 */}
+            <View style={styles.row}>
+                <View style={styles.leftColumn}>
+                    <Text style={styles.labelValue}>
+                        <Text style={styles.label}>Address           </Text>
+                        <Text style={styles.value}>: {patient.address}</Text>
+                    </Text>
+                </View>
+                <View style={styles.rightColumn}>
+                    <Text style={styles.labelValue}>
+                        <Text style={styles.label}>Gender         </Text>
+                        <Text style={styles.value}>: {formatGender(patient.sex)}</Text>
+                    </Text>
+                </View>
+            </View>
+        </View>
+    </View>
+);
+
 const Footer = () => (
     <Text style={styles.footer} fixed render={({ pageNumber, totalPages }) => (
         <Text>Page {pageNumber} of {totalPages}</Text>
     )} />
 );
 
+// Helper function to group data by category (if needed)
 const groupData = (data: ReportData[]) => {
-    return data.reduce((acc, item) => {
-        const { category, subCategory } = item;
-        if (!acc[category]) acc[category] = {};
-        if (!acc[category][subCategory]) acc[category][subCategory] = [];
-        acc[category][subCategory].push(item);
-        return acc;
-    }, {} as Record<string, Record<string, ReportData[]>>);
+    const grouped: Record<string, ReportData[]> = {};
+    data.forEach((item) => {
+        if (!grouped[item.category]) {
+            grouped[item.category] = [];
+        }
+        grouped[item.category].push(item);
+    });
+    return grouped;
 };
 
-export const ReportDocument = ({ data }: { data: ReportData[] }) => {
+export const ReportDocument = ({ data, patientData }: { data: ReportData[]; patientData: Patient }) => {
     const groupedData = groupData(data);
 
     return (
         <Document>
-            <Page size={"A4"} style={styles.page} wrap >
+            <Page size={"A4"} style={styles.page} wrap>
                 <Header />
-                {Object.entries(groupedData).map(([category, subCategories]) => (
+                <PatientInfo patient={patientData} />
+                {Object.entries(groupedData).map(([category, items]) => (
                     <View key={category} wrap>
                         <Text style={styles.category}>{category}</Text>
 
-                        {Object.entries(subCategories).map(([subCategory, items]) => (
-                            <View key={subCategory}>
-                                <Text style={styles.subCategory}>{subCategory}</Text>
+                        {/* Table Header */}
+                        <View style={styles.tableHeader}>
+                            <Text style={[styles.columnHeader, styles.cell]}>Parameter</Text>
+                            <Text style={[styles.columnResult, styles.cell]}>Result</Text>
+                            <Text style={[styles.columnReference, styles.cell]}>Reference</Text>
+                            <Text style={[styles.columnReference, styles.cell]}>Status</Text>
+                        </View>
 
-                                {/* Table Header */}
-                                <View style={styles.tableHeader}>
-                                    <Text style={[styles.columnHeader, styles.cell]}>Parameter</Text>
-                                    <Text style={[styles.columnResult, styles.cell]}>Result</Text>
-                                    <Text style={[styles.columnReference, styles.cell]}>Reference</Text>
-                                    <Text style={[styles.columnReference, styles.cell]}>Status</Text>
+                        {/* Table Rows */}
+                        {items.map((item, index) => {
+                            const abnormalColor = {
+                                color:
+                                    item.abnormality === 'High' ? '#e53e3e' : // Red for High
+                                        item.abnormality === 'Low' ? '#3182ce' :  // Blue for Low
+                                            '#222222', // Default color for No Data or other cases
+                            };
+                            return (
+                                <View key={index} style={styles.tableRow}>
+                                    <Text style={[styles.columnHeader, styles.cell, abnormalColor]}>{item.parameter}</Text>
+                                    <Text style={[styles.columnResult, styles.cell, abnormalColor]}>{item.result}</Text>
+                                    <Text style={[styles.columnReference, styles.cell, abnormalColor]}>
+                                        {item.reference}
+                                    </Text>
+                                    <Text style={[styles.columnReference, styles.cell, abnormalColor]}>
+                                        {item.abnormality}
+                                    </Text>
                                 </View>
-
-                                {/* Table Rows */}
-                                {items.map((item, index) => {
-                                    const abnormal = ['High', 'Low', "No Data"] as ReportDataAbnormality[];
-                                    const isAbnormal = abnormal.includes(item.abnormality);
-                                    const abnormalColor = {
-                                        color: isAbnormal ? '#e53e3e' : '#222222',
-                                    }
-                                    return (
-                                        <View key={index} style={styles.tableRow}>
-                                            <Text style={[styles.columnHeader, styles.cell, abnormalColor]}>{item.parameter}</Text>
-                                            <Text style={[styles.columnResult, styles.cell, abnormalColor]}>{item.result}</Text>
-                                            <Text style={[
-                                                styles.columnReference,
-                                                styles.cell,
-                                                abnormalColor
-                                            ]}>
-                                                {item.reference}
-                                            </Text>
-                                            <Text style={[
-                                                styles.columnReference,
-                                                styles.cell,
-                                                abnormalColor
-                                            ]}>
-                                                {item.abnormality}
-                                            </Text>
-                                        </View>
-                                    );
-                                })}
-                            </View>
-                        ))}
+                            );
+                        })}
                     </View>
                 ))}
                 <Footer />

@@ -1,6 +1,6 @@
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import PrintIcon from '@mui/icons-material/Print';
-import { CircularProgress, IconButton, Stack, Tooltip } from '@mui/material';
+import {  IconButton, Stack, Tooltip } from '@mui/material';
 import {
     BlobProvider,
     Font
@@ -53,8 +53,13 @@ const PrintMCUButton = (prop: PrintMCUProps) => {
 
     }, [prop.results]);
 
+    // const [patientData, setPatientData] = useState<Patient | null>(null)
+    // useEffect(() => {
+    //     setPatientData(prop.patient)
+    // }, [prop.patient]);
+
     return (
-        <BlobProvider document={<ReportDocument data={data} />}>
+        <BlobProvider document={<ReportDocument data={data} patientData={prop.patient} />}>
             {({ url, loading, error }) => {
                 if (error) {
                     return <span color='red'>Error generating PDF: {error.message}</span>;
