@@ -1,7 +1,9 @@
 import Box from "@mui/material/Box";
-import { Create, Datagrid, Edit, List, NumberInput, SimpleForm, TextField, TextInput } from "react-admin";
+import { useQuery } from "@tanstack/react-query";
+import { AutocompleteInput, Create, Datagrid, Edit, List, NumberInput, SimpleForm, TextField, TextInput, required } from "react-admin";
 import type { ActionKeys } from "../../types/props";
 import { TestFilterSidebar } from "../workOrder/TestTypeFilter";
+import { useEffect, useState } from "react";
 
 export const TestTypeList = () => (
     <List aside={<TestFilterSidebar />} title="Test Type" sort={{
@@ -36,15 +38,58 @@ type TestTypeFormProps = {
 }
 
 function TestTypeForm(props: TestTypeFormProps) {
+    const { data: filter, isLoading: isFilterLoading } = useQuery({
+        queryKey: ['filterTestType'],
+        queryFn: () => fetch(import.meta.env.VITE_BACKEND_BASE_URL + '/test-type/filter').then(res => res.json()),
+    });
+
+    const [categories, setCategories] = useState<string[]>([]);
+    const [subCategories, setSubCategories] = useState<string[]>([]);
+    useEffect(() => {
+        if (filter) {
+            setCategories(filter.categories);
+            setSubCategories(filter.sub_categories);
+        }
+    }, [filter, isFilterLoading]);
+
+
     return (
         <SimpleForm>
-            <TextInput source="name" readOnly={props.readonly} />
-            <TextInput source="code" readOnly={props.readonly} />
-            <TextInput source="category" readOnly={props.readonly} />
-            <TextInput source="sub_category" readOnly={props.readonly} />
-            <NumberInput source="low_ref_range" label="low" readOnly={props.readonly} />
-            <NumberInput  source="high_ref_range" label="high" readOnly={props.readonly} />
-            <TextInput source="unit" readOnly={props.readonly} />
+            <TextInput source="name" readOnly={props.readonly} validate={[required()]} />
+            <TextInput source="code" readOnly={props.readonly} validate={[required()]} />
+            <AutocompleteInput source="category" readOnly={props.readonly} filterSelectedOptions={false}
+                loading={isFilterLoading}
+                choices={categories.map(val => {
+                    return { id: val, name: val }
+                })}
+                onCreate={val => {
+                    if (!val || categories.includes(val)) {
+                        return;
+                    }
+
+                    const newCategories = [...categories, val];
+                    setCategories(newCategories);
+                    return { id: val, name: val }
+                }} />
+            <AutocompleteInput source="sub_category"
+                readOnly={props.readonly}
+                loading={isFilterLoading}
+                choices={subCategories.map(val => {
+                    return { id: val, name: val }
+                })}
+                onCreate={val => {
+                    console.log("onCreate", val, subCategories);
+                    if (!val || subCategories.includes(val)) {
+                        return;
+                    }
+
+                    const newSubCategories = [...subCategories, val];
+                    setSubCategories(newSubCategories);
+                    return { id: val, name: val }
+                }} />
+            <NumberInput source="low_ref_range" label="Low Range" readOnly={props.readonly} validate={[required()]} />
+            <NumberInput source="high_ref_range" label="High Range" readOnly={props.readonly} validate={[required()]} />
+            <TextInput source="unit" readOnly={props.readonly} validate={[required()]} />
             <TextInput source="description" readOnly={props.readonly} />
         </SimpleForm>
     )
@@ -53,7 +98,7 @@ function TestTypeForm(props: TestTypeFormProps) {
 
 export function TestTypeEdit() {
     return (
-        <Edit mutationMode="pessimistic" title="Edit Test Type">
+        <Edit mutationMode="pessimistic" title="Edit Test Type" redirect={"list"}>
             <TestTypeForm readonly={false} mode={"EDIT"} />
             <ReferenceSection />
         </Edit>
@@ -62,7 +107,7 @@ export function TestTypeEdit() {
 
 export function TestTypeCreate() {
     return (
-        <Create title="Create Test Type">
+        <Create title="Create Test Type" redirect={"list"}>
             <TestTypeForm readonly={false} mode={"CREATE"} />
             <ReferenceSection />
         </Create>

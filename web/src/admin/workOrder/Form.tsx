@@ -219,7 +219,7 @@ const PatientFilterSidebar = () => (
 
     }}>
         <CardContent>
-            <FilterLiveSearch />
+            <FilterLiveSearch onKeyDown={(e) => { e.key === 'Enter' && e.preventDefault() }} />
             <FilterListSection label="Birth Date" icon={<CalendarMonthIcon />}>
                 <FilterLiveForm debounce={1500}>
                     <CustomDateInput source={"birthdate"} label={"Birth Date"} clearable />
