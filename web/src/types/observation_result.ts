@@ -34,5 +34,6 @@ export interface ReportData {
   parameter: string;
   result: number;
   reference: string;
+  unit : string;
   abnormality: ReportDataAbnormality;
 }

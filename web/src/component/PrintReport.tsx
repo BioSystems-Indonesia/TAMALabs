@@ -45,6 +45,7 @@ const PrintMCUButton = (prop: PrintMCUProps) => {
                 category: v.test_type.category,
                 parameter: v.test_type.code,
                 reference: `${v.test_type.low_ref_range} - ${v.test_type.high_ref_range}`,
+                unit: v.test_type.unit,
                 result: value,
                 abnormality: abnormality,
                 subCategory: v.test_type.sub_category,
