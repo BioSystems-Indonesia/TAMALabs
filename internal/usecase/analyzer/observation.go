@@ -15,15 +15,10 @@ func (u *Usecase) ProcessOULR22(ctx context.Context, data entity.OUL_R22) error 
 	var errs []error
 	uniqueWorkOrder := map[int64]struct{}{}
 	for i := range specimens {
-		spEntities, err := u.SpecimenRepository.FindByBarcode(ctx, specimens[i].HL7ID)
+		spEntity, err := u.SpecimenRepository.FindByBarcode(ctx, specimens[i].HL7ID)
 		if err != nil {
 			errs = append(errs, err)
 			continue
-		}
-		var spEntity entity.Specimen
-
-		if len(spEntities) > 0 {
-			spEntity = spEntities[0]
 		}
 
 		if specimens[i].ObservationResult != nil {
