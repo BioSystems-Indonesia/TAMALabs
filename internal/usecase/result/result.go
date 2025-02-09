@@ -73,27 +73,32 @@ func (u *Usecase) UpdateResult(ctx context.Context, data []entity.ResultTest) ([
 
 func (u *Usecase) CreateResult(
 	ctx context.Context, data entity.ObservationResultCreate,
-) (entity.ObservationResult, error) {
-	testType, err := u.testTypeRepository.FindOneByCode(ctx, data.Code)
+) ([]entity.ObservationResult, error) {
+	var results []entity.ObservationResult
+	for _, v := range data.Tests {
+		testType, err := u.testTypeRepository.FindOneByID(ctx, int(v.TestTypeID))
+		if err != nil {
+			return []entity.ObservationResult{}, err
+		}
+
+		input := entity.ObservationResult{
+			SpecimenID:     data.SpecimenID,
+			Code:           testType.Code,
+			Values:         []string{fmt.Sprintf("%v", v.Value)},
+			Unit:           testType.Unit,
+			ReferenceRange: fmt.Sprintf("%.2f - %.2f", testType.LowRefRange, testType.HighRefRange),
+			TestType:       testType,
+		}
+
+		results = append(results, input)
+	}
+
+	err := u.resultRepository.CreateMany(ctx, results)
 	if err != nil {
-		return entity.ObservationResult{}, err
+		return []entity.ObservationResult{}, err
 	}
 
-	input := entity.ObservationResult{
-		SpecimenID:     data.SpecimenID,
-		Code:           data.Code,
-		Values:         []string{fmt.Sprintf("%v", data.Value)},
-		Unit:           testType.Unit,
-		ReferenceRange: fmt.Sprintf("%.2f - %.2f", testType.LowRefRange, testType.HighRefRange),
-		TestType:       testType,
-	}
-
-	err = u.resultRepository.Create(ctx, &input)
-	if err != nil {
-		return entity.ObservationResult{}, err
-	}
-
-	return input, nil
+	return results, nil
 }
 
 func (u *Usecase) mapListResult(specimens []entity.Specimen) []entity.Result {

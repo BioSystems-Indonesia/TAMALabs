@@ -62,7 +62,10 @@ func (h *ResultHandler) CreateResult(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"id":    req.SpecimenID,
+		"tests": result,
+	})
 }
 
 func (h *ResultHandler) DeleteResult(c echo.Context) error {

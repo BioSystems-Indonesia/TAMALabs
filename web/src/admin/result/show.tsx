@@ -1,9 +1,12 @@
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Badge, Box, ButtonGroup, Chip, Dialog, DialogContent, DialogTitle, Grid, Icon, IconButton, Stack, Tooltip, Typography } from "@mui/material";
-import { DataGrid as MuiDatagrid, type GridRenderCellParams, GridRow, type DataGridProps } from '@mui/x-data-grid';
 import HistoryIcon from '@mui/icons-material/History';
+import { Badge, Box, ButtonGroup, Chip, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { DataGrid as MuiDatagrid, type DataGridProps, type GridRenderCellParams } from '@mui/x-data-grid';
+import dayjs from 'dayjs';
+import { useState } from 'react';
 import {
+    ArrayInput,
     AutocompleteInput,
     Button,
     Confirm,
@@ -16,6 +19,7 @@ import {
     ReferenceInput,
     Show,
     SimpleForm,
+    SimpleFormIterator,
     SimpleShowLayout,
     TextField,
     WithRecord,
@@ -28,11 +32,6 @@ import { useSearchParams } from "react-router-dom";
 import { getRefererParam, useRefererRedirect } from "../../hooks/useReferer";
 import type { ResultColumn } from "../../types/general";
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
-import { dateFormatter } from '../../helper/format';
-import ExpandLess from '@mui/icons-material/ExpandLess';
-import ExpandMore from '@mui/icons-material/ExpandMore';
-import dayjs from 'dayjs';
-import { useState } from 'react';
 
 
 export const ResultShow = () => {
@@ -176,7 +175,7 @@ export const ResultShow = () => {
                         <Labeled>
                             <WithRecord label="Patient" render={(record: any) => (
                                 <Link to={`/patient/${record.order_id}/show`} resource="patient" label={"Patient"} onClick={e => e.stopPropagation()}>
-                                    #{record.patient.id}-{record.patient.first_name} {record.patient.last_name}
+                                    #{record.patient?.id}-{record.patient?.first_name} {record.patient?.last_name}
                                 </Link>
                             )} />
                         </Labeled>
@@ -185,7 +184,7 @@ export const ResultShow = () => {
                         <Labeled>
                             <WithRecord label="Work Order" render={(record: any) => (
                                 <Link to={`/work-order/${record.order_id}/show`} label={"Work Order"} onClick={e => e.stopPropagation()}>
-                                    <Chip label={`#${record.order_id} - ${record.work_order.status}`} color={WorkOrderChipColorMap(record.work_order.status)} />
+                                    <Chip label={`#${record?.order_id} - ${record.work_order?.status}`} color={WorkOrderChipColorMap(record.work_order?.status)} />
                                 </Link>
                             )} />
                         </Labeled>
@@ -206,7 +205,7 @@ export const ResultShow = () => {
                                 width: "100%",
                                 textAlign: "center",
                             }}>No Test Result found</Typography>
-                            <Link to={`add-result?specimen_id=${record.id}&${getRefererParam()}`}>
+                            <Link to={`add-result?specimen_id=${record?.id}&${getRefererParam()}`}>
                                 <Button label="Add Result" variant="contained" sx={{
                                     width: "default",
                                 }}>
@@ -469,10 +468,18 @@ export const ObservationResultAdd = () => {
         return (
             <>
                 <NumberInput source="specimen_id" label="Specimen ID" defaultValue={specimenID} readOnly={true} />
-                <ReferenceInput source="code" reference="test-type" >
-                    <AutocompleteInput optionValue="code" optionText={record => `${record.code} - ${record.category}`} />
-                </ReferenceInput >
-                <NumberInput source="value" label="Result" />
+                <ArrayInput source="tests" >
+                    <SimpleFormIterator inline disableReordering disableClear>
+                        <ReferenceInput source="test_type_id" reference="test-type" >
+                            <AutocompleteInput optionValue="id" optionText={record => `${record.code} - ${record.category}`}
+                                TextFieldProps={{
+                                    autoFocus: true,
+                                }}
+                            />
+                        </ReferenceInput >
+                        <NumberInput source="value" label="Result" autoFocus />
+                    </SimpleFormIterator>
+                </ArrayInput>
             </>
 
         )
