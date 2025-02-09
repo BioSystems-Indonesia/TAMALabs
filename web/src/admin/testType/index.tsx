@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { AutocompleteInput, Create, Datagrid, Edit, List, NumberInput, SimpleForm, TextField, TextInput, required } from "react-admin";
 import type { ActionKeys } from "../../types/props";
 import { TestFilterSidebar } from "../workOrder/TestTypeFilter";
+import { useFormContext } from "react-hook-form";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 export const TestTypeList = () => (
     <List aside={<TestFilterSidebar />} title="Test Type" sort={{
@@ -37,7 +39,7 @@ type TestTypeFormProps = {
     mode?: ActionKeys
 }
 
-function TestTypeForm(props: TestTypeFormProps) {
+function TestTypeInput(props: TestTypeFormProps) {
     const { data: filter, isLoading: isFilterLoading } = useQuery({
         queryKey: ['filterTestType'],
         queryFn: () => fetch(import.meta.env.VITE_BACKEND_BASE_URL + '/test-type/filter').then(res => res.json()),
@@ -52,9 +54,18 @@ function TestTypeForm(props: TestTypeFormProps) {
         }
     }, [filter, isFilterLoading]);
 
+    const { setValue } = useFormContext();
+    const [params] = useSearchParams()
+    useEffect(() => {
+        if (params.has("code")) {
+            const code = params.get("code")
+            setValue("code", code)
+            setValue("name", code)
+        }
+    }, [params.has("code")])
 
     return (
-        <SimpleForm>
+        <>
             <TextInput source="name" readOnly={props.readonly} validate={[required()]} />
             <TextInput source="code" readOnly={props.readonly} validate={[required()]} />
             <AutocompleteInput source="category" readOnly={props.readonly} filterSelectedOptions={false}
@@ -91,6 +102,15 @@ function TestTypeForm(props: TestTypeFormProps) {
             <NumberInput source="high_ref_range" label="High Range" readOnly={props.readonly} validate={[required()]} />
             <TextInput source="unit" readOnly={props.readonly} validate={[required()]} />
             <TextInput source="description" readOnly={props.readonly} />
+        </>
+
+    )
+}
+
+function TestTypeForm(props: TestTypeFormProps) {
+    return (
+        <SimpleForm>
+            <TestTypeInput {...props} />
         </SimpleForm>
     )
 }

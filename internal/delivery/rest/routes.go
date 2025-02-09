@@ -135,6 +135,7 @@ func RegisterRoutes(
 		result.POST("", handler.CreateResult)
 		result.PUT("", handler.UpdateResult)
 		result.GET("/:id", handler.GetResult)
+		result.DELETE("/bulk", handler.DeleteResultBulk)
 		result.DELETE("/:id", handler.DeleteResult)
 	}
 

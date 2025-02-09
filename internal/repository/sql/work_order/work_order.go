@@ -31,6 +31,10 @@ func (r WorkOrderRepository) FindAll(ctx context.Context, req *entity.WorkOrderG
 	db := r.db.WithContext(ctx)
 	db = sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{})
 
+	if req.Query != "" {
+		db = db.Where("work_orders.id like ? or work_orders.created_at like ?", "%"+req.Query+"%", "%"+req.Query+"%")
+	}
+
 	if len(req.SpecimenIDs) > 0 {
 		db = db.Joins("join work_order_specimens on work_order_Specimens.work_order_id = work_orders.id and work_order_Specimens.Specimen_id in (?)", req.SpecimenIDs)
 	}

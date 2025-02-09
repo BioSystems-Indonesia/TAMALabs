@@ -7,7 +7,7 @@ import {
 } from '@react-pdf/renderer';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import type { ObservationResult, ReportData, ReportDataAbnormality } from '../types/observation_result';
+import type { ObservationResult, ReportData, ReportDataAbnormality, TestResult } from '../types/observation_result';
 import type { Patient } from '../types/patient';
 import type { WorkOrder } from '../types/work_order';
 import { ReportDocument } from './ReportFile';
@@ -21,7 +21,7 @@ Font.register({
 type PrintMCUProps = {
     patient: Patient
     workOrder: WorkOrder
-    results: ObservationResult[]
+    results: TestResult[]
 }
 
 const PrintMCUButton = (prop: PrintMCUProps) => {
@@ -30,26 +30,32 @@ const PrintMCUButton = (prop: PrintMCUProps) => {
 
         setData(prop.results.map(v => {
             let abnormality = "Normal" as ReportDataAbnormality
-            const value = v.values.length > 0 ? Number.parseFloat(v.values[0]) : null;
-            if (value === null) {
-                abnormality = "No Data"
-            } else {
-                if (value < v.test_type.low_ref_range) {
-                    abnormality = "Low"
-                } else if (value > v.test_type.high_ref_range) {
+            switch (v.abnormal) {
+                case 0:
+                    abnormality = "Normal"
+                    break
+                case 1:
                     abnormality = "High"
-                }
+                    break
+                case 2:
+                    abnormality = "Low"
+                    break
+                default:
+                    abnormality = "Normal"
+                    break
             }
 
-            return {
-                category: v.test_type.category,
-                parameter: v.test_type.code,
-                reference: `${v.test_type.low_ref_range} - ${v.test_type.high_ref_range}`,
-                unit: v.test_type.unit,
-                result: value,
+            const reportData: ReportData =  {
+                category: v.category,
+                parameter: v.test,
+                reference: v.reference_range,
+                unit: v.unit,
+                result: v.result,
                 abnormality: abnormality,
-                subCategory: v.test_type.sub_category,
-            } as ReportData
+                subCategory: v.category,
+            } 
+
+            return reportData
         }))
 
     }, [prop.results]);

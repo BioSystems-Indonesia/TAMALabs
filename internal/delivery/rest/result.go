@@ -79,6 +79,20 @@ func (h *ResultHandler) DeleteResult(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
+func (h *ResultHandler) DeleteResultBulk(c echo.Context) error {
+	req := entity.DeleteResultBulkReq{}
+	if err := bindAndValidate(c, &req); err != nil {
+		return handleError(c, err)
+	}
+
+	result, err := h.resultUsecase.DeleteResultBulk(c.Request().Context(), &req)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, result)
+}
+
 func (h *ResultHandler) UpdateResult(c echo.Context) error {
 	req := entity.UpdateManyResultTestReq{}
 	if err := bindAndValidate(c, &req); err != nil {

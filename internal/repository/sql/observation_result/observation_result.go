@@ -81,3 +81,13 @@ func (r *Repository) Delete(context context.Context, id int64) (entity.Observati
 
 	return observationResult, nil
 }
+
+func (r *Repository) DeleteBulk(context context.Context, ids []int64) (entity.ObservationResult, error) {
+	var observationResult entity.ObservationResult
+	err := r.DB.Delete(&observationResult, "id in ?", ids).Error
+	if err != nil {
+		return entity.ObservationResult{}, err
+	}
+
+	return observationResult, nil
+}

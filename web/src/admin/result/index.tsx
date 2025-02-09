@@ -1,36 +1,20 @@
-import AddIcon from '@mui/icons-material/Add';
-import { Card, CardContent, Chip, Grid, Stack, Typography } from "@mui/material";
-import { DataGrid as MuiDatagrid, type GridRenderCellParams } from '@mui/x-data-grid';
+import { Card, CardContent, Chip, Typography } from "@mui/material";
 import {
     AutocompleteArrayInput,
-    AutocompleteInput,
     BooleanInput,
-    Button,
     CheckboxGroupInput,
-    Create,
     Datagrid,
     DateField,
-    DeleteButton,
     FilterLiveForm,
-    Labeled,
     Link,
     List,
     NumberField,
-    NumberInput,
     ReferenceInput,
-    Show,
-    SimpleForm,
-    SimpleShowLayout,
     TextField,
-    WithRecord,
-    useNotify,
-    useRefresh
+    WithRecord
 } from "react-admin";
-import { useSearchParams } from "react-router-dom";
 import FeatureList from "../../component/FeatureList";
 import PrintMCUButton from "../../component/PrintReport";
-import { getRefererParam, useRefererRedirect } from "../../hooks/useReferer";
-import type { ResultColumn } from "../../types/general";
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
 
 
@@ -41,9 +25,6 @@ const ResultFilterSidebar = () => {
         }}>
             <CardContent>
                 <FilterLiveForm>
-                    <FeatureList source={"work_order_status"} types={"work-order-status"}>
-                        <CheckboxGroupInput />
-                    </FeatureList>
                     <ReferenceInput source={"work_order_ids"} reference="work-order" label={"Work Order"}>
                         <AutocompleteArrayInput />
                     </ReferenceInput>
@@ -79,12 +60,12 @@ export const ResultDataGrid = (props: any) => {
             )} />
             <WithRecord label="Result" render={(record: any) => (
                 <Typography variant="body2" >
-                    {record.observation_result.length}
+                    {record.test_result?.length}
                 </Typography>
             )} />
             <DateField source="created_at" showDate showTime />
             <WithRecord label="Print Result" render={(record: any) => (
-                <PrintMCUButton results={record.observation_result} patient={record.patient} workOrder={record.work_order} />
+                <PrintMCUButton results={record.test_result} patient={record.patient} workOrder={record.work_order} />
             )} />
         </Datagrid>
     )
@@ -101,236 +82,3 @@ export const ResultList = () => (
 
 
 
-
-export const ResultShow = () => {
-    const notify = useNotify();
-
-    function onUpdateError(error: any): void {
-        notify(`Error update ${error}`, {
-            type: 'error',
-        });
-    }
-
-    async function updateResult(newRow: ResultColumn, oldRow: ResultColumn) {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/result`, {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                data: [newRow]
-            }),
-            method: 'PUT',
-        });
-
-        if (!response.ok) {
-            const responseJson = await response.json();
-            throw new Error(responseJson?.error);
-        } else {
-            const respJSON = await response.json();
-            if (Array.isArray(respJSON) === false) {
-                console.error("respJSON is not array");
-                return newRow
-            }
-
-            notify(`Success update row ${newRow.test}`, {
-                type: 'success',
-            });
-
-            return respJSON[0]
-        }
-
-    }
-
-    const refresh = useRefresh();
-
-    return (
-        <Show title="Edit Result">
-            <SimpleShowLayout >
-                <Grid sx={{
-                    display: "flex",
-                    border: "1px solid #ccc",
-                    padding: "12px",
-                }} container>
-                    <Grid item xs={12} md={12} sx={{
-                    }}>
-                        <Labeled>
-                            <TextField source="barcode" label="Barcode" />
-                        </Labeled>
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                        <Labeled>
-                            <WithRecord label="Patient" render={(record: any) => (
-                                <Link to={`/patient/${record.order_id}/show`} resource="patient" label={"Patient"} onClick={e => e.stopPropagation()}>
-                                    #{record.patient.id}-{record.patient.first_name} {record.patient.last_name}
-                                </Link>
-                            )} />
-                        </Labeled>
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                        <Labeled>
-                            <WithRecord label="Work Order" render={(record: any) => (
-                                <Link to={`/work-order/${record.order_id}/show`} label={"Work Order"} onClick={e => e.stopPropagation()}>
-                                    <Chip label={`#${record.order_id} - ${record.work_order.status}`} color={WorkOrderChipColorMap(record.work_order.status)} />
-                                </Link>
-                            )} />
-                        </Labeled>
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                        <Labeled>
-                            <DateField source="created_at" showTime />
-                        </Labeled>
-                    </Grid>
-                </Grid>
-                <WithRecord label="Test Result" render={(record: any) => {
-                    if (!record?.test_result || Object.keys(record?.test_result).length === 0) {
-                        return <Stack sx={{
-                            width: "100%",
-                            marginY: 2,
-                        }} gap={0.5}>
-                            <Typography variant="h5" color={"text.primary"} sx={{
-                                width: "100%",
-                                textAlign: "center",
-                            }}>No Test Result found</Typography>
-                            <Link to={`add-result?specimen_id=${record.id}&${getRefererParam()}`}>
-                                <Button label="Add Result" variant="contained" sx={{
-                                    width: "default",
-                                }}>
-                                    <AddIcon />
-                                </Button>
-                            </Link>
-                        </Stack>
-                    }
-
-                    return (
-                        <>
-                            <Stack sx={{
-                                display: "flex",
-                                alignItems: "flex-end",
-                                width: "100%",
-                                marginTop: 2,
-                                paddingRight: 5,
-                            }}>
-                                <Link to={`add-result?specimen_id=${record.id}&${getRefererParam()}`}>
-                                    <Button label="Add Result" variant="contained" sx={{
-                                        width: "default",
-                                    }}>
-                                        <AddIcon />
-                                    </Button>
-                                </Link>
-                            </Stack>
-                            {
-                                Object.entries(record?.test_result).map(([category, result]: any) => (
-                                    <Stack sx={{
-                                        marginY: 2,
-                                        width: "100%",
-                                    }} key={category}>
-                                        <Typography variant="subtitle1" gutterBottom>
-                                            {category}
-                                        </Typography>
-                                        <Typography variant="caption" gutterBottom>
-                                            Click result column to edit
-                                        </Typography>
-                                        <MuiDatagrid rows={result}
-                                            pageSizeOptions={[-1]}
-                                            hideFooter
-                                            editMode="row"
-                                            processRowUpdate={updateResult}
-                                            onProcessRowUpdateError={onUpdateError}
-                                            columns={[
-                                                {
-                                                    field: 'test',
-                                                    headerName: 'Test',
-                                                    flex: 1,
-                                                },
-                                                {
-                                                    field: 'result',
-                                                    headerName: 'Result',
-                                                    flex: 1,
-                                                    editable: true,
-                                                },
-                                                {
-                                                    field: 'unit',
-                                                    headerName: 'Unit',
-                                                    flex: 1,
-                                                },
-                                                {
-                                                    field: 'reference_range',
-                                                    headerName: 'Reference Range',
-                                                    flex: 1,
-                                                },
-                                                {
-                                                    field: 'abnormal',
-                                                    headerName: 'Status',
-                                                    flex: 1,
-                                                    renderCell: (params: GridRenderCellParams) => {
-                                                        return params.value === 1 ? (
-                                                            <Chip color="error" label="High" />
-                                                        ) : params.value === 2 ? (
-                                                            <Chip color="warning" label="Low" />
-                                                        ) :
-                                                            (
-                                                                <Chip color="primary" label="Normal" />
-                                                            )
-                                                    },
-                                                },
-                                                {
-                                                    field: 'action',
-                                                    headerName: 'Action',
-                                                    flex: 1,
-                                                    renderCell: (params: GridRenderCellParams) => {
-                                                        return <DeleteButton mutationMode="pessimistic" resource="result" record={{
-                                                            id: params.row.id,
-                                                            code: params.row.test,
-                                                        }} confirmTitle={`Delete test ${params.row.test}?`}
-                                                            confirmColor="warning"
-                                                            confirmContent="This will delete the test result. This action cannot be undone."
-                                                            redirect={false}
-                                                            mutationOptions={{
-                                                                onSettled: () => {
-                                                                    notify(`Success delete test ${params.row.test}`, {
-                                                                        type: 'success',
-                                                                    });
-                                                                    refresh();
-                                                                },
-                                                            }}
-                                                        />
-                                                    },
-                                                }
-                                            ]} />
-                                    </Stack>
-                                ))
-                            }
-                        </>
-                    )
-                }} />
-            </SimpleShowLayout>
-        </Show>
-    )
-}
-
-export const ObservationResultAdd = () => {
-    const FormField = () => {
-        const [params] = useSearchParams();
-        const specimenID = Number(params.get("specimen_id"));
-
-        return (
-            <>
-                <NumberInput source="specimen_id" label="Specimen ID" defaultValue={specimenID} readOnly={true} />
-                <ReferenceInput source="code" reference="test-type" >
-                    <AutocompleteInput optionValue="code" optionText={record => `${record.code} - ${record.category}`} />
-                </ReferenceInput >
-                <NumberInput source="value" label="Result" />
-            </>
-
-        )
-    }
-
-    const useReferer = useRefererRedirect("/result");
-    return (
-        <Create title="Create Observation Result" resource="result" redirect={useReferer}>
-            <SimpleForm>
-                <FormField />
-            </SimpleForm>
-        </Create>
-    )
-}

@@ -15,6 +15,21 @@ export interface ObservationResult {
   test_type: TestType;
 }
 
+export interface TestResult {
+  id:              number;
+  test_type_id:    number;
+  test:            string;
+  result:          string;
+  unit:            string;
+  category:        string;
+  abnormal:        number;
+  reference_range: string;
+  created_at:      string;
+  history:         TestResult[] | null;
+}
+
+
+
 export interface TestType {
   id: number;
   name: string;
@@ -32,7 +47,7 @@ export interface ReportData {
   category: string;
   subCategory: string;
   parameter: string;
-  result: number;
+  result: string;
   reference: string;
   unit : string;
   abnormality: ReportDataAbnormality;
