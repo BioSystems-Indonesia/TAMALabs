@@ -62,7 +62,10 @@ func (h *ResultHandler) CreateResult(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"id":    req.SpecimenID,
+		"tests": result,
+	})
 }
 
 func (h *ResultHandler) DeleteResult(c echo.Context) error {
@@ -72,6 +75,20 @@ func (h *ResultHandler) DeleteResult(c echo.Context) error {
 	}
 
 	result, err := h.resultUsecase.DeleteResult(c.Request().Context(), id)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, result)
+}
+
+func (h *ResultHandler) DeleteResultBulk(c echo.Context) error {
+	req := entity.DeleteResultBulkReq{}
+	if err := bindAndValidate(c, &req); err != nil {
+		return handleError(c, err)
+	}
+
+	result, err := h.resultUsecase.DeleteResultBulk(c.Request().Context(), &req)
 	if err != nil {
 		return handleError(c, err)
 	}

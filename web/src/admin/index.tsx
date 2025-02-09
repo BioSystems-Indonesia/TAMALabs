@@ -12,12 +12,14 @@ import { ConfigEdit, ConfigList } from "./config/config.tsx";
 import { DeviceCreate, DeviceEdit, DeviceList, DeviceShow } from "./device/index.tsx";
 import { DefaultLayout } from "./layout.tsx";
 import { PatientCreate, PatientEdit, PatientList, PatientShow } from "./patient";
-import { ObservationResultAdd, ResultList, ResultShow } from "./result";
+import { ResultList } from "./result";
 import Settings from "./settings/index.tsx";
 import { TestTemplateCreate, TestTemplateEdit, TestTemplateList } from './testTemplate/index.tsx';
 import { TestTypeCreate, TestTypeEdit, TestTypeList } from "./testType";
 import { WorkOrderAddTest, WorkOrderCreate, WorkOrderList } from "./workOrder";
 import { WorkOrderShow } from "./workOrder/Show.tsx";
+import { ObservationResultAdd, ResultShow } from './result/show.tsx';
+import { dateFormatter } from '../helper/format.ts';
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
@@ -32,6 +34,7 @@ const App = () => {
             hasCreate={true}
             hasShow={true}
             icon={BiotechIcon}
+            recordRepresentation={record => `#${record.id} - ${dateFormatter(record.created_at)})`}
         >
             <Route path="/:id/show/add-test*" element={<WorkOrderAddTest />} />
             <Route path="/:id/show/patient/create" element={<PatientCreate />} />

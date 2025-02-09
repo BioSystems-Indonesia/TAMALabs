@@ -98,23 +98,23 @@ func (r Repository) FindOne(ctx context.Context, id int64) (entity.Specimen, err
 	return specimen, nil
 }
 
-func (r Repository) FindByBarcode(ctx context.Context, barcode string) ([]entity.Specimen, error) {
-	var specimens []entity.Specimen
+func (r Repository) FindByBarcode(ctx context.Context, barcode string) (entity.Specimen, error) {
+	var specimen entity.Specimen
 	err := r.db.Debug().WithContext(ctx).
 		Where("barcode = ?", barcode).
 		Preload("ObservationResult").
 		Preload("ObservationResult.TestType").
 		Preload("WorkOrder").
-		Find(&specimens).Error
+		First(&specimen).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, entity.ErrNotFound
+		return entity.Specimen{}, entity.ErrNotFound
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("error finding Specimen: %w", err)
+		return entity.Specimen{}, fmt.Errorf("error finding Specimen: %w", err)
 	}
 
-	return specimens, nil
+	return specimen, nil
 }
 
 func (r *Repository) GenerateBarcode(ctx context.Context) string {

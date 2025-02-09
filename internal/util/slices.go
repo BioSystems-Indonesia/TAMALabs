@@ -88,3 +88,30 @@ func Flatten[T any](input [][]T) []T {
 	}
 	return result
 }
+
+// RemoveDuplicates removes duplicates from a slice of type T based on a key field.
+// The keyFunc extracts a comparable key of type K from each item.
+//
+//	people := []Person{
+//			{ID: 1, Name: "Alice"},
+//			{ID: 2, Name: "Bob"},
+//			{ID: 1, Name: "Alice"},
+//			{ID: 3, Name: "Charlie"},
+//			{ID: 2, Name: "Bob"},
+//		}
+//
+//		uniquePeople := RemoveDuplicatesFromStruct(people, func(p Person) int {
+//			return p.ID
+//		})
+func RemoveDuplicatesFromStruct[T any, K comparable](items []T, keyFunc func(T) K) []T {
+	seen := make(map[K]struct{})
+	result := make([]T, 0, len(items))
+	for _, item := range items {
+		key := keyFunc(item)
+		if _, exists := seen[key]; !exists {
+			seen[key] = struct{}{}
+			result = append(result, item)
+		}
+	}
+	return result
+}
