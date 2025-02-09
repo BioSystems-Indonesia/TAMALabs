@@ -2,7 +2,6 @@ import { Card, CardContent, Chip, Typography } from "@mui/material";
 import {
     AutocompleteArrayInput,
     BooleanInput,
-    CheckboxGroupInput,
     Datagrid,
     DateField,
     FilterLiveForm,
@@ -13,7 +12,6 @@ import {
     TextField,
     WithRecord
 } from "react-admin";
-import FeatureList from "../../component/FeatureList";
 import PrintMCUButton from "../../component/PrintReport";
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
 

@@ -214,8 +214,6 @@ export const ResultShow = () => {
                             </Link>
                         </Stack>
                     }
-                    const [expandedRows, setExpandedRows] = useState<string[]>([]);
-
                     const checkHistoryHaveDifferentResult = (row: ResultColumn, history: ResultColumn[]) => {
                         let resultDifference = false
                         for (const v of history) {

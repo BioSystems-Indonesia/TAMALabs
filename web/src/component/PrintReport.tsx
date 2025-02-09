@@ -7,7 +7,7 @@ import {
 } from '@react-pdf/renderer';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import type { ObservationResult, ReportData, ReportDataAbnormality, TestResult } from '../types/observation_result';
+import type { ReportData, ReportDataAbnormality, TestResult } from '../types/observation_result';
 import type { Patient } from '../types/patient';
 import type { WorkOrder } from '../types/work_order';
 import { ReportDocument } from './ReportFile';
