@@ -72,7 +72,7 @@ func TestConvertCompoundUnit(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result, err := convertCompoundUnit(test.value, test.fromUnit, test.toUnit)
+		result, err := ConvertCompoundUnit(test.value, test.fromUnit, test.toUnit)
 		if err != nil {
 			t.Errorf("convertCompoundUnit(%v, %s, %s) failed: %v", test.value, test.fromUnit, test.toUnit, err)
 		} else if !almostEqual(result, test.expected, 1e-9) {
@@ -117,7 +117,7 @@ func TestErrorHandling(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		_, err := convertCompoundUnit(test.value, test.fromUnit, test.toUnit)
+		_, err := ConvertCompoundUnit(test.value, test.fromUnit, test.toUnit)
 		if err == nil {
 			t.Errorf("convertCompoundUnit(%v, %s, %s) should have failed", test.value, test.fromUnit, test.toUnit)
 		}

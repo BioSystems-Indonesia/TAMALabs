@@ -109,8 +109,8 @@ func convertSimpleUnit(value float64, fromUnit, toUnit string) (float64, error) 
 	return result, nil
 }
 
-// convertCompoundUnit converts a compound unit (e.g., mg/dL, U/L)
-func convertCompoundUnit(value float64, fromUnit, toUnit string) (float64, error) {
+// ConvertCompoundUnit converts a compound unit (e.g., mg/dL, U/L)
+func ConvertCompoundUnit(value float64, fromUnit, toUnit string) (float64, error) {
 	// Parse the compound units
 	fromNum, fromDen := parseCompoundUnit(fromUnit)
 	toNum, toDen := parseCompoundUnit(toUnit)
