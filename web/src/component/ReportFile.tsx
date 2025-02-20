@@ -164,7 +164,8 @@ const calculateAge = (birthdate: string) => {
         months--;
     }
 
-    return `${years} year(s), ${months} month(s), ${days} day(s)`;
+    // return `${years} year(s), ${months} month(s), ${days} day(s)`;
+    return `${years} year(s)`;
 };
 
 // Helper function to format gender
