@@ -1,14 +1,14 @@
 package ba400
 
 import (
-	"strconv"
+	"fmt"
 
 	"github.com/kardianos/hl7/h251"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
 func EncodeToPID(in entity.Patient) *h251.PID {
-	id := strconv.FormatInt(in.ID, 10)
+	id := fmt.Sprintf("%d-%s %s", in.ID, in.FirstName, in.LastName)
 	return &h251.PID{
 		HL7:                   h251.HL7Name{},
 		SetID:                 "1",
