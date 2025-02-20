@@ -70,6 +70,8 @@ func (r ResultTest) FromObservationResult(observation ObservationResult) ResultT
 		}
 	}
 
+	resultTest.Result = fmt.Sprintf("%.5f", result)
+
 	resultTest.Abnormal = NormalResult
 	if result <= observation.TestType.LowRefRange {
 		resultTest.Abnormal = LowResult
