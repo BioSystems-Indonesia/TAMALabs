@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/oibacidem/lims-hl-seven/internal/util"
 )
 
 type Result struct {
@@ -55,9 +57,17 @@ func (r ResultTest) FromObservationResult(observation ObservationResult) ResultT
 	}
 
 	// only process the first value, if the observation have multiple values we need to handle it later
-	result, err := strconv.ParseFloat(resultTest.Result, 64)
+	var result float64
+	resultOrig, err := strconv.ParseFloat(resultTest.Result, 64)
 	if err != nil {
 		return resultTest
+	}
+	// convert result into configuration units
+	if resultTest.Unit != "%" {
+		result, err = util.ConvertCompoundUnit(resultOrig, observation.Unit, observation.TestType.Unit)
+		if err != nil {
+			result = resultOrig
+		}
 	}
 
 	resultTest.Abnormal = NormalResult
