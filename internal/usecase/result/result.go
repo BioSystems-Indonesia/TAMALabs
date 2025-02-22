@@ -64,17 +64,12 @@ func (u *Usecase) ResultDetail(ctx context.Context, specimenID int64) (entity.Re
 
 // UpdateResult will store the result into histories
 // in the handler, it will use PUT
-func (u *Usecase) UpdateResult(ctx context.Context, data []entity.ResultTest) ([]entity.ResultTest, error) {
+func (u *Usecase) UpdateResult(ctx context.Context, data []entity.TestResult) ([]entity.TestResult, error) {
 	// This will create N+1 condition but right now only used for one test
 	// TODO but do we really need to update in bulk?
-	var testResults = []entity.ResultTest{}
+	var testResults = []entity.TestResult{}
 	for _, v := range data {
 		testType, err := u.testTypeRepository.FindOneByID(ctx, int(v.TestTypeID))
-		if err != nil {
-			return data, err
-		}
-
-		fromDB, err := u.resultRepository.FindByID(ctx, v.ID)
 		if err != nil {
 			return data, err
 		}
@@ -85,7 +80,7 @@ func (u *Usecase) UpdateResult(ctx context.Context, data []entity.ResultTest) ([
 		}
 
 		input := entity.ObservationResult{
-			SpecimenID:     fromDB.SpecimenID,
+			SpecimenID:     v.SpecimenID,
 			Code:           testType.Code,
 			Values:         values,
 			Unit:           testType.Unit,
@@ -98,10 +93,13 @@ func (u *Usecase) UpdateResult(ctx context.Context, data []entity.ResultTest) ([
 			return data, err
 		}
 
-		test := entity.ResultTest{}
+		test := entity.TestResult{}
 		test = test.FromObservationResult(input)
 		// Hack so the front end is not add first then replace
-		test.ID = v.ID
+		// TODO maybe need to find better way than this
+		if v.ID != 0 {
+			test.ID = v.ID
+		}
 
 		history, err := u.resultRepository.FindHistory(ctx, input)
 		if err != nil {
@@ -157,8 +155,8 @@ func (u *Usecase) mapListResult(specimens []entity.Specimen) []entity.Result {
 	return results
 }
 
-func (u *Usecase) groupResultInCategory(tests []entity.ResultTest) map[string][]entity.ResultTest {
-	var resultTestsCategory = map[string][]entity.ResultTest{}
+func (u *Usecase) groupResultInCategory(tests []entity.TestResult) map[string][]entity.TestResult {
+	var resultTestsCategory = map[string][]entity.TestResult{}
 	for _, resultTest := range tests {
 		categoryName := resultTest.Category
 
@@ -166,19 +164,19 @@ func (u *Usecase) groupResultInCategory(tests []entity.ResultTest) map[string][]
 		if ok {
 			resultTestsCategory[categoryName] = append(categoryTestResults, resultTest)
 		} else {
-			resultTestsCategory[categoryName] = []entity.ResultTest{resultTest}
+			resultTestsCategory[categoryName] = []entity.TestResult{resultTest}
 		}
 	}
 
 	return resultTestsCategory
 }
 
-func (u *Usecase) processResultDetail(specimen entity.Specimen) []entity.ResultTest {
-	var tests = make([]entity.ResultTest, len(specimen.ObservationRequest))
+func (u *Usecase) processResultDetail(specimen entity.Specimen) []entity.TestResult {
+	var tests = make([]entity.TestResult, len(specimen.ObservationRequest))
 
 	// create the placeholder first
 	for i, request := range specimen.ObservationRequest {
-		tests[i] = entity.ResultTest{}.CreateEmpty(request)
+		tests[i] = entity.TestResult{}.CreateEmpty(request)
 	}
 
 	// sort by test code

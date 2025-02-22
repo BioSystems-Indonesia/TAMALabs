@@ -15,7 +15,7 @@ func (u *Usecase) ProcessOULR22(ctx context.Context, data entity.OUL_R22) error 
 	var errs []error
 	uniqueWorkOrder := map[int64]struct{}{}
 	for i := range specimens {
-		spEntity, err := u.SpecimenRepository.FindByBarcode(ctx, specimens[i].HL7ID)
+		spEntity, err := u.SpecimenRepository.FindByBarcode(ctx, specimens[i].Barcode)
 		if err != nil {
 			errs = append(errs, err)
 			continue

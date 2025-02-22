@@ -20,20 +20,23 @@ type ResultPaginationResponse struct {
 
 type ResultDetail struct {
 	Specimen
-	TestResult map[string][]ResultTest `json:"test_result"`
+	TestResult map[string][]TestResult `json:"test_result"`
 }
 
 type UpdateManyResultTestReq struct {
-	Data []ResultTest `json:"data"`
+	Data []TestResult `json:"data"`
 }
 
 type DeleteResultBulkReq struct {
 	IDs []int64 `json:"ids"`
 }
 
-// ResultTest
-type ResultTest struct {
+// TestResult are representation of result that will be manipulated and managed
+// in our LIS. it is used to store or add the test manually or to show
+// the test to others
+type TestResult struct {
 	ID             int64          `json:"id"`
+	SpecimenID     int64          `json:"specimen_id"`
 	TestTypeID     int64          `json:"test_type_id"`
 	Test           string         `json:"test"`
 	Result         *float64       `json:"result"`
@@ -43,16 +46,17 @@ type ResultTest struct {
 	ReferenceRange string         `json:"reference_range"`
 	UpdatedAt      string         `json:"created_at"`
 
-	History []ResultTest `json:"history"`
+	History []TestResult `json:"history"`
 }
 
 // CreateEmpty why we create empty result test? because we need the placeholder for the result test
 // Result test can be filled manualy in frontend or from the result observation
 // When we fill we need to show to the user, what testCode that we are filling
 // What are the unit they will fill and what is the reference range
-func (r ResultTest) CreateEmpty(request ObservationRequest) ResultTest {
-	return ResultTest{
+func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
+	return TestResult{
 		ID:             0,
+		SpecimenID:     request.SpecimenID,
 		Test:           request.TestCode,
 		Result:         nil,
 		TestTypeID:     int64(request.TestType.ID),
@@ -61,13 +65,14 @@ func (r ResultTest) CreateEmpty(request ObservationRequest) ResultTest {
 		ReferenceRange: fmt.Sprintf("%.2f - %.2f", request.TestType.LowRefRange, request.TestType.HighRefRange),
 		UpdatedAt:      request.UpdatedAt.Format(time.RFC3339),
 		Abnormal:       NormalResult,
-		History:        []ResultTest{},
+		History:        []TestResult{},
 	}
 }
 
-func (r ResultTest) FromObservationResult(observation ObservationResult) ResultTest {
-	resultTest := ResultTest{
+func (r TestResult) FromObservationResult(observation ObservationResult) TestResult {
+	resultTest := TestResult{
 		ID:             observation.ID,
+		SpecimenID:     observation.SpecimenID,
 		Test:           observation.Code,
 		TestTypeID:     int64(observation.TestType.ID),
 		Unit:           observation.TestType.Unit,
@@ -124,13 +129,14 @@ func (r ResultTest) FromObservationResult(observation ObservationResult) ResultT
 	return resultTest
 }
 
-func (r ResultTest) FillHistory(history []ObservationResult) ResultTest {
-	histories := make([]ResultTest, len(history))
+func (r TestResult) FillHistory(history []ObservationResult) TestResult {
+	histories := make([]TestResult, len(history))
 	for i, h := range history {
 		result := h.GetFirstValue()
 
-		histories[i] = ResultTest{
+		histories[i] = TestResult{
 			ID:             h.ID,
+			SpecimenID:     h.SpecimenID,
 			Test:           h.Code,
 			Result:         &result,
 			TestTypeID:     int64(h.TestType.ID),
@@ -144,34 +150,6 @@ func (r ResultTest) FillHistory(history []ObservationResult) ResultTest {
 	r.History = histories
 
 	return r
-}
-
-func (r ResultTest) ToObservationResult() (ObservationResult, error) {
-	var lowRefRange, highRefRange float64
-
-	_, err := fmt.Sscanf(r.ReferenceRange, "%f - %f", &lowRefRange, &highRefRange)
-	if err != nil {
-		return ObservationResult{}, err
-	}
-
-	updated_at, _ := time.Parse(time.RFC3339, r.UpdatedAt)
-
-	values := make([]string, 0)
-	if r.Result != nil {
-		values = append(values, fmt.Sprintf("%f", *r.Result))
-	}
-
-	return ObservationResult{
-		ID:   r.ID,
-		Code: r.Test,
-		TestType: TestType{
-			ID:   int(r.TestTypeID),
-			Name: r.Test, Unit: r.Unit, Category: r.Category,
-			LowRefRange: lowRefRange, HighRefRange: highRefRange,
-		},
-		Values:    values,
-		UpdatedAt: updated_at,
-	}, nil
 }
 
 type AbnormalResult int32

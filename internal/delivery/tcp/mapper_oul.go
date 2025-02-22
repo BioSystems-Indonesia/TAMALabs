@@ -84,7 +84,7 @@ func mapOULSpecimenToSpecimenEntity(specimen h251.OUL_R22_Specimen) entity.Speci
 	}
 
 	if specimen.SPM != nil {
-		specimenResult.HL7ID = specimen.SPM.SpecimenID.PlacerAssignedIdentifier.EntityIdentifier
+		specimenResult.Barcode = specimen.SPM.SpecimenID.PlacerAssignedIdentifier.EntityIdentifier
 		specimenResult.Type = specimen.SPM.SpecimenType.Identifier
 		specimenResult.ReceivedDate = specimen.SPM.SpecimenReceivedDateTime
 	}

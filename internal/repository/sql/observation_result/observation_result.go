@@ -39,47 +39,6 @@ func (r *Repository) FindHistory(ctx context.Context, input entity.ObservationRe
 	return
 }
 
-func (r *Repository) UpdateResultTest(
-	ctx context.Context,
-	data []entity.ResultTest,
-) ([]entity.ResultTest, error) {
-	err := r.DB.Transaction(func(tx *gorm.DB) error {
-		for i, result := range data {
-			newObservationResult, errConv := result.ToObservationResult()
-			if errConv != nil {
-				return fmt.Errorf("error converting result to observation result: %w", errConv)
-			}
-
-			var oldObservationResult entity.ObservationResult
-			err := tx.
-				Where("id = ?", result.ID).
-				First(&oldObservationResult).Error
-			if err != nil {
-				return fmt.Errorf("error finding observation result: %w", err)
-			}
-
-			oldObservationResult.Values = newObservationResult.Values
-
-			err = tx.
-				Model([]entity.ObservationResult{}).
-				Where("id = ?", result.ID).
-				Save(&oldObservationResult).Error
-			if err != nil {
-				return fmt.Errorf("error updating observation result: %w", err)
-			}
-
-			data[i] = result
-		}
-
-		return nil
-	})
-	if err != nil {
-		return []entity.ResultTest{}, err
-	}
-
-	return data, nil
-}
-
 func (r *Repository) Delete(context context.Context, id int64) (entity.ObservationResult, error) {
 	var observationResult entity.ObservationResult
 	err := r.DB.Where("id = ?", id).First(&observationResult).Error
