@@ -62,97 +62,52 @@ func (u *Usecase) ResultDetail(ctx context.Context, specimenID int64) (entity.Re
 	}, nil
 }
 
-// UpdateResult will store the result into histories
-// in the handler, it will use PUT
-func (u *Usecase) UpdateResult(ctx context.Context, data []entity.TestResult) ([]entity.TestResult, error) {
-	// This will create N+1 condition but right now only used for one test
-	// TODO but do we really need to update in bulk?
-	var testResults = []entity.TestResult{}
-	for _, v := range data {
-		testType, err := u.testTypeRepository.FindOneByID(ctx, int(v.TestTypeID))
-		if err != nil {
-			return data, err
-		}
+// PutTestResult will create ObservationResult
+// set the value, unit and everyting else
+// and will prepend it in TestResult.History
+func (u *Usecase) PutTestResult(ctx context.Context, result entity.TestResult) (entity.TestResult, error) {
+	oldResult := result
 
-		values := make([]string, 0)
-		if v.Result != nil {
-			values = append(values, fmt.Sprintf("%f", *v.Result))
-		}
-
-		input := entity.ObservationResult{
-			SpecimenID:     v.SpecimenID,
-			Code:           testType.Code,
-			Values:         values,
-			Unit:           testType.Unit,
-			ReferenceRange: fmt.Sprintf("%.2f - %.2f", testType.LowRefRange, testType.HighRefRange),
-			TestType:       testType,
-		}
-
-		err = u.resultRepository.Create(ctx, &input)
-		if err != nil {
-			return data, err
-		}
-
-		test := entity.TestResult{}
-		test = test.FromObservationResult(input)
-		// Hack so the front end is not add first then replace
-		// TODO maybe need to find better way than this
-		if v.ID != 0 {
-			test.ID = v.ID
-		}
-
-		history, err := u.resultRepository.FindHistory(ctx, input)
-		if err != nil {
-			log.Printf("cannot get history: ")
-		}
-
-		test = test.FillHistory(history)
-
-		testResults = append(testResults, test)
+	obs := entity.ObservationResult{
+		SpecimenID:     result.SpecimenID,
+		Code:           result.Test,
+		Unit:           result.Unit,
+		ReferenceRange: result.ReferenceRange,
 	}
 
-	return testResults, nil
-}
-
-func (u *Usecase) CreateResult(
-	ctx context.Context, data entity.ObservationResultCreate,
-) ([]entity.ObservationResult, error) {
-	var results []entity.ObservationResult
-	for _, v := range data.Tests {
-		testType, err := u.testTypeRepository.FindOneByID(ctx, int(v.TestTypeID))
-		if err != nil {
-			return []entity.ObservationResult{}, err
-		}
-
-		input := entity.ObservationResult{
-			SpecimenID:     data.SpecimenID,
-			Code:           testType.Code,
-			Values:         []string{fmt.Sprintf("%v", v.Value)},
-			Unit:           testType.Unit,
-			ReferenceRange: fmt.Sprintf("%.2f - %.2f", testType.LowRefRange, testType.HighRefRange),
-			TestType:       testType,
-		}
-
-		results = append(results, input)
+	if result.Result != nil {
+		obs.Values = append(obs.Values, fmt.Sprintf("%f", *result.Result))
 	}
 
-	err := u.resultRepository.CreateMany(ctx, results)
+	err := u.resultRepository.Create(ctx, &obs)
 	if err != nil {
-		return []entity.ObservationResult{}, err
+		return result, err
 	}
 
-	return results, nil
+	obs.TestType, err = u.testTypeRepository.FindOneByCode(ctx, obs.Code)
+	if err != nil {
+		log.Printf("cannot fill test type for result %d: %v", obs.ID, err)
+	}
+
+	result = result.FromObservationResult(obs)
+	// Hack so the front end is not add first then replace
+	// TODO maybe need to find better way than this
+	if oldResult.ID != 0 {
+		result.ID = oldResult.ID
+	}
+
+	history, err := u.resultRepository.FindHistory(ctx, obs)
+	if err != nil {
+		log.Printf("cannot get history: %v", err)
+	}
+
+	result = result.FillHistory(history)
+
+	return result, nil
 }
 
-func (u *Usecase) mapListResult(specimens []entity.Specimen) []entity.Result {
-	results := make([]entity.Result, len(specimens))
-	for i, specimen := range specimens {
-		results[i] = entity.Result{
-			Specimen: specimen,
-		}
-	}
-
-	return results
+func (u *Usecase) DeleteTestResult(context context.Context, id int64) (entity.ObservationResult, error) {
+	return u.resultRepository.Delete(context, id)
 }
 
 func (u *Usecase) groupResultInCategory(tests []entity.TestResult) map[string][]entity.TestResult {
@@ -200,23 +155,16 @@ func (u *Usecase) processResultDetail(specimen entity.Specimen) []entity.TestRes
 
 	// fill the placeholder
 	for i, test := range tests {
+		newTest := test
 		history := testResults[test.Test]
 		if len(history) > 0 {
-			test = test.FromObservationResult(history[0])
+			newTest = newTest.FromObservationResult(history[0])
 		}
-		test = test.FillHistory(history)
+		newTest = newTest.FillHistory(history)
 
 		// or should be like this or we can just use the above code
-		tests[i] = test
+		tests[i] = newTest
 	}
 
 	return tests
-}
-
-func (u *Usecase) DeleteResult(context context.Context, id int64) (entity.ObservationResult, error) {
-	return u.resultRepository.Delete(context, id)
-}
-
-func (u *Usecase) DeleteResultBulk(context context.Context, req *entity.DeleteResultBulkReq) (entity.ObservationResult, error) {
-	return u.resultRepository.DeleteBulk(context, req.IDs)
 }

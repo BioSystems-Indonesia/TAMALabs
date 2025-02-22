@@ -15,26 +15,14 @@ import {
 import PrintMCUButton from "../../component/PrintReport";
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
 
-
-const ResultFilterSidebar = () => {
-    return (
-        <Card sx={{
-            order: -1, mr: 2, mt: 2, width: 200, minWidth: 200,
-        }}>
-            <CardContent>
-                <FilterLiveForm>
-                    <ReferenceInput source={"work_order_ids"} reference="work-order" label={"Work Order"}>
-                        <AutocompleteArrayInput />
-                    </ReferenceInput>
-                    <ReferenceInput source={"patient_ids"} reference="patient" label={"Patient"}>
-                        <AutocompleteArrayInput />
-                    </ReferenceInput>
-                    <BooleanInput source={"has_result"} label={"Show Only With Result"} />
-                </FilterLiveForm>
-            </CardContent>
-        </Card>
-    )
-}
+export const ResultList = () => (
+    <List resource="result" sort={{
+        field: "id",
+        order: "DESC"
+    }} aside={<ResultFilterSidebar />} exporter={false} >
+        <ResultDataGrid />
+    </List>
+);
 
 export const ResultDataGrid = (props: any) => {
     return (
@@ -69,14 +57,22 @@ export const ResultDataGrid = (props: any) => {
     )
 }
 
-export const ResultList = () => (
-    <List resource="result" sort={{
-        field: "id",
-        order: "DESC"
-    }} aside={<ResultFilterSidebar />} exporter={false} >
-        <ResultDataGrid />
-    </List>
-);
-
-
-
+const ResultFilterSidebar = () => {
+    return (
+        <Card sx={{
+            order: -1, mr: 2, mt: 2, width: 200, minWidth: 200,
+        }}>
+            <CardContent>
+                <FilterLiveForm>
+                    <ReferenceInput source={"work_order_ids"} reference="work-order" label={"Work Order"}>
+                        <AutocompleteArrayInput />
+                    </ReferenceInput>
+                    <ReferenceInput source={"patient_ids"} reference="patient" label={"Patient"}>
+                        <AutocompleteArrayInput />
+                    </ReferenceInput>
+                    <BooleanInput source={"has_result"} label={"Show Only With Result"} />
+                </FilterLiveForm>
+            </CardContent>
+        </Card>
+    )
+}

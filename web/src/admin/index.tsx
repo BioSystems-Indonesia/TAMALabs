@@ -14,7 +14,7 @@ import { DeviceCreate, DeviceEdit, DeviceList, DeviceShow } from "./device/index
 import { DefaultLayout } from "./layout.tsx";
 import { PatientCreate, PatientEdit, PatientList, PatientShow } from "./patient";
 import { ResultList } from "./result";
-import { ObservationResultAdd, ResultShow } from './result/show.tsx';
+import { ResultShow } from './result/show.tsx';
 import Settings from "./settings/index.tsx";
 import { TestTemplateCreate, TestTemplateEdit, TestTemplateList } from './testTemplate/index.tsx';
 import { TestTypeCreate, TestTypeEdit, TestTypeList } from "./testType";
@@ -51,9 +51,7 @@ const App = () => {
             hasShow={true}
             icon={AssessmentIcon}
             recordRepresentation={record => `#${record.barcode}}`}
-        >
-            <Route path="/:id/show/add-result*" element={<ObservationResultAdd />} />
-        </Resource>
+        />
         <Resource name="patient" list={PatientList} show={PatientShow} edit={PatientEdit} create={PatientCreate}
             hasCreate={true}
             hasEdit={true}

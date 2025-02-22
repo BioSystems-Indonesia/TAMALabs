@@ -1,72 +1,25 @@
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
 import HistoryIcon from '@mui/icons-material/History';
-import { Badge, Box, ButtonGroup, Chip, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, tableClasses, Tooltip, Typography } from "@mui/material";
+import { Badge, Box, ButtonGroup, Chip, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { DataGrid as MuiDatagrid, type DataGridProps, type GridRenderCellParams } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import {
-    ArrayInput,
-    AutocompleteInput,
-    Button,
-    Confirm,
-    Create,
     DateField,
     DeleteButton,
     Labeled,
     Link,
-    NumberInput,
-    ReferenceInput,
     Show,
-    SimpleForm,
-    SimpleFormIterator,
     SimpleShowLayout,
     TextField,
     WithRecord,
-    useDeleteMany,
     useNotify,
     useRefresh,
-    type ButtonProps
 } from "react-admin";
-import { useSearchParams } from "react-router-dom";
-import { getRefererParam, useRefererRedirect } from "../../hooks/useReferer";
 import type { ResultColumn } from "../../types/general";
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
+import { TestResult } from '../../types/observation_result';
 
-
-export const ResultShow = () => {
-    const notify = useNotify();
-    const refresh = useRefresh();
-
-    function onUpdateError(error: any): void {
-        notify(`Error update ${error}`, { type: 'error' });
-    }
-
-    async function updateResult(newRow: ResultColumn, oldRow: ResultColumn) {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/result`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                data: [newRow]
-            }),
-        });
-
-        if (!response.ok) {
-            const responseJson = await response.json();
-            throw new Error(responseJson?.error);
-        } 
-
-        const respJSON = await response.json();
-        if (Array.isArray(respJSON) === false) {
-            throw new Error("got unspected response, response not array")
-        }
-
-        notify(`Success update row ${newRow.test}`, { type: 'success' });
-        refresh();
-
-        return respJSON[0]
-    }
-
+export const ResultShow = (props: any) => {
     const [openHistory, setOpenHistory] = useState(false);
     const [history, setHistory] = useState<HistoryChangeProps>({
         rows: [],
@@ -76,264 +29,253 @@ export const ResultShow = () => {
     return (
         <Show title="Edit Result">
             <SimpleShowLayout >
-                <Grid sx={{
-                    display: "flex",
-                    border: "1px solid #ccc",
-                    padding: "12px",
-                }} container>
-                    <Grid item xs={12} md={12} sx={{
-                    }}>
-                        <Labeled>
-                            <TextField source="barcode" label="Barcode" />
-                        </Labeled>
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                        <Labeled>
-                            <WithRecord label="Patient" render={(record: any) => (
-                                <Link to={`/patient/${record.order_id}/show`} resource="patient" label={"Patient"} onClick={e => e.stopPropagation()}>
-                                    #{record.patient?.id}-{record.patient?.first_name} {record.patient?.last_name}
-                                </Link>
-                            )} />
-                        </Labeled>
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                        <Labeled>
-                            <WithRecord label="Work Order" render={(record: any) => (
-                                <Link to={`/work-order/${record.order_id}/show`} label={"Work Order"} onClick={e => e.stopPropagation()}>
-                                    <Chip label={`#${record?.order_id} - ${record.work_order?.status}`} color={WorkOrderChipColorMap(record.work_order?.status)} />
-                                </Link>
-                            )} />
-                        </Labeled>
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                        <Labeled>
-                            <DateField source="created_at" showTime />
-                        </Labeled>
-                    </Grid>
-                </Grid>
-                <WithRecord label="Test Result" render={(record: any) => {
-                    const checkHistoryHaveDifferentResult = (row: ResultColumn, history: ResultColumn[]) => {
-                        let resultDifference = false
-                        for (const v of history) {
-                            if (v.result !== row.result) {
-                                resultDifference = true
-                                break
-                            }
+                <HeaderInfo />
+                <WithRecord label="Test Result" render={(record: any) => (
+                    <>
+                        {
+                            Object.entries(record?.test_result).map(([category, rows]) => (
+                                <TestResultTableGroup
+                                    key={category}
+                                    category={category}
+                                    rows={rows}
+                                    setHistory={setHistory}
+                                    setOpenHistory={setOpenHistory}
+                                />
+                            ))
                         }
-                        return resultDifference
-                    }
-
-                    return (
-                        <>
-                            <Stack sx={{
-                                display: "flex",
-                                alignItems: "flex-end",
-                                width: "100%",
-                                marginTop: 2,
-                                paddingRight: 5,
-                            }}>
-                                <Link to={`add-result?specimen_id=${record.id}&${getRefererParam()}`}>
-                                    <Button label="Add Result" variant="contained" sx={{
-                                        width: "default",
-                                    }}>
-                                        <AddIcon />
-                                    </Button>
-                                </Link>
-                            </Stack>
-                            {
-                                Object.entries(record?.test_result).map(([category, result]: any) => (
-                                    <Stack sx={{
-                                        marginY: 2,
-                                        width: "100%",
-                                    }} key={category}>
-                                        <Typography variant="subtitle1" gutterBottom>
-                                            {category}
-                                        </Typography>
-                                        <Typography variant="caption" gutterBottom>
-                                            Click result column to edit
-                                        </Typography>
-                                        <MuiDatagrid rows={result}
-                                            pageSizeOptions={[-1]}
-                                            hideFooter
-                                            editMode="row"
-                                            processRowUpdate={updateResult}
-                                            onProcessRowUpdateError={onUpdateError}
-                                            rowHeight={60}
-                                            columns={[
-                                                ...baseColumns,
-                                                {
-                                                    field: '',
-                                                    headerName: 'Action',
-                                                    flex: 1,
-                                                    renderCell: (params: GridRenderCellParams) => {
-                                                        let resultDifference = checkHistoryHaveDifferentResult(params.row, params.row.history)
-
-                                                        return <Box sx={{
-                                                        }}>
-                                                            <Tooltip title={resultDifference ? "History has different result" : "Show History"}>
-                                                                <Badge badgeContent={params.row.history.length} color={resultDifference ? "warning" : "primary"}>
-                                                                    <IconButton color={resultDifference ? "warning" : "primary"}
-                                                                        onClick={() => {
-                                                                            setHistory({
-                                                                                rows: params.row.history,
-                                                                                title: `History of ${params.row.test}`
-                                                                            })
-                                                                            setOpenHistory(true)
-                                                                        }} >
-                                                                        <HistoryIcon />
-                                                                    </IconButton>
-                                                                </Badge>
-                                                            </Tooltip>
-
-
-                                                            <DeleteTestButton label={''} variant='text' size='large' resource="result"
-                                                                ids={params.row.history.map((v: ResultColumn) => v.id)}
-                                                                code={params.row.test}
-                                                                onError={() => {
-                                                                    notify(`Error delete test ${params.row.test}`, {
-                                                                        type: 'error',
-                                                                    });
-                                                                }}
-                                                                onSuccess={() => {
-                                                                    notify(`Success delete test ${params.row.test}`, {
-                                                                        type: 'success',
-                                                                    });
-                                                                    refresh();
-
-                                                                    const newHistoryRows = history.rows.filter(v => v.id !== params.row.id)
-                                                                    setHistory({
-                                                                        rows: newHistoryRows,
-                                                                        title: history.title,
-                                                                    })
-                                                                }}
-                                                            />
-                                                        </Box>
-                                                    },
-                                                }
-                                            ]} />
-                                    </Stack>
-                                ))
-                            }
-                            <HistoryDialog
-                                pageSizeOptions={[-1]}
-                                hideFooter
-                                editMode="row"
-                                processRowUpdate={updateResult}
-                                onProcessRowUpdateError={onUpdateError}
-                                rowHeight={60}
-                                title={history.title} open={openHistory} onClose={() => setOpenHistory(false)} rows={history.rows} columns={[
-                                    ...baseColumns,
-                                    {
-                                        field: '',
-                                        headerName: 'Action',
-                                        flex: 1,
-                                        renderCell: (params: GridRenderCellParams) => {
-                                            return <ButtonGroup sx={{
-                                                gap: 2,
-                                            }}>
-                                                <DeleteButton sx={{
-                                                    marginLeft: 2,
-                                                }} label={''} mutationMode="pessimistic" size='medium' resource="result" variant='text' record={{
-                                                    id: params.row.id,
-                                                }} confirmTitle={`Delete test ${params.row.test}?`}
-                                                    confirmColor="warning"
-                                                    confirmContent="This will delete the test result. This action cannot be undone."
-                                                    redirect={false}
-                                                    mutationOptions={{
-                                                        onError: () => {
-                                                            notify(`Error delete test ${params.row.test}`, {
-                                                                type: 'error',
-                                                            });
-                                                        },
-                                                        onSuccess: () => {
-                                                            notify(`Success delete test ${params.row.test}`, {
-                                                                type: 'success',
-                                                            });
-                                                            refresh();
-
-                                                            const newHistoryRows = history.rows.filter(v => v.id !== params.row.id)
-                                                            setHistory({
-                                                                rows: newHistoryRows,
-                                                                title: history.title,
-                                                            })
-                                                        },
-                                                    }}
-                                                />
-                                            </ButtonGroup>
-                                        }
-                                    }
-                                ]} />
-                        </>
-                    )
-                }} />
+                        <HistoryDialog
+                            specimenId={record.specimen_id}
+                            title={history.title}
+                            open={openHistory}
+                            onClose={() => setOpenHistory(false)}
+                            rows={history.rows}
+                            setHistory={setHistory}
+                        />
+                    </>)
+                } />
             </SimpleShowLayout>
         </Show>
     )
 }
 
-type DeleteTestButtonProps = {
-    ids: number[]
-    code: string
-    onSuccess?: () => void
-    onError?: () => void
-} & Partial<ButtonProps>
+const HeaderInfo = (props: any) => (
+    <Grid sx={{
+        display: "flex",
+        border: "1px solid #ccc",
+        padding: "12px",
+    }} container>
+        <Grid item xs={12} md={12} >
+            <Labeled>
+                <TextField source="barcode" label="Barcode" />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={4}>
+            <Labeled>
+                <WithRecord label="Patient" render={(record: any) => (
+                    <Link to={`/patient/${record.order_id}/show`} resource="patient" label={"Patient"} onClick={e => e.stopPropagation()}>
+                        #{record.patient?.id}-{record.patient?.first_name} {record.patient?.last_name}
+                    </Link>
+                )} />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={4}>
+            <Labeled>
+                <WithRecord label="Work Order" render={(record: any) => (
+                    <Link to={`/work-order/${record.order_id}/show`} label={"Work Order"} onClick={e => e.stopPropagation()}>
+                        <Chip label={`#${record?.order_id} - ${record.work_order?.status}`} color={WorkOrderChipColorMap(record.work_order?.status)} />
+                    </Link>
+                )} />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={4}>
+            <Labeled>
+                <DateField source="created_at" showTime />
+            </Labeled>
+        </Grid>
+    </Grid>
+)
 
-const DeleteTestButton = (props: DeleteTestButtonProps) => {
-    const [open, setOpen] = useState(false);
+const TestResultTableGroup = (props: any) => {
+    return <Stack sx={{
+        marginY: 2,
+        width: "100%",
+    }} key={props.category}>
+        <Typography variant="subtitle1" gutterBottom>
+            {props.category}
+        </Typography>
+        <Typography variant="caption" gutterBottom>
+            Click result column to edit
+        </Typography>
+        <TestResultTable {...props} />
+    </Stack>
+}
 
-    const [remove, { isPending }] = useDeleteMany(
-        'result',
-        { ids: props.ids },
-        {
-            onError: props.onError,
-            onSuccess: props.onSuccess,
+
+const TestResultTable = (props: any) => {
+    const notify = useNotify();
+
+    function onUpdateError(error: any): void {
+        notify(`Error update ${error}`, { type: 'error' });
+    }
+
+    async function putResult(newRow: TestResult, _oldRow: TestResult) {
+        // TODO right now we are using specimen_id for the get which one
+        // specimen that we want.. change this to work_order_id or order_id if
+        // dafa job is done
+        const url = `${import.meta.env.VITE_BACKEND_BASE_URL}/result/${newRow.specimen_id}/test`
+
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newRow)
+        });
+
+        if (!response.ok) {
+            const responseJson = await response.json();
+            throw new Error(responseJson?.error);
         }
-    );
 
-    const handleClick = () => setOpen(true);
-    const handleDialogClose = () => setOpen(false);
-    const handleConfirm = () => {
-        remove();
-        setOpen(false);
-    };
+        const respJSON = await response.json();
+        notify(`Success update row ${newRow.test}`, { type: 'success' });
+
+        return respJSON
+    }
+
+    let negID = -1
+
+    // support id == 0 when the TestResult is not set yet
+    // TODO find better hack than this
+    const rows = props.rows.map((r: any) => ({ ...r, id: r.id || negID-- }))
 
     return (
-        <>
-            <Tooltip title="Delete Test (All History)">
-                <IconButton  {...props} onClick={handleClick} color='error' resource="result" sx={{
-                    marginLeft: 2,
-                }}>
-                    <DeleteIcon />
-                </IconButton>
-            </Tooltip>
-            <Confirm
-                isOpen={open}
-                loading={isPending}
-                title={`Delete test ${props.code}?`}
-                content="This will delete the test result. This action cannot be undone."
-                confirmColor="warning"
-                onConfirm={handleConfirm}
-                onClose={handleDialogClose}
-            />
-        </>
-    );
-};
+        <MuiDatagrid rows={rows}
+            pageSizeOptions={[-1]}
+            hideFooter
+            editMode="row"
+            processRowUpdate={putResult}
+            onProcessRowUpdateError={onUpdateError}
+            rowHeight={60}
+            columns={[
+                {
+                    field: 'test',
+                    headerName: 'Test',
+                    flex: 2,
+                    renderCell: (params: GridRenderCellParams) => {
+                        if (!params.row.test_type_id) {
+                            return <Link to={`/test-type/create?code=${params.row.test}`} onClick={e => e.stopPropagation()} sx={{
+                                textAlign: "center",
+                                width: "100%",
+                                height: "100%",
+                                display: "flex",
+                                justifyContent: "start",
+                                textDecoration: "unset",
+                                alignItems: "center",
+                            }}>
+                                <Tooltip title="Test Type is Unset, please create it first">
+                                    <Chip label={params.row.test} color="error" />
+                                </Tooltip>
+                            </Link >
+                        }
 
+                        return <>
+                            <Link to={`/test-type/${params.row.test_type_id}/show`} onClick={e => e.stopPropagation()} sx={{
+                                width: "100%",
+                                height: "100%",
+                                textAlign: "center",
+                                display: "flex",
+                                justifyContent: "start",
+                                alignItems: "center",
+                            }}>
+                                <p>{params.row.test}</p>
+                            </Link>
+                        </>
+                    },
+                },
+                {
+                    field: 'result',
+                    headerName: 'Result',
+                    type: 'number',
+                    editable: true,
+                    flex: 1,
+                },
+                {
+                    field: 'unit',
+                    headerName: 'Unit',
+                    flex: 1,
+                },
+                {
+                    field: 'reference_range',
+                    headerName: 'Reference Range',
+                    flex: 2,
+                },
+                {
+                    field: 'abnormal',
+                    headerName: 'Status',
+                    flex: 1,
+                    renderCell: (params: GridRenderCellParams) => {
+                        switch (params.value) {
+                            case 1: return <Chip color="error" label="High" />
+                            case 2: return <Chip color="primary" label="Low" />
+                            default: return <Chip color="success" label="Normal" />
+                        }
+                    },
+                },
+                {
+                    field: 'created_at',
+                    headerName: 'Date',
+                    flex: 2,
+                    renderCell: (params: GridRenderCellParams) => {
+                        return dayjs(params.value).format("YYYY-MM-DD HH:mm:ss")
+                    },
+                },
+                {
+                    field: '',
+                    headerName: 'Action',
+                    flex: 1,
+                    renderCell: (params: GridRenderCellParams) => {
+                        let resultDifference = !params.row.history
+                            .map((h: TestResult) => "" + h.result + h.unit)
+                            .every((v: string, _: number, a: string[]) => v === a[0])
+
+                        return <Box>
+                            <Tooltip title={resultDifference ? "History has different result" : "Show History"}>
+                                <Badge badgeContent={params.row.history.length} color={resultDifference ? "warning" : "primary"}>
+                                    <IconButton color={resultDifference ? "warning" : "primary"}
+                                        onClick={() => {
+                                            props.setHistory({
+                                                rows: params.row.history,
+                                                title: `History of ${params.row.test}`
+                                            })
+                                            props.setOpenHistory(true)
+                                        }} >
+                                        <HistoryIcon />
+                                    </IconButton>
+                                </Badge>
+                            </Tooltip>
+                        </Box>
+                    },
+                },
+            ]} />
+    );
+}
 
 type HistoryChangeProps = {
-    rows: ResultColumn[]
     title: string
+    rows: ResultColumn[]
 }
 
 type HistoryDialogProps = {
+    specimenId: number
     title: string
     rows: ResultColumn[]
-    columns: any[]
     open: boolean
     onClose: () => void
+    setHistory: (props: HistoryChangeProps) => void
 } & Partial<DataGridProps<ResultColumn>>
 
 const HistoryDialog = (props: HistoryDialogProps) => {
+    const notify = useNotify();
+    const refresh = useRefresh();
     return (
         <Dialog
             open={props.open}
@@ -348,202 +290,87 @@ const HistoryDialog = (props: HistoryDialogProps) => {
             <DialogTitle id="alert-dialog-title">
                 {props.title}
             </DialogTitle>
-            <DialogContent sx={{
-            }}>
-                <MuiDatagrid  {...props} rows={props.rows} columns={props.columns} />
+            <DialogContent>
+                <MuiDatagrid
+                    pageSizeOptions={[-1]}
+                    hideFooter
+                    rowHeight={60}
+                    rows={props.rows}
+                    columns={[
+                        {
+                            field: 'test',
+                            headerName: 'Test',
+                            flex: 1,
+                        },
+                        {
+                            field: 'result',
+                            headerName: 'Result',
+                            type: 'number',
+                            flex: 1,
+                        },
+                        {
+                            field: 'unit',
+                            headerName: 'Unit',
+                            flex: 1,
+                        },
+                        {
+                            field: 'reference_range',
+                            headerName: 'Reference Range',
+                            flex: 1,
+                        },
+                        {
+                            field: 'created_at',
+                            headerName: 'Created At',
+                            flex: 1,
+                            renderCell: (params: GridRenderCellParams) => {
+                                return dayjs(params.value).format("YYYY-MM-DD HH:mm:ss")
+                            },
+                        },
+                        {
+                            field: '',
+                            headerName: 'Action',
+                            flex: 1,
+                            renderCell: (params: GridRenderCellParams) => {
+                                return <ButtonGroup sx={{
+                                    gap: 2,
+                                }}>
+                                    <DeleteButton
+                                        sx={{ marginLeft: 2 }}
+                                        label={''}
+                                        mutationMode="pessimistic"
+                                        size='medium'
+                                        resource={`result/${props.specimenId}/test`}
+                                        variant='text'
+                                        record={{ id: params.row.id }}
+                                        confirmTitle={`Delete test ${params.row.test}?`}
+                                        confirmColor="warning"
+                                        confirmContent="This will delete the test result. This action cannot be undone."
+                                        redirect={false}
+                                        mutationOptions={{
+                                            onError: () => {
+                                                notify(`Error delete test ${params.row.test}`, {
+                                                    type: 'error',
+                                                });
+                                            },
+                                            onSuccess: () => {
+                                                notify(`Success delete test ${params.row.test}`, {
+                                                    type: 'success',
+                                                });
+                                                refresh();
+
+                                                const newHistoryRows = props.rows.filter(v => v.id !== params.row.id)
+                                                props.setHistory({
+                                                    rows: newHistoryRows,
+                                                    title: props.title,
+                                                })
+                                            },
+                                        }}
+                                    />
+                                </ButtonGroup>
+                            }
+                        }
+                    ]} />
             </DialogContent>
         </Dialog>
     )
 }
-
-export const ObservationResultAdd = () => {
-    const FormField = () => {
-        const [params] = useSearchParams();
-        const specimenID = Number(params.get("specimen_id"));
-
-        return (
-            <>
-                <NumberInput source="specimen_id" label="Specimen ID" defaultValue={specimenID} readOnly={true} />
-                <ArrayInput source="tests" >
-                    <SimpleFormIterator inline disableReordering disableClear>
-                        <ReferenceInput source="test_type_id" reference="test-type" >
-                            <AutocompleteInput optionValue="id" optionText={record => `${record.code} - ${record.category}`}
-                                TextFieldProps={{
-                                    autoFocus: true,
-                                }}
-                            />
-                        </ReferenceInput >
-                        <NumberInput source="value" label="Result" autoFocus />
-                    </SimpleFormIterator>
-                </ArrayInput>
-            </>
-
-        )
-    }
-
-    const useReferer = useRefererRedirect("/result");
-    return (
-        <Create title="Create Observation Result" resource="result" redirect={useReferer}>
-            <SimpleForm>
-                <FormField />
-            </SimpleForm>
-        </Create>
-    )
-}
-
-const tableColumns = () => [
-    {
-        field: 'test',
-        headerName: 'Test',
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => {
-            if (!params.row.test_type_id) {
-                return <Link to={`/test-type/create?code=${params.row.test}`} onClick={e => e.stopPropagation()} sx={{
-                    textAlign: "center",
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    justifyContent: "start",
-                    textDecoration: "unset",
-                    alignItems: "center",
-                }}>
-                    <Tooltip title="Test Type is Unset, please create it first">
-                        <Chip label={params.row.test} color="error" />
-                    </Tooltip>
-                </Link >
-            }
-
-            return <>
-                <Link to={`/test-type/${params.row.test_type_id}/show`} onClick={e => e.stopPropagation()} sx={{
-                    width: "100%",
-                    height: "100%",
-                    textAlign: "center",
-                    display: "flex",
-                    justifyContent: "start",
-                    alignItems: "center",
-                }}>
-                    <p>{params.row.test}</p>
-                </Link>
-            </>
-        },
-    },
-    {
-        field: 'result',
-        headerName: 'Result',
-        type: 'number',
-        flex: 1,
-        editable: true,
-    },
-    {
-        field: 'unit',
-        headerName: 'Unit',
-        flex: 1,
-    },
-    {
-        field: 'reference_range',
-        headerName: 'Reference Range',
-        flex: 1,
-    },
-    {
-        field: 'created_at',
-        headerName: 'Created At',
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => {
-            return dayjs(params.value).format("YYYY-MM-DD HH:mm:ss")
-        },
-    },
-    {
-        field: 'abnormal',
-        headerName: 'Status',
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => {
-            return params.value === 1 ? (
-                <Chip color="error" label="High" />
-            ) : params.value === 2 ? (
-                <Chip color="warning" label="Low" />
-            ) :
-                (
-                    <Chip color="primary" label="Normal" />
-                )
-        },
-    },
-
-]
-
-const baseColumns = [
-    {
-        field: 'test',
-        headerName: 'Test',
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => {
-            if (!params.row.test_type_id) {
-                return <Link to={`/test-type/create?code=${params.row.test}`} onClick={e => e.stopPropagation()} sx={{
-                    textAlign: "center",
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    justifyContent: "start",
-                    textDecoration: "unset",
-                    alignItems: "center",
-                }}>
-                    <Tooltip title="Test Type is Unset, please create it first">
-                        <Chip label={params.row.test} color="error" />
-                    </Tooltip>
-                </Link >
-            }
-
-            return <>
-                <Link to={`/test-type/${params.row.test_type_id}/show`} onClick={e => e.stopPropagation()} sx={{
-                    width: "100%",
-                    height: "100%",
-                    textAlign: "center",
-                    display: "flex",
-                    justifyContent: "start",
-                    alignItems: "center",
-                }}>
-                    <p>{params.row.test}</p>
-                </Link>
-            </>
-        },
-    },
-    {
-        field: 'result',
-        headerName: 'Result',
-        type: 'number',
-        flex: 1,
-        editable: true,
-    },
-    {
-        field: 'unit',
-        headerName: 'Unit',
-        flex: 1,
-    },
-    {
-        field: 'reference_range',
-        headerName: 'Reference Range',
-        flex: 1,
-    },
-    {
-        field: 'created_at',
-        headerName: 'Created At',
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => {
-            return dayjs(params.value).format("YYYY-MM-DD HH:mm:ss")
-        },
-    },
-    {
-        field: 'abnormal',
-        headerName: 'Status',
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => {
-            return params.value === 1 ? (
-                <Chip color="error" label="High" />
-            ) : params.value === 2 ? (
-                <Chip color="warning" label="Low" />
-            ) :
-                (
-                    <Chip color="primary" label="Normal" />
-                )
-        },
-    },
-]
