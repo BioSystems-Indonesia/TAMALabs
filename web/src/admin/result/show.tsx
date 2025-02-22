@@ -1,7 +1,7 @@
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import HistoryIcon from '@mui/icons-material/History';
-import { Badge, Box, ButtonGroup, Chip, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Badge, Box, ButtonGroup, Chip, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, tableClasses, Tooltip, Typography } from "@mui/material";
 import { DataGrid as MuiDatagrid, type DataGridProps, type GridRenderCellParams } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 import { useState } from 'react';
@@ -36,126 +36,42 @@ import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
 
 export const ResultShow = () => {
     const notify = useNotify();
+    const refresh = useRefresh();
 
     function onUpdateError(error: any): void {
-        notify(`Error update ${error}`, {
-            type: 'error',
-        });
+        notify(`Error update ${error}`, { type: 'error' });
     }
 
     async function updateResult(newRow: ResultColumn, oldRow: ResultColumn) {
         const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/result`, {
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 data: [newRow]
             }),
-            method: 'PUT',
         });
 
         if (!response.ok) {
             const responseJson = await response.json();
             throw new Error(responseJson?.error);
-        } else {
-            const respJSON = await response.json();
-            if (Array.isArray(respJSON) === false) {
-                console.error("respJSON is not array");
-                return newRow
-            }
+        } 
 
-            notify(`Success update row ${newRow.test}`, {
-                type: 'success',
-            });
-            refresh();
-
-            return respJSON[0]
+        const respJSON = await response.json();
+        if (Array.isArray(respJSON) === false) {
+            throw new Error("got unspected response, response not array")
         }
 
+        notify(`Success update row ${newRow.test}`, { type: 'success' });
+        refresh();
+
+        return respJSON[0]
     }
 
-    const refresh = useRefresh();
     const [openHistory, setOpenHistory] = useState(false);
     const [history, setHistory] = useState<HistoryChangeProps>({
         rows: [],
         title: '',
     });
-    const baseColumns = [
-        {
-            field: 'test',
-            headerName: 'Test',
-            flex: 1,
-            renderCell: (params: GridRenderCellParams) => {
-                if (!params.row.test_type_id) {
-                    return <Link to={`/test-type/create?code=${params.row.test}`} onClick={e => e.stopPropagation()} sx={{
-                        textAlign: "center",
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        justifyContent: "center",
-                        textDecoration: "unset",
-                        alignItems: "center",
-                    }}>
-                        <Tooltip title="Test Type is Unset, please create it first">
-                            <Chip label={params.row.test} color="error" />
-                        </Tooltip>
-                    </Link >
-                }
-
-                return <>
-                    <Link to={`/test-type/${params.row.test_type_id}/show`} onClick={e => e.stopPropagation()} sx={{
-                        width: "100%",
-                        height: "100%",
-                        textAlign: "center",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                    }}>
-                        <p>{params.row.test}</p>
-                    </Link>
-                </>
-            },
-        },
-        {
-            field: 'result',
-            headerName: 'Result',
-            flex: 1,
-            editable: true,
-        },
-        {
-            field: 'unit',
-            headerName: 'Unit',
-            flex: 1,
-        },
-        {
-            field: 'reference_range',
-            headerName: 'Reference Range',
-            flex: 1,
-        },
-        {
-            field: 'created_at',
-            headerName: 'Created At',
-            flex: 1,
-            renderCell: (params: GridRenderCellParams) => {
-                return dayjs(params.value).format("YYYY-MM-DD HH:mm:ss")
-            },
-        },
-        {
-            field: 'abnormal',
-            headerName: 'Status',
-            flex: 1,
-            renderCell: (params: GridRenderCellParams) => {
-                return params.value === 1 ? (
-                    <Chip color="error" label="High" />
-                ) : params.value === 2 ? (
-                    <Chip color="warning" label="Low" />
-                ) :
-                    (
-                        <Chip color="primary" label="Normal" />
-                    )
-            },
-        },
-    ]
 
     return (
         <Show title="Edit Result">
@@ -196,24 +112,6 @@ export const ResultShow = () => {
                     </Grid>
                 </Grid>
                 <WithRecord label="Test Result" render={(record: any) => {
-                    if (!record?.test_result || Object.keys(record?.test_result).length === 0) {
-                        return <Stack sx={{
-                            width: "100%",
-                            marginY: 2,
-                        }} gap={0.5}>
-                            <Typography variant="h5" color={"text.primary"} sx={{
-                                width: "100%",
-                                textAlign: "center",
-                            }}>No Test Result found</Typography>
-                            <Link to={`add-result?specimen_id=${record?.id}&${getRefererParam()}`}>
-                                <Button label="Add Result" variant="contained" sx={{
-                                    width: "default",
-                                }}>
-                                    <AddIcon />
-                                </Button>
-                            </Link>
-                        </Stack>
-                    }
                     const checkHistoryHaveDifferentResult = (row: ResultColumn, history: ResultColumn[]) => {
                         let resultDifference = false
                         for (const v of history) {
@@ -492,3 +390,160 @@ export const ObservationResultAdd = () => {
         </Create>
     )
 }
+
+const tableColumns = () => [
+    {
+        field: 'test',
+        headerName: 'Test',
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => {
+            if (!params.row.test_type_id) {
+                return <Link to={`/test-type/create?code=${params.row.test}`} onClick={e => e.stopPropagation()} sx={{
+                    textAlign: "center",
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    justifyContent: "start",
+                    textDecoration: "unset",
+                    alignItems: "center",
+                }}>
+                    <Tooltip title="Test Type is Unset, please create it first">
+                        <Chip label={params.row.test} color="error" />
+                    </Tooltip>
+                </Link >
+            }
+
+            return <>
+                <Link to={`/test-type/${params.row.test_type_id}/show`} onClick={e => e.stopPropagation()} sx={{
+                    width: "100%",
+                    height: "100%",
+                    textAlign: "center",
+                    display: "flex",
+                    justifyContent: "start",
+                    alignItems: "center",
+                }}>
+                    <p>{params.row.test}</p>
+                </Link>
+            </>
+        },
+    },
+    {
+        field: 'result',
+        headerName: 'Result',
+        type: 'number',
+        flex: 1,
+        editable: true,
+    },
+    {
+        field: 'unit',
+        headerName: 'Unit',
+        flex: 1,
+    },
+    {
+        field: 'reference_range',
+        headerName: 'Reference Range',
+        flex: 1,
+    },
+    {
+        field: 'created_at',
+        headerName: 'Created At',
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => {
+            return dayjs(params.value).format("YYYY-MM-DD HH:mm:ss")
+        },
+    },
+    {
+        field: 'abnormal',
+        headerName: 'Status',
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => {
+            return params.value === 1 ? (
+                <Chip color="error" label="High" />
+            ) : params.value === 2 ? (
+                <Chip color="warning" label="Low" />
+            ) :
+                (
+                    <Chip color="primary" label="Normal" />
+                )
+        },
+    },
+
+]
+
+const baseColumns = [
+    {
+        field: 'test',
+        headerName: 'Test',
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => {
+            if (!params.row.test_type_id) {
+                return <Link to={`/test-type/create?code=${params.row.test}`} onClick={e => e.stopPropagation()} sx={{
+                    textAlign: "center",
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    justifyContent: "start",
+                    textDecoration: "unset",
+                    alignItems: "center",
+                }}>
+                    <Tooltip title="Test Type is Unset, please create it first">
+                        <Chip label={params.row.test} color="error" />
+                    </Tooltip>
+                </Link >
+            }
+
+            return <>
+                <Link to={`/test-type/${params.row.test_type_id}/show`} onClick={e => e.stopPropagation()} sx={{
+                    width: "100%",
+                    height: "100%",
+                    textAlign: "center",
+                    display: "flex",
+                    justifyContent: "start",
+                    alignItems: "center",
+                }}>
+                    <p>{params.row.test}</p>
+                </Link>
+            </>
+        },
+    },
+    {
+        field: 'result',
+        headerName: 'Result',
+        type: 'number',
+        flex: 1,
+        editable: true,
+    },
+    {
+        field: 'unit',
+        headerName: 'Unit',
+        flex: 1,
+    },
+    {
+        field: 'reference_range',
+        headerName: 'Reference Range',
+        flex: 1,
+    },
+    {
+        field: 'created_at',
+        headerName: 'Created At',
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => {
+            return dayjs(params.value).format("YYYY-MM-DD HH:mm:ss")
+        },
+    },
+    {
+        field: 'abnormal',
+        headerName: 'Status',
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => {
+            return params.value === 1 ? (
+                <Chip color="error" label="High" />
+            ) : params.value === 2 ? (
+                <Chip color="warning" label="Low" />
+            ) :
+                (
+                    <Chip color="primary" label="Normal" />
+                )
+        },
+    },
+]

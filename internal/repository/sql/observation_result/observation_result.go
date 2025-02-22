@@ -26,6 +26,19 @@ func (r *Repository) CreateMany(ctx context.Context, data []entity.ObservationRe
 	return r.DB.Create(data).Error
 }
 
+func (r *Repository) FindByID(ctx context.Context, id int64) (result entity.ObservationResult, err error) {
+	err = r.DB.First(&result, id).Error
+	return
+}
+
+func (r *Repository) FindHistory(ctx context.Context, input entity.ObservationResult) (results []entity.ObservationResult, err error) {
+	err = r.DB.
+		Where("specimen_id = ?", input.SpecimenID).
+		Where("code = ?", input.Code).
+		Find(&results).Error
+	return
+}
+
 func (r *Repository) UpdateResultTest(
 	ctx context.Context,
 	data []entity.ResultTest,
