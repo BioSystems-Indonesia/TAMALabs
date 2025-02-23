@@ -1,4 +1,5 @@
 import HistoryIcon from '@mui/icons-material/History';
+import { memo } from 'react';
 import { Badge, Box, ButtonGroup, Chip, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { DataGrid as MuiDatagrid, type DataGridProps, type GridRenderCellParams } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
@@ -17,7 +18,7 @@ import {
 } from "react-admin";
 import type { ResultColumn } from "../../types/general";
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
-import { TestResult } from '../../types/observation_result';
+import { Result, TestResult } from '../../types/observation_result';
 
 export const ResultShow = (props: any) => {
     const [openHistory, setOpenHistory] = useState(false);
@@ -30,7 +31,7 @@ export const ResultShow = (props: any) => {
         <Show title="Edit Result">
             <SimpleShowLayout >
                 <HeaderInfo />
-                <WithRecord label="Test Result" render={(record: any) => (
+                <WithRecord label="Test Result" render={(record: Result) => (
                     <>
                         {
                             Object.entries(record?.test_result).map(([category, rows]) => (
@@ -95,7 +96,8 @@ const HeaderInfo = (props: any) => (
     </Grid>
 )
 
-const TestResultTableGroup = (props: any) => {
+// using memo because we don't want this table rerendered when dialog appear or disappear
+const TestResultTableGroup = memo((props: TestResultTableProps) => {
     return <Stack sx={{
         marginY: 2,
         width: "100%",
@@ -108,10 +110,16 @@ const TestResultTableGroup = (props: any) => {
         </Typography>
         <TestResultTable {...props} />
     </Stack>
+})
+
+type TestResultTableProps = {
+    category: string
+    rows: TestResult[]
+    setHistory: (props: HistoryChangeProps) => void
+    setOpenHistory: (open: boolean) => void
 }
 
-
-const TestResultTable = (props: any) => {
+const TestResultTable = (props: TestResultTableProps) => {
     const notify = useNotify();
 
     function onUpdateError(error: any): void {
@@ -276,10 +284,18 @@ type HistoryDialogProps = {
 const HistoryDialog = (props: HistoryDialogProps) => {
     const notify = useNotify();
     const refresh = useRefresh();
+
+    // Some Hack because Dialog is on top, and it will refresh
+    // some updated value, then we need to make the values
+    // not rollback into previous value
+    const onClose = () => {
+        props.onClose()
+    }
+
     return (
         <Dialog
             open={props.open}
-            onClose={props.onClose}
+            onClose={onClose}
             fullWidth
             sx={{
                 width: "100%",
@@ -356,8 +372,8 @@ const HistoryDialog = (props: HistoryDialogProps) => {
                                                 notify(`Success delete test ${params.row.test}`, {
                                                     type: 'success',
                                                 });
-                                                refresh();
 
+                                                refresh()
                                                 const newHistoryRows = props.rows.filter(v => v.id !== params.row.id)
                                                 props.setHistory({
                                                     rows: newHistoryRows,

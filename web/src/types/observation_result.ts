@@ -51,3 +51,23 @@ export interface ReportData {
   unit: string;
   abnormality: ReportDataAbnormality;
 }
+
+export interface Patient {
+  id: number;
+  first_name: string;
+  last_name: string;
+}
+
+export interface WorkOrder {
+  id: number;
+  status: number;
+}
+
+export interface Result {
+  id: number;
+  barcode: string;
+  patient: Patient
+  work_order: WorkOrder
+  created_at: Date;
+  test_result: Map<string, TestResult[]>;
+}
