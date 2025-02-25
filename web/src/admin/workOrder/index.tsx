@@ -46,7 +46,7 @@ const WorkOrderAction = () => {
 
 export function WorkOrderCreate() {
     return (
-        <Create redirect={"list"} actions={<WorkOrderAction />} sx={{
+        <Create redirect={"show"} actions={<WorkOrderAction />} sx={{
             "& .RaCreate-card": {
                 overflow: "visible",
             }
@@ -58,7 +58,7 @@ export function WorkOrderCreate() {
 
 export function WorkOrderEdit() {
     return (
-        <Edit redirect={"list"} actions={<WorkOrderAction />} sx={{
+        <Edit redirect={"show"} actions={<WorkOrderAction />} sx={{
             "& .RaCreate-card": {
                 overflow: "visible",
             }

@@ -132,7 +132,7 @@ func (h *WorkOrderHandler) RunWorkOrder(c echo.Context) error {
 		return handleError(c, fmt.Errorf("error finding device: %w", tx.Error))
 	}
 
-	err = ba400.SendToBA400(c.Request().Context(), patients, device)
+	err = ba400.SendToBA400(c.Request().Context(), patients, device, req.Urgent)
 	if err != nil {
 		return handleError(c, err)
 	}
@@ -185,7 +185,7 @@ func (h *WorkOrderHandler) CancelOrder(c echo.Context) error {
 	}
 
 	workOrders.Status = entity.WorkOrderCancelled
-	err = ba400.SendToBA400(c.Request().Context(), []entity.Patient{workOrders.Patient}, device)
+	err = ba400.SendToBA400(c.Request().Context(), []entity.Patient{workOrders.Patient}, device, false)
 	if err != nil {
 		return handleError(c, err)
 	}

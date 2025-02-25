@@ -29,7 +29,7 @@ func (r PatientRepository) FindAll(
 	db = sql.ProcessGetMany(db, req.GetManyRequest,
 		sql.Modify{
 			ProcessSearch: func(db *gorm.DB, query string) *gorm.DB {
-				return db.Where("first_name like ? or last_name like ?", query+"%", query+"%")
+				return db.Where("first_name || ' ' || last_name like ?", "%"+query+"%")
 			},
 		})
 

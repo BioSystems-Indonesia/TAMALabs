@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/config"
@@ -196,83 +197,180 @@ func (r WorkOrderRepository) upsertRelation(
 	patient *entity.Patient,
 	workOrder *entity.WorkOrder,
 ) error {
-	specimen := entity.Specimen{
-		PatientID:      int(req.PatientID),
-		OrderID:        int(workOrder.ID),
-		Type:           defaultSerumType, // TODO: Change it so it not be hardcoded
-		Barcode:        r.specimentRepo.GenerateBarcode(trx.Statement.Context),
-		CollectionDate: time.Now().Format(time.RFC3339),
-	}
-	specimenQuery := trx.Clauses(clause.OnConflict{
-		// DoNothing: true,
-	}).Debug().Create(&specimen)
-	err := specimenQuery.Error
+	specimenTestTypes, err := r.groupBySpecimenType(trx, req)
 	if err != nil {
-		return err
+		return fmt.Errorf("error grouping specimen type: %w", err)
 	}
 
-	slog.Info("specimen insert",
-		"patientID", patient.ID,
-		"specimenID", specimen.ID,
-		"workOrderID", specimen.OrderID,
-		"type", defaultSerumType,
-		"rowAffected", specimenQuery.RowsAffected,
-	)
-
-	if specimenQuery.RowsAffected != 0 {
-		err := r.specimentRepo.IncrementBarcodeSequence(trx.Statement.Context)
+	for specimenType, testTypes := range specimenTestTypes {
+		specimen := entity.Specimen{
+			PatientID:      int(req.PatientID),
+			OrderID:        int(workOrder.ID),
+			Type:           specimenType,
+			Barcode:        r.specimentRepo.GenerateBarcode(trx.Statement.Context),
+			CollectionDate: time.Now().Format(time.RFC3339),
+		}
+		specimenQuery := trx.Clauses(clause.OnConflict{
+			// DoNothing: true,
+		}).Debug().Create(&specimen)
+		err = specimenQuery.Error
 		if err != nil {
 			return err
 		}
-	}
 
-	if specimenQuery.RowsAffected == 0 {
-		err = trx.Where("patient_id = ? AND order_id = ? AND type = ?", patient.ID, workOrder.ID, defaultSerumType).
-			First(&specimen).Error
-		if err != nil {
-			return fmt.Errorf("error finding specimen: %w", err)
-		}
-
-		slog.Info("specimen find",
+		slog.Info("specimen insert",
 			"patientID", patient.ID,
 			"specimenID", specimen.ID,
+			"workOrderID", specimen.OrderID,
 			"type", defaultSerumType,
 			"rowAffected", specimenQuery.RowsAffected,
 		)
-	}
 
-	testTypes, err := r.getTestType(trx, req.TestIDs)
-	if err != nil {
-		return fmt.Errorf("error getting test type: %w", err)
-	}
-
-	for _, testType := range testTypes {
-		observationRequest := entity.ObservationRequest{
-			TestCode:        testType.Code,
-			TestDescription: testType.Name,
-			SpecimenID:      int64(specimen.ID),
-			RequestedDate:   time.Now(),
+		if specimenQuery.RowsAffected != 0 {
+			err := r.specimentRepo.IncrementBarcodeSequence(trx.Statement.Context)
+			if err != nil {
+				return err
+			}
 		}
 
-		observationRequestQuery := trx.Clauses(clause.OnConflict{DoNothing: false}).Create(&observationRequest)
-		err := observationRequestQuery.Error
-		if err != nil {
-			return err
+		if specimenQuery.RowsAffected == 0 {
+			err = trx.Where("patient_id = ? AND order_id = ? AND type = ?", patient.ID, workOrder.ID, defaultSerumType).
+				First(&specimen).Error
+			if err != nil {
+				return fmt.Errorf("error finding specimen: %w", err)
+			}
+
+			slog.Info("specimen find",
+				"patientID", patient.ID,
+				"specimenID", specimen.ID,
+				"type", defaultSerumType,
+				"rowAffected", specimenQuery.RowsAffected,
+			)
 		}
 
-		slog.Info("observation request insert",
-			"testCode", testType.Code,
-			"testDescription", testType.Name,
-			"patientID", patient.ID,
-			"specimenID", specimen.ID,
-			"rowAffected", observationRequestQuery.RowsAffected,
-		)
-		if observationRequestQuery.RowsAffected == 0 {
-			continue
+		for _, testType := range testTypes {
+			observationRequest := entity.ObservationRequest{
+				TestCode:        testType.Code,
+				TestDescription: testType.Name,
+				SpecimenID:      int64(specimen.ID),
+				RequestedDate:   time.Now(),
+			}
+
+			observationRequestQuery := trx.Clauses(clause.OnConflict{DoNothing: false}).Create(&observationRequest)
+			err := observationRequestQuery.Error
+			if err != nil {
+				return err
+			}
+
+			slog.Info("observation request insert",
+				"testCode", testType.Code,
+				"testDescription", testType.Name,
+				"patientID", patient.ID,
+				"specimenID", specimen.ID,
+				"rowAffected", observationRequestQuery.RowsAffected,
+			)
+			if observationRequestQuery.RowsAffected == 0 {
+				continue
+			}
 		}
 	}
 
 	return nil
+}
+
+func (r WorkOrderRepository) groupBySpecimenType(trx *gorm.DB, req *entity.WorkOrderCreateRequest) (map[string][]entity.TestType, error) {
+	testTypes, err := r.getTestType(trx, req.TestIDs)
+	if err != nil {
+		return nil, fmt.Errorf("error getting test type: %w", err)
+	}
+
+	specimenTypes := make(map[string][]entity.TestType)
+	for _, testType := range testTypes {
+		// TODO: Remove hardcoded value
+		// INI GW NGARANG
+		var testCodeURI = []string{"PLATELET COUNT",
+			"LYMPHOCYTES",
+			"HEMATOCRIT",
+			"HEMOGLOBIN",
+			"GRAN#",
+			"GRAN%",
+			"LYM#",
+			"CHOLINESTERASE",
+			"Diastole",
+			"Sistole",
+			"HBA1C-DIR_NGSP",
+			"CREATININE",
+			"HDL DIRECT TOOS",
+			"LDL DIRECT TOOS",
+			"LDL DIRECT TOOS",
+			"URIC ACID",
+			"UREA-BUN-UV",
+			"UIBC",
+			"TRIGLYCERIDES",
+			"TRANSFERRIN BIR",
+		}
+		var testCodeHYDC = []string{
+			"TOTAL BILE ACIDS",
+			"RF",
+			"PROTEIN URINE",
+			"PROTEIN TOTALBIR",
+			"PREALBUMIN BIR",
+			"PHOSPHORUS-VERIF",
+			"PHOSPHORUS",
+			"OXALATE",
+			"NEFA",
+			"MAGNESIUM",
+			"LIPASE DGGR",
+			"LIPASE",
+			"LDH IFCC",
+			"LDH",
+			"LACTATE",
+			"IRON FERROZINE",
+			"IGM BIR",
+			"IGG BIR",
+			"IGA BIR",
+			"HOMOCYSTEINE",
+		}
+		var testCodePLAS = []string{
+			"HBA1C-DIR",
+			"HAPTOGLOBIN",
+			"GLUCOSE-VERIF",
+			"GLUCOSE-HK",
+			"GLUCOSE",
+			"GAMMA-GT",
+			"G6PDH",
+			"FRUCTOSE",
+			"FIBRINOGEN",
+			"FERRITIN",
+			"ETHANOL",
+			"D-DIMER",
+			"CRPHS",
+			"CRP",
+			"CK-MB",
+			"CK",
+			"CITRATE",
+			"CHOLESTEROL",
+			"CHOL LDL DIRECT",
+			"CHOL HDL DIRECT",
+		}
+
+		var specimentType string
+		if slices.Contains(testCodeURI, testType.Code) {
+			specimentType = entity.SpecimenTypeUR
+		} else if slices.Contains(testCodeHYDC, testType.Code) {
+			specimentType = entity.SpecimenTypeHYDC
+		} else if slices.Contains(testCodePLAS, testType.Code) {
+			specimentType = entity.SpecimenTypePLAS
+		} else {
+			specimentType = entity.SpecimenTypeSER
+		}
+		specimenTypes[specimentType] = append(specimenTypes[specimentType], testType)
+
+		// TODO: Change to this after specimen type is added to test type
+		// specimenTypes[testType.SpecimenType] = append(specimenTypes[testType.SpecimenType], testType)
+	}
+
+	return specimenTypes, nil
 }
 
 func (r WorkOrderRepository) getTestType(trx *gorm.DB, observationRequest []int64) ([]entity.TestType, error) {

@@ -326,7 +326,6 @@ function PatientInput(props: WorkOrderFormProps) {
                         noOptionsText={<NoPatient setOpen={setOpen} />}
                     />
                 </ReferenceInput>
-                <CreatePatientButton setOpen={setOpen} />
                 {
                     watch("patient_id") && <>
                         <Divider sx={{ my: "1rem" }} />
