@@ -100,9 +100,8 @@ func RegisterRoutes(
 		workOrder.POST("", handler.CreateWorkOrder)
 		workOrder.POST("/run", handler.RunWorkOrder)
 		workOrder.POST("/cancel", handler.CancelOrder)
-		workOrder.POST("/:id/show/add-test", handler.AddTestWorkOrder)
 		workOrder.GET("/:id", handler.GetOneWorkOrder)
-		workOrder.DELETE("/:id/test/:patient_id", handler.DeleteTestWorkOrder)
+		workOrder.PUT("/:id", handler.EditWorkOrder)
 		workOrder.DELETE("/:id", handler.DeleteWorkOrder)
 	}
 

@@ -17,6 +17,7 @@ import {
     RadioButtonGroupInput,
     ReferenceManyField,
     required,
+    SelectInput,
     Show,
     SimpleForm,
     TextField,
@@ -27,8 +28,9 @@ import FeatureList from "../../component/FeatureList.tsx";
 import { useRefererRedirect } from "../../hooks/useReferer.ts";
 import { Action, ActionKeys } from "../../types/props.ts";
 import { ResultDataGrid } from "../result/index.tsx";
+import { Stack } from '@mui/material';
 
-type PatientFormProps = {
+export type PatientFormProps = {
     readonly?: boolean
     mode?: ActionKeys
 }
@@ -45,30 +47,55 @@ function ReferenceSection() {
     )
 }
 
-function PatientForm(props: PatientFormProps) {
+export function PatientFormField(props: PatientFormProps) {
+    return (
+        <>
+            {props.mode !== Action.CREATE && (
+                <Box sx={{
+                    width: "100%",
+                }}>
+                    <TextInput source={"id"} readOnly={true} />
+                    <Stack direction={"row"} gap={5} width={"100%"}>
+                        <DateTimeInput source={"created_at"} readOnly={true} />
+                        <DateTimeInput source={"updated_at"} readOnly={true} />
+                    </Stack>
+                    <Divider />
+                </Box>
+            )}
+
+            <Typography variant={"subtitle1"}>Required</Typography>
+            <Divider sx={{ my: "1rem" }} />
+            <Stack direction={"row"} gap={5} width={"100%"}>
+                <TextInput source="first_name" validate={[required()]} readOnly={props.readonly} />
+                <TextInput source="last_name" validate={[required()]} readOnly={props.readonly} />
+            </Stack>
+            <Stack direction={"row"} gap={3} width={"100%"}>
+                <CustomDateInput source={"birthdate"} label={"Birth Date"} required sx={{
+                    maxWidth: null
+                }} />
+                <FeatureList source={"sex"} types={"sex"}>
+                    <SelectInput source="sex" validate={[required()]} readOnly={props.readonly} />
+                </FeatureList>
+            </Stack>
+            <Typography variant={"subtitle1"}>Optional</Typography>
+            <Divider sx={{ my: "1rem" }} />
+            <Stack direction={"row"} gap={5} width={"100%"}>
+                <TextInput source="phone_number" readOnly={props.readonly} />
+                <TextInput source="location" readOnly={props.readonly} />
+            </Stack>
+            <TextInput source="address" readOnly={props.readonly} />
+        </>
+    )
+
+}
+
+export function PatientForm(props: PatientFormProps) {
     return (
         <SimpleForm disabled={props.readonly}
             toolbar={props.readonly === true ? false : undefined}
             warnWhenUnsavedChanges
         >
-            {props.mode !== Action.CREATE && (
-                <div>
-                    <TextInput source={"id"} readOnly={true} />
-                    <DateTimeInput source={"created_at"} readOnly={true} />
-                    <DateTimeInput source={"updated_at"} readOnly={true} />
-                    <Divider />
-                </div>
-            )}
-
-            <TextInput source="first_name" validate={[required()]} readOnly={props.readonly} />
-            <TextInput source="last_name" validate={[required()]} readOnly={props.readonly} />
-            <CustomDateInput source={"birthdate"} label={"Birth Date"} required />
-            <FeatureList source={"sex"} types={"sex"}>
-                <RadioButtonGroupInput source="sex" validate={[required()]} readOnly={props.readonly} />
-            </FeatureList>
-            <TextInput source="phone_number" readOnly={props.readonly} />
-            <TextInput source="location" readOnly={props.readonly} />
-            <TextInput source="address" readOnly={props.readonly} />
+            <PatientFormField {...props} />
         </SimpleForm>
     )
 }

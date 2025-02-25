@@ -40,6 +40,31 @@ func (r PatientRepository) FindAll(
 	return sql.GetWithPaginationResponse[entity.Patient](db, req.GetManyRequest)
 }
 
+func (r PatientRepository) FindManyByWorkOrderID(
+	ctx context.Context,
+	workOrderIDs []int64,
+) ([]entity.Patient, error) {
+	var patientIDs []int64
+	err := r.db.WithContext(ctx).Model(&entity.WorkOrder{}).
+		Where("id in (?)", workOrderIDs).
+		Pluck("patient_id", &patientIDs).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var patients []entity.Patient
+	err = r.db.WithContext(ctx).Where("id in (?)", patientIDs).
+		Preload("Specimen").
+		Preload("Specimen.ObservationRequest").
+		Preload("Specimen.ObservationRequest.TestType").
+		Find(&patients).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return patients, nil
+}
+
 func (r PatientRepository) FindOne(id int64) (entity.Patient, error) {
 	var patient entity.Patient
 	err := r.db.Where("id = ?", id).First(&patient).Error

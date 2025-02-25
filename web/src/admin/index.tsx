@@ -8,18 +8,18 @@ import TableViewIcon from '@mui/icons-material/TableView';
 import jsonServerProvider from "ra-data-json-server";
 import { Admin, CustomRoutes, Resource } from "react-admin";
 import { Route } from "react-router-dom";
+import { dateFormatter } from '../helper/format.ts';
 import { ConfigEdit, ConfigList } from "./config/config.tsx";
 import { DeviceCreate, DeviceEdit, DeviceList, DeviceShow } from "./device/index.tsx";
 import { DefaultLayout } from "./layout.tsx";
 import { PatientCreate, PatientEdit, PatientList, PatientShow } from "./patient";
 import { ResultList } from "./result";
+import { ObservationResultAdd, ResultShow } from './result/show.tsx';
 import Settings from "./settings/index.tsx";
 import { TestTemplateCreate, TestTemplateEdit, TestTemplateList } from './testTemplate/index.tsx';
 import { TestTypeCreate, TestTypeEdit, TestTypeList } from "./testType";
-import { WorkOrderAddTest, WorkOrderCreate, WorkOrderList } from "./workOrder";
+import { WorkOrderCreate, WorkOrderEdit, WorkOrderList } from "./workOrder";
 import { WorkOrderShow } from "./workOrder/Show.tsx";
-import { ObservationResultAdd, ResultShow } from './result/show.tsx';
-import { dateFormatter } from '../helper/format.ts';
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
@@ -28,16 +28,20 @@ const App = () => {
         <CustomRoutes>
             <Route path="/settings*" element={<Settings />} />
         </CustomRoutes>
-        <Resource name="work-order" list={WorkOrderList}
+        <Resource
+            name="work-order"
+            list={WorkOrderList}
             create={WorkOrderCreate}
             show={WorkOrderShow}
             hasCreate={true}
+            edit={WorkOrderEdit}
             hasShow={true}
             icon={BiotechIcon}
+            options={{
+                label: "Lab Request"
+            }}
             recordRepresentation={record => `#${record.id} - ${dateFormatter(record.created_at)})`}
         >
-            <Route path="/:id/show/add-test*" element={<WorkOrderAddTest />} />
-            <Route path="/:id/show/patient/create" element={<PatientCreate />} />
             <Route path="/:id/show/device/create" element={<DeviceCreate />} />
         </Resource>
 

@@ -130,16 +130,23 @@ func (r *Repository) GetBarcodeSequence(ctx context.Context) int64 {
 		now := time.Now()
 		tomorrowMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.Local)
 		expire := tomorrowMidnight.Sub(now)
-		r.cache.Set(constant.KeySpecimenBarcodeSequence, 1, expire)
+		r.cache.Set(constant.KeySpecimenBarcodeSequence, int64(1), expire)
 
 		return 1
 	}
 
-	return seq.(int64)
+	switch seq.(type) {
+	case int64:
+		return seq.(int64)
+	case int:
+		return int64(seq.(int))
+	default:
+		panic(fmt.Sprintf("unknown type: %T", seq))
+	}
 }
 
 func (r *Repository) IncrementBarcodeSequence(ctx context.Context) error {
-	err := r.cache.Increment(constant.KeySpecimenBarcodeSequence, 1)
+	err := r.cache.Increment(constant.KeySpecimenBarcodeSequence, int64(1))
 	if err != nil {
 		return err
 	}
@@ -161,7 +168,7 @@ func (r *Repository) SyncBarcodeSequence(ctx context.Context) error {
 	}
 
 	expire := tomorrowMidnight.Sub(now)
-	r.cache.Set(constant.KeySpecimenBarcodeSequence, count+1, expire)
+	r.cache.Set(constant.KeySpecimenBarcodeSequence, int64(count+1), expire)
 
 	return nil
 }

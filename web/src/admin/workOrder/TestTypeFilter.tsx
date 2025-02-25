@@ -120,12 +120,12 @@ export const TestFilterSidebar = () => {
 
     return (
         <Card sx={{
-            order: -1, mr: 1, mt: 2, width: 200, minWidth: 200,
+            order: -1,  width: 200, minWidth: 200,
             overflow: "visible",
         }}>
             <CardContent sx={{
                 position: "sticky",
-                top: 96,
+                top: 0,
             }}>
                 <SavedQueriesList />
                 <FilterLiveSearch onSubmit={(event) => event.preventDefault()} onKeyDown={(e) => { e.key === 'Enter' && e.preventDefault() }}  />

@@ -1,43 +1,37 @@
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
+import AddIcon from '@mui/icons-material/Add';
+import { Box, Button, Dialog, DialogContent, DialogTitle, type ButtonProps } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-    CreateButton,
+    AutocompleteInput,
     Datagrid,
-    DateField,
-    DateTimeInput,
-    DeleteButton,
-    FilterListSection,
-    FilterLiveForm,
-    FilterLiveSearch,
+    DateInput,
+    Form,
     List,
-    RadioButtonGroupInput,
+    ReferenceInput,
     SaveButton,
-    TabbedForm,
+    SimpleForm,
     TextField,
     TextInput,
     Toolbar,
-    TopToolbar,
-    useGetMany,
-    useGetOne,
+    useCreate,
     useListContext,
     useNotify,
+    useRecordContext,
     useSaveContext
 } from "react-admin";
-import { FieldValues, UseFormWatch, useFormContext } from "react-hook-form";
-import { useParams, useSearchParams } from "react-router-dom";
-import CustomDateInput from "../../component/CustomDateInput.tsx";
-import FeatureList from "../../component/FeatureList.tsx";
-import { getRefererParam } from "../../hooks/useReferer.ts";
+import { useFormContext } from "react-hook-form";
+import { useSearchParams } from "react-router-dom";
+import useAxios from "../../hooks/useAxios.ts";
 import type { ObservationRequest } from "../../types/observation_requests.ts";
 import { ActionKeys } from "../../types/props.ts";
 import type { TestType } from "../../types/test_type.ts";
+import { PatientFormField } from "../patient/index.tsx";
+import FormStepper from "./Stepper.tsx";
 import { TestFilterSidebar } from "./TestTypeFilter.tsx";
 
 
@@ -93,15 +87,14 @@ const PickedTest = ({ allTestType }: { allTestType: TestType[] }) => {
     )
 }
 
-const patientIDsField = "patient_ids";
+const patientIDField = "patient_id";
 
 
 function TestTable(props: TestInputProps) {
     const { selectedIds, onSelect, data: testList } = useListContext();
     const { setValue } = useFormContext();
 
-    const { id } = useParams()
-    const { data, isLoading } = useGetOne('work-order', { id: id });
+    const data = useRecordContext();
     const [searchParams] = useSearchParams();
     const [allTestType, setAllTestType] = useState<TestType[]>([]);
     const [allTestTypeSet, setAllTestTypeSet] = useState<boolean>(false);
@@ -121,36 +114,27 @@ function TestTable(props: TestInputProps) {
     }, [testList])
 
     useEffect(() => {
-        if (data && searchParams.getAll("patient_id").length > 0) {
+        if (data) {
             if (!allTestType) {
                 console.error("testList is undefined");
                 return
             }
 
-            const patientIDs = searchParams.getAll("patient_id")!.map(id => parseInt(id));
-            const patients = data.patient_list.filter((patient: any) => {
-                return patientIDs.includes(patient.id);
-            })
-            const observationRequestCodeList = patients.map((patient: any) => {
-                return patient.specimen_list.map((specimen: any) => {
-                    return specimen.observation_requests.map((observationRequest: ObservationRequest) => {
-                        return observationRequest.test_code;
-                    })
-                }).flat()
-            }) as string[][]
+            const observationRequestCodeList = data.patient.specimen_list.map((specimen: any) => {
+                return specimen.observation_requests.map((observationRequest: ObservationRequest) => {
+                    return observationRequest.test_code;
+                })
+            }).flat()
             if (observationRequestCodeList.length === 0) {
                 return;
             }
 
-            const observationRequestCodesLongest = observationRequestCodeList.reduce((acc, cur) => {
-                return acc.length > cur.length ? acc : cur;
-            }, observationRequestCodeList[0]);
-            console.debug("observationRequestCodesLongest", observationRequestCodesLongest);
-            setValue(observationRequestField, observationRequestCodesLongest);
+            console.debug("observationRequestCodesLongest", observationRequestCodeList);
+            setValue(observationRequestField, observationRequestCodeList);
 
 
             const observationRequestIDs = allTestType.filter((test: TestType) => {
-                return observationRequestCodesLongest.includes(test.code);
+                return observationRequestCodeList.includes(test.code);
             }).map((test: any) => {
                 return test?.id
             })
@@ -179,7 +163,6 @@ function TestTable(props: TestInputProps) {
             <Datagrid width={"100%"}
                 bulkActionButtons={<BulkActionButtons />}
                 rowClick={"toggleSelection"}
-                isLoading={isLoading}
             >
                 <TextField label={"Name"} source={"name"} />
                 <TextField label={"Code"} source={"code"} />
@@ -197,167 +180,186 @@ type TestInputProps = {
 }
 
 export function TestInput(props: TestInputProps) {
-    return (<List resource={"test-type"} exporter={false} aside={<TestFilterSidebar />}
-        perPage={999999}
-        storeKey={false}
-        actions={false}
-        title={false}
-        pagination={false}
-        disableSyncWithLocation
-        sx={{
-            marginTop: "48px",
-            width: "100%"
-        }}
-    >
-        <TestTable {...props} />
-    </List>);
+    return (
+        <Box sx={{
+            maxHeight: "calc(70vh - 48px)",
+            overflow: "scroll",
+        }}>
+            <List resource={"test-type"} exporter={false} aside={<TestFilterSidebar />}
+                perPage={999999}
+                storeKey={false}
+                actions={false}
+                title={false}
+                pagination={false}
+                disableSyncWithLocation
+                sx={{
+                    width: "100%",
+                }}
+            >
+                <TestTable {...props} />
+            </List>
+        </Box>
+    );
 }
 
-const PatientFilterSidebar = () => (
-    <Card sx={{
-        order: -1, mr: 2, mt: 2, width: 200, minWidth: 200,
 
-    }}>
-        <CardContent>
-            <FilterLiveSearch onKeyDown={(e) => { e.key === 'Enter' && e.preventDefault() }} />
-            <FilterListSection label="Birth Date" icon={<CalendarMonthIcon />}>
-                <FilterLiveForm debounce={1500}>
-                    <CustomDateInput source={"birthdate"} label={"Birth Date"} clearable />
-                </FilterLiveForm>
-            </FilterListSection>
-        </CardContent>
-    </Card>
-);
+type PatientFormProps = {
+    open: boolean
+    onClose: () => void
+    setPatientID: React.Dispatch<React.SetStateAction<number | undefined>>
+}
 
-function PickedPatient() {
-    const { selectedIds, onToggleItem } = useListContext();
+function PatientFormModal(props: PatientFormProps) {
+    const [create, { isPending }] = useCreate("patient");
 
-    if (selectedIds.length === 0) {
+    const PatientToolbar = () => {
+
         return (
-            <Typography fontSize={16}>Please select patient</Typography>
-        )
-    }
+            <Toolbar>
+                <SaveButton
+                    label="Save Patient"
+                    resource="patient"
+                    disabled={isPending}
+                />
 
-    const { data, isPending, error } = useGetMany("patient", {
-        ids: selectedIds,
-    });
+            </Toolbar>
+        );
+    };
 
-    if (isPending) {
-        return <Typography fontSize={16}>Loading...</Typography>
-    }
-    if (error) {
-        return <Typography fontSize={16} color="error">{error.message}</Typography>
-    }
 
+    const notify = useNotify();
     return (
-        <Stack spacing={2}>
-            <Typography fontSize={16}>Selected patient</Typography>
-            <Grid container spacing={1}>
-                {
-                    data?.map((v: any) => {
-                        return (
-                            <Grid item key={v.id}>
-                                <Chip label={`${v.id} - ${v.first_name} ${v.last_name}`}
-                                    onDelete={() => {
-                                        const currentId = v.id;
-                                        console.log(currentId)
-                                        onToggleItem(currentId);
-                                    }}
-                                />
-                            </Grid>
-                        )
-                    })
-                }
-            </Grid>
+        <Dialog
+            open={props.open}
+            onClose={props.onClose}
+            fullWidth
+            sx={{
+                width: "100%",
+                margin: 0,
+            }}
+            maxWidth="lg"
+        >
+            <DialogTitle id="alert-dialog-title">
+                Create Patient
+            </DialogTitle>
+            <DialogContent sx={{}}>
+                <SimpleForm resource="patient" sx={{
+                    width: "100%",
+                }} toolbar={<PatientToolbar />} onSubmit={async (data: any) => {
+                    console.log(data);
+                    create("patient", {
+                        data: data,
+                    }, {
+                        onSuccess: (data) => {
+                            notify("Success create patient", {
+                                type: 'success',
+                            });
+                            props.setPatientID(data.id);
+                            props.onClose();
+                        },
+                        onError: () => {
+                            notify("Error create patient", {
+                                type: 'error',
+                            });
+                        }
+                    }
+                    );
+                }} >
+                    <PatientFormField mode="CREATE" />
+                </SimpleForm>
+            </DialogContent>
+        </Dialog >
+    )
+}
+
+
+function NoPatient(props: CreatePatientButtonProps) {
+    return (
+        <Stack sx={{ width: "100%" }} spacing={2}>
+            <Typography fontSize={16}>No Patient found </Typography>
+            <CreatePatientButton setOpen={props.setOpen} />
         </Stack>
     )
 }
 
 
-function PatientTable(props: WorkOrderFormProps) {
-    const BulkActionButtons = () => {
-        return (
-            <></>
-        );
-    };
-    const { selectedIds, onSelect } = useListContext();
-    const { setValue } = useFormContext();
-    const [searchParams] = useSearchParams();
-    const [havePatientIDsInQueryParam, setHavePatientIDsInQueryParam] = useState(false);
+function PatientInput(props: WorkOrderFormProps) {
+    const [open, setOpen] = useState(false);
+    const [patientID, setPatientID] = useState<number | undefined>(undefined);
+    const { setValue, watch, getValues } = useFormContext()
+    const notify = useNotify();
 
     useEffect(() => {
-        if (searchParams.get("patient_id")) {
-            const patientIDs = searchParams.getAll("patient_id")!.map(id => parseInt(id));
-            console.debug("patientIDs", patientIDs);
-            onSelect(patientIDs);
-            setValue(patientIDsField, patientIDs);
-            setHavePatientIDsInQueryParam(true);
+        if (patientID) {
+            setValue("patient_id", patientID);
         }
-    }, [searchParams]);
-
+    }, [patientID])
+    const axios = useAxios();
 
     useEffect(() => {
-        console.debug("test selected ids", selectedIds);
-        setValue(patientIDsField, selectedIds);
-    }, [selectedIds]);
+        const patientID = getValues("patient_id");
+        if (!patientID) {
+            return;
+        }
 
+        axios.get(`patient/${patientID}`).then((res) => {
+            console.log(res)
+            for (const [key, value] of Object.entries(res.data)) {
+                setValue(key, value);
+            }
+        }).catch((err) => {
+            notify("Error get patient info", {
+                type: 'error',
+            });
+        })
+    }, [watch("patient_id")])
 
-    return <Grid container spacing={2}>
-        <Grid item xs={12} md={8}>
-            <Datagrid rowClick={"toggleSelection"} bulkActionButtons={<BulkActionButtons />}
-
-                // Disable selection when have patient IDs in query param
-                isRowSelectable={(record: any) => {
-                    if (havePatientIDsInQueryParam) {
-                        const patientIDs = searchParams.getAll("patient_id")!.map(id => parseInt(id));
-                        return patientIDs.includes(record.id);
-                    }
-
-                    return true
-                }}
-                onToggleItem={!havePatientIDsInQueryParam ? undefined : () => { }}
-                onSelect={!havePatientIDsInQueryParam ? undefined : () => { }}
-            >
-                <TextField source="id" />
-                <TextField source="first_name" />
-                <TextField source="last_name" />
-                <DateField source="birthdate" locales={["id-ID"]} />
-                <TextField source="sex" />
-                <DateField source="created_at" showTime />
-            </Datagrid>
-        </Grid>
-        <Grid item xs={12} md={4}>
-            <PickedPatient />
-        </Grid>
-    </Grid>;
+    return (
+        <>
+            <Stack sx={{
+                marginBottom: "2rem",
+            }}>
+                <ReferenceInput source="patient_id" reference="patient" target="patient_id" label="Patient Name">
+                    <AutocompleteInput
+                        shouldRenderSuggestions={(val: string) => { return val.trim().length > 2 }}
+                        suggestionLimit={10}
+                        noOptionsText={<NoPatient setOpen={setOpen} />}
+                    />
+                </ReferenceInput>
+                <CreatePatientButton setOpen={setOpen} />
+                {
+                    watch("patient_id") && <>
+                        <Divider sx={{ my: "1rem" }} />
+                        <Stack>
+                            <Typography variant="subtitle1">Patient Info</Typography>
+                            <Stack direction={"row"} gap={5} width={"100%"}>
+                                <TextInput source="patient_id" label="Patient ID" readOnly />
+                                <TextInput source="first_name" readOnly />
+                                <TextInput source="last_name" readOnly />
+                            </Stack>
+                            <Stack direction={"row"} gap={3} width={"100%"}>
+                                <DateInput source="birthdate" label="Birth Date" readOnly />
+                                <TextInput source="sex" readOnly />
+                            </Stack>
+                        </Stack>
+                    </>
+                }
+            </Stack>
+            <PatientFormModal open={open} onClose={() => setOpen(false)} setPatientID={setPatientID} />
+        </>
+    )
 }
 
-const PatientListActions = () => {
-    return (
-        <TopToolbar>
-            <CreateButton to={`/patient/create?${getRefererParam()}`} label="Create Patient" />
-        </TopToolbar>
-    )
-};
+type CreatePatientButtonProps = {
+    setOpen: React.Dispatch<React.SetStateAction<boolean>>
+} & Partial<ButtonProps>
 
-function PatientInput(props: WorkOrderFormProps) {
-
-    return (
-        <List aside={<PatientFilterSidebar />} resource={"patient"}
-            actions={<PatientListActions />}
-            exporter={false}
-            title={false}
-            perPage={25}
-            sx={{
-                width: "100%"
-            }}
-            disableSyncWithLocation
-            storeKey={false}
-            empty={false}
-        >
-            <PatientTable {...props} />
-        </List>
-    )
+function CreatePatientButton(props: CreatePatientButtonProps) {
+    return <Button variant="contained" color="secondary" sx={{
+        maxWidth: "200px",
+    }} endIcon={<AddIcon />} onClick={() => props.setOpen(true)} {...props}>
+        Create Patient
+    </Button>;
 }
 
 export const WorkOrderSaveButton = ({ disabled }: { disabled?: boolean }) => {
@@ -375,7 +377,7 @@ export const WorkOrderSaveButton = ({ disabled }: { disabled?: boolean }) => {
             return;
         }
 
-        if (!data[patientIDsField] || data[patientIDsField].length === 0) {
+        if (!data[patientIDField] || data[patientIDField].length === 0) {
             notify("Please select patient", {
                 type: "error",
             });
@@ -404,65 +406,63 @@ export const WorkOrderSaveButton = ({ disabled }: { disabled?: boolean }) => {
     return <SaveButton type="button" onClick={handleClick} alwaysEnable size="small" />
 }
 
-const validForm = (watch: UseFormWatch<FieldValues>): boolean => {
-    return (!!watch(observationRequestField) && watch(observationRequestField).length !== 0)
-        && (!!watch(patientIDsField) && watch(patientIDsField).length !== 0)
-}
-
-const WorkOrderToolbar = () => {
-    const { watch } = useFormContext();
-    return (
-        <Stack width={"100%"}
-            sx={{
-                position: "sticky",
-                top: 48,
-                borderBottom: "1px solid #ccc",
-                zIndex: 2147483647,
-                marginBottom: 1,
-            }}
-        >
-            <Toolbar sx={{
-                gap: 2,
-                width: "100%",
-                display: "flex",
-                justifyContent: "flex-end",
-            }}>
-                <DeleteButton variant="contained" size="small" />
-                {validForm(watch) && <WorkOrderSaveButton disabled={!validForm(watch)} />}
-            </Toolbar>
-        </Stack>
-    )
-};
 
 const showDetailOnMode: Array<WorkOrderActionKeys> = ["SHOW", "EDIT"];
+const steps = ['Patient', 'Test'];
+
+
 export default function WorkOrderForm(props: WorkOrderFormProps) {
+    const [activeStep, setActiveStep] = React.useState(0);
+    const { save } = useSaveContext();
+    const notify = useNotify();
+    const onFinish = (data: any) => {
+
+        if (data == undefined) {
+            notify("Please fill in all required fields", {
+                type: "error",
+            });
+            return;
+        }
+
+        if (!data[patientIDField]) {
+            notify("Please select patient", {
+                type: "error",
+            });
+            return;
+        }
+
+        if (!data[observationRequestField] || data[observationRequestField].length === 0) {
+            notify("Please select test", {
+                type: "error",
+            });
+            return;
+        }
+
+        if (save) {
+            const observationRequest = data[observationRequestField] as TestType[]
+            save({
+                patient_id: data[patientIDField],
+                test_ids: observationRequest.map((test: TestType) => {
+                    return test.id
+                })
+            });
+        }
+    };
+
     return (
-        <TabbedForm toolbar={false} >
-            <TabbedForm.Tab label="Patient">
-                <WorkOrderToolbar />
-                <PatientInput {...props} />
-            </TabbedForm.Tab>
-            <TabbedForm.Tab label="Test" sx={{
-                position: "relative",
-                overflow: "visible",
+        <Form>
+            <Box sx={{
+                margin: '24px',
             }}>
-                <WorkOrderToolbar />
-                <TestInput />
-            </TabbedForm.Tab>
-            {showDetailOnMode.includes(props.mode) && (
-                <TabbedForm.Tab label="Detail">
-                    <WorkOrderToolbar />
-                    <div>
-                        <TextInput source={"id"} readOnly={true} size={"small"} />
-                        <DateTimeInput source={"created_at"} readOnly={true} size={"small"} />
-                        <DateTimeInput source={"updated_at"} readOnly={true} size={"small"} />
-                        <FeatureList types={"work-order-status"} source={"status"}>
-                            <RadioButtonGroupInput source="status" readOnly={true} size={"small"} />
-                        </FeatureList>
-                        <Divider />
-                    </div>
-                </TabbedForm.Tab>
-            )}
-        </TabbedForm>
+                <FormStepper activeStep={activeStep} setActiveStep={setActiveStep} steps={steps} onFinish={onFinish} >
+                    {
+                        activeStep === 0 && <PatientInput {...props} />
+                    }
+                    {
+                        activeStep === 1 && <TestInput />
+                    }
+                </FormStepper>
+            </Box>
+        </Form>
     )
 }

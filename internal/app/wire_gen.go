@@ -50,7 +50,7 @@ func InitRestApp() server.RestServer {
 	specimenUseCase := specimenuc.NewSpecimenUseCase(schema, specimenRepository, validate)
 	specimenHandler := rest.NewSpecimenHandler(schema, specimenUseCase)
 	workOrderUseCase := workOrderuc.NewWorkOrderUseCase(schema, workOrderRepository, validate)
-	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, gormDB)
+	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, gormDB, patientUseCase)
 	featureListHandler := rest.NewFeatureListHandler()
 	observationRequestUseCase := observation_requestuc.NewObservationRequestUseCase(schema, observation_requestRepository, validate)
 	observationRequestHandler := rest.NewObservationRequestHandler(schema, observationRequestUseCase)
