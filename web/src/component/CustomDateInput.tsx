@@ -29,6 +29,7 @@ export default function CustomDateInput({ source, label, required, readonly, cle
                 }}
                 slotProps={{ field: { clearable: clearable, onBlur: field.onBlur } }}
                 sx={{
+                    //@ts-ignore this is perfectly fine
                     maxWidth: "280px",
                     ...sx
                 }}

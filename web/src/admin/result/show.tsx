@@ -26,8 +26,7 @@ import {
     useDeleteMany,
     useNotify,
     useRefresh,
-    type ButtonProps,
-    useCreate
+    type ButtonProps
 } from "react-admin";
 import { useSearchParams } from "react-router-dom";
 import { getRefererParam, useRefererRedirect } from "../../hooks/useReferer";

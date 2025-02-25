@@ -406,7 +406,6 @@ export const WorkOrderSaveButton = ({ disabled }: { disabled?: boolean }) => {
 }
 
 
-const showDetailOnMode: Array<WorkOrderActionKeys> = ["SHOW", "EDIT"];
 const steps = ['Patient', 'Test'];
 
 

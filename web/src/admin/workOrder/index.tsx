@@ -1,9 +1,11 @@
+import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
+import { CircularProgress, Dialog, DialogContent, DialogTitle } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMutation } from "@tanstack/react-query";
-import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import dayjs from "dayjs";
+import { useState } from "react";
 import {
     Button,
     Create,
@@ -19,7 +21,6 @@ import {
     TopToolbar,
     WithRecord,
     WrapperField,
-    useList,
     useListContext,
     useNotify,
     useRefresh
@@ -30,9 +31,7 @@ import useAxios from "../../hooks/useAxios.ts";
 import type { WorkOrder } from "../../types/work_order.ts";
 import { WorkOrderChipColorMap } from "./ChipFieldStatus.tsx";
 import WorkOrderForm from "./Form.tsx";
-import { CircularProgress, Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { RunWorkOrderForm } from "./Show.tsx";
-import { useState } from "react";
 
 
 
@@ -111,7 +110,7 @@ function RunWorkOrderButton(props: RunWorkOrderProps) {
     const notify = useNotify();
     const refresh = useRefresh();
     const axios = useAxios();
-    const { mutate, isPending } = useMutation({
+    const { isPending } = useMutation({
         mutationFn: async (data: any) => {
             const response = await axios.post(`${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`, data, {
                 headers: {
@@ -138,20 +137,6 @@ function RunWorkOrderButton(props: RunWorkOrderProps) {
         },
     })
 
-    const onSubmit = (data: any) => {
-        if (!data.device_id) {
-            notify('Please select device to run', {
-                type: 'error',
-            });
-            return;
-        }
-
-        mutate({
-            work_order_ids: [data.id],
-            device_id: data.device_id
-        });
-    }
-
     return (
         <Button label="Run Work Order" onClick={() => {
             props.setOpen(true)
@@ -168,7 +153,7 @@ type RunWorkOrderProps = {
 }
 
 function RunWorkOrderDialog(props: RunWorkOrderProps) {
-    const {selectedIds} = useListContext();
+    const { selectedIds } = useListContext();
 
     return (
         <Dialog
@@ -185,7 +170,7 @@ function RunWorkOrderDialog(props: RunWorkOrderProps) {
                 Run Work Order
             </DialogTitle>
             <DialogContent sx={{}}>
-                <RunWorkOrderForm workOrderIDs={selectedIds}/>
+                <RunWorkOrderForm workOrderIDs={selectedIds} />
             </DialogContent>
         </Dialog >
     )

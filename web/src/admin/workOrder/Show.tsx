@@ -1,7 +1,4 @@
-import AddIcon from '@mui/icons-material/Add';
 import CancelIcon from '@mui/icons-material/Cancel';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import PrintIcon from '@mui/icons-material/Print';
 import { Card, CardContent, CircularProgress, Grid, type SxProps } from "@mui/material";
@@ -12,10 +9,12 @@ import React from "react";
 import {
     ArrayField,
     AutocompleteInput,
+    BooleanInput,
     Button,
     ChipField,
     Datagrid,
     DateField,
+    EditButton,
     Form,
     InputHelperText,
     Link,
@@ -29,30 +28,23 @@ import {
     WithRecord,
     WrapperField,
     required,
-    useDeleteMany,
     useGetRecordId,
-    useListContext,
     useNotify,
     useRecordContext,
-    useRefresh,
-    type ButtonProps,
-    EditButton,
-    BooleanInput
+    useRefresh
 } from "react-admin";
 import Barcode from "react-barcode";
 import { useFormContext } from 'react-hook-form';
 import { useReactToPrint } from "react-to-print";
 import { trimName } from '../../helper/format';
+import useAxios from '../../hooks/useAxios';
 import { getRefererParam } from '../../hooks/useReferer';
 import useSettings from '../../hooks/useSettings';
 import type { BarcodeStyle } from '../../types/general';
-import type { ObservationRequest } from '../../types/observation_requests';
-import type { Specimen } from '../../types/specimen';
 import type { WorkOrder } from '../../types/work_order';
 import { DeviceForm } from "../device";
 import { PatientForm } from '../patient';
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
-import useAxios from '../../hooks/useAxios';
 
 const barcodePageStyle = (style: BarcodeStyle) => `
 @media all {
@@ -117,54 +109,6 @@ const PrintBarcodeButton = ({ barcodeRef }: { barcodeRef: React.RefObject<any> }
     );
 }
 
-const BulkEditButton = ({ patientIDs, workOrderID }: { patientIDs?: number[], workOrderID?: number }) => {
-    const recordId = workOrderID ?? useGetRecordId();
-
-    const generateUrl = (patientIDs?: number[]) => {
-        const urlParams = new URLSearchParams();
-        if (patientIDs) {
-            patientIDs.forEach(id => urlParams.append('patient_id', id.toString()));
-        }
-
-        return `/work-order/${recordId}/show/add-test/1?${urlParams.toString()}`;
-    }
-
-    return (
-        <Link to={generateUrl(patientIDs)}>
-            <Button label="Edit" color="secondary" variant="contained">
-                <EditIcon />
-            </Button>
-        </Link>
-    );
-}
-
-const BulkDeleteButton = ({ patientIDs, workOrderID }: { patientIDs?: number[], workOrderID?: number }) => {
-    const recordId = workOrderID ?? useGetRecordId();
-    const notify = useNotify();
-    const refresh = useRefresh();
-
-    const [deleteMany, { isPending }] = useDeleteMany(`work-order/${recordId}/test`, { ids: patientIDs }, {
-        onError: (error: Error) => {
-            notify('Error:' + error.message, {
-                type: 'error',
-            });
-        },
-        onSuccess: () => {
-            refresh();
-            notify('Success delete', {
-                type: 'success',
-            });
-        },
-    });
-
-    return (
-        <Button label="Delete" onClick={() => {
-            deleteMany();
-        }} disabled={isPending} color="error" variant="contained">
-            <DeleteIcon />
-        </Button>
-    );
-}
 
 const CancelButton = ({ workOrderID }: { workOrderID: number }) => {
     const notify = useNotify();
@@ -220,18 +164,6 @@ function WorkOrderShowActions({ barcodeRef, workOrderID }: { barcodeRef: React.R
         </TopToolbar>
     )
 }
-
-function PatientListBulkAction() {
-    const { selectedIds } = useListContext();
-
-    return (
-        <>
-            <BulkEditButton patientIDs={selectedIds} />
-            <BulkDeleteButton patientIDs={selectedIds} />
-        </>
-    )
-}
-
 
 
 export function WorkOrderShow() {
