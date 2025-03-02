@@ -1,16 +1,19 @@
 import HistoryIcon from '@mui/icons-material/History';
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { Badge, Box, ButtonGroup, Chip, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { DataGrid as MuiDatagrid, type DataGridProps, type GridRenderCellParams } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import {
+    ArrayField,
     DateField,
     DeleteButton,
     Labeled,
     Link,
     Show,
+    SimpleList,
     SimpleShowLayout,
+    SingleFieldList,
     TextField,
     WithRecord,
     useNotify,
@@ -19,6 +22,10 @@ import {
 import type { ResultColumn } from "../../types/general";
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
 import { Result, TestResult } from '../../types/observation_result';
+import { FilledPercentChip } from './component';
+import type { WorkOrder } from '../../types/work_order';
+import Barcode from 'react-barcode';
+import type { Specimen } from '../../types/specimen';
 
 export const ResultShow = (props: any) => {
     const [openHistory, setOpenHistory] = useState(false);
@@ -45,7 +52,7 @@ export const ResultShow = (props: any) => {
                             ))
                         }
                         <HistoryDialog
-                            specimenId={record.specimen_id}
+                            workOrderID={record.id}
                             title={history.title}
                             open={openHistory}
                             onClose={() => setOpenHistory(false)}
@@ -64,10 +71,31 @@ const HeaderInfo = (props: any) => (
         display: "flex",
         border: "1px solid #ccc",
         padding: "12px",
-    }} container>
+    }} container rowGap={1}>
         <Grid item xs={12} md={12} >
             <Labeled>
-                <TextField source="barcode" label="Barcode" />
+                <WithRecord label="Barcodes" render={(record: WorkOrder) => {
+                    return (
+                        <Stack direction={"row"} gap={1}>
+                            {record.specimen_list.map((specimen: Specimen) => {
+                                return (
+                                    <Stack gap={0} sx={{
+                                        height: "80px",
+                                    }}>
+                                        <Barcode value={specimen.barcode} displayValue={false}
+                                         />
+                                        <Typography
+                                            className={"barcode-text"}
+                                            fontSize={12}
+                                            sx={{
+                                                margin: 0,
+                                            }}>{specimen.barcode}</Typography>
+                                    </Stack>
+                                )
+                            })}
+                        </Stack>
+                    )
+                }} />
             </Labeled>
         </Grid>
         <Grid item xs={12} md={4}>
@@ -82,8 +110,8 @@ const HeaderInfo = (props: any) => (
         <Grid item xs={12} md={4}>
             <Labeled>
                 <WithRecord label="Work Order" render={(record: any) => (
-                    <Link to={`/work-order/${record.order_id}/show`} label={"Work Order"} onClick={e => e.stopPropagation()}>
-                        <Chip label={`#${record?.order_id} - ${record.work_order?.status}`} color={WorkOrderChipColorMap(record.work_order?.status)} />
+                    <Link to={`/work-order/${record.id}/show`} label={"Work Order"} onClick={e => e.stopPropagation()}>
+                        <Chip label={`#${record.id} - ${record.status}`} color={WorkOrderChipColorMap(record.status)} />
                     </Link>
                 )} />
             </Labeled>
@@ -91,6 +119,23 @@ const HeaderInfo = (props: any) => (
         <Grid item xs={12} md={4}>
             <Labeled>
                 <DateField source="created_at" showTime />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={4} >
+            <Labeled>
+                <TextField source="total_request" label="Total Request" />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={4} >
+            <Labeled>
+                <TextField source="total_result_filled" label="Total Result Filled" />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={4} >
+            <Labeled>
+                <WithRecord label="Filled" render={(record: WorkOrder) => (
+                    <FilledPercentChip percent={record.percent_complete} />
+                )} />
             </Labeled>
         </Grid>
     </Grid>
@@ -127,9 +172,6 @@ const TestResultTable = (props: TestResultTableProps) => {
     }
 
     async function putResult(newRow: TestResult, _oldRow: TestResult) {
-        // TODO right now we are using specimen_id for the get which one
-        // specimen that we want.. change this to work_order_id or order_id if
-        // dafa job is done
         const url = `${import.meta.env.VITE_BACKEND_BASE_URL}/result/${newRow.specimen_id}/test`
 
         const response = await fetch(url, {
@@ -153,7 +195,19 @@ const TestResultTable = (props: TestResultTableProps) => {
 
     // support id == 0 when the TestResult is not set yet
     // TODO find better hack than this
-    const rows = props.rows.map((r: any) => ({ ...r, id: r.id || negID-- }))
+    const [rows, setRows] = useState<any>([])
+    useEffect(() => {
+        if (!props?.rows) {
+            return
+        }
+
+        // Check if rows is array
+        if (!Array.isArray(props.rows)) {
+            return
+        }
+
+        setRows(props.rows.map((r: any) => ({ ...r, id: r.id || negID-- })))
+    }, [props?.rows])
 
     return (
         <MuiDatagrid rows={rows}
@@ -273,7 +327,7 @@ type HistoryChangeProps = {
 }
 
 type HistoryDialogProps = {
-    specimenId: number
+    workOrderID: number
     title: string
     rows: ResultColumn[]
     open: boolean
@@ -355,7 +409,7 @@ const HistoryDialog = (props: HistoryDialogProps) => {
                                         label={''}
                                         mutationMode="pessimistic"
                                         size='medium'
-                                        resource={`result/${props.specimenId}/test`}
+                                        resource={`result/${props.workOrderID}/test`}
                                         variant='text'
                                         record={{ id: params.row.id }}
                                         confirmTitle={`Delete test ${params.row.test}?`}

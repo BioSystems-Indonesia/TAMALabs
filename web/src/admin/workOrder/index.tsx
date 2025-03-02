@@ -193,7 +193,7 @@ export const WorkOrderList = () => {
         }} filters={WorkOrderFilters} title="Lab Request" filterDefaultValues={{
             created_at_start: dayjs().subtract(7, "day").toISOString(),
             created_at_end: dayjs().toISOString(),
-        }} storeKey={false} exporter={false}>
+        }} storeKey={false} exporter={false} disableSyncWithLocation>
             <Datagrid bulkActionButtons={<WorkOrderListBulkActionButtons
                 open={open}
                 setOpen={setOpen}

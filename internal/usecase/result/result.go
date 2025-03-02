@@ -37,28 +37,29 @@ func NewUsecase(
 func (u *Usecase) Results(
 	ctx context.Context,
 	req *entity.ResultGetManyRequest,
-) (entity.PaginationResponse[entity.Specimen], error) {
-	resp, err := u.specimenRepository.FindAllForResult(ctx, req)
+) (entity.PaginationResponse[entity.WorkOrder], error) {
+	resp, err := u.workOrderRepository.FindAllForResult(ctx, req)
 	if err != nil {
-		return entity.PaginationResponse[entity.Specimen]{}, err
+		return entity.PaginationResponse[entity.WorkOrder]{}, err
 	}
 
 	for i := range resp.Data {
-		resp.Data[i].TestResult = u.processResultDetail(resp.Data[i])
+		u.fillResultDetail(&resp.Data[i])
 	}
 
 	return resp, nil
 }
 
-func (u *Usecase) ResultDetail(ctx context.Context, specimenID int64) (entity.ResultDetail, error) {
-	specimen, err := u.specimenRepository.FindOne(ctx, specimenID)
+func (u *Usecase) ResultDetail(ctx context.Context, workOrderID int64) (entity.ResultDetail, error) {
+	workOrder, err := u.workOrderRepository.FindOneForResult(workOrderID)
 	if err != nil {
 		return entity.ResultDetail{}, err
 	}
+	u.fillResultDetail(&workOrder)
 
 	return entity.ResultDetail{
-		Specimen:   specimen,
-		TestResult: u.groupResultInCategory(u.processResultDetail(specimen)),
+		WorkOrder:  workOrder,
+		TestResult: u.groupResultInCategory(workOrder.TestResult),
 	}, nil
 }
 
@@ -126,35 +127,42 @@ func (u *Usecase) groupResultInCategory(tests []entity.TestResult) map[string][]
 	return resultTestsCategory
 }
 
-func (u *Usecase) processResultDetail(specimen entity.Specimen) []entity.TestResult {
-	var tests = make([]entity.TestResult, len(specimen.ObservationRequest))
+func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder) {
+	var allObservationRequests []entity.ObservationRequest
+	var allObservationResults []entity.ObservationResult
+	for _, specimen := range workOrder.Specimen {
+		allObservationRequests = append(allObservationRequests, specimen.ObservationRequest...)
+		allObservationResults = append(allObservationResults, specimen.ObservationResult...)
+	}
 
+	allTests := make([]entity.TestResult, len(allObservationRequests))
 	// create the placeholder first
-	for i, request := range specimen.ObservationRequest {
-		tests[i] = entity.TestResult{}.CreateEmpty(request)
+	for i, request := range allObservationRequests {
+		allTests[i] = entity.TestResult{}.CreateEmpty(request)
 	}
 
 	// sort by test code
-	sort.Slice(tests, func(i, j int) bool {
-		return tests[i].Test < tests[j].Test
+	sort.Slice(allTests, func(i, j int) bool {
+		return allTests[i].Test < allTests[j].Test
 	})
 
 	// prepare the data that will be filled into the placeholder
 	// prepare by grouping into code. But before that, sort by updated_at
 	// the latest updated_at will be the first element
-	sort.Slice(specimen.ObservationResult, func(i, j int) bool {
-		return specimen.ObservationResult[i].UpdatedAt.After(specimen.ObservationResult[j].UpdatedAt)
+	sort.Slice(allObservationResults, func(i, j int) bool {
+		return allObservationResults[i].UpdatedAt.After(allObservationResults[j].UpdatedAt)
 	})
 
 	// ok final step to create the order data
 	testResults := map[string][]entity.ObservationResult{}
-	for _, observation := range specimen.ObservationResult {
+	for _, observation := range allObservationResults {
 		// TODO check whether this will create chaos in order or not
 		testResults[observation.Code] = append(testResults[observation.Code], observation)
 	}
 
 	// fill the placeholder
-	for i, test := range tests {
+	totalResultFilled := 0
+	for i, test := range allTests {
 		newTest := test
 		history := testResults[test.Test]
 		if len(history) > 0 {
@@ -163,8 +171,17 @@ func (u *Usecase) processResultDetail(specimen entity.Specimen) []entity.TestRes
 		newTest = newTest.FillHistory(history)
 
 		// or should be like this or we can just use the above code
-		tests[i] = newTest
+		allTests[i] = newTest
+
+		// count the filled result
+		if newTest.Result != nil {
+			totalResultFilled++
+		}
 	}
 
-	return tests
+	workOrder.TotalRequest = int64(len(allObservationRequests))
+	workOrder.TotalResultFilled = int64(totalResultFilled)
+	workOrder.HaveCompleteData = len(allObservationRequests) == totalResultFilled
+	workOrder.PercentComplete = float64(totalResultFilled) / float64(len(allObservationRequests))
+	workOrder.TestResult = allTests
 }

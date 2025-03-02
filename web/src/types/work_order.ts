@@ -10,4 +10,9 @@ export interface WorkOrder {
 
   patient: Patient;
   specimen_list: Specimen[];
+
+  total_request: number;
+  total_result_filled: number;
+  percent_complete: number;
+  have_complete_data: boolean;
 }
