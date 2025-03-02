@@ -206,8 +206,8 @@ func (r WorkOrderRepository) upsertRelation(
 		specimen := entity.Specimen{
 			PatientID:      int(req.PatientID),
 			OrderID:        int(workOrder.ID),
-			Type:           specimenType,
-			Barcode:        r.specimentRepo.GenerateBarcode(trx.Statement.Context),
+			Type:           string(specimenType),
+			Barcode:        r.specimentRepo.GenerateBarcode(trx.Statement.Context, specimenType),
 			CollectionDate: time.Now().Format(time.RFC3339),
 		}
 		specimenQuery := trx.Clauses(clause.OnConflict{
@@ -278,13 +278,13 @@ func (r WorkOrderRepository) upsertRelation(
 	return nil
 }
 
-func (r WorkOrderRepository) groupBySpecimenType(trx *gorm.DB, req *entity.WorkOrderCreateRequest) (map[string][]entity.TestType, error) {
+func (r WorkOrderRepository) groupBySpecimenType(trx *gorm.DB, req *entity.WorkOrderCreateRequest) (map[entity.SpecimenType][]entity.TestType, error) {
 	testTypes, err := r.getTestType(trx, req.TestIDs)
 	if err != nil {
 		return nil, fmt.Errorf("error getting test type: %w", err)
 	}
 
-	specimenTypes := make(map[string][]entity.TestType)
+	specimenTypes := make(map[entity.SpecimenType][]entity.TestType)
 	for _, testType := range testTypes {
 		// TODO: Remove hardcoded value
 		// INI GW NGARANG
@@ -354,7 +354,7 @@ func (r WorkOrderRepository) groupBySpecimenType(trx *gorm.DB, req *entity.WorkO
 			"CHOL HDL DIRECT",
 		}
 
-		var specimentType string
+		var specimentType entity.SpecimenType
 		if slices.Contains(testCodeURI, testType.Code) {
 			specimentType = entity.SpecimenTypeUR
 		} else if slices.Contains(testCodeHYDC, testType.Code) {

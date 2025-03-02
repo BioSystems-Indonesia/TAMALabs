@@ -9,512 +9,528 @@ type SpecimenType string
 
 const (
 	// 	Abscess
-	SpecimenTypeABS = "ABS"
+	SpecimenTypeABS SpecimenType = "ABS"
 	// Tissue, Acne
-	SpecimenTypeACNE = "ACNE"
+	SpecimenTypeACNE SpecimenType = "ACNE"
 	// Fluid, Acne
-	SpecimenTypeACNFLD = "ACNFLD"
+	SpecimenTypeACNFLD SpecimenType = "ACNFLD"
 	// Air Sample
-	SpecimenTypeAIRS = "AIRS"
+	SpecimenTypeAIRS SpecimenType = "AIRS"
 	// Allograft
-	SpecimenTypeALL = "ALL"
+	SpecimenTypeALL SpecimenType = "ALL"
 	// Amputation
-	SpecimenTypeAMP = "AMP"
+	SpecimenTypeAMP SpecimenType = "AMP"
 	// Catheter Tip, Angio
-	SpecimenTypeANGI = "ANGI"
+	SpecimenTypeANGI SpecimenType = "ANGI"
 	// Catheter Tip, Arterial
-	SpecimenTypeARTC = "ARTC"
+	SpecimenTypeARTC SpecimenType = "ARTC"
 	// Serum, Acute
-	SpecimenTypeASERU = "ASERU"
+	SpecimenTypeASERU SpecimenType = "ASERU"
 	// Aspirate
-	SpecimenTypeASP = "ASP"
+	SpecimenTypeASP SpecimenType = "ASP"
 	// Environment, Attest
-	SpecimenTypeATTE = "ATTE"
+	SpecimenTypeATTE SpecimenType = "ATTE"
 	// Environmental, Autoclave Ampule
-	SpecimenTypeAUTOA = "AUTOA"
+	SpecimenTypeAUTOA SpecimenType = "AUTOA"
 	// Environmental, Autoclave Capsule
-	SpecimenTypeAUTOC = "AUTOC"
+	SpecimenTypeAUTOC SpecimenType = "AUTOC"
 	// Autopsy
-	SpecimenTypeAUTP = "AUTP"
+	SpecimenTypeAUTP SpecimenType = "AUTP"
 	// Blood bag
-	SpecimenTypeBBL = "BBL"
+	SpecimenTypeBBL SpecimenType = "BBL"
 	// Cyst, Baker's
-	SpecimenTypeBCYST = "BCYST"
+	SpecimenTypeBCYST SpecimenType = "BCYST"
 	// Bite
-	SpecimenTypeBITE = "BITE"
+	SpecimenTypeBITE SpecimenType = "BITE"
 	// Bleb
-	SpecimenTypeBLEB = "BLEB"
+	SpecimenTypeBLEB SpecimenType = "BLEB"
 	// Blister
-	SpecimenTypeBLIST = "BLIST"
+	SpecimenTypeBLIST SpecimenType = "BLIST"
 	// Boil
-	SpecimenTypeBOIL = "BOIL"
+	SpecimenTypeBOIL SpecimenType = "BOIL"
 	// Bone
-	SpecimenTypeBON = "BON"
+	SpecimenTypeBON SpecimenType = "BON"
 	// Bowel contents
-	SpecimenTypeBOWL = "BOWL"
+	SpecimenTypeBOWL SpecimenType = "BOWL"
 	// Blood product unit
-	SpecimenTypeBPU = "BPU"
+	SpecimenTypeBPU SpecimenType = "BPU"
 	// Burn
-	SpecimenTypeBRN = "BRN"
+	SpecimenTypeBRN SpecimenType = "BRN"
 	// Brush
-	SpecimenTypeBRSH = "BRSH"
+	SpecimenTypeBRSH SpecimenType = "BRSH"
 	// Breath (use EXHLD)
-	SpecimenTypeBRTH = "BRTH"
+	SpecimenTypeBRTH SpecimenType = "BRTH"
 	// Brushing
-	SpecimenTypeBRUS = "BRUS"
+	SpecimenTypeBRUS SpecimenType = "BRUS"
 	// Bubo
-	SpecimenTypeBUB = "BUB"
+	SpecimenTypeBUB SpecimenType = "BUB"
 	// Bulla/Bullae
-	SpecimenTypeBULLA = "BULLA"
+	SpecimenTypeBULLA SpecimenType = "BULLA"
 	// Biopsy
-	SpecimenTypeBX = "BX"
+	SpecimenTypeBX SpecimenType = "BX"
 	// Calculus (=Stone)
-	SpecimenTypeCALC = "CALC"
+	SpecimenTypeCALC SpecimenType = "CALC"
 	// Carbuncle
-	SpecimenTypeCARBU = "CARBU"
+	SpecimenTypeCARBU SpecimenType = "CARBU"
 	// Catheter
-	SpecimenTypeCAT = "CAT"
+	SpecimenTypeCAT SpecimenType = "CAT"
 	// Bite, Cat
-	SpecimenTypeCBITE = "CBITE"
+	SpecimenTypeCBITE SpecimenType = "CBITE"
 	// Clippings
-	SpecimenTypeCLIPP = "CLIPP"
+	SpecimenTypeCLIPP SpecimenType = "CLIPP"
 	// Conjunctiva
-	SpecimenTypeCNJT = "CNJT"
+	SpecimenTypeCNJT SpecimenType = "CNJT"
 	// Colostrum
-	SpecimenTypeCOL = "COL"
+	SpecimenTypeCOL SpecimenType = "COL"
 	// Biospy, Cone
-	SpecimenTypeCONE = "CONE"
+	SpecimenTypeCONE SpecimenType = "CONE"
 	// Scratch, Cat
-	SpecimenTypeCSCR = "CSCR"
+	SpecimenTypeCSCR SpecimenType = "CSCR"
 	// Serum, Convalescent
-	SpecimenTypeCSERU = "CSERU"
+	SpecimenTypeCSERU SpecimenType = "CSERU"
 	// Catheter Insertion Site
-	SpecimenTypeCSITE = "CSITE"
+	SpecimenTypeCSITE SpecimenType = "CSITE"
 	// Fluid, Cystostomy Tube
-	SpecimenTypeCSMY = "CSMY"
+	SpecimenTypeCSMY SpecimenType = "CSMY"
 	// Fluid, Cyst
-	SpecimenTypeCST = "CST"
+	SpecimenTypeCST SpecimenType = "CST"
 	// Blood, Cell Saver
-	SpecimenTypeCSVR = "CSVR"
+	SpecimenTypeCSVR SpecimenType = "CSVR"
 	// Catheter tip
-	SpecimenTypeCTP = "CTP"
+	SpecimenTypeCTP SpecimenType = "CTP"
 	// Site, CVP
-	SpecimenTypeCVPS = "CVPS"
+	SpecimenTypeCVPS SpecimenType = "CVPS"
 	// Catheter Tip, CVP
-	SpecimenTypeCVPT = "CVPT"
+	SpecimenTypeCVPT SpecimenType = "CVPT"
 	// Nodule, Cystic
-	SpecimenTypeCYN = "CYN"
+	SpecimenTypeCYN SpecimenType = "CYN"
 	// Cyst
-	SpecimenTypeCYST = "CYST"
+	SpecimenTypeCYST SpecimenType = "CYST"
 	// Bite, Dog
-	SpecimenTypeDBITE = "DBITE"
+	SpecimenTypeDBITE SpecimenType = "DBITE"
 	// Sputum, Deep Cough
-	SpecimenTypeDCS = "DCS"
+	SpecimenTypeDCS SpecimenType = "DCS"
 	// Ulcer, Decubitus
-	SpecimenTypeDEC = "DEC"
+	SpecimenTypeDEC SpecimenType = "DEC"
 	// Environmental, Water (Deionized)
-	SpecimenTypeDEION = "DEION"
+	SpecimenTypeDEION SpecimenType = "DEION"
 	// Dialysate
-	SpecimenTypeDIA = "DIA"
+	SpecimenTypeDIA SpecimenType = "DIA"
 	// Discharge
-	SpecimenTypeDISCHG = "DISCHG"
+	SpecimenTypeDISCHG SpecimenType = "DISCHG"
 	// Diverticulum
-	SpecimenTypeDIV = "DIV"
+	SpecimenTypeDIV SpecimenType = "DIV"
 	// Drain
-	SpecimenTypeDRN = "DRN"
+	SpecimenTypeDRN SpecimenType = "DRN"
 	// Drainage, Tube
-	SpecimenTypeDRNG = "DRNG"
+	SpecimenTypeDRNG SpecimenType = "DRNG"
 	// Drainage, Penrose
-	SpecimenTypeDRNGP = "DRNGP"
+	SpecimenTypeDRNGP SpecimenType = "DRNGP"
 	// Ear wax (cerumen)
-	SpecimenTypeEARW = "EARW"
+	SpecimenTypeEARW SpecimenType = "EARW"
 	// Brush, Esophageal
-	SpecimenTypeEBRUSH = "EBRUSH"
+	SpecimenTypeEBRUSH SpecimenType = "EBRUSH"
 	// Environmental, Eye Wash
-	SpecimenTypeEEYE = "EEYE"
+	SpecimenTypeEEYE SpecimenType = "EEYE"
 	// Environmental, Effluent
-	SpecimenTypeEFF = "EFF"
+	SpecimenTypeEFF SpecimenType = "EFF"
 	// Effusion
-	SpecimenTypeEFFUS = "EFFUS"
+	SpecimenTypeEFFUS SpecimenType = "EFFUS"
 	// Environmental, Food
-	SpecimenTypeEFOD = "EFOD"
+	SpecimenTypeEFOD SpecimenType = "EFOD"
 	// Environmental, Isolette
-	SpecimenTypeEISO = "EISO"
+	SpecimenTypeEISO SpecimenType = "EISO"
 	// Electrode
-	SpecimenTypeELT = "ELT"
+	SpecimenTypeELT SpecimenType = "ELT"
 	// Environmental, Unidentified Substance
-	SpecimenTypeENVIR = "ENVIR"
+	SpecimenTypeENVIR SpecimenType = "ENVIR"
 	// Environmental, Other Substance
-	SpecimenTypeEOTH = "EOTH"
+	SpecimenTypeEOTH SpecimenType = "EOTH"
 	// Environmental, Soil
-	SpecimenTypeESOI = "ESOI"
+	SpecimenTypeESOI SpecimenType = "ESOI"
 	// Environmental, Solution (Sterile)
-	SpecimenTypeESOS = "ESOS"
+	SpecimenTypeESOS SpecimenType = "ESOS"
 	// Aspirate, Endotrach
-	SpecimenTypeETA = "ETA"
+	SpecimenTypeETA SpecimenType = "ETA"
 	// Catheter Tip, Endotracheal
-	SpecimenTypeETTP = "ETTP"
+	SpecimenTypeETTP SpecimenType = "ETTP"
 	// Tube, Endotracheal
-	SpecimenTypeETTUB = "ETTUB"
+	SpecimenTypeETTUB SpecimenType = "ETTUB"
 	// Environmental, Whirlpool
-	SpecimenTypeEWHI = "EWHI"
+	SpecimenTypeEWHI SpecimenType = "EWHI"
 	// Gas, exhaled (=breath)
-	SpecimenTypeEXG = "EXG"
+	SpecimenTypeEXG SpecimenType = "EXG"
 	// Shunt, External
-	SpecimenTypeEXS = "EXS"
+	SpecimenTypeEXS SpecimenType = "EXS"
 	// Exudate
-	SpecimenTypeEXUDTE = "EXUDTE"
+	SpecimenTypeEXUDTE SpecimenType = "EXUDTE"
 	// Environmental, Water (Well)
-	SpecimenTypeFAW = "FAW"
+	SpecimenTypeFAW SpecimenType = "FAW"
 	// Blood, Fetal
-	SpecimenTypeFBLOOD = "FBLOOD"
+	SpecimenTypeFBLOOD SpecimenType = "FBLOOD"
 	// Fluid, Abdomen
-	SpecimenTypeFGA = "FGA"
+	SpecimenTypeFGA SpecimenType = "FGA"
 	// Fistula
-	SpecimenTypeFIST = "FIST"
+	SpecimenTypeFIST SpecimenType = "FIST"
 	// Fluid, Other
-	SpecimenTypeFLD = "FLD"
+	SpecimenTypeFLD SpecimenType = "FLD"
 	// Filter
-	SpecimenTypeFLT = "FLT"
+	SpecimenTypeFLT SpecimenType = "FLT"
 	// Fluid, Body unsp
-	SpecimenTypeFLU = "FLU"
+	SpecimenTypeFLU SpecimenType = "FLU"
 	// Fluid
-	SpecimenTypeFLUID = "FLUID"
+	SpecimenTypeFLUID SpecimenType = "FLUID"
 	// Catheter Tip, Foley
-	SpecimenTypeFOLEY = "FOLEY"
+	SpecimenTypeFOLEY SpecimenType = "FOLEY"
 	// Fluid, Respiratory
-	SpecimenTypeFRS = "FRS"
+	SpecimenTypeFRS SpecimenType = "FRS"
 	// Scalp, Fetal
-	SpecimenTypeFSCLP = "FSCLP"
+	SpecimenTypeFSCLP SpecimenType = "FSCLP"
 	// Furuncle
-	SpecimenTypeFUR = "FUR"
+	SpecimenTypeFUR SpecimenType = "FUR"
 	// Gas
-	SpecimenTypeGAS = "GAS"
+	SpecimenTypeGAS SpecimenType = "GAS"
 	// Aspirate, Gastric
-	SpecimenTypeGASA = "GASA"
+	SpecimenTypeGASA SpecimenType = "GASA"
 	// Antrum, Gastric
-	SpecimenTypeGASAN = "GASAN"
+	SpecimenTypeGASAN SpecimenType = "GASAN"
 	// Brushing, Gastric
-	SpecimenTypeGASBR = "GASBR"
+	SpecimenTypeGASBR SpecimenType = "GASBR"
 	// Drainage, Gastric
-	SpecimenTypeGASD = "GASD"
+	SpecimenTypeGASD SpecimenType = "GASD"
 	// Fluid/contents, Gastric
-	SpecimenTypeGAST = "GAST"
+	SpecimenTypeGAST SpecimenType = "GAST"
 	// Genital vaginal
-	SpecimenTypeGENV = "GENV"
+	SpecimenTypeGENV SpecimenType = "GENV"
 	// Graft
-	SpecimenTypeGRAFT = "GRAFT"
+	SpecimenTypeGRAFT SpecimenType = "GRAFT"
 	// Graft Site
-	SpecimenTypeGRAFTS = "GRAFTS"
+	SpecimenTypeGRAFTS SpecimenType = "GRAFTS"
 	// Granuloma
-	SpecimenTypeGRANU = "GRANU"
+	SpecimenTypeGRANU SpecimenType = "GRANU"
 	// Catheter, Groshong
-	SpecimenTypeGROSH = "GROSH"
+	SpecimenTypeGROSH SpecimenType = "GROSH"
 	// Solution, Gastrostomy
-	SpecimenTypeGSOL = "GSOL"
+	SpecimenTypeGSOL SpecimenType = "GSOL"
 	// Biopsy, Gastric
-	SpecimenTypeGSPEC = "GSPEC"
+	SpecimenTypeGSPEC SpecimenType = "GSPEC"
 	// Tube, Gastric
-	SpecimenTypeGT = "GT"
+	SpecimenTypeGT SpecimenType = "GT"
 	// Drainage Tube, Drainage (Gastrostomy)
-	SpecimenTypeGTUBE = "GTUBE"
+	SpecimenTypeGTUBE SpecimenType = "GTUBE"
 	// Bite, Human
-	SpecimenTypeHBITE = "HBITE"
+	SpecimenTypeHBITE SpecimenType = "HBITE"
 	// Blood, Autopsy
-	SpecimenTypeHBLUD = "HBLUD"
+	SpecimenTypeHBLUD SpecimenType = "HBLUD"
 	// Catheter Tip, Hemaquit
-	SpecimenTypeHEMAQ = "HEMAQ"
+	SpecimenTypeHEMAQ SpecimenType = "HEMAQ"
 	// Catheter Tip, Hemovac
-	SpecimenTypeHEMO = "HEMO"
+	SpecimenTypeHEMO SpecimenType = "HEMO"
 	// Tissue, Herniated
-	SpecimenTypeHERNI = "HERNI"
+	SpecimenTypeHERNI SpecimenType = "HERNI"
 	// Drain, Hemovac
-	SpecimenTypeHEV = "HEV"
+	SpecimenTypeHEV SpecimenType = "HEV"
 	// Catheter, Hickman
-	SpecimenTypeHIC = "HIC"
+	SpecimenTypeHIC SpecimenType = "HIC"
 	// Fluid, Hydrocele
-	SpecimenTypeHYDC = "HYDC"
+	SpecimenTypeHYDC SpecimenType = "HYDC"
 	// Bite, Insect
-	SpecimenTypeIBITE = "IBITE"
+	SpecimenTypeIBITE SpecimenType = "IBITE"
 	// Cyst, Inclusion
-	SpecimenTypeICYST = "ICYST"
+	SpecimenTypeICYST SpecimenType = "ICYST"
 	// Catheter Tip, Indwelling
-	SpecimenTypeIDC = "IDC"
+	SpecimenTypeIDC SpecimenType = "IDC"
 	// Gas, Inhaled
-	SpecimenTypeIHG = "IHG"
+	SpecimenTypeIHG SpecimenType = "IHG"
 	// Drainage, Ileostomy
-	SpecimenTypeILEO = "ILEO"
+	SpecimenTypeILEO SpecimenType = "ILEO"
 	// Source of Specimen Is Illegible
-	SpecimenTypeILLEG = "ILLEG"
+	SpecimenTypeILLEG SpecimenType = "ILLEG"
 	// Implant
-	SpecimenTypeIMP = "IMP"
+	SpecimenTypeIMP SpecimenType = "IMP"
 	// Site, Incision/Surgical
-	SpecimenTypeINCI = "INCI"
+	SpecimenTypeINCI SpecimenType = "INCI"
 	// Infiltrate
-	SpecimenTypeINFIL = "INFIL"
+	SpecimenTypeINFIL SpecimenType = "INFIL"
 	// Insect
-	SpecimenTypeINS = "INS"
+	SpecimenTypeINS SpecimenType = "INS"
 	// Catheter Tip, Introducer
-	SpecimenTypeINTRD = "INTRD"
+	SpecimenTypeINTRD SpecimenType = "INTRD"
 	// Intubation tube
-	SpecimenTypeIT = "IT"
+	SpecimenTypeIT SpecimenType = "IT"
 	// Intrauterine Device
-	SpecimenTypeIUD = "IUD"
+	SpecimenTypeIUD SpecimenType = "IUD"
 	// Catheter Tip, IV
-	SpecimenTypeIVCAT = "IVCAT"
+	SpecimenTypeIVCAT SpecimenType = "IVCAT"
 	// Fluid, IV
-	SpecimenTypeIVFLD = "IVFLD"
+	SpecimenTypeIVFLD SpecimenType = "IVFLD"
 	// Tubing Tip, IV
-	SpecimenTypeIVTIP = "IVTIP"
+	SpecimenTypeIVTIP SpecimenType = "IVTIP"
 	// Drainage, Jejunal
-	SpecimenTypeJEJU = "JEJU"
+	SpecimenTypeJEJU SpecimenType = "JEJU"
 	// Fluid, Joint
-	SpecimenTypeJNTFLD = "JNTFLD"
+	SpecimenTypeJNTFLD SpecimenType = "JNTFLD"
 	// Drainage, Jackson Pratt
-	SpecimenTypeJP = "JP"
+	SpecimenTypeJP SpecimenType = "JP"
 	// Lavage
-	SpecimenTypeKELOI = "KELOI"
+	SpecimenTypeKELOI SpecimenType = "KELOI"
 	// Fluid, Kidney
-	SpecimenTypeKIDFLD = "KIDFLD"
+	SpecimenTypeKIDFLD SpecimenType = "KIDFLD"
 	// Lavage, Bronhial
-	SpecimenTypeLAVG = "LAVG"
+	SpecimenTypeLAVG SpecimenType = "LAVG"
 	// Lavage, Gastric
-	SpecimenTypeLAVGG = "LAVGG"
+	SpecimenTypeLAVGG SpecimenType = "LAVGG"
 	// Lavage, Peritoneal
-	SpecimenTypeLAVGP = "LAVGP"
+	SpecimenTypeLAVGP SpecimenType = "LAVGP"
 	// Lavage, Pre-Bronch
-	SpecimenTypeLAVPG = "LAVPG"
+	SpecimenTypeLAVPG SpecimenType = "LAVPG"
 	// Contact Lens
-	SpecimenTypeLENS1 = "LENS1"
+	SpecimenTypeLENS1 SpecimenType = "LENS1"
 	// Contact Lens Case
-	SpecimenTypeLENS2 = "LENS2"
+	SpecimenTypeLENS2 SpecimenType = "LENS2"
 	// Lesion
-	SpecimenTypeLESN = "LESN"
+	SpecimenTypeLESN SpecimenType = "LESN"
 	// Liquid, Unspecified
-	SpecimenTypeLIQ = "LIQ"
+	SpecimenTypeLIQ SpecimenType = "LIQ"
 	// Liquid, Other
-	SpecimenTypeLIQO = "LIQO"
+	SpecimenTypeLIQO SpecimenType = "LIQO"
 	// Fluid, Lumbar Sac
-	SpecimenTypeLSAC = "LSAC"
+	SpecimenTypeLSAC SpecimenType = "LSAC"
 	// Catheter Tip, Makurkour
-	SpecimenTypeMAHUR = "MAHUR"
+	SpecimenTypeMAHUR SpecimenType = "MAHUR"
 	// Mass
-	SpecimenTypeMASS = "MASS"
+	SpecimenTypeMASS SpecimenType = "MASS"
 	// Blood, Menstrual
-	SpecimenTypeMBLD = "MBLD"
+	SpecimenTypeMBLD SpecimenType = "MBLD"
 	// Mucosa
-	SpecimenTypeMUCOS = "MUCOS"
+	SpecimenTypeMUCOS SpecimenType = "MUCOS"
 	// Mucus
-	SpecimenTypeMUCUS = "MUCUS"
+	SpecimenTypeMUCUS SpecimenType = "MUCUS"
 	// Drainage, Nasal
-	SpecimenTypeNASDR = "NASDR"
+	SpecimenTypeNASDR SpecimenType = "NASDR"
 	// Needle
-	SpecimenTypeNEDL = "NEDL"
+	SpecimenTypeNEDL SpecimenType = "NEDL"
 	// Site, Nephrostomy
-	SpecimenTypeNEPH = "NEPH"
+	SpecimenTypeNEPH SpecimenType = "NEPH"
 	// Aspirate, Nasogastric
-	SpecimenTypeNGASP = "NGASP"
+	SpecimenTypeNGASP SpecimenType = "NGASP"
 	// Drainage, Nasogastric
-	SpecimenTypeNGAST = "NGAST"
+	SpecimenTypeNGAST SpecimenType = "NGAST"
 	// Site, Naso/Gastric
-	SpecimenTypeNGS = "NGS"
+	SpecimenTypeNGS SpecimenType = "NGS"
 	// Nodule(s)
-	SpecimenTypeNODUL = "NODUL"
+	SpecimenTypeNODUL SpecimenType = "NODUL"
 	// Secretion, Nasal
-	SpecimenTypeNSECR = "NSECR"
+	SpecimenTypeNSECR SpecimenType = "NSECR"
 	// Other
-	SpecimenTypeORH = "ORH"
+	SpecimenTypeORH SpecimenType = "ORH"
 	// Lesion, Oral
-	SpecimenTypeORL = "ORL"
+	SpecimenTypeORL SpecimenType = "ORL"
 	// Source, Other
-	SpecimenTypeOTH = "OTH"
+	SpecimenTypeOTH SpecimenType = "OTH"
 	// Pacemaker
-	SpecimenTypePACEM = "PACEM"
+	SpecimenTypePACEM SpecimenType = "PACEM"
 	// Fluid, Pericardial
-	SpecimenTypePCFL = "PCFL"
+	SpecimenTypePCFL SpecimenType = "PCFL"
 	// Site, Peritoneal Dialysis
-	SpecimenTypePDSIT = "PDSIT"
+	SpecimenTypePDSIT SpecimenType = "PDSIT"
 	// Site, Peritoneal Dialysis Tunnel
-	SpecimenTypePDTS = "PDTS"
+	SpecimenTypePDTS SpecimenType = "PDTS"
 	// Abscess, Pelvic
-	SpecimenTypePELVA = "PELVA"
+	SpecimenTypePELVA SpecimenType = "PELVA"
 	// Lesion, Penile
-	SpecimenTypePENIL = "PENIL"
+	SpecimenTypePENIL SpecimenType = "PENIL"
 	// Abscess, Perianal
-	SpecimenTypePERIA = "PERIA"
+	SpecimenTypePERIA SpecimenType = "PERIA"
 	// Cyst, Pilonidal
-	SpecimenTypePILOC = "PILOC"
+	SpecimenTypePILOC SpecimenType = "PILOC"
 	// Site, Pin
-	SpecimenTypePINS = "PINS"
+	SpecimenTypePINS SpecimenType = "PINS"
 	// Site, Pacemaker Insetion
-	SpecimenTypePIS = "PIS"
+	SpecimenTypePIS SpecimenType = "PIS"
 	// Plant Material
-	SpecimenTypePLAN = "PLAN"
+	SpecimenTypePLAN SpecimenType = "PLAN"
 	// Plasma
-	SpecimenTypePLAS = "PLAS"
+	SpecimenTypePLAS SpecimenType = "PLAS"
 	// Plasma bag
-	SpecimenTypePLB = "PLB"
+	SpecimenTypePLB SpecimenType = "PLB"
 	// Serum, Peak Level
-	SpecimenTypePLEVS = "PLEVS"
+	SpecimenTypePLEVS SpecimenType = "PLEVS"
 	// Drainage, Penile
-	SpecimenTypePND = "PND"
+	SpecimenTypePND SpecimenType = "PND"
 	// Polyps
-	SpecimenTypePOL = "POL"
+	SpecimenTypePOL SpecimenType = "POL"
 	// Graft Site, Popliteal
-	SpecimenTypePOPGS = "POPGS"
+	SpecimenTypePOPGS SpecimenType = "POPGS"
 	// Graft, Popliteal
-	SpecimenTypePOPLG = "POPLG"
+	SpecimenTypePOPLG SpecimenType = "POPLG"
 	// Site, Popliteal Vein
-	SpecimenTypePOPLV = "POPLV"
+	SpecimenTypePOPLV SpecimenType = "POPLV"
 	// Catheter, Porta
-	SpecimenTypePORTA = "PORTA"
+	SpecimenTypePORTA SpecimenType = "PORTA"
 	// Plasma, Platelet poor
-	SpecimenTypePPP = "PPP"
+	SpecimenTypePPP SpecimenType = "PPP"
 	// Prosthetic Device
-	SpecimenTypePROST = "PROST"
+	SpecimenTypePROST SpecimenType = "PROST"
 	// Plasma, Platelet rich
-	SpecimenTypePRP = "PRP"
+	SpecimenTypePRP SpecimenType = "PRP"
 	// Pseudocyst
-	SpecimenTypePSC = "PSC"
+	SpecimenTypePSC SpecimenType = "PSC"
 	// Wound, Puncture
-	SpecimenTypePUNCT = "PUNCT"
+	SpecimenTypePUNCT SpecimenType = "PUNCT"
 	// Pus
-	SpecimenTypePUS = "PUS"
+	SpecimenTypePUS SpecimenType = "PUS"
 	// Pustule
-	SpecimenTypePUSFR = "PUSFR"
+	SpecimenTypePUSFR SpecimenType = "PUSFR"
 	// Pus
-	SpecimenTypePUST = "PUST"
+	SpecimenTypePUST SpecimenType = "PUST"
 	// Quality Control
-	SpecimenTypeQC3 = "QC3"
+	SpecimenTypeQC3 SpecimenType = "QC3"
 	// Urine, Random
-	SpecimenTypeRANDU = "RANDU"
+	SpecimenTypeRANDU SpecimenType = "RANDU"
 	// Bite, Reptile
-	SpecimenTypeRBITE = "RBITE"
+	SpecimenTypeRBITE SpecimenType = "RBITE"
 	// Drainage, Rectal
-	SpecimenTypeRECT = "RECT"
+	SpecimenTypeRECT SpecimenType = "RECT"
 	// Abscess, Rectal
-	SpecimenTypeRECTA = "RECTA"
+	SpecimenTypeRECTA SpecimenType = "RECTA"
 	// Cyst, Renal
-	SpecimenTypeRENALC = "RENALC"
+	SpecimenTypeRENALC SpecimenType = "RENALC"
 	// Fluid, Renal Cyst
-	SpecimenTypeRENC = "RENC"
+	SpecimenTypeRENC SpecimenType = "RENC"
 	// Respiratory
-	SpecimenTypeRES = "RES"
+	SpecimenTypeRES SpecimenType = "RES"
 	// Saliva
-	SpecimenTypeSAL = "SAL"
+	SpecimenTypeSAL SpecimenType = "SAL"
 	// Tissue, Keloid (Scar)
-	SpecimenTypeSCAR = "SCAR"
+	SpecimenTypeSCAR SpecimenType = "SCAR"
 	// Catheter Tip, Subclavian
-	SpecimenTypeSCLV = "SCLV"
+	SpecimenTypeSCLV SpecimenType = "SCLV"
 	// Abscess, Scrotal
-	SpecimenTypeSCROA = "SCROA"
+	SpecimenTypeSCROA SpecimenType = "SCROA"
 	// Secretion(s)
-	SpecimenTypeSECRE = "SECRE"
+	SpecimenTypeSECRE SpecimenType = "SECRE"
 	// Serum
-	SpecimenTypeSER = "SER"
+	SpecimenTypeSER SpecimenType = "SER"
 	// Site, Shunt
-	SpecimenTypeSHU = "SHU"
+	SpecimenTypeSHU SpecimenType = "SHU"
 	// Fluid, Shunt
-	SpecimenTypeSHUNF = "SHUNF"
+	SpecimenTypeSHUNF SpecimenType = "SHUNF"
 	// Shunt
-	SpecimenTypeSHUNT = "SHUNT"
+	SpecimenTypeSHUNT SpecimenType = "SHUNT"
 	// Site
-	SpecimenTypeSITE = "SITE"
+	SpecimenTypeSITE SpecimenType = "SITE"
 	// Biopsy, Skin
-	SpecimenTypeSKBP = "SKBP"
+	SpecimenTypeSKBP SpecimenType = "SKBP"
 	// Skin
-	SpecimenTypeSKN = "SKN"
+	SpecimenTypeSKN SpecimenType = "SKN"
 	// Mass, Sub-Mandibular
-	SpecimenTypeSMM = "SMM"
+	SpecimenTypeSMM SpecimenType = "SMM"
 	// Fluid, synovial (Joint fluid)
-	SpecimenTypeSNV = "SNV"
+	SpecimenTypeSNV SpecimenType = "SNV"
 	// Spermatozoa
-	SpecimenTypeSPRM = "SPRM"
+	SpecimenTypeSPRM SpecimenType = "SPRM"
 	// Catheter Tip, Suprapubic
-	SpecimenTypeSPRP = "SPRP"
+	SpecimenTypeSPRP SpecimenType = "SPRP"
 	// Cathether Tip, Suprapubic
-	SpecimenTypeSPRPB = "SPRPB"
+	SpecimenTypeSPRPB SpecimenType = "SPRPB"
 	// Environmental, Spore Strip
-	SpecimenTypeSPS = "SPS"
+	SpecimenTypeSPS SpecimenType = "SPS"
 	// Sputum
-	SpecimenTypeSPT = "SPT"
+	SpecimenTypeSPT SpecimenType = "SPT"
 	// Sputum - coughed
-	SpecimenTypeSPTC = "SPTC"
+	SpecimenTypeSPTC SpecimenType = "SPTC"
 	// Sputum - tracheal aspirate
-	SpecimenTypeSPTT = "SPTT"
+	SpecimenTypeSPTT SpecimenType = "SPTT"
 	// Sputum, Simulated
-	SpecimenTypeSPUT1 = "SPUT1"
+	SpecimenTypeSPUT1 SpecimenType = "SPUT1"
 	// Sputum, Inducted
-	SpecimenTypeSPUTIN = "SPUTIN"
+	SpecimenTypeSPUTIN SpecimenType = "SPUTIN"
 	// Sputum, Spontaneous
-	SpecimenTypeSPUTSP = "SPUTSP"
+	SpecimenTypeSPUTSP SpecimenType = "SPUTSP"
 	// Environmental, Sterrad
-	SpecimenTypeSTER = "STER"
+	SpecimenTypeSTER SpecimenType = "STER"
 	// Stool = Fecal
-	SpecimenTypeSTL = "STL"
+	SpecimenTypeSTL SpecimenType = "STL"
 	// Stone, Kidney
-	SpecimenTypeSTONE = "STONE"
+	SpecimenTypeSTONE SpecimenType = "STONE"
 	// Abscess, Submandibular
-	SpecimenTypeSUBMA = "SUBMA"
+	SpecimenTypeSUBMA SpecimenType = "SUBMA"
 	// Abscess, Submaxillary
-	SpecimenTypeSUBMX = "SUBMX"
+	SpecimenTypeSUBMX SpecimenType = "SUBMX"
 	// Drainage, Sump
-	SpecimenTypeSUMP = "SUMP"
+	SpecimenTypeSUMP SpecimenType = "SUMP"
 	// Suprapubic Tap
-	SpecimenTypeSUP = "SUP"
+	SpecimenTypeSUP SpecimenType = "SUP"
 	// Suture
-	SpecimenTypeSUTUR = "SUTUR"
+	SpecimenTypeSUTUR SpecimenType = "SUTUR"
 	// Catheter Tip, Swan Gantz
-	SpecimenTypeSWGZ = "SWGZ"
+	SpecimenTypeSWGZ SpecimenType = "SWGZ"
 	// Aspirate, Tracheal
-	SpecimenTypeTASP = "TASP"
+	SpecimenTypeTASP SpecimenType = "TASP"
 	// Tissue
-	SpecimenTypeTISS = "TISS"
+	SpecimenTypeTISS SpecimenType = "TISS"
 	// Tissue ulcer
-	SpecimenTypeTISU = "TISU"
+	SpecimenTypeTISU SpecimenType = "TISU"
 	// Cathether Tip, Triple Lumen
-	SpecimenTypeTLC = "TLC"
+	SpecimenTypeTLC SpecimenType = "TLC"
 	// Site, Tracheostomy
-	SpecimenTypeTRAC = "TRAC"
+	SpecimenTypeTRAC SpecimenType = "TRAC"
 	// Transudate
-	SpecimenTypeTRANS = "TRANS"
+	SpecimenTypeTRANS SpecimenType = "TRANS"
 	// Serum, Trough
-	SpecimenTypeTSERU = "TSERU"
+	SpecimenTypeTSERU SpecimenType = "TSERU"
 	// Abscess, Testicular
-	SpecimenTypeTSTES = "TSTES"
+	SpecimenTypeTSTES SpecimenType = "TSTES"
 	// Aspirate, Transtracheal
-	SpecimenTypeTTRA = "TTRA"
+	SpecimenTypeTTRA SpecimenType = "TTRA"
 	// Tubes
-	SpecimenTypeTUBES = "TUBES"
+	SpecimenTypeTUBES SpecimenType = "TUBES"
 	// Tumor
-	SpecimenTypeTUMOR = "TUMOR"
+	SpecimenTypeTUMOR SpecimenType = "TUMOR"
 	// Smear, Tzanck
-	SpecimenTypeTZANC = "TZANC"
+	SpecimenTypeTZANC SpecimenType = "TZANC"
 	// Source, Unidentified
-	SpecimenTypeUDENT = "UDENT"
+	SpecimenTypeUDENT SpecimenType = "UDENT"
 	// Urine
-	SpecimenTypeUR = "UR"
+	SpecimenTypeUR SpecimenType = "UR"
 	// Urine clean catch
-	SpecimenTypeURC = "URC"
+	SpecimenTypeURC SpecimenType = "URC"
 	// Urine, Bladder Washings
-	SpecimenTypeURINB = "URINB"
+	SpecimenTypeURINB SpecimenType = "URINB"
 	// Urine, Catheterized
-	SpecimenTypeURINC = "URINC"
+	SpecimenTypeURINC SpecimenType = "URINC"
 	// Urine, Midstream
-	SpecimenTypeURINM = "URINM"
+	SpecimenTypeURINM SpecimenType = "URINM"
 	// Urine, Nephrostomy
-	SpecimenTypeURINN = "URINN"
+	SpecimenTypeURINN SpecimenType = "URINN"
 	// Urine, Pedibag
-	SpecimenTypeURINP = "URINP"
+	SpecimenTypeURINP SpecimenType = "URINP"
 	// Urine catheter
-	SpecimenTypeURT = "URT"
+	SpecimenTypeURT SpecimenType = "URT"
 	// Urine, Cystoscopy
-	SpecimenTypeUSCOP = "USCOP"
+	SpecimenTypeUSCOP SpecimenType = "USCOP"
 	// Source, Unspecified
-	SpecimenTypeUSPEC = "USPEC"
+	SpecimenTypeUSPEC SpecimenType = "USPEC"
 	// Catheter Tip, Vas
-	SpecimenTypeVASTIP = "VASTIP"
+	SpecimenTypeVASTIP SpecimenType = "VASTIP"
 )
+
+// TODO: Change this to real data
+func (s SpecimenType) Code() string {
+	switch s {
+	case SpecimenTypeSER:
+		return "1"
+	case SpecimenTypeUR:
+		return "2"
+	case SpecimenTypeHYDC:
+		return "3"
+	case SpecimenTypePLAS:
+		return "4"
+	}
+
+	return "5"
+}
 
 type Priority string
 
