@@ -29,34 +29,26 @@ func (p WorkOrderUseCase) FindAll(
 	return p.workOrderRepo.FindAll(ctx, req)
 }
 
-func (p WorkOrderUseCase) FindManyByID(
-	ctx context.Context, id []int64,
-) ([]entity.WorkOrder, error) {
-	return p.workOrderRepo.FindManyByID(ctx, id)
-}
-
 func (p WorkOrderUseCase) FindOneByID(id int64) (entity.WorkOrder, error) {
 	return p.workOrderRepo.FindOne(id)
 }
 
-func (p WorkOrderUseCase) Create(req *entity.WorkOrder) error {
-	req.Status = entity.WorkOrderStatusNew
-
+func (p WorkOrderUseCase) Create(req *entity.WorkOrderCreateRequest) (entity.WorkOrder, error) {
 	return p.workOrderRepo.Create(req)
 }
 
-func (p WorkOrderUseCase) AddTest(req *entity.WorkOrder) error {
-	return p.workOrderRepo.AddTest(req)
+func (p WorkOrderUseCase) Edit(id int, req *entity.WorkOrderCreateRequest) (entity.WorkOrder, error) {
+	return p.workOrderRepo.Edit(id, req)
 }
 
 func (p WorkOrderUseCase) Delete(id int64) error {
 	return p.workOrderRepo.Delete(id)
 }
 
-func (p WorkOrderUseCase) DeleteTest(workOrderID int64, patientID int64) error {
-	return p.workOrderRepo.DeleteTest(workOrderID, patientID)
-}
-
 func (p WorkOrderUseCase) Update(workOrder *entity.WorkOrder) error {
 	return p.workOrderRepo.Update(workOrder)
+}
+
+func (p WorkOrderUseCase) UpsertDevice(workOrderID int64, deviceID int64) error {
+	return p.workOrderRepo.UpsertDevice(workOrderID, deviceID)
 }

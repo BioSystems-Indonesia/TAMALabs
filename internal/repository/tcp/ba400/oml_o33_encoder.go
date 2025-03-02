@@ -10,28 +10,28 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
-func NewOML_O33(patient entity.Patient, device entity.Device) h251.OML_O33 {
+func NewOML_O33(patient entity.Patient, device entity.Device, urgent bool) h251.OML_O33 {
 	msgControlID := uuid.New()
 	date := time.Now()
 	return h251.OML_O33{
 		MSH:      NewOML_O33_MSH(msgControlID.String(), device, date),
 		Patient:  NewOML_O33_Patient(patient),
-		Specimen: NewOML_O33_Specimens(patient.Specimen, date),
+		Specimen: NewOML_O33_Specimens(patient.Specimen, date, urgent),
 	}
 }
 
-func NewOML_O33_Specimens(sepeciments []entity.Specimen, date time.Time) []h251.OML_O33_Specimen {
+func NewOML_O33_Specimens(sepeciments []entity.Specimen, date time.Time, urgent bool) []h251.OML_O33_Specimen {
 	var specimens []h251.OML_O33_Specimen
 	for i, s := range sepeciments {
-		specimens = append(specimens, NewOML_O33_Specimen(i+1, s, s.ObservationRequest, date))
+		specimens = append(specimens, NewOML_O33_Specimen(i+1, s, s.ObservationRequest, date, urgent))
 	}
 	return specimens
 }
 
-func NewOML_O33_Specimen(index int, s entity.Specimen, obr []entity.ObservationRequest, date time.Time) h251.OML_O33_Specimen {
+func NewOML_O33_Specimen(index int, s entity.Specimen, obr []entity.ObservationRequest, date time.Time, urgent bool) h251.OML_O33_Specimen {
 	var orders = []h251.OML_O33_Order{}
 	for i, o := range obr {
-		orders = append(orders, NewOrder(strconv.Itoa(i+1), date, o.TestCode, o.GetOrderControlNode()))
+		orders = append(orders, NewOrder(strconv.Itoa(i+1), date, o.TestCode, o.GetOrderControlNode(), urgent))
 	}
 
 	return h251.OML_O33_Specimen{
@@ -113,7 +113,12 @@ func NewOBRUniversalID(id string) h251.CE {
 	}
 }
 
-func NewOrder(setID string, date time.Time, testID string, orderControl string) h251.OML_O33_Order {
+func NewOrder(setID string, date time.Time, testID string, orderControl string, urgent bool) h251.OML_O33_Order {
+	priority := entity.PriorityR
+	if urgent {
+		priority = entity.PriorityS
+	}
+
 	return h251.OML_O33_Order{
 		ORC: &h251.ORC{
 			OrderControl:          orderControl,
@@ -124,6 +129,7 @@ func NewOrder(setID string, date time.Time, testID string, orderControl string) 
 				SetID:                      setID,
 				PlacerOrderNumber:          &h251.EI{EntityIdentifier: "1"},
 				UniversalServiceIdentifier: NewOBRUniversalID(testID),
+				Priority:                   string(priority),
 			},
 		},
 	}

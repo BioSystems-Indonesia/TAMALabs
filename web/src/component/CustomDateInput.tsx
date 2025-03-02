@@ -5,6 +5,7 @@ import { DateInputProps, InputHelperText, useInput } from "react-admin";
 import dayjs, { Dayjs } from "dayjs";
 import React from "react";
 import { requiredAstrix } from "../helper/format.ts";
+import type { SxProps } from '@mui/material';
 
 type CustomDateInputProps = {
     source: string
@@ -12,9 +13,10 @@ type CustomDateInputProps = {
     required?: boolean
     readonly?: boolean
     clearable?: boolean
+    sx?: SxProps
 } & DateInputProps
 
-export default function CustomDateInput({ source, label, required, readonly, clearable }: CustomDateInputProps) {
+export default function CustomDateInput({ source, label, required, readonly, clearable, sx }: CustomDateInputProps) {
     const { field, fieldState } = useInput({ source });
     const [value, setValue] = React.useState<Dayjs | null>(field.value ? dayjs(field.value) : null);
 
@@ -27,7 +29,9 @@ export default function CustomDateInput({ source, label, required, readonly, cle
                 }}
                 slotProps={{ field: { clearable: clearable, onBlur: field.onBlur } }}
                 sx={{
+                    //@ts-ignore this is perfectly fine
                     maxWidth: "280px",
+                    ...sx
                 }}
                 ref={field.ref}
                 name={field.name}

@@ -129,7 +129,6 @@ func InitDatabase() (*gorm.DB, error) {
 		&entity.Patient{},
 		&entity.Specimen{},
 		&entity.WorkOrder{},
-		&entity.WorkOrderPatient{},
 		&entity.Device{},
 		&entity.TestType{},
 		&entity.Config{},
@@ -142,7 +141,7 @@ func InitDatabase() (*gorm.DB, error) {
 
 		err = db.AutoMigrate(model)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error auto migrate %T: %w", model, err)
 		}
 	}
 

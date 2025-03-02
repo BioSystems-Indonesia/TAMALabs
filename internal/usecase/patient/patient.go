@@ -29,6 +29,12 @@ func (p PatientUseCase) FindAll(
 	return p.patientRepo.FindAll(ctx, req)
 }
 
+func (p PatientUseCase) FindManyByWorkOrderID(
+	ctx context.Context, workOrderIDs []int64,
+) ([]entity.Patient, error) {
+	return p.patientRepo.FindManyByWorkOrderID(ctx, workOrderIDs)
+}
+
 func (p PatientUseCase) FindOneByID(id int64) (entity.Patient, error) {
 	return p.patientRepo.FindOne(id)
 }

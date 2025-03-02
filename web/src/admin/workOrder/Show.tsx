@@ -1,10 +1,7 @@
-import AddIcon from '@mui/icons-material/Add';
 import CancelIcon from '@mui/icons-material/Cancel';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import PrintIcon from '@mui/icons-material/Print';
-import { Card, CardContent, CircularProgress, Grid } from "@mui/material";
+import { Card, CardContent, CircularProgress, Grid, type SxProps } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMutation } from "@tanstack/react-query";
@@ -12,14 +9,16 @@ import React from "react";
 import {
     ArrayField,
     AutocompleteInput,
+    BooleanInput,
     Button,
     ChipField,
     Datagrid,
     DateField,
+    EditButton,
     Form,
     InputHelperText,
     Link,
-    ReferenceField,
+    RecordContextProvider,
     ReferenceInput,
     Show,
     SingleFieldList,
@@ -29,22 +28,22 @@ import {
     WithRecord,
     WrapperField,
     required,
-    useDeleteMany,
     useGetRecordId,
-    useListContext,
     useNotify,
     useRecordContext,
-    useRefresh,
-    type ButtonProps
+    useRefresh
 } from "react-admin";
 import Barcode from "react-barcode";
 import { useFormContext } from 'react-hook-form';
 import { useReactToPrint } from "react-to-print";
 import { trimName } from '../../helper/format';
+import useAxios from '../../hooks/useAxios';
 import { getRefererParam } from '../../hooks/useReferer';
 import useSettings from '../../hooks/useSettings';
 import type { BarcodeStyle } from '../../types/general';
+import type { WorkOrder } from '../../types/work_order';
 import { DeviceForm } from "../device";
+import { PatientForm } from '../patient';
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
 
 const barcodePageStyle = (style: BarcodeStyle) => `
@@ -110,66 +109,6 @@ const PrintBarcodeButton = ({ barcodeRef }: { barcodeRef: React.RefObject<any> }
     );
 }
 
-const AddTestButton = (props: ButtonProps) => {
-    const record = useRecordContext();
-
-    return (
-        <Link to={`/work-order/${record?.id}/show/add-test`}>
-            <Button label="Add Test" {...props}>
-                <AddIcon />
-            </Button>
-        </Link>
-    );
-}
-
-const BulkEditButton = ({ patientIDs, workOrderID }: { patientIDs?: number[], workOrderID?: number }) => {
-    const recordId = workOrderID ?? useGetRecordId();
-
-    const generateUrl = (patientIDs?: number[]) => {
-        const urlParams = new URLSearchParams();
-        if (patientIDs) {
-            patientIDs.forEach(id => urlParams.append('patient_id', id.toString()));
-        }
-
-        return `/work-order/${recordId}/show/add-test/1?${urlParams.toString()}`;
-    }
-
-    return (
-        <Link to={generateUrl(patientIDs)}>
-            <Button label="Edit" color="secondary" variant="contained">
-                <EditIcon />
-            </Button>
-        </Link>
-    );
-}
-
-const BulkDeleteButton = ({ patientIDs, workOrderID }: { patientIDs?: number[], workOrderID?: number }) => {
-    const recordId = workOrderID ?? useGetRecordId();
-    const notify = useNotify();
-    const refresh = useRefresh();
-
-    const [deleteMany, { isPending }] = useDeleteMany(`work-order/${recordId}/test`, { ids: patientIDs }, {
-        onError: (error: Error) => {
-            notify('Error:' + error.message, {
-                type: 'error',
-            });
-        },
-        onSuccess: () => {
-            refresh();
-            notify('Success delete', {
-                type: 'success',
-            });
-        },
-    });
-
-    return (
-        <Button label="Delete" onClick={() => {
-            deleteMany();
-        }} disabled={isPending} color="error" variant="contained">
-            <DeleteIcon />
-        </Button>
-    );
-}
 
 const CancelButton = ({ workOrderID }: { workOrderID: number }) => {
     const notify = useNotify();
@@ -221,35 +160,8 @@ function WorkOrderShowActions({ barcodeRef, workOrderID }: { barcodeRef: React.R
                 <CancelButton workOrderID={workOrderID} />
             }
             <PrintBarcodeButton barcodeRef={barcodeRef} />
-            <AddTestButton />
+            <EditButton />
         </TopToolbar>
-    )
-}
-
-function PatientListBulkAction() {
-    const { selectedIds } = useListContext();
-
-    return (
-        <>
-            <BulkEditButton patientIDs={selectedIds} />
-            <BulkDeleteButton patientIDs={selectedIds} />
-        </>
-    )
-}
-
-const PatientTestEmpty = () => {
-    return (
-        <Card>
-            <CardContent sx={{
-                display: "flex",
-                justifyContent: "center",
-                flexDirection: "column",
-                gap: 2,
-            }}>
-                <Typography fontSize={24} >No patient test found</Typography>
-                <AddTestButton variant="contained" color="primary" />
-            </CardContent>
-        </Card>
     )
 }
 
@@ -274,52 +186,68 @@ export function WorkOrderShow() {
                             <RunWorkOrderForm />
                         </CardContent>
                     </Card>
-                    <ArrayField source={"patient_list"} label={"Patient Test"} >
-                        <Datagrid rowClick={false} bulkActionButtons={<PatientListBulkAction />} empty={<PatientTestEmpty />}>
-                            <ReferenceField reference={"patient"} source={"id"} label={"Patient"} textAlign="center" />
-                            <ArrayField source={"specimen_list"} label={"Specimen"} textAlign="center" >
-                                <Datagrid bulkActionButtons={false} rowClick={false} hover={false}>
-                                    <ChipField source={"type"} textAlign={"center"} />
-                                    <WrapperField source={"barcode"} label={"Barcode"} textAlign={"center"}>
-                                        <Stack>
-                                            <WithRecord render={(record: any) => {
-                                                return (
-                                                    <Stack gap={0} justifyContent={"center"} alignItems={"center"}>
-                                                        <Barcode value={record.barcode} displayValue={false} />
-                                                        <Typography
-                                                            className={"barcode-text"}
-                                                            fontSize={12}
-                                                            sx={{
-                                                                margin: 0,
-                                                            }}>{record.barcode}</Typography>
-                                                    </Stack>
-                                                )
-                                            }} />
-                                        </Stack>
-                                    </WrapperField>
-                                    <ArrayField source={"observation_requests"} label={`Observation Requests`} textAlign="center">
-                                        <SingleFieldList linkType={false} sx={{
-                                            maxHeight: "200px",
-                                            overflow: "scroll",
-                                        }}>
-                                            <ChipField source={"test_code"} textAlign={"center"} />
-                                        </SingleFieldList>
+                    <Card>
+                        <CardContent sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            flexDirection: "column",
+                            gap: 2,
+                        }}>
+                            <Typography variant='subtitle1'>Patient Info</Typography>
+                            <WithRecord render={(record: WorkOrder) => {
+                                return (
+                                    <RecordContextProvider value={record.patient}>
+                                        <PatientForm readonly mode={"SHOW"} />
+                                    </RecordContextProvider>
+                                )
+                            }} />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            flexDirection: "column",
+                            gap: 2,
+                        }}>
+                            <Typography variant='subtitle1'>Test Info</Typography>
+                            <WithRecord render={(record: WorkOrder) => {
+
+                                return (
+                                    <ArrayField source={"patient.specimen_list"} label={"Specimen"} textAlign="center" >
+                                        <Datagrid bulkActionButtons={false} rowClick={false} hover={false}>
+                                            <ChipField source={"type"} textAlign={"center"} />
+                                            <WrapperField source={"barcode"} label={"Barcode"} textAlign={"center"}>
+                                                <Stack>
+                                                    <WithRecord render={(record: any) => {
+                                                        return (
+                                                            <Stack gap={0} justifyContent={"center"} alignItems={"center"}>
+                                                                <Barcode value={record.barcode} displayValue={false} />
+                                                                <Typography
+                                                                    className={"barcode-text"}
+                                                                    fontSize={12}
+                                                                    sx={{
+                                                                        margin: 0,
+                                                                    }}>{record.barcode}</Typography>
+                                                            </Stack>
+                                                        )
+                                                    }} />
+                                                </Stack>
+                                            </WrapperField>
+                                            <ArrayField source={"observation_requests"} label={`Observation Requests`} textAlign="center">
+                                                <SingleFieldList linkType={false} sx={{
+                                                    maxHeight: "200px",
+                                                    overflow: "scroll",
+                                                }}>
+                                                    <ChipField source={"test_code"} textAlign={"center"} />
+                                                </SingleFieldList>
+                                            </ArrayField>
+                                        </Datagrid>
                                     </ArrayField>
-                                </Datagrid>
-                            </ArrayField>
-                            <DateField source="updated_at" showTime textAlign="center" />
-                            <WrapperField label="Actions">
-                                <WithRecord render={(record: any) => {
-                                    return (
-                                        <Stack gap={1}>
-                                            <BulkEditButton patientIDs={[record.id]} workOrderID={Number(workOrderID)} />
-                                            <BulkDeleteButton patientIDs={[record.id]} workOrderID={Number(workOrderID)} />
-                                        </Stack>
-                                    )
-                                }} />
-                            </WrapperField>
-                        </Datagrid>
-                    </ArrayField>
+                                )
+                            }} />
+                        </CardContent>
+                    </Card>
                 </TabbedShowLayout.Tab>
                 <TabbedShowLayout.Tab label="Detail">
                     <TextField source="id" />
@@ -331,8 +259,8 @@ export function WorkOrderShow() {
             <WithRecord render={(record: any) => {
                 return (
                     <Stack ref={barcodeRef}>
-                        {record?.patient_list?.map((patient: any) => {
-                            return patient?.specimen_list?.map((specimen: any) => {
+                        {
+                            record.patient?.specimen_list?.map((specimen: any) => {
                                 return (
                                     <Stack gap={0} justifyContent={"center"} alignItems={"center"}
                                         className={"barcode-container"} sx={{
@@ -343,38 +271,40 @@ export function WorkOrderShow() {
                                             fontSize={8}
                                             sx={{
                                                 margin: 0,
-                                            }}>{trimName(`${patient.first_name} ${patient.last_name}`, 14)} | {specimen.barcode}</Typography>
+                                            }}>{trimName(`${record.patient.first_name} ${record.patient.last_name}`, 14)} | {specimen.barcode}</Typography>
                                         <Barcode value={specimen.barcode} displayValue={false} height={settings.barcode_height} margin={0} width={settings.barcode_width} />
                                     </Stack>
                                 )
                             })
-                        })}
+                        }
                     </Stack>
                 )
             }} />
-        </Show>
+        </Show >
     )
 }
 
-function RunWorkOrderForm() {
+export type RunWorkOrderFormProps = {
+    workOrderIDs?: number[];
+}
+
+export function RunWorkOrderForm(props: RunWorkOrderFormProps) {
     const notify = useNotify();
     const refresh = useRefresh();
+    const axios = useAxios();
     const { mutate, isPending } = useMutation({
         mutationFn: async (data: any) => {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`, {
-                method: 'POST',
+            const response = await axios.post(`${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`, data, {
                 headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
+                    'Content-Type': 'application/json'
+                }
             });
 
-            if (!response.ok) {
-                const responseJson = await response.json();
-                throw new Error(responseJson.error);
+            if (response.status != 200) {
+                throw new Error(response.data?.error);
             }
 
-            return response.json();
+            return response.data;
         },
         onSuccess: () => {
             notify('Success run', {
@@ -398,8 +328,9 @@ function RunWorkOrderForm() {
         }
 
         mutate({
-            work_order_id: data.id,
-            device_id: data.device_id
+            work_order_ids: props.workOrderIDs ?? [data.id],
+            device_id: data.device_id,
+            urgent: data.urgent,
         });
     }
 
@@ -412,18 +343,16 @@ function RunWorkOrderForm() {
                 justifyContent: "center",
                 alignItems: "center",
             }}>
-                <Stack width={"100%"}>
-                    <ReferenceInput source={"device_id"} reference={"device"} disabled={isPending} >
-                        <AutocompleteInput source={"device_id"} validate={[required()]} create={<DeviceForm />} sx={{
-                            margin: 0,
-                        }} disabled={isPending} helperText={
-                            <Link to={"device/create?" + getRefererParam()}>
-                                <InputHelperText helperText="Create new device"></InputHelperText>
-                            </Link>
-                        }
-                        />
-                    </ReferenceInput>
-                </Stack>
+                <ReferenceInput source={"device_id"} reference={"device"} disabled={isPending} >
+                    <AutocompleteInput source={"device_id"} validate={[required()]} create={<DeviceForm />} sx={{
+                        margin: 0,
+                    }} disabled={isPending} helperText={
+                        <Link to={"/device/create?" + getRefererParam()}>
+                            <InputHelperText helperText="Create new device"></InputHelperText>
+                        </Link>
+                    }
+                    />
+                </ReferenceInput>
             </Grid>
             <Grid item xs={12} md={3} sx={{
                 display: "flex",
@@ -431,21 +360,24 @@ function RunWorkOrderForm() {
                 justifyContent: "start",
                 alignItems: "center",
             }}>
-                <RunWorkOrderSubmit isPending={isPending} />
+                <BooleanInput source={"urgent"} disabled={isPending} label="Urgent" />
             </Grid>
         </Grid>
+        <RunWorkOrderSubmit isPending={isPending} sx={{
+            marginTop: "12px",
+        }} />
     </Form>;
 }
 
-function RunWorkOrderSubmit({ isPending }: { isPending: boolean }) {
+function RunWorkOrderSubmit({ isPending, sx }: { isPending: boolean, sx: SxProps }) {
     const { watch } = useFormContext()
 
 
     return (
-        <Stack >
+        <Stack sx={sx}>
             <Button label="Run Work Order" disabled={isPending || !watch("device_id")} variant="contained" type='submit' sx={{
                 cursor: "pointer"
-            }}>
+            }} >
                 {isPending ? <CircularProgress size={12} variant='indeterminate' color='primary' /> : <PlayCircleFilledIcon />}
             </Button>
             {!isPending && !watch("device_id") && <Typography color='error' fontSize={12}>Please pick device to run</Typography>}

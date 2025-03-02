@@ -15,6 +15,8 @@ type ObservationRequest struct {
 	SpecimenID      int64     `json:"specimen_id" gorm:"not null;index:observation_request_uniq,unique,priority:1" validate:"required"`
 	CreatedAt       time.Time `json:"created_at" gorm:"not null"`
 	UpdatedAt       time.Time `json:"updated_at" gorm:"not null"`
+
+	TestType TestType `json:"test_type" gorm:"foreignKey:TestCode;references:Code" validate:"-"`
 }
 
 func (o ObservationRequest) GetOrderControlNode() string {

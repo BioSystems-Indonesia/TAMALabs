@@ -7,11 +7,8 @@ import { useFormContext } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-export const TestTypeList = () => (
-    <List aside={<TestFilterSidebar />} title="Test Type" sort={{
-        field: "id",
-        order: "DESC",
-    }}>
+export const TestTypeDatagrid = (props: any) => {
+    return (
         <Datagrid bulkActionButtons={false}>
             <TextField source="id" />
             <TextField source="name" />
@@ -23,6 +20,15 @@ export const TestTypeList = () => (
             <TextField source="unit" />
             <TextField source="description" />
         </Datagrid>
+    )
+}
+
+export const TestTypeList = () => (
+    <List aside={<TestFilterSidebar />} title="Test Type" sort={{
+        field: "id",
+        order: "DESC",
+    }}>
+        <TestTypeDatagrid />
     </List>
 );
 

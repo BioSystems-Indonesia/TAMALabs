@@ -14,7 +14,7 @@ import (
 )
 
 // SendToBA400 is a function to send message to BA400 for now its singleton view
-func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.Device) error {
+func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.Device, urgent bool) error {
 	encoder := hl7.NewEncoder(&hl7.EncodeOption{
 		TrimTrailingSeparator: true,
 	})
@@ -22,7 +22,7 @@ func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.D
 	const batchSend = 3
 	buf := bytes.Buffer{}
 	for i, p := range patients {
-		o := NewOML_O33(p, device)
+		o := NewOML_O33(p, device, urgent)
 
 		b, err := encoder.Encode(o)
 		if err != nil {
