@@ -117,11 +117,11 @@ func (r Repository) FindByBarcode(ctx context.Context, barcode string) (entity.S
 	return specimen, nil
 }
 
-func (r *Repository) GenerateBarcode(ctx context.Context) string {
+func (r *Repository) GenerateBarcode(ctx context.Context, specimenType entity.SpecimenType) string {
 	seq := r.GetBarcodeSequence(ctx)
 	seqPadding := fmt.Sprintf("%06d", seq) // Prints to stdout '000012'
 
-	return fmt.Sprintf("%s%s", time.Now().Format("20060102"), seqPadding)
+	return fmt.Sprintf("%s_%s%s", specimenType.Code(), time.Now().Format("20060102"), seqPadding)
 }
 
 func (r *Repository) GetBarcodeSequence(ctx context.Context) int64 {
