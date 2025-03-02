@@ -38,12 +38,12 @@ func (h *ResultHandler) ListResult(c echo.Context) error {
 }
 
 func (h *ResultHandler) GetResult(c echo.Context) error {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	specimenID, err := strconv.ParseInt(c.Param("specimen_id"), 10, 64)
 	if err != nil {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
-	result, err := h.resultUsecase.ResultDetail(c.Request().Context(), id)
+	result, err := h.resultUsecase.ResultDetail(c.Request().Context(), specimenID)
 	if err != nil {
 		return handleError(c, err)
 	}
@@ -51,58 +51,27 @@ func (h *ResultHandler) GetResult(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
-func (h *ResultHandler) CreateResult(c echo.Context) error {
-	req := entity.ObservationResultCreate{}
+func (h *ResultHandler) AddTestResult(c echo.Context) error {
+	req := entity.TestResult{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return handleError(c, err)
 	}
 
-	result, err := h.resultUsecase.CreateResult(c.Request().Context(), req)
+	result, err := h.resultUsecase.PutTestResult(c.Request().Context(), req)
 	if err != nil {
 		return handleError(c, err)
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"id":    req.SpecimenID,
-		"tests": result,
-	})
+	return c.JSON(http.StatusOK, result)
 }
 
-func (h *ResultHandler) DeleteResult(c echo.Context) error {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+func (h *ResultHandler) DeleteTestResult(c echo.Context) error {
+	testResultID, err := strconv.ParseInt(c.Param("test_result_id"), 10, 64)
 	if err != nil {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
-	result, err := h.resultUsecase.DeleteResult(c.Request().Context(), id)
-	if err != nil {
-		return handleError(c, err)
-	}
-
-	return c.JSON(http.StatusOK, result)
-}
-
-func (h *ResultHandler) DeleteResultBulk(c echo.Context) error {
-	req := entity.DeleteResultBulkReq{}
-	if err := bindAndValidate(c, &req); err != nil {
-		return handleError(c, err)
-	}
-
-	result, err := h.resultUsecase.DeleteResultBulk(c.Request().Context(), &req)
-	if err != nil {
-		return handleError(c, err)
-	}
-
-	return c.JSON(http.StatusOK, result)
-}
-
-func (h *ResultHandler) UpdateResult(c echo.Context) error {
-	req := entity.UpdateManyResultTestReq{}
-	if err := bindAndValidate(c, &req); err != nil {
-		return handleError(c, err)
-	}
-
-	result, err := h.resultUsecase.UpdateResult(c.Request().Context(), req.Data)
+	result, err := h.resultUsecase.DeleteTestResult(c.Request().Context(), testResultID)
 	if err != nil {
 		return handleError(c, err)
 	}

@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"log"
+	"strconv"
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
@@ -54,6 +56,24 @@ type ObservationResult struct {
 	UpdatedAt      time.Time       `json:"updated_at" gorm:"not null"`
 
 	TestType TestType `json:"test_type" gorm:"foreignKey:Code;references:Code" validate:"required"`
+}
+
+// GetFirstValue get the first value from the values
+// If it needs two or more values, then we need to handle it later
+// TODO do we really need more than one values?
+func (o ObservationResult) GetFirstValue() float64 {
+	if len(o.Values) < 1 {
+		log.Printf("values from observation %d is empty or negative", o.ID)
+		return 0
+	}
+
+	v, err := strconv.ParseFloat(o.Values[0], 64)
+	if err != nil {
+		log.Printf("parse observation.Values from observation %d failed: %v", o.ID, err)
+		return v
+	}
+
+	return v
 }
 
 type ObservationRequestGetManyRequest struct {

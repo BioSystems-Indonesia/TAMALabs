@@ -6,7 +6,6 @@ import (
 
 type Specimen struct {
 	ID             int       `json:"id" gorm:"primaryKey;autoIncrement"`
-	HL7ID          string    `json:"specimen_hl7_id" gorm:"not null"`                                                              // SPM-2
 	PatientID      int       `json:"patient_id" gorm:"not null;index:specimen_uniq,unique,priority:2" validate:"required"`         // Foreign key linking to Patient
 	OrderID        int       `json:"order_id" gorm:"not null;index:specimen_uniq,unique,priority:1" validate:"required"`           // Foreign key linking to WorkOrder
 	Type           string    `json:"type" gorm:"not null;index:specimen_uniq,unique,priority:3" validate:"required,specimen-type"` // SPM-4
@@ -26,7 +25,7 @@ type Specimen struct {
 	WorkOrder          WorkOrder            `json:"work_order" gorm:"foreignKey:OrderID;->" validate:"-"`
 	Patient            Patient              `json:"patient" gorm:"foreignKey:PatientID;->" validate:"-"`
 
-	TestResult []ResultTest `json:"test_result" gorm:"-"`
+	TestResult []TestResult `json:"test_result" gorm:"-"`
 }
 
 type SpecimenGetManyRequest struct {

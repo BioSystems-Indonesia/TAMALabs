@@ -82,6 +82,8 @@ func (r Repository) FindOne(ctx context.Context, id int64) (entity.Specimen, err
 	var specimen entity.Specimen
 	err := r.db.
 		Where("id = ?", id).
+		Preload("ObservationRequest").
+		Preload("ObservationRequest.TestType").
 		Preload("ObservationResult").
 		Preload("ObservationResult.TestType").
 		Preload("Patient").

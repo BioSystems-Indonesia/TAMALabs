@@ -10,8 +10,8 @@ import AppIndicator from '../component/AppIndicator';
 
 
 const SettingsButton = () => (
-    <Link to="/settings" color={"inherit"} LinkComponent={Link}>
-        <IconButton color="inherit" LinkComponent={Link}>
+    <Link to="/settings" color={"inherit"}>
+        <IconButton color="inherit">
             <SettingsIcon />
         </IconButton>
     </Link>
