@@ -53,16 +53,28 @@ function TestTypeInput(props: TestTypeFormProps) {
         queryFn: () => fetch(import.meta.env.VITE_BACKEND_BASE_URL + '/test-type/filter').then(res => res.json()),
     });
 
-
-
     const [categories, setCategories] = useState<string[]>([]);
     const [subCategories, setSubCategories] = useState<string[]>([]);
+
     useEffect(() => {
         if (filter) {
             setCategories(filter.categories);
             setSubCategories(filter.sub_categories);
         }
     }, [filter, isFilterLoading]);
+
+
+    const { data: units, isLoading: isUnitLoading } = useQuery({
+        queryKey: ['unit'],
+        queryFn: () => fetch(import.meta.env.VITE_BACKEND_BASE_URL + '/unit').then(res => res.json()),
+    });
+
+    const [unit, setUnit] = useState<string[]>([]);
+    useEffect(() => {
+        if (units) {
+            setUnit(units.value)
+        }
+    }, [units, isUnitLoading]);
 
     const { setValue } = useFormContext();
     const [params] = useSearchParams()
@@ -110,7 +122,22 @@ function TestTypeInput(props: TestTypeFormProps) {
                 }} />
             <NumberInput source="low_ref_range" label="Low Range" readOnly={props.readonly} validate={[required()]} />
             <NumberInput source="high_ref_range" label="High Range" readOnly={props.readonly} validate={[required()]} />
-            <TextInput source="unit" readOnly={props.readonly} validate={[required()]} />
+            <AutocompleteInput source="unit"
+               readOnly={props.readonly}
+               loading={isUnitLoading}
+               choices={unit.map(val => {
+                   return { id: val, name: val }
+               })}
+               onCreate={val => {
+                   console.log("onCreate", val, unit);
+                   if (!val || unit.includes(val)) {
+                       return;
+                   }
+
+                   const newUnit = [...unit, val];
+                   setUnit(newUnit);
+                   return { id: val, name: val }
+               }} />
             <NumberInput source="decimal" readOnly={props.readonly} validate={[required()]} />
             <TextInput source="type" readOnly={props.readonly} validate={[required()]} />
             <TextInput source="description" readOnly={props.readonly} />
