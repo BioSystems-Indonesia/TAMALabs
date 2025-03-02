@@ -64,6 +64,7 @@ func provideRestHandler(
 	testTypeHandler *rest.TestTypeHandler,
 	resultHandler *rest.ResultHandler,
 	configHandler *rest.ConfigHandler,
+	unitHandler *rest.UnitHandler,
 ) *rest.Handler {
 	return &rest.Handler{
 		HlSevenHandler:            hlSevenHandler,
@@ -76,6 +77,7 @@ func provideRestHandler(
 		TestTypeHandler:           testTypeHandler,
 		ResultHandler:             resultHandler,
 		ConfigHandler:             configHandler,
+		UnitHandler:               unitHandler,
 	}
 }
 
@@ -130,6 +132,7 @@ func InitDatabase() (*gorm.DB, error) {
 		&entity.Specimen{},
 		&entity.WorkOrder{},
 		&entity.Device{},
+		&entity.Unit{},
 		&entity.TestType{},
 		&entity.Config{},
 		&entity.TestTemplate{},
@@ -185,6 +188,14 @@ func seedTestData(db *gorm.DB) error {
 		err := db.Clauses(clause.OnConflict{
 			DoNothing: true,
 		}).Create(&device).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, unit := range seedUnits {
+		err := db.Clauses(clause.OnConflict{DoNothing: true}).
+			Create(&unit).Error
 		if err != nil {
 			return err
 		}

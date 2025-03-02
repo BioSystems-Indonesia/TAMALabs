@@ -21,6 +21,7 @@ type Handler struct {
 	*TestTypeHandler
 	*ResultHandler
 	*ConfigHandler
+	*UnitHandler
 }
 
 func RegisterMiddleware(e *echo.Echo) {
@@ -146,6 +147,11 @@ func RegisterRoutes(
 		config.GET("", handler.ListConfig)
 		config.GET("/:key", handler.GetConfig)
 		config.PUT("/:key", handler.EditConfig)
+	}
+
+	unit := v1.Group("/unit")
+	{
+		unit.GET("", handler.ListUnit)
 	}
 
 	handler.RegisterFeatureList(v1)

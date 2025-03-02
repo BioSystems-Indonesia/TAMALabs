@@ -11,6 +11,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_template"
 	testTypeRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/unit"
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	configuc "github.com/oibacidem/lims-hl-seven/internal/usecase/config"
@@ -20,6 +21,7 @@ import (
 	specimenuc "github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
 	test_template_uc "github.com/oibacidem/lims-hl-seven/internal/usecase/test_template"
 	testTypeUC "github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
+	unitUC "github.com/oibacidem/lims-hl-seven/internal/usecase/unit"
 	workOrderuc "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
@@ -50,6 +52,7 @@ var (
 		specimen.NewRepository,
 		configrepo.NewRepository,
 		test_template.NewRepository,
+		unit.NewRepository,
 
 		restUsecaseSet,
 		tcpUsecaseSet,
@@ -60,6 +63,7 @@ var (
 		observation_requestuc.NewObservationRequestUseCase,
 		configuc.NewConfigUseCase,
 		test_template_uc.NewUsecase,
+		unitUC.NewUnitUseCase,
 
 		rest.NewHlSevenHandler,
 		rest.NewHealthCheckHandler,
@@ -71,6 +75,7 @@ var (
 		rest.NewTestTypeHandler,
 		rest.NewResultHandler,
 		rest.NewConfigHandler,
+		rest.NewUnitHandler,
 		wire.Struct(new(rest.DeviceHandler), "*"),
 
 		rest.NewTestTemplateHandler,

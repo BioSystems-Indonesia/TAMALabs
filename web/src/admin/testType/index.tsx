@@ -18,6 +18,8 @@ export const TestTypeDatagrid = (props: any) => {
             <TextField source="low_ref_range" label="low" />
             <TextField source="high_ref_range" label="high" />
             <TextField source="unit" />
+            <TextField source="type" />
+            <TextField source="decimal" />
             <TextField source="description" />
         </Datagrid>
     )
@@ -50,6 +52,8 @@ function TestTypeInput(props: TestTypeFormProps) {
         queryKey: ['filterTestType'],
         queryFn: () => fetch(import.meta.env.VITE_BACKEND_BASE_URL + '/test-type/filter').then(res => res.json()),
     });
+
+
 
     const [categories, setCategories] = useState<string[]>([]);
     const [subCategories, setSubCategories] = useState<string[]>([]);
@@ -107,6 +111,8 @@ function TestTypeInput(props: TestTypeFormProps) {
             <NumberInput source="low_ref_range" label="Low Range" readOnly={props.readonly} validate={[required()]} />
             <NumberInput source="high_ref_range" label="High Range" readOnly={props.readonly} validate={[required()]} />
             <TextInput source="unit" readOnly={props.readonly} validate={[required()]} />
+            <NumberInput source="decimal" readOnly={props.readonly} validate={[required()]} />
+            <TextInput source="type" readOnly={props.readonly} validate={[required()]} />
             <TextInput source="description" readOnly={props.readonly} />
         </>
 

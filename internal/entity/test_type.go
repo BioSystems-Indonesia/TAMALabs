@@ -7,6 +7,8 @@ type TestType struct {
 	Unit         string  `json:"unit"`
 	LowRefRange  float64 `json:"low_ref_range"`
 	HighRefRange float64 `json:"high_ref_range"`
+	Type         string  `json:"type"`
+	Decimal      int     `json:"decimal"`
 	Category     string  `json:"category"`
 	SubCategory  string  `json:"sub_category"`
 	Description  string  `json:"description"`
