@@ -1,11 +1,14 @@
 import Box from "@mui/material/Box";
 import { useQuery } from "@tanstack/react-query";
-import { AutocompleteInput, Create, Datagrid, Edit, List, NumberInput, SimpleForm, TextField, TextInput, required } from "react-admin";
+import { AutocompleteInput, Create, Datagrid, Edit, List, NumberInput, SelectInput, SimpleForm, TextField, TextInput, required } from "react-admin";
 import type { ActionKeys } from "../../types/props";
 import { TestFilterSidebar } from "../workOrder/TestTypeFilter";
 import { useFormContext } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import type { WorkOrder } from "../../types/work_order";
+import type { Unit } from "../../types/unit";
+import FeatureList from "../../component/FeatureList";
 
 export const TestTypeDatagrid = (props: any) => {
     return (
@@ -64,7 +67,7 @@ function TestTypeInput(props: TestTypeFormProps) {
     }, [filter, isFilterLoading]);
 
 
-    const { data: units, isLoading: isUnitLoading } = useQuery({
+    const { data: units, isLoading: isUnitLoading } = useQuery<Unit[]>({
         queryKey: ['unit'],
         queryFn: () => fetch(import.meta.env.VITE_BACKEND_BASE_URL + '/unit').then(res => res.json()),
     });
@@ -72,7 +75,7 @@ function TestTypeInput(props: TestTypeFormProps) {
     const [unit, setUnit] = useState<string[]>([]);
     useEffect(() => {
         if (units) {
-            setUnit(units.value)
+            setUnit(units.map(v => v.value))
         }
     }, [units, isUnitLoading]);
 
@@ -123,23 +126,25 @@ function TestTypeInput(props: TestTypeFormProps) {
             <NumberInput source="low_ref_range" label="Low Range" readOnly={props.readonly} validate={[required()]} />
             <NumberInput source="high_ref_range" label="High Range" readOnly={props.readonly} validate={[required()]} />
             <AutocompleteInput source="unit"
-               readOnly={props.readonly}
-               loading={isUnitLoading}
-               choices={unit.map(val => {
-                   return { id: val, name: val }
-               })}
-               onCreate={val => {
-                   console.log("onCreate", val, unit);
-                   if (!val || unit.includes(val)) {
-                       return;
-                   }
+                readOnly={props.readonly}
+                loading={isUnitLoading}
+                choices={unit.map(val => {
+                    return { id: val, name: val }
+                })}
+                onCreate={val => {
+                    console.log("onCreate", val, unit);
+                    if (!val || unit.includes(val)) {
+                        return;
+                    }
 
-                   const newUnit = [...unit, val];
-                   setUnit(newUnit);
-                   return { id: val, name: val }
-               }} />
+                    const newUnit = [...unit, val];
+                    setUnit(newUnit);
+                    return { id: val, name: val }
+                }} />
             <NumberInput source="decimal" readOnly={props.readonly} validate={[required()]} />
-            <TextInput source="type" readOnly={props.readonly} validate={[required()]} />
+            <FeatureList source="type" readOnly={props.readonly} types="specimen-type" >
+                <SelectInput />
+            </FeatureList>
             <TextInput source="description" readOnly={props.readonly} />
         </>
 

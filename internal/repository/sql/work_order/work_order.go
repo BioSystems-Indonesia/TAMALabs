@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"slices"
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/config"
@@ -346,88 +345,14 @@ func (r WorkOrderRepository) groupBySpecimenType(trx *gorm.DB, req *entity.WorkO
 
 	specimenTypes := make(map[entity.SpecimenType][]entity.TestType)
 	for _, testType := range testTypes {
-		// TODO: Remove hardcoded value
-		// INI GW NGARANG
-		var testCodeURI = []string{"PLATELET COUNT",
-			"LYMPHOCYTES",
-			"HEMATOCRIT",
-			"HEMOGLOBIN",
-			"GRAN#",
-			"GRAN%",
-			"LYM#",
-			"CHOLINESTERASE",
-			"Diastole",
-			"Sistole",
-			"HBA1C-DIR_NGSP",
-			"CREATININE",
-			"HDL DIRECT TOOS",
-			"LDL DIRECT TOOS",
-			"LDL DIRECT TOOS",
-			"URIC ACID",
-			"UREA-BUN-UV",
-			"UIBC",
-			"TRIGLYCERIDES",
-			"TRANSFERRIN BIR",
-		}
-		var testCodeHYDC = []string{
-			"TOTAL BILE ACIDS",
-			"RF",
-			"PROTEIN URINE",
-			"PROTEIN TOTALBIR",
-			"PREALBUMIN BIR",
-			"PHOSPHORUS-VERIF",
-			"PHOSPHORUS",
-			"OXALATE",
-			"NEFA",
-			"MAGNESIUM",
-			"LIPASE DGGR",
-			"LIPASE",
-			"LDH IFCC",
-			"LDH",
-			"LACTATE",
-			"IRON FERROZINE",
-			"IGM BIR",
-			"IGG BIR",
-			"IGA BIR",
-			"HOMOCYSTEINE",
-		}
-		var testCodePLAS = []string{
-			"HBA1C-DIR",
-			"HAPTOGLOBIN",
-			"GLUCOSE-VERIF",
-			"GLUCOSE-HK",
-			"GLUCOSE",
-			"GAMMA-GT",
-			"G6PDH",
-			"FRUCTOSE",
-			"FIBRINOGEN",
-			"FERRITIN",
-			"ETHANOL",
-			"D-DIMER",
-			"CRPHS",
-			"CRP",
-			"CK-MB",
-			"CK",
-			"CITRATE",
-			"CHOLESTEROL",
-			"CHOL LDL DIRECT",
-			"CHOL HDL DIRECT",
+		specimenType := entity.SpecimenType(testType.Type)
+		if specimenType == "" {
+			specimenType = entity.SpecimenTypeSER
 		}
 
-		var specimentType entity.SpecimenType
-		if slices.Contains(testCodeURI, testType.Code) {
-			specimentType = entity.SpecimenTypeUR
-		} else if slices.Contains(testCodeHYDC, testType.Code) {
-			specimentType = entity.SpecimenTypeHYDC
-		} else if slices.Contains(testCodePLAS, testType.Code) {
-			specimentType = entity.SpecimenTypePLAS
-		} else {
-			specimentType = entity.SpecimenTypeSER
-		}
-		specimenTypes[specimentType] = append(specimenTypes[specimentType], testType)
-
-		// TODO: Change to this after specimen type is added to test type
-		// specimenTypes[testType.SpecimenType] = append(specimenTypes[testType.SpecimenType], testType)
+		specimenTypes[specimenType] = append(
+			specimenTypes[specimenType], testType,
+		)
 	}
 
 	return specimenTypes, nil

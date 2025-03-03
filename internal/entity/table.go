@@ -44,7 +44,25 @@ func (t Tables) FilterName(search string) []Table {
 
 var TableSpecimenType = Tables{
 	{
-		ID: `SER`, Name: `Serum`,
+		ID: string(SpecimenTypeSER), Name: `Serum`,
+	},
+	{
+		ID: string(SpecimenTypeURI), Name: `Urine`,
+	},
+	{
+		ID: string(SpecimenTypeCSF), Name: `CSF`,
+	},
+	{
+		ID: string(SpecimenTypeLIQ), Name: `LIQ`,
+	},
+	{
+		ID: string(SpecimenTypePLM), Name: `PLM`,
+	},
+	{
+		ID: string(SpecimenTypeSEM), Name: `SEM`,
+	},
+	{
+		ID: string(SpecimenTypeWBL), Name: `WBL`,
 	},
 }
 
