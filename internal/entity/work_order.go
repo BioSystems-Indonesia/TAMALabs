@@ -46,7 +46,7 @@ type WorkOrderDevice struct {
 type WorkOrderRunRequest struct {
 	DeviceID     int64   `json:"device_id" gorm:"-" validate:"required"`
 	WorkOrderIDs []int64 `json:"work_order_ids" gorm:"-" validate:"required"`
-	Urgent       bool    `json:"urgent" gorm:"-" validate:"required"`
+	Urgent       bool    `json:"urgent" gorm:"-"`
 }
 
 type WorkOrderCancelRequest struct {

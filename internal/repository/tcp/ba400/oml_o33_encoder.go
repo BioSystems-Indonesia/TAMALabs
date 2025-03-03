@@ -124,6 +124,14 @@ func NewOrder(setID string, date time.Time, testID string, orderControl string, 
 			OrderControl:          orderControl,
 			DateTimeOfTransaction: date,
 		},
+		Tiiming: []h251.OML_O33_Tiiming{
+			{
+				TQ1: &h251.TQ1{
+					SetID: setID,
+					Priority: []h251.CWE{{Identifier: h251.ST(priority)}},
+				},
+			},
+		},
 		ObservationRequest: &h251.OML_O33_ObservationRequest{
 			OBR: &h251.OBR{
 				SetID:                      setID,
