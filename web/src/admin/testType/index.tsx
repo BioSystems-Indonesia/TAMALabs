@@ -71,8 +71,10 @@ function TestTypeInput(props: TestTypeFormProps) {
 
     const [unit, setUnit] = useState<string[]>([]);
     useEffect(() => {
-        if (units) {
-            setUnit(units.value)
+        if (units && Array.isArray(units)) {
+            // Extract the `value` property from each object in the `units` array
+            const unitValues = units.map(unit => unit.value);
+            setUnit(unitValues);
         }
     }, [units, isUnitLoading]);
 
