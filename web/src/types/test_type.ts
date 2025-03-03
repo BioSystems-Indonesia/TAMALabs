@@ -8,4 +8,6 @@ export interface TestType {
     category:       string;
     sub_category:   string;
     description:    string;
+    type: string;
+    decimal: number;
 }

@@ -1,14 +1,13 @@
 import Box from "@mui/material/Box";
 import { useQuery } from "@tanstack/react-query";
-import { AutocompleteInput, Create, Datagrid, Edit, List, NumberInput, SelectInput, SimpleForm, TextField, TextInput, required } from "react-admin";
-import type { ActionKeys } from "../../types/props";
-import { TestFilterSidebar } from "../workOrder/TestTypeFilter";
-import { useFormContext } from "react-hook-form";
 import { useEffect, useState } from "react";
+import { AutocompleteInput, Create, Datagrid, Edit, List, NumberInput, SelectInput, SimpleForm, TextField, TextInput, required } from "react-admin";
+import { useFormContext } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
-import type { WorkOrder } from "../../types/work_order";
-import type { Unit } from "../../types/unit";
 import FeatureList from "../../component/FeatureList";
+import type { ActionKeys } from "../../types/props";
+import type { Unit } from "../../types/unit";
+import { TestFilterSidebar } from "../workOrder/TestTypeFilter";
 
 export const TestTypeDatagrid = (props: any) => {
     return (
@@ -74,8 +73,10 @@ function TestTypeInput(props: TestTypeFormProps) {
 
     const [unit, setUnit] = useState<string[]>([]);
     useEffect(() => {
-        if (units) {
-            setUnit(units.map(v => v.value))
+        if (units && Array.isArray(units)) {
+            // Extract the `value` property from each object in the `units` array
+            const unitValues = units.map(unit => unit.value);
+            setUnit(unitValues);
         }
     }, [units, isUnitLoading]);
 
