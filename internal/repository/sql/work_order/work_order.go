@@ -261,12 +261,14 @@ func (r WorkOrderRepository) upsertRelation(
 		return fmt.Errorf("error grouping specimen type: %w", err)
 	}
 
+	barcodeSeq := r.specimentRepo.GenerateBarcode(trx.Statement.Context)
+	idx := 1
 	for specimenType, testTypes := range specimenTestTypes {
 		specimen := entity.Specimen{
 			PatientID:      int(req.PatientID),
 			OrderID:        int(workOrder.ID),
 			Type:           string(specimenType),
-			Barcode:        r.specimentRepo.GenerateBarcode(trx.Statement.Context, specimenType),
+			Barcode:        fmt.Sprintf("%s_%02d", barcodeSeq, idx),
 			CollectionDate: time.Now().Format(time.RFC3339),
 		}
 		specimenQuery := trx.Clauses(clause.OnConflict{
@@ -329,9 +331,12 @@ func (r WorkOrderRepository) upsertRelation(
 				"rowAffected", observationRequestQuery.RowsAffected,
 			)
 			if observationRequestQuery.RowsAffected == 0 {
+				idx++
 				continue
 			}
 		}
+
+		idx++
 	}
 
 	return nil
