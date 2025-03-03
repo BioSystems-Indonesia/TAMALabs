@@ -38,12 +38,12 @@ func (h *ResultHandler) ListResult(c echo.Context) error {
 }
 
 func (h *ResultHandler) GetResult(c echo.Context) error {
-	specimenID, err := strconv.ParseInt(c.Param("specimen_id"), 10, 64)
+	workOrderID, err := strconv.ParseInt(c.Param("work_order_id"), 10, 64)
 	if err != nil {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
-	result, err := h.resultUsecase.ResultDetail(c.Request().Context(), specimenID)
+	result, err := h.resultUsecase.ResultDetail(c.Request().Context(), workOrderID)
 	if err != nil {
 		return handleError(c, err)
 	}

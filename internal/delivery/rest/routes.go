@@ -137,9 +137,9 @@ func RegisterRoutes(
 		// now, we just use spcimen_id untul one work_order could have
 		// more than one specimen
 		result.GET("", handler.ListResult)
-		result.GET("/:specimen_id", handler.GetResult)
-		result.PUT("/:specimen_id/test", handler.AddTestResult)
-		result.DELETE("/:specimen_id/test/:test_result_id", handler.DeleteTestResult)
+		result.GET("/:work_order_id", handler.GetResult)
+		result.PUT("/:work_order_id/test", handler.AddTestResult)
+		result.DELETE("/:work_order_id/test/:test_result_id", handler.DeleteTestResult)
 	}
 
 	config := v1.Group("/config")

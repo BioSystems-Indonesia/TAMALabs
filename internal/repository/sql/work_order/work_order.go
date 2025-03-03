@@ -27,6 +27,66 @@ func NewWorkOrderRepository(db *gorm.DB, cfg *config.Schema, specimentRepo *spec
 	return &WorkOrderRepository{db: db, cfg: cfg, specimentRepo: specimentRepo}
 }
 
+func (r *WorkOrderRepository) FindAllForResult(ctx context.Context, req *entity.ResultGetManyRequest) (entity.PaginationResponse[entity.WorkOrder], error) {
+	db := r.db.WithContext(ctx).
+		Preload("Patient").
+		Preload("Specimen").
+		Preload("Specimen.ObservationRequest").
+		Preload("Specimen.ObservationRequest.TestType").
+		Preload("Specimen.ObservationResult").
+		Preload("Specimen.ObservationResult.TestType")
+
+	if len(req.PatientIDs) > 0 {
+		db = db.Where("work_orders.patient_id in (?)", req.PatientIDs)
+	}
+
+	if len(req.WorkOrderStatus) > 0 {
+		db = db.Joins("work_orders.status in (?)", req.WorkOrderStatus)
+	}
+
+	if !req.CreatedAtStart.IsZero() {
+		db = db.Where("work_orders.created_at >= ?", req.CreatedAtStart.Add(-24*time.Hour))
+	}
+
+	if !req.CreatedAtEnd.IsZero() {
+		db = db.Where("work_orders.created_at <= ?", req.CreatedAtEnd.Add(24*time.Hour))
+	}
+
+	if req.HasResult {
+		subQuery := r.db.Table("specimens").Select("specimens.order_id").
+			Joins("join observation_results on specimens.id = observation_results.specimen_id").
+			Where("observation_results.id is not null")
+		db = db.Where("work_orders.id in (?)", subQuery)
+	}
+
+	db = sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{
+		TableName: "work_orders",
+	})
+
+	return sql.GetWithPaginationResponse[entity.WorkOrder](db, req.GetManyRequest)
+}
+
+func (r WorkOrderRepository) FindOneForResult(id int64) (entity.WorkOrder, error) {
+	var workOrder entity.WorkOrder
+	err := r.db.Where("id = ?", id).
+		Preload("Patient").
+		Preload("Specimen").
+		Preload("Specimen.ObservationRequest").
+		Preload("Specimen.ObservationRequest.TestType").
+		Preload("Specimen.ObservationResult").
+		Preload("Specimen.ObservationResult.TestType").
+		First(&workOrder).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return entity.WorkOrder{}, entity.ErrNotFound
+	}
+
+	if err != nil {
+		return entity.WorkOrder{}, fmt.Errorf("error finding workOrder: %w", err)
+	}
+
+	return workOrder, nil
+}
+
 func (r WorkOrderRepository) FindAll(ctx context.Context, req *entity.WorkOrderGetManyRequest) (entity.PaginationResponse[entity.WorkOrder], error) {
 	db := r.db.WithContext(ctx)
 	db = sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{})

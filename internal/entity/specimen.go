@@ -24,8 +24,6 @@ type Specimen struct {
 	ObservationRequest []ObservationRequest `json:"observation_requests" gorm:"foreignKey:SpecimenID;->" validate:"-"`
 	WorkOrder          WorkOrder            `json:"work_order" gorm:"foreignKey:OrderID;->" validate:"-"`
 	Patient            Patient              `json:"patient" gorm:"foreignKey:PatientID;->" validate:"-"`
-
-	TestResult []TestResult `json:"test_result" gorm:"-"`
 }
 
 type SpecimenGetManyRequest struct {

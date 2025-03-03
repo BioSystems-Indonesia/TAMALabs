@@ -1,4 +1,5 @@
-import { Card, CardContent, Chip, Typography } from "@mui/material";
+import { Card, CardContent, Chip, Stack, Typography } from "@mui/material";
+import dayjs from "dayjs";
 import {
     AutocompleteArrayInput,
     BooleanInput,
@@ -9,17 +10,26 @@ import {
     List,
     NumberField,
     ReferenceInput,
-    TextField,
     WithRecord
 } from "react-admin";
+import CustomDateInput from "../../component/CustomDateInput";
 import PrintMCUButton from "../../component/PrintReport";
+import type { WorkOrder } from "../../types/work_order";
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
+import { FilledPercentChip } from "./component";
+
+
 
 export const ResultList = () => (
     <List resource="result" sort={{
         field: "id",
         order: "DESC"
-    }} aside={<ResultFilterSidebar />} exporter={false} >
+    }} aside={<ResultFilterSidebar />}
+        filterDefaultValues={{
+            created_at_start: dayjs().subtract(7, "day").toISOString(),
+            created_at_end: dayjs().toISOString(),
+        }}
+        storeKey={false} exporter={false} disableSyncWithLocation >
         <ResultDataGrid />
     </List>
 );
@@ -33,25 +43,27 @@ export const ResultDataGrid = (props: any) => {
                     #{record.patient.id}-{record.patient.first_name} {record.patient.last_name}
                 </Link>
             )} />
-            <WithRecord label="Work Order" render={(record: any) => (
-                <Link to={`/work-order/${record.work_order.id}/show`} label={"Work Order"} onClick={e => e.stopPropagation()}>
-                    <Chip label={`#${record.work_order.id} - ${record.work_order.status}`} color={WorkOrderChipColorMap(record.work_order.status)} />
+            <WithRecord label="Request" render={(record: any) => (
+                <Link to={`/work-order/${record.id}/show`} label={"Work Order"} onClick={e => e.stopPropagation()}>
+                    <Chip label={`#${record.id} - ${record.status}`} color={WorkOrderChipColorMap(record.status)} />
                 </Link>
             )} />
-            <TextField source="barcode" />
-            <WithRecord label="Request" render={(record: any) => (
+            <WithRecord label="Request" render={(record: WorkOrder) => (
                 <Typography variant="body2" >
-                    {record.observation_requests.length}
+                    {record.total_request}
                 </Typography>
             )} />
-            <WithRecord label="Result" render={(record: any) => (
+            <WithRecord label="Result" render={(record: WorkOrder) => (
                 <Typography variant="body2" >
-                    {record.test_result?.length}
+                    {record.total_result_filled}
                 </Typography>
+            )} />
+            <WithRecord label="Filled" render={(record: WorkOrder) => (
+                <FilledPercentChip percent={record.percent_complete} />
             )} />
             <DateField source="created_at" showDate showTime />
             <WithRecord label="Print Result" render={(record: any) => (
-                <PrintMCUButton results={record.test_result} patient={record.patient} workOrder={record.work_order} />
+                <PrintMCUButton results={record.test_result} patient={record.patient} workOrder={record} />
             )} />
         </Datagrid>
     )
@@ -64,13 +76,14 @@ const ResultFilterSidebar = () => {
         }}>
             <CardContent>
                 <FilterLiveForm>
-                    <ReferenceInput source={"work_order_ids"} reference="work-order" label={"Work Order"}>
-                        <AutocompleteArrayInput />
-                    </ReferenceInput>
-                    <ReferenceInput source={"patient_ids"} reference="patient" label={"Patient"}>
-                        <AutocompleteArrayInput />
-                    </ReferenceInput>
-                    <BooleanInput source={"has_result"} label={"Show Only With Result"} />
+                    <Stack>
+                        <ReferenceInput source={"patient_ids"} reference="patient" label={"Patient"} alwaysOn >
+                            <AutocompleteArrayInput />
+                        </ReferenceInput>
+                        <CustomDateInput label={"Created At Start"} source="created_at_start" alwaysOn />
+                        <CustomDateInput label={"Created At End"} source="created_at_end" alwaysOn />
+                        <BooleanInput source={"has_result"} label={"Show Only With Result"} alwaysOn />
+                    </Stack>
                 </FilterLiveForm>
             </CardContent>
         </Card>

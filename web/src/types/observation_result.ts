@@ -1,3 +1,5 @@
+import type { Patient } from "./patient";
+
 export interface ObservationResult {
   id: number;
   specimen_id: number;
@@ -20,7 +22,7 @@ export interface TestResult {
   test_type_id: number;
   specimen_id: number;
   test: string;
-  result: string;
+  result: number;
   unit: string;
   category: string;
   abnormal: number;
@@ -52,22 +54,14 @@ export interface ReportData {
   abnormality: ReportDataAbnormality;
 }
 
-export interface Patient {
-  id: number;
-  first_name: string;
-  last_name: string;
-}
-
-export interface WorkOrder {
-  id: number;
-  status: number;
-}
-
 export interface Result {
-  id: number;
-  barcode: string;
-  patient: Patient
-  work_order: WorkOrder
-  created_at: Date;
-  test_result: Map<string, TestResult[]>;
+  id:          number;
+  status:      string;
+  patient_id:  number;
+  device_id:   number;
+  created_at:  string;
+  updated_at:  string;
+  patient:     Patient;
+  devices:     null;
+  test_result: TestResult;
 }

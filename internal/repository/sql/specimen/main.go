@@ -53,9 +53,6 @@ func (r Repository) FindAllForResult(
 		Preload("Patient").
 		Preload("WorkOrder")
 
-	if len(req.WorkOrderIDs) > 0 {
-		db = db.Where("specimens.order_id in (?)", req.WorkOrderIDs)
-	}
 	if len(req.PatientIDs) > 0 {
 		db = db.Where("specimens.patient_id in (?)", req.PatientIDs)
 	}

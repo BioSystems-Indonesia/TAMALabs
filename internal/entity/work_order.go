@@ -28,6 +28,12 @@ type WorkOrder struct {
 	Specimen []Specimen `json:"specimen_list,omitempty" gorm:"foreignKey:OrderID;->" validate:"-"`
 	// nolint:lll // tag cannot be shorter
 	Devices []Device `json:"devices" gorm:"many2many:work_order_devices;->" validate:"-"`
+
+	TestResult        []TestResult `json:"test_result" gorm:"-"`
+	TotalRequest      int64        `json:"total_request" gorm:"-"`
+	TotalResultFilled int64        `json:"total_result_filled" gorm:"-"`
+	PercentComplete   float64      `json:"percent_complete" gorm:"-"`
+	HaveCompleteData  bool         `json:"have_complete_data" gorm:"-"`
 }
 
 type WorkOrderDevice struct {

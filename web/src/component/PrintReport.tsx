@@ -27,7 +27,6 @@ type PrintMCUProps = {
 const PrintMCUButton = (prop: PrintMCUProps) => {
     const [data, setData] = useState<ReportData[]>([])
     useEffect(() => {
-
         setData(prop.results.map(v => {
             let abnormality = "Normal" as ReportDataAbnormality
             switch (v.abnormal) {
@@ -45,7 +44,7 @@ const PrintMCUButton = (prop: PrintMCUProps) => {
                     break
             }
 
-            const reportData: ReportData =  {
+            const reportData: ReportData = {
                 category: v.category,
                 parameter: v.test,
                 reference: v.reference_range,
@@ -53,7 +52,7 @@ const PrintMCUButton = (prop: PrintMCUProps) => {
                 result: v.result,
                 abnormality: abnormality,
                 subCategory: v.category,
-            } 
+            }
 
             return reportData
         }))
