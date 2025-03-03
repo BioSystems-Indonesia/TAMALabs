@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { AutocompleteInput, Create, Datagrid, Edit, List, NumberInput, SelectInput, SimpleForm, TextField, TextInput, required } from "react-admin";
+import { AutocompleteInput, Create, Datagrid, Edit, List, NumberInput, SimpleForm, TextField, TextInput, required } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
 import FeatureList from "../../component/FeatureList";
@@ -144,7 +144,7 @@ function TestTypeInput(props: TestTypeFormProps) {
                 }} />
             <NumberInput source="decimal" readOnly={props.readonly} validate={[required()]} />
             <FeatureList source="type" readOnly={props.readonly} types="specimen-type" >
-                <SelectInput />
+                <AutocompleteInput />
             </FeatureList>
             <TextInput source="description" readOnly={props.readonly} />
         </>
