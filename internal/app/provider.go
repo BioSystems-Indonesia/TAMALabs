@@ -131,6 +131,7 @@ func InitDatabase() (*gorm.DB, error) {
 		&entity.Patient{},
 		&entity.Specimen{},
 		&entity.WorkOrder{},
+		&entity.WorkOrderDevice{},
 		&entity.Device{},
 		&entity.Unit{},
 		&entity.TestType{},

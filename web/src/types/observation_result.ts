@@ -48,7 +48,7 @@ export interface ReportData {
   category: string;
   subCategory: string;
   parameter: string;
-  result: string;
+  result: number;
   reference: string;
   unit: string;
   abnormality: ReportDataAbnormality;

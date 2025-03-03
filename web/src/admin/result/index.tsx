@@ -13,7 +13,7 @@ import {
     WithRecord
 } from "react-admin";
 import CustomDateInput from "../../component/CustomDateInput";
-import PrintMCUButton from "../../component/PrintReport";
+import PrintReportButton from "../../component/PrintReport";
 import type { WorkOrder } from "../../types/work_order";
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
 import { FilledPercentChip } from "./component";
@@ -63,7 +63,7 @@ export const ResultDataGrid = (props: any) => {
             )} />
             <DateField source="created_at" showDate showTime />
             <WithRecord label="Print Result" render={(record: any) => (
-                <PrintMCUButton results={record.test_result} patient={record.patient} workOrder={record} />
+                <PrintReportButton results={record.test_result} patient={record.patient} workOrder={record} />
             )} />
         </Datagrid>
     )
