@@ -501,6 +501,8 @@ func (r WorkOrderRepository) UpsertDevice(workOrderID int64, deviceID int64) err
 	workOrderDevice := entity.WorkOrderDevice{
 		WorkOrderID: workOrderID,
 		DeviceID:    deviceID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 	res := r.db.Model(&entity.WorkOrderDevice{}).
 		Clauses(clause.OnConflict{DoNothing: true}).

@@ -294,7 +294,7 @@ export function RunWorkOrderForm(props: RunWorkOrderFormProps) {
     const axios = useAxios();
     const { mutate, isPending } = useMutation({
         mutationFn: async (data: any) => {
-            const response = await axios.post(`${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`, data, {
+            const response = await axios.post(`/work-order/run`, data, {
                 headers: {
                     'Content-Type': 'application/json'
                 }

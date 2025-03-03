@@ -18,13 +18,13 @@ Font.register({
     src: 'https://fonts.gstatic.com/s/roboto/v27/KFOmCnqEu92Fr1Me5Q.ttf',
 });
 
-type PrintMCUProps = {
+type PrintReportButtonProps = {
     patient: Patient
     workOrder: WorkOrder
     results: TestResult[]
 }
 
-const PrintMCUButton = (prop: PrintMCUProps) => {
+const PrintReportButton = (prop: PrintReportButtonProps) => {
     const [data, setData] = useState<ReportData[]>([])
     useEffect(() => {
         setData(prop.results.map(v => {
@@ -108,4 +108,4 @@ const PrintMCUButton = (prop: PrintMCUProps) => {
     );
 };
 
-export default PrintMCUButton;
+export default PrintReportButton;

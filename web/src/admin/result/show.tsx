@@ -1,31 +1,27 @@
 import HistoryIcon from '@mui/icons-material/History';
-import { memo, useEffect } from 'react';
 import { Badge, Box, ButtonGroup, Chip, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { DataGrid as MuiDatagrid, type DataGridProps, type GridRenderCellParams } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import {
-    ArrayField,
     DateField,
     DeleteButton,
     Labeled,
     Link,
     Show,
-    SimpleList,
     SimpleShowLayout,
-    SingleFieldList,
     TextField,
     WithRecord,
     useNotify,
-    useRefresh,
+    useRefresh
 } from "react-admin";
-import type { ResultColumn } from "../../types/general";
-import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
-import { Result, TestResult } from '../../types/observation_result';
-import { FilledPercentChip } from './component';
-import type { WorkOrder } from '../../types/work_order';
 import Barcode from 'react-barcode';
+import type { ResultColumn } from "../../types/general";
+import { Result, TestResult } from '../../types/observation_result';
 import type { Specimen } from '../../types/specimen';
+import type { WorkOrder } from '../../types/work_order';
+import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
+import { FilledPercentChip } from './component';
 
 export const ResultShow = (props: any) => {
     const [openHistory, setOpenHistory] = useState(false);
