@@ -123,10 +123,11 @@ func (r TestResult) FromObservationResult(observation ObservationResult) TestRes
 		observation.TestType.Decimal = 2
 	}
 
-	*resultTest.FormattedResult, err = strconv.ParseFloat(fmt.Sprintf("%.*f", observation.TestType.Decimal, result), 64)
+	formattedResult, err := strconv.ParseFloat(fmt.Sprintf("%.*f", observation.TestType.Decimal, result), 64)
 	if err != nil {
 		resultTest.FormattedResult = resultTest.Result
 	}
+	resultTest.FormattedResult = &formattedResult
 
 	resultTest.Abnormal = NormalResult
 	if result <= observation.TestType.LowRefRange {
