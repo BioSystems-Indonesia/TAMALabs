@@ -167,6 +167,7 @@ function TestTable(props: TestInputProps) {
                 <TextField label={"Name"} source={"name"} />
                 <TextField label={"Code"} source={"code"} />
                 <TextField label={"Category"} source={"category"} />
+                <TextField label={"Type"} source={"type"} />
             </Datagrid>
         </Grid>
         <Grid item xs={12} md={4}>
