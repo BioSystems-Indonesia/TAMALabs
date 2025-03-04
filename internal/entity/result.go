@@ -119,7 +119,7 @@ func (r TestResult) FromObservationResult(observation ObservationResult) TestRes
 	}
 
 	resultTest.Result = &result
-	if observation.TestType.Decimal == 0 {
+	if observation.TestType.Decimal < 1 {
 		observation.TestType.Decimal = 2
 	}
 
