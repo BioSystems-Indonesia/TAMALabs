@@ -23,6 +23,7 @@ export interface TestResult {
   specimen_id: number;
   test: string;
   result: number;
+  formatted_result: number;
   unit: string;
   category: string;
   abnormal: number;

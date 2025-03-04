@@ -49,7 +49,7 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                 parameter: v.test,
                 reference: v.reference_range,
                 unit: v.unit,
-                result: v.result,
+                result: v.formatted_result,
                 abnormality: abnormality,
                 subCategory: v.category,
             }
