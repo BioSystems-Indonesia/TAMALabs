@@ -6,7 +6,7 @@ import LanIcon from '@mui/icons-material/Lan';
 import UserIcon from '@mui/icons-material/Person';
 import TableViewIcon from '@mui/icons-material/TableView';
 import jsonServerProvider from "ra-data-json-server";
-import { Admin, CustomRoutes, Resource } from "react-admin";
+import { Admin, CustomRoutes, Resource, radiantLightTheme, radiantDarkTheme  } from "react-admin";
 import { Route } from "react-router-dom";
 import { dateFormatter } from '../helper/format.ts';
 import { ConfigEdit, ConfigList } from "./config/config.tsx";
@@ -24,9 +24,14 @@ import { WorkOrderShow } from "./workOrder/Show.tsx";
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
 const App = () => {
-    return (<Admin dataProvider={dataProvider} layout={DefaultLayout}>
+    return (<Admin 
+    dataProvider={dataProvider} 
+    layout={DefaultLayout}
+    theme={radiantLightTheme}
+    darkTheme={radiantDarkTheme}
+    >
         <CustomRoutes>
-            <Route path="/settings*" element={<Settings />} />
+            <Route path="/settings/*" element={<Settings />} />
         </CustomRoutes>
         <Resource
             name="work-order"

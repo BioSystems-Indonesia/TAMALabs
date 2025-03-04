@@ -21,15 +21,14 @@ import { FilledPercentChip } from "./component";
 
 
 export const ResultList = () => (
-    <List resource="result" sort={{
-        field: "id",
-        order: "DESC"
-    }} aside={<ResultFilterSidebar />}
-        filterDefaultValues={{
-            created_at_start: dayjs().subtract(7, "day").toISOString(),
-            created_at_end: dayjs().toISOString(),
-        }}
-        storeKey={false} exporter={false} disableSyncWithLocation >
+    <List 
+        resource="result" 
+        sort={{ field: "id", order: "DESC" }} 
+        filters={ResultFilters}
+        storeKey={false} 
+        exporter={false} 
+        disableSyncWithLocation 
+        >
         <ResultDataGrid />
     </List>
 );
@@ -72,7 +71,7 @@ export const ResultDataGrid = (props: any) => {
 const ResultFilterSidebar = () => {
     return (
         <Card sx={{
-            order: -1, mr: 2, mt: 2, width: 200, minWidth: 200,
+            order: -1, mr: 2, mt: 2, minWidth: 200,
         }}>
             <CardContent>
                 <FilterLiveForm>
@@ -89,3 +88,12 @@ const ResultFilterSidebar = () => {
         </Card>
     )
 }
+
+const ResultFilters = [
+    <ReferenceInput source={"patient_ids"} reference="patient" label={"Patient"} >
+        <AutocompleteArrayInput />
+    </ReferenceInput>,
+    <CustomDateInput label={"Created At Start"} source="created_at_start" />,
+    <CustomDateInput label={"Created At End"} source="created_at_end" />,
+    <BooleanInput source={"has_result"} label={"Show Only With Result"} />,
+];

@@ -76,7 +76,7 @@ const DynamicBreadcrumbs = () => {
     }, [location.pathname])
 
     return (
-        <Breadcrumbs aria-label="breadcrumb">
+        <Breadcrumbs sx={{ py: 2 }} aria-label="breadcrumb">
             {paths.map((val, i) => {
                 const generateHref = (): string => {
                     const pathUntil = paths.slice(0, i + 1)
@@ -103,7 +103,8 @@ export const DefaultLayout = ({ children }: { children: ReactNode }) => {
         <Layout sx={{}} appBar={MyAppBar}>
             <Stack direction={"row"} gap={2}>
                 <Button label='Back' variant='contained' onClick={() => navigate(-1)} sx={{
-                    display: location.pathname.split("/").length > 2 ? 'flex' : 'none'
+                    display: location.pathname.split("/").length > 2 ? 'flex' : 'none',
+                    my: 1.25, 
                 }}>
                     <ArrowBackIcon />
                 </Button>
