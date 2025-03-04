@@ -35,16 +35,17 @@ type DeleteResultBulkReq struct {
 // in our LIS. it is used to store or add the test manually or to show
 // the test to others
 type TestResult struct {
-	ID             int64          `json:"id"`
-	SpecimenID     int64          `json:"specimen_id"`
-	TestTypeID     int64          `json:"test_type_id"`
-	Test           string         `json:"test"`
-	Result         *float64       `json:"result"`
-	Unit           string         `json:"unit"`
-	Category       string         `json:"category"`
-	Abnormal       AbnormalResult `json:"abnormal"`
-	ReferenceRange string         `json:"reference_range"`
-	UpdatedAt      string         `json:"created_at"`
+	ID              int64          `json:"id"`
+	SpecimenID      int64          `json:"specimen_id"`
+	TestTypeID      int64          `json:"test_type_id"`
+	Test            string         `json:"test"`
+	Result          *float64       `json:"result"`
+	FormattedResult *float64       `json:"formatted_result"`
+	Unit            string         `json:"unit"`
+	Category        string         `json:"category"`
+	Abnormal        AbnormalResult `json:"abnormal"`
+	ReferenceRange  string         `json:"reference_range"`
+	UpdatedAt       string         `json:"created_at"`
 
 	History []TestResult `json:"history"`
 }
@@ -118,6 +119,14 @@ func (r TestResult) FromObservationResult(observation ObservationResult) TestRes
 	}
 
 	resultTest.Result = &result
+	if observation.TestType.Decimal == 0 {
+		observation.TestType.Decimal = 2
+	}
+
+	*resultTest.FormattedResult, err = strconv.ParseFloat(fmt.Sprintf("%.*f", observation.TestType.Decimal, result), 64)
+	if err != nil {
+		resultTest.FormattedResult = resultTest.Result
+	}
 
 	resultTest.Abnormal = NormalResult
 	if result <= observation.TestType.LowRefRange {
