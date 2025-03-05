@@ -1,5 +1,4 @@
 import { Card, CardContent, Chip, Stack, Typography } from "@mui/material";
-import dayjs from "dayjs";
 import {
     AutocompleteArrayInput,
     BooleanInput,
@@ -65,27 +64,6 @@ export const ResultDataGrid = (props: any) => {
                 <PrintReportButton results={record.test_result} patient={record.patient} workOrder={record} />
             )} />
         </Datagrid>
-    )
-}
-
-const ResultFilterSidebar = () => {
-    return (
-        <Card sx={{
-            order: -1, mr: 2, mt: 2, minWidth: 200,
-        }}>
-            <CardContent>
-                <FilterLiveForm>
-                    <Stack>
-                        <ReferenceInput source={"patient_ids"} reference="patient" label={"Patient"} alwaysOn >
-                            <AutocompleteArrayInput />
-                        </ReferenceInput>
-                        <CustomDateInput label={"Created At Start"} source="created_at_start" alwaysOn />
-                        <CustomDateInput label={"Created At End"} source="created_at_end" alwaysOn />
-                        <BooleanInput source={"has_result"} label={"Show Only With Result"} alwaysOn />
-                    </Stack>
-                </FilterLiveForm>
-            </CardContent>
-        </Card>
     )
 }
 
