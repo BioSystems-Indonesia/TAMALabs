@@ -4,28 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql"
-	"github.com/patrickmn/go-cache"
 	"gorm.io/gorm"
 )
 
 type Repository struct {
-	db    *gorm.DB
-	cfg   *config.Schema
-	cache *cache.Cache
+	db  *gorm.DB
+	cfg *config.Schema
 }
 
-func NewRepository(db *gorm.DB, cfg *config.Schema, cache *cache.Cache) *Repository {
-	r := &Repository{db: db, cfg: cfg, cache: cache}
-	err := r.SyncBarcodeSequence(context.Background())
-	if err != nil {
-		panic(err)
-	}
+func NewRepository(db *gorm.DB, cfg *config.Schema) *Repository {
+	r := &Repository{db: db, cfg: cfg}
 
 	return r
 }
@@ -114,60 +106,4 @@ func (r Repository) FindByBarcode(ctx context.Context, barcode string) (entity.S
 	}
 
 	return specimen, nil
-}
-
-func (r *Repository) GenerateBarcode(ctx context.Context) string {
-	seq := r.GetBarcodeSequence(ctx)
-	seqPadding := fmt.Sprintf("%06d", seq) // Prints to stdout '000012'
-
-	return fmt.Sprintf("%s%s", time.Now().Format("20060102"), seqPadding)
-}
-
-func (r *Repository) GetBarcodeSequence(ctx context.Context) int64 {
-	seq, ok := r.cache.Get(constant.KeySpecimenBarcodeSequence)
-	if !ok {
-		now := time.Now()
-		tomorrowMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.Local)
-		expire := tomorrowMidnight.Sub(now)
-		r.cache.Set(constant.KeySpecimenBarcodeSequence, int64(1), expire)
-
-		return 1
-	}
-
-	switch seq.(type) {
-	case int64:
-		return seq.(int64)
-	case int:
-		return int64(seq.(int))
-	default:
-		panic(fmt.Sprintf("unknown type: %T", seq))
-	}
-}
-
-func (r *Repository) IncrementBarcodeSequence(ctx context.Context) error {
-	err := r.cache.Increment(constant.KeySpecimenBarcodeSequence, int64(1))
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *Repository) SyncBarcodeSequence(ctx context.Context) error {
-	now := time.Now()
-	currentDayMidnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
-	tomorrowMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.Local)
-
-	var count int64
-	err := r.db.Model(entity.Specimen{}).
-		Where("created_at >= ? and created_at < ?", currentDayMidnight, tomorrowMidnight).
-		Count(&count).Error
-	if err != nil {
-		return err
-	}
-
-	expire := tomorrowMidnight.Sub(now)
-	r.cache.Set(constant.KeySpecimenBarcodeSequence, int64(count+1), expire)
-
-	return nil
 }

@@ -12,4 +12,5 @@ export type ResultColumn = {
 	reference_range: string
 	abnormal: number
     isNew: boolean
+    picked: boolean
 }

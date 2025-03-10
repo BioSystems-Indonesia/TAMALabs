@@ -1,5 +1,5 @@
 import HistoryIcon from '@mui/icons-material/History';
-import { Badge, Box, ButtonGroup, Chip, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Badge, Box, ButtonGroup, Checkbox, Chip, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { DataGrid as MuiDatagrid, type DataGridProps, type GridRenderCellParams } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 import { memo, useEffect, useState } from 'react';
@@ -16,6 +16,7 @@ import {
     useRefresh
 } from "react-admin";
 import Barcode from 'react-barcode';
+import useAxios from '../../hooks/useAxios';
 import type { ResultColumn } from "../../types/general";
 import { Result, TestResult } from '../../types/observation_result';
 import type { Specimen } from '../../types/specimen';
@@ -79,7 +80,7 @@ const HeaderInfo = (props: any) => (
                                         height: "80px",
                                     }}>
                                         <Barcode value={specimen.barcode} displayValue={false}
-                                         />
+                                        />
                                         <Typography
                                             className={"barcode-text"}
                                             fontSize={12}
@@ -168,6 +169,10 @@ const TestResultTable = (props: TestResultTableProps) => {
     }
 
     async function putResult(newRow: TestResult, _oldRow: TestResult) {
+        if (newRow.result === _oldRow.result && newRow.unit === _oldRow.unit) {
+            return _oldRow
+        }
+
         const url = `${import.meta.env.VITE_BACKEND_BASE_URL}/result/${newRow.specimen_id}/test`
 
         const response = await fetch(url, {
@@ -182,7 +187,7 @@ const TestResultTable = (props: TestResultTableProps) => {
         }
 
         const respJSON = await response.json();
-        notify(`Success update row ${newRow.test}`, { type: 'success' });
+        notify(`Success update ${newRow.test}`, { type: 'success' });
 
         return respJSON
     }
@@ -342,6 +347,32 @@ const HistoryDialog = (props: HistoryDialogProps) => {
         props.onClose()
     }
 
+    const axios = useAxios();
+    const pickTestResult = async (testResultID: number) => {
+        try {
+            const url = `/result/${props.workOrderID}/test/${testResultID}/pick`
+            const response = await axios.put(url);
+            if (response.status !== 200) {
+                throw new Error("Error pick test result");
+            }
+
+            notify("Success pick test result", {
+                type: 'success',
+            });
+
+            refresh()
+
+            props.setHistory({
+                rows: props.rows.map(v => v.id === testResultID ? { ...v, picked: true } : {...v, picked:false}),
+                title: props.title,
+            })
+        } catch (err) {
+            notify("Error pick test result", {
+                type: 'error',
+            });
+        }
+    }
+
     return (
         <Dialog
             open={props.open}
@@ -390,6 +421,16 @@ const HistoryDialog = (props: HistoryDialogProps) => {
                             flex: 1,
                             renderCell: (params: GridRenderCellParams) => {
                                 return dayjs(params.value).format("YYYY-MM-DD HH:mm:ss")
+                            },
+                        },
+                        {
+                            field: 'picked',
+                            headerName: 'Picked',
+                            flex: 1,
+                            renderCell: (params: GridRenderCellParams) => {
+                                return <Checkbox checked={params.value} readOnly onClick={() => {
+                                    pickTestResult(params.row.id)
+                                }} />
                             },
                         },
                         {

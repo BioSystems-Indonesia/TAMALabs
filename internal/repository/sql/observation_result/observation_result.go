@@ -2,6 +2,7 @@ package observation_result
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -34,6 +35,7 @@ func (r *Repository) FindHistory(ctx context.Context, input entity.ObservationRe
 	err = r.DB.
 		Where("specimen_id = ?", input.SpecimenID).
 		Where("code = ?", input.Code).
+		Order("created_at DESC").
 		Find(&results).Error
 	return
 }
@@ -51,4 +53,36 @@ func (r *Repository) Delete(context context.Context, id int64) (entity.Observati
 	}
 
 	return observationResult, nil
+}
+
+func (r *Repository) PickObservationResult(ctx context.Context, id int64) (entity.ObservationResult, error) {
+	var observationResult entity.ObservationResult
+
+	err := r.DB.Transaction(func(tx *gorm.DB) error {
+		err := tx.Where("id = ?", id).First(&observationResult).Error
+		if err != nil {
+			return fmt.Errorf("get observation result error: %w", err)
+		}
+
+		// Update all other observation result picked to false
+		err = tx.Model(&entity.ObservationResult{}).
+			Where("specimen_id = ? AND code = ? AND id != ?", observationResult.SpecimenID, observationResult.Code, id).
+			Update("picked", false).
+			Error
+		if err != nil {
+			return fmt.Errorf("failed to update observation result: %w", err)
+		}
+
+		// Update the picked result to true
+		err = tx.Model(&entity.ObservationResult{}).
+			Where("id = ?", id).Update("picked", true).Error
+		if err != nil {
+			return fmt.Errorf("failed to update observation result pick: %w", err)
+		}
+
+		return nil
+	})
+
+	observationResult.Picked = true
+	return observationResult, err
 }

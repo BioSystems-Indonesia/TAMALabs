@@ -12,3 +12,9 @@ export type ObservationRequest = {
 
   test_type: TestType;
 };
+
+export type ObservationRequestCreateRequest = {
+  test_type_id: number;
+  test_type_code: string;
+  specimen_type: string;
+};

@@ -1,21 +1,20 @@
 import AddIcon from '@mui/icons-material/Add';
-import { Box, Button, Dialog, DialogContent, DialogTitle, type ButtonProps } from "@mui/material";
+import { Box, Button, Checkbox, Dialog, DialogContent, DialogTitle, MenuItem, Select, type ButtonProps } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { DataGrid as MuiDatagrid, useGridApiRef, type GridRenderCellParams } from "@mui/x-data-grid";
 import React, { useEffect, useState } from "react";
 import {
     AutocompleteInput,
-    Datagrid,
     DateInput,
     Form,
     List,
     ReferenceInput,
     SaveButton,
     SimpleForm,
-    TextField,
     TextInput,
     Toolbar,
     useCreate,
@@ -25,11 +24,12 @@ import {
     useSaveContext
 } from "react-admin";
 import { useFormContext } from "react-hook-form";
-import { useSearchParams } from "react-router-dom";
 import useAxios from "../../hooks/useAxios.ts";
-import type { ObservationRequest } from "../../types/observation_requests.ts";
+import type { ObservationRequest, ObservationRequestCreateRequest } from "../../types/observation_requests.ts";
 import { ActionKeys } from "../../types/props.ts";
-import type { TestType } from "../../types/test_type.ts";
+import type { Specimen } from '../../types/specimen.ts';
+import type { TestType, TestTypeSpecimenType } from "../../types/test_type.ts";
+import { WorkOrder } from '../../types/work_order.ts';
 import { PatientFormField } from "../patient/index.tsx";
 import FormStepper from "./Stepper.tsx";
 import { TestFilterSidebar } from "./TestTypeFilter.tsx";
@@ -43,27 +43,11 @@ type WorkOrderFormProps = {
 }
 
 
-const observationRequestField = "observation_requests";
+export const testTypesField = "test_types";
 
 
-const PickedTest = ({ allTestType }: { allTestType: TestType[] }) => {
-    const { watch } = useFormContext()
-    const [selectedData, setSelectedData] = useState<any[]>([]);
-
-    useEffect(() => {
-        if (!allTestType) {
-            return;
-        }
-
-        const testTypes = watch(observationRequestField) as TestType[] | undefined
-        if (!testTypes) {
-            return;
-        }
-
-        setSelectedData(testTypes);
-    }, [watch(observationRequestField), allTestType]);
-
-    if (watch(observationRequestField)?.length === 0) {
+const PickedTest = ({ selectedData }: { selectedData: Record<number, ObservationRequestCreateRequest> }) => {
+    if (Object.keys(selectedData).length === 0) {
         return (
             <Typography fontSize={16}>Please select test to run</Typography>
         )
@@ -74,10 +58,10 @@ const PickedTest = ({ allTestType }: { allTestType: TestType[] }) => {
             <Typography fontSize={16}>Selected Test</Typography>
             <Grid container spacing={1}>
                 {
-                    selectedData.map((v: any) => {
+                    Object.entries(selectedData).map(([key, value]) => {
                         return (
-                            <Grid item key={v.id}>
-                                <Chip label={v.code} />
+                            <Grid item key={key}>
+                                <Chip label={value.test_type_code} />
                             </Grid>
                         )
                     })
@@ -89,104 +73,197 @@ const PickedTest = ({ allTestType }: { allTestType: TestType[] }) => {
 
 const patientIDField = "patient_id";
 
+type TableTestType = TestType & {
+    checked: boolean
+    picked_type: string
+}
 
-function TestTable(props: TestInputProps) {
-    const { selectedIds, onSelect, data: testList } = useListContext();
+type TestTableProps = {
+    setSelectedData: React.Dispatch<React.SetStateAction<Record<number, ObservationRequestCreateRequest>>>
+    selectedData: Record<number, ObservationRequestCreateRequest>
+} & TestInputProps
+
+function TestTable({
+    setSelectedData,
+    selectedData,
+    ...props
+}: TestTableProps) {
+    const data = useRecordContext<WorkOrder>();
     const { setValue } = useFormContext();
-
-    const data = useRecordContext();
-    const [searchParams] = useSearchParams();
-    const [allTestType, setAllTestType] = useState<TestType[]>([]);
-    const [allTestTypeSet, setAllTestTypeSet] = useState<boolean>(false);
+    const { data: testType, isPending } = useListContext();
+    const [rows, setRows] = useState<TableTestType[]>([]);
+    const [allTestType, setAllTestType] = useState<TestType[] | undefined>(undefined);
+    const [alreadySetTestType, setAlreadySetTestType] = useState<boolean>(false);
 
     useEffect(() => {
-        if (props.initSelectedIds) {
-            onSelect(props.initSelectedIds);
+        if (testType && !alreadySetTestType) {
+            setAllTestType(testType);
+            setAlreadySetTestType(true);
         }
-    }, [props.initSelectedIds])
 
-    // This will store all test type (without filter)
-    useEffect(() => {
-        if ((testList && testList.length > 0) && !allTestTypeSet) {
-            setAllTestTypeSet(true);
-            setAllTestType(testList);
+        if (testType) {
+            setRows(testType)
         }
-    }, [testList])
+    }, [testType])
 
     useEffect(() => {
-        if (data) {
-            if (!allTestType) {
-                console.error("testList is undefined");
-                return
-            }
+        if (props.initSelectedType && allTestType) {
+            const initSelectedType = props.initSelectedType;
+            setSelectedData(initSelectedType);
+        }
+    }, [props.initSelectedType, allTestType])
 
-            const observationRequestCodeList = data.patient.specimen_list.map((specimen: any) => {
+    useEffect(() => {
+        setValue(testTypesField, selectedData);
+
+        if (testType && selectedData) {
+            setRows(rows => {
+                const newRows = rows.map(row => {
+                    if (selectedData[row.id]) {
+                        return {
+                            ...row,
+                            checked: true,
+                            picked_type: selectedData[row.id].specimen_type,
+                        }
+                    }
+
+                    return {
+                        ...row,
+                        checked: false,
+                        picked_type: row.types[0].type
+                    }
+                })
+
+                return newRows
+            })
+        }
+    }, [selectedData, testType])
+
+    useEffect(() => {
+        if (data && data.patient && allTestType) {
+            const observationRequestCodeList = data.patient?.specimen_list?.map((specimen: Specimen) => {
                 return specimen.observation_requests.map((observationRequest: ObservationRequest) => {
-                    return observationRequest.test_code;
+                    return {
+                        test_type_id: observationRequest.test_type.id,
+                        specimen_type: specimen.type,
+                        test_type_code: observationRequest.test_type.code,
+                    } as ObservationRequestCreateRequest;
                 })
             }).flat()
-            if (observationRequestCodeList.length === 0) {
+            if (observationRequestCodeList?.length === 0) {
                 return;
             }
 
-            console.debug("observationRequestCodesLongest", observationRequestCodeList);
-            setValue(observationRequestField, observationRequestCodeList);
-
-
-            const observationRequestIDs = allTestType.filter((test: TestType) => {
-                return observationRequestCodeList.includes(test.code);
-            }).map((test: any) => {
-                return test?.id
+            const observationRequestMap: Record<string, ObservationRequestCreateRequest> = {};
+            observationRequestCodeList?.forEach((v: ObservationRequestCreateRequest) => {
+                observationRequestMap[v.test_type_id] = v;
             })
-            console.debug("observationRequestIDs", observationRequestIDs);
-            onSelect(observationRequestIDs);
+
+            setSelectedData(observationRequestMap);
         }
-    }, [data, searchParams, allTestType]);
+    }, [data, allTestType]);
 
-    useEffect(() => {
-        console.debug("selected ids", selectedIds);
-        const pickedTestType = allTestType?.filter((test: any) => {
-            return selectedIds.includes(test?.id);
-        })
-        console.debug("observationRequest", pickedTestType);
-        setValue(observationRequestField, pickedTestType);
-    }, [selectedIds, allTestType]);
+    function updateSelectedData(testType: TableTestType) {
+        setSelectedData(val => {
+            const newSelectedData = { ...val }
 
-    const BulkActionButtons = () => {
-        return (
-            <></>
-        );
-    };
+            if (testType.checked) {
+                const newData: ObservationRequestCreateRequest = {
+                    test_type_id: testType.id,
+                    test_type_code: testType.code,
+                    specimen_type: testType.picked_type ?? testType.types[0].type,
+                }
+
+                newSelectedData[testType.id] = newData
+            } else {
+                delete newSelectedData[testType.id]
+            }
+
+            return newSelectedData
+        });
+    }
+
+    const apiRef = useGridApiRef();
 
     return <Grid container spacing={2}>
         <Grid item xs={12} md={8}>
-            <Datagrid width={"100%"}
-                bulkActionButtons={<BulkActionButtons />}
-                rowClick={"toggleSelection"}
-            >
-                <TextField label={"Name"} source={"name"} />
-                <TextField label={"Code"} source={"code"} />
-                <TextField label={"Category"} source={"category"} />
-                <TextField label={"Type"} source={"type"} />
-            </Datagrid>
+            <MuiDatagrid
+                pageSizeOptions={[-1]}
+                hideFooter
+                editMode="row"
+                apiRef={apiRef}
+                loading={isPending}
+                columns={[
+                    {
+                        field: 'checked',
+                        headerName: 'Checked',
+                        flex: 1,
+                        filterable: false,
+                        renderCell: (params: GridRenderCellParams) => {
+                            return <Checkbox checked={params.row.checked} onChange={(e: any) => {
+                                const newRow = { ...params.row, checked: e.target.checked }
+                                updateSelectedData(newRow)
+                            }} />
+                        },
+                    },
+                    {
+                        field: 'name',
+                        headerName: 'Name',
+                        flex: 1,
+                        filterable: false,
+                    },
+                    {
+                        field: 'category',
+                        headerName: 'Category',
+                        flex: 1,
+                        filterable: false,
+                    },
+                    {
+                        field: 'sub_category',
+                        headerName: 'Sub Category',
+                        flex: 1,
+                    },
+                    {
+                        field: 'picked_type',
+                        headerName: 'Specimen Type',
+                        flex: 1,
+                        renderCell: (params: GridRenderCellParams) => {
+                            const testType = params.row as TestType
+
+                            return <Select defaultValue={testType.types[0]?.type} value={params.row.picked_type} onChange={(e) => {
+                                const newRow = { ...params.row, picked_type: e.target.value }
+                                updateSelectedData(newRow)
+                            }}>
+                                {testType.types.map((type: TestTypeSpecimenType) => {
+                                    return <MenuItem value={type.type}>{type.type}</MenuItem>
+                                })}
+                            </Select>
+                        },
+                    }
+                ]}
+                disableColumnSelector
+                rows={rows}
+            />
         </Grid>
         <Grid item xs={12} md={4}>
-            <PickedTest allTestType={allTestType} />
+            <PickedTest selectedData={selectedData} />
         </Grid>
     </Grid>;
 }
 
 type TestInputProps = {
-    initSelectedIds?: number[]
+    initSelectedType?: Record<number, ObservationRequestCreateRequest>
 }
 
 export function TestInput(props: TestInputProps) {
+    const [selectedData, setSelectedData] = useState<Record<number, ObservationRequestCreateRequest>>({});
     return (
         <Box sx={{
             maxHeight: "calc(70vh - 48px)",
             overflow: "scroll",
+            width: "100%",
         }}>
-            <List resource={"test-type"} exporter={false} aside={<TestFilterSidebar />}
+            <List resource={"test-type"} exporter={false} aside={<TestFilterSidebar setSelectedData={setSelectedData} selectedData={selectedData} />}
                 perPage={999999}
                 storeKey={false}
                 actions={false}
@@ -197,7 +274,7 @@ export function TestInput(props: TestInputProps) {
                     width: "100%",
                 }}
             >
-                <TestTable {...props} />
+                <TestTable selectedData={selectedData} setSelectedData={setSelectedData} {...props} />
             </List>
         </Box>
     );
@@ -384,7 +461,7 @@ export const WorkOrderSaveButton = ({ disabled }: { disabled?: boolean }) => {
             return;
         }
 
-        if (!data[observationRequestField] || data[observationRequestField].length === 0) {
+        if (!data[testTypesField] || data[testTypesField].length === 0) {
             notify("Please select test", {
                 type: "error",
             });
@@ -392,7 +469,7 @@ export const WorkOrderSaveButton = ({ disabled }: { disabled?: boolean }) => {
         }
 
         if (save) {
-            const observationRequest = data[observationRequestField] as TestType[]
+            const observationRequest = data[testTypesField] as TestType[]
             save({
                 ...data,
                 observation_requests: observationRequest.map((test: TestType) => {
@@ -415,7 +492,6 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
     const { save } = useSaveContext();
     const notify = useNotify();
     const onFinish = (data: any) => {
-
         if (data == undefined) {
             notify("Please fill in all required fields", {
                 type: "error",
@@ -430,7 +506,7 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
             return;
         }
 
-        if (!data[observationRequestField] || data[observationRequestField].length === 0) {
+        if (!data[testTypesField] || data[testTypesField].length === 0) {
             notify("Please select test", {
                 type: "error",
             });
@@ -438,11 +514,11 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
         }
 
         if (save) {
-            const observationRequest = data[observationRequestField] as TestType[]
+            const observationRequest = data[testTypesField] as Record<number, ObservationRequestCreateRequest>
             save({
                 patient_id: data[patientIDField],
-                test_ids: observationRequest.map((test: TestType) => {
-                    return test.id
+                test_types: Object.entries(observationRequest).map(([_, value]) => {
+                    return value
                 })
             });
         }

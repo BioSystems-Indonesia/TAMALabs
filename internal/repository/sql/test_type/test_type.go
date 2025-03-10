@@ -44,7 +44,12 @@ func (r *Repository) FindAll(
 		db = db.Where("sub_category in (?)", req.SubCategories)
 	}
 
-	return sql.GetWithPaginationResponse[entity.TestType](db, req.GetManyRequest)
+	resp, err := sql.GetWithPaginationResponse[entity.TestType](db, req.GetManyRequest)
+	if err != nil {
+		return resp, err
+	}
+
+	return resp, nil
 }
 
 func (r *Repository) FindAllFilter(ctx context.Context) (entity.TestTypeFilter, error) {

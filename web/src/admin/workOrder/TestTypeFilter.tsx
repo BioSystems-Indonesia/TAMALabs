@@ -8,8 +8,17 @@ import LinearProgress from "@mui/material/LinearProgress";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { FilterList, FilterListItem, FilterLiveSearch, SavedQueriesList, useGetList, useListContext } from "react-admin";
+import type { ObservationRequestCreateRequest } from '../../types/observation_requests';
 
-export const TestFilterSidebar = () => {
+type TestFilterSidebarProps = {
+    setSelectedData: React.Dispatch<React.SetStateAction<Record<number, ObservationRequestCreateRequest>>>
+    selectedData: Record<number, ObservationRequestCreateRequest>
+}
+
+export const TestFilterSidebar = ({
+    setSelectedData,
+    selectedData,
+}: TestFilterSidebarProps) => {
     const list = useListContext();
     const [_dataUniqueCategory, setDataUniqueCategory] = useState<Array<any>>([])
     const [_dataUniqueSubCategory, setDataUniqueSubCategory] = useState<Array<any>>([])
@@ -92,14 +101,32 @@ export const TestFilterSidebar = () => {
         const templates = filters.templates || [];
         const removeTemplate = (value: any, templates: any[]) => {
             console.log("removeTemplate", value, templates);
-            const filteredIds = list.selectedIds.filter((v: any) => !value.template.test_type_id.includes(v))
-            list.onSelect(filteredIds)
+            setSelectedData(v => {
+                const newSelectedData = { ...v }
+                const testTypes = value.template.test_types as Record<number, ObservationRequestCreateRequest>
+                Object.entries(testTypes).forEach(([key, value]) => {
+                    delete newSelectedData[value.test_type_id]
+                })
+
+                return newSelectedData
+            })
+
             return templates.filter((v: any) => v !== value.template.id)
         }
 
         const addTemplate = (value: any, templates: any[]) => {
             console.log("addTemplate", value, templates);
-            list.onSelect(value.template.test_type_id)
+            setSelectedData(v => {
+                const newSelectedData = { ...v }
+                const testTypes = value.template.test_types as Record<number, ObservationRequestCreateRequest>
+                Object.entries(testTypes).forEach(([key, value]) => {
+                    newSelectedData[value.test_type_id] = value
+                })
+                console.log(newSelectedData);
+
+                return newSelectedData
+            })
+
             return [...templates, value.template.id]
         }
 

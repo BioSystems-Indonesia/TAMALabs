@@ -45,7 +45,8 @@ type TestResult struct {
 	Category        string         `json:"category"`
 	Abnormal        AbnormalResult `json:"abnormal"`
 	ReferenceRange  string         `json:"reference_range"`
-	UpdatedAt       string         `json:"created_at"`
+	CreatedAt       string         `json:"created_at"`
+	Picked          bool           `json:"picked"`
 
 	History []TestResult `json:"history"`
 }
@@ -64,8 +65,9 @@ func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
 		Unit:           request.TestType.Unit,
 		Category:       request.TestType.Category,
 		ReferenceRange: fmt.Sprintf("%.2f - %.2f", request.TestType.LowRefRange, request.TestType.HighRefRange),
-		UpdatedAt:      request.UpdatedAt.Format(time.RFC3339),
+		CreatedAt:      request.UpdatedAt.Format(time.RFC3339),
 		Abnormal:       NormalResult,
+		Picked:         false,
 		History:        []TestResult{},
 	}
 }
@@ -79,7 +81,8 @@ func (r TestResult) FromObservationResult(observation ObservationResult) TestRes
 		Unit:           observation.TestType.Unit,
 		Category:       observation.TestType.Category,
 		ReferenceRange: fmt.Sprintf("%.2f - %.2f", observation.TestType.LowRefRange, observation.TestType.HighRefRange),
-		UpdatedAt:      observation.UpdatedAt.Format(time.RFC3339),
+		CreatedAt:      observation.UpdatedAt.Format(time.RFC3339),
+		Picked:         observation.Picked,
 
 		// Result, Abnormal will be filled below
 		Result:   nil,
@@ -153,7 +156,8 @@ func (r TestResult) FillHistory(history []ObservationResult) TestResult {
 			Unit:           h.Unit,
 			Category:       h.TestType.Category,
 			ReferenceRange: fmt.Sprintf("%.2f - %.2f", h.TestType.LowRefRange, h.TestType.HighRefRange),
-			UpdatedAt:      h.UpdatedAt.Format(time.RFC3339),
+			CreatedAt:      h.CreatedAt.Format(time.RFC3339),
+			Picked:         h.Picked,
 		}
 	}
 
