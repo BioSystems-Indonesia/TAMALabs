@@ -6,7 +6,7 @@ import LanIcon from '@mui/icons-material/Lan';
 import UserIcon from '@mui/icons-material/Person';
 import TableViewIcon from '@mui/icons-material/TableView';
 import jsonServerProvider from "ra-data-json-server";
-import { Admin, CustomRoutes, Resource, radiantLightTheme, radiantDarkTheme  } from "react-admin";
+import { Admin, CustomRoutes, Resource } from "react-admin";
 import { Route } from "react-router-dom";
 import { dateFormatter } from '../helper/format.ts';
 import { ConfigEdit, ConfigList } from "./config/config.tsx";
@@ -20,6 +20,7 @@ import { TestTemplateCreate, TestTemplateEdit, TestTemplateList } from './testTe
 import { TestTypeCreate, TestTypeEdit, TestTypeList } from "./testType";
 import { WorkOrderCreate, WorkOrderEdit, WorkOrderList } from "./workOrder";
 import { WorkOrderShow } from "./workOrder/Show.tsx";
+import { radiantLightTheme, radiantDarkTheme } from './theme.tsx';
 
 const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
 
