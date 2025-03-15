@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { AutocompleteInput, Create, Datagrid, Edit, List, NumberInput, SimpleForm, TextField, TextInput, required } from "react-admin";
+import { ArrayInput, AutocompleteInput, Create, Datagrid, Edit, List, NumberInput, SimpleForm, SimpleFormIterator, TextField, TextInput, required } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
 import FeatureList from "../../component/FeatureList";
@@ -27,14 +27,17 @@ export const TestTypeDatagrid = (props: any) => {
     )
 }
 
-export const TestTypeList = () => (
-    <List aside={<TestFilterSidebar />} title="Test Type" sort={{
+export const TestTypeList = () => {
+    const [selectedData, setSelectedData] = useState<any>([]);
+    
+    return (
+    <List aside={<TestFilterSidebar selectedData={selectedData} setSelectedData={setSelectedData} />} title="Test Type" sort={{
         field: "id",
         order: "DESC",
     }}>
         <TestTypeDatagrid />
     </List>
-);
+)};
 
 
 function ReferenceSection() {
@@ -143,9 +146,13 @@ function TestTypeInput(props: TestTypeFormProps) {
                     return { id: val, name: val }
                 }} />
             <NumberInput source="decimal" readOnly={props.readonly} validate={[required()]} />
-            <FeatureList source="type" readOnly={props.readonly} types="specimen-type" >
-                <AutocompleteInput />
-            </FeatureList>
+            <ArrayInput source="types" readOnly={props.readonly}>
+                <SimpleFormIterator inline>
+                    <FeatureList source="type" readOnly={props.readonly} types="specimen-type" >
+                        <AutocompleteInput source="type" readOnly={props.readonly} />
+                    </FeatureList>
+                </SimpleFormIterator>
+            </ArrayInput>
             <TextInput source="description" readOnly={props.readonly} />
         </>
 

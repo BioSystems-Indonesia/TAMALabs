@@ -2,11 +2,12 @@ import { Divider } from "@mui/material";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Stack from "@mui/material/Stack";
-import { Create, Datagrid, DeleteButton, Edit, FilterLiveSearch, List, NumberField, ReferenceArrayField, SaveButton, SimpleForm, TextField, TextInput, Toolbar, required, useNotify, useRecordContext, useSaveContext } from "react-admin";
+import { useEffect, useState } from "react";
+import { Create, Datagrid, DeleteButton, Edit, FilterLiveSearch, List, NumberField, SaveButton, SimpleForm, TextField, TextInput, Toolbar, required, useEditContext, useNotify, useSaveContext } from "react-admin";
 import { useFormContext } from "react-hook-form";
+import type { ObservationRequestCreateRequest } from "../../types/observation_requests";
 import type { ActionKeys } from "../../types/props";
-import type { TestType } from '../../types/test_type';
-import { TestInput } from '../workOrder/Form';
+import { TestInput, testTypesField } from '../workOrder/Form';
 
 export const TestTemplateList = () => (
     <List aside={<TestTemplateFilterSidebar />} title="Test Template">
@@ -14,7 +15,6 @@ export const TestTemplateList = () => (
             <NumberField source="id" />
             <TextField source="name" />
             <TextField source="description" />
-            <ReferenceArrayField reference="test-type" source="test_type_id" />
         </Datagrid>
     </List>
 );
@@ -36,7 +36,38 @@ type TestTemplateFormProps = {
 }
 
 function TestTemplateForm(props: TestTemplateFormProps) {
-    const record = useRecordContext();
+    const [isLoading, setIsLoading] = useState(false);
+    const [selectedType, setSelectedType] = useState<Record<number, ObservationRequestCreateRequest>>({});
+
+    if (props.mode === "EDIT") {
+        const { record, isPending } = useEditContext();
+
+        useEffect(() => {
+            if (isPending) {
+                setIsLoading(true);
+            } else {
+                setIsLoading(false);
+            }
+        }, [isPending])
+
+        useEffect(() => {
+            if (record) {
+                setIsLoading(true);
+                const newSelectedType: Record<number, ObservationRequestCreateRequest> = {};
+                record.test_types.forEach((v: ObservationRequestCreateRequest) => {
+                    newSelectedType[v.test_type_id] = v
+                })
+
+                setSelectedType(newSelectedType)
+                setIsLoading(false);
+            }
+        }, [record])
+    }
+
+
+    if (isLoading) {
+        return <></>
+    }
 
     return (
         <SimpleForm disabled={props.readonly} toolbar={false}>
@@ -46,12 +77,11 @@ function TestTemplateForm(props: TestTemplateFormProps) {
             }} />
             <TextInput source="name" readOnly={props.readonly} validate={[required()]} />
             <TextInput source="description" readOnly={props.readonly} multiline />
-            <TestInput initSelectedIds={record?.test_type_id} />
+            <TestInput initSelectedType={selectedType} />
         </SimpleForm>
     )
 }
 
-const observationRequestField = "observation_requests";
 const TestTemplateSaveButton = ({ disabled }: { disabled?: boolean }) => {
     const { getValues } = useFormContext();
     const { save } = useSaveContext();
@@ -67,7 +97,7 @@ const TestTemplateSaveButton = ({ disabled }: { disabled?: boolean }) => {
             return;
         }
 
-        if (!data[observationRequestField] || data[observationRequestField].length === 0) {
+        if (!data[testTypesField] || data[testTypesField].length === 0) {
             notify("Please select test", {
                 type: "error",
             });
@@ -75,11 +105,11 @@ const TestTemplateSaveButton = ({ disabled }: { disabled?: boolean }) => {
         }
 
         if (save) {
-            const observationRequest = data[observationRequestField] as TestType[]
+            const observationRequest = data[testTypesField] as Record<number, ObservationRequestCreateRequest>
             save({
                 ...data,
-                test_type_id: observationRequest.map((test: TestType) => {
-                    return test.id
+                test_types: Object.entries(observationRequest).map(([_, value]) => {
+                    return value
                 })
             });
         }
@@ -120,7 +150,7 @@ export function TestTemplateEdit() {
             "& .RaEdit-card": {
                 overflow: "visible",
             }
-        }}>
+        }} emptyWhileLoading>
             <TestTemplateForm readonly={false} mode={"EDIT"} />
         </Edit>
     )

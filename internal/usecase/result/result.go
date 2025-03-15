@@ -85,6 +85,11 @@ func (u *Usecase) PutTestResult(ctx context.Context, result entity.TestResult) (
 		return result, err
 	}
 
+	obs, err = u.TooglePickTestResult(ctx, obs.ID)
+	if err != nil {
+		return result, fmt.Errorf("failed to toogle pick test result: %w", err)
+	}
+
 	obs.TestType, err = u.testTypeRepository.FindOneByCode(ctx, obs.Code)
 	if err != nil {
 		log.Printf("cannot fill test type for result %d: %v", obs.ID, err)
@@ -150,7 +155,7 @@ func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder) {
 	// prepare by grouping into code. But before that, sort by updated_at
 	// the latest updated_at will be the first element
 	sort.Slice(allObservationResults, func(i, j int) bool {
-		return allObservationResults[i].UpdatedAt.After(allObservationResults[j].UpdatedAt)
+		return allObservationResults[i].CreatedAt.After(allObservationResults[j].CreatedAt)
 	})
 
 	// ok final step to create the order data
@@ -166,7 +171,16 @@ func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder) {
 		newTest := test
 		history := testResults[test.Test]
 		if len(history) > 0 {
-			newTest = newTest.FromObservationResult(history[0])
+			// Pick the latest history or the manually picked one
+			pickedTest := history[0]
+			for _, v := range history {
+				if v.Picked {
+					pickedTest = v
+					break
+				}
+			}
+
+			newTest = newTest.FromObservationResult(pickedTest)
 		}
 		newTest = newTest.FillHistory(history)
 
@@ -184,4 +198,8 @@ func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder) {
 	workOrder.HaveCompleteData = len(allObservationRequests) == totalResultFilled
 	workOrder.PercentComplete = float64(totalResultFilled) / float64(len(allObservationRequests))
 	workOrder.TestResult = allTests
+}
+
+func (u *Usecase) TooglePickTestResult(ctx context.Context, testResultID int64) (entity.ObservationResult, error) {
+	return u.resultRepository.PickObservationResult(ctx, testResultID)
 }

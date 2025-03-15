@@ -12,8 +12,14 @@ const (
 )
 
 type WorkOrderCreateRequest struct {
-	PatientID int64   `json:"patient_id" validate:"required"`
-	TestIDs   []int64 `json:"test_ids" validate:"required"`
+	PatientID int64                            `json:"patient_id" validate:"required"`
+	TestTypes []WorkOrderCreateRequestTestType `json:"test_types" validate:"required"`
+}
+
+type WorkOrderCreateRequestTestType struct {
+	TestTypeID   int64  `json:"test_type_id" validate:"required"`
+	TestTypeCode string `json:"test_type_code" validate:"required"`
+	SpecimenType string `json:"specimen_type" validate:"required"`
 }
 
 type WorkOrder struct {
@@ -22,6 +28,7 @@ type WorkOrder struct {
 	PatientID          int64           `json:"patient_id" gorm:"type:not null;default:0"`
 	DeviceIDDeprecated int64           `json:"device_id" gorm:"column:device_id;type:not null;default:0"`
 	CreatedAt          time.Time       `json:"created_at" gorm:"index:work_order_created_at"`
+	Barcode            string          `json:"barcode" gorm:"column:barcode;type:varchar(255);default:'';index:work_order_barcode,unique"`
 	UpdatedAt          time.Time       `json:"updated_at" gorm:""`
 
 	Patient  Patient    `json:"patient" gorm:"foreignKey:PatientID;->" validate:"-"`

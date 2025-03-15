@@ -1,14 +1,52 @@
 package entity
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type TestTemplate struct {
-	ID          int    `json:"id" gorm:"primaryKey"`
-	Name        string `json:"name" gorm:"not null" validate:"required"`
-	Description string `json:"description" gorm:"not null"`
-	TestTypeID  []int  `json:"test_type_id" gorm:"-"`
+	ID               int                              `json:"id" gorm:"primaryKey"`
+	Name             string                           `json:"name" gorm:"not null" validate:"required"`
+	Description      string                           `json:"description" gorm:"not null"`
+	TestTypesString  string                           `json:"-" gorm:"not null;column:test_types"`
+	RequestTestTypes []WorkOrderCreateRequestTestType `json:"test_types" gorm:"-" validate:"required"`
+}
 
-	TestType []TestType `json:"test_type,omitempty" gorm:"many2many:test_template_test_types;->"`
+func (t *TestTemplate) BeforeCreate(tx *gorm.DB) error {
+	testTypeByte, err := json.Marshal(t.RequestTestTypes)
+	if err != nil {
+		return err
+	}
+
+	t.TestTypesString = string(testTypeByte)
+
+	return nil
+}
+
+func (t *TestTemplate) BeforeUpdate(tx *gorm.DB) error {
+	testTypeByte, err := json.Marshal(t.RequestTestTypes)
+	if err != nil {
+		return err
+	}
+
+	t.TestTypesString = string(testTypeByte)
+
+	return nil
+}
+
+func (t *TestTemplate) AfterFind(tx *gorm.DB) error {
+	var testTypes []WorkOrderCreateRequestTestType
+	err := json.Unmarshal([]byte(t.TestTypesString), &testTypes)
+	if err != nil {
+		return err
+	}
+
+	t.RequestTestTypes = testTypes
+
+	return nil
 }
 
 type TestTemplateTestType struct {

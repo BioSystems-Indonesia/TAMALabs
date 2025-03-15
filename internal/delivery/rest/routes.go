@@ -131,14 +131,10 @@ func RegisterRoutes(
 
 	result := v1.Group("/result")
 	{
-		// TODO fix after work order is finish
-		// right now, ListResult is based on specimen_id
-		// Later, it will be based on work_order_id
-		// now, we just use spcimen_id untul one work_order could have
-		// more than one specimen
 		result.GET("", handler.ListResult)
 		result.GET("/:work_order_id", handler.GetResult)
 		result.PUT("/:work_order_id/test", handler.AddTestResult)
+		result.PUT("/:work_order_id/test/:test_result_id/pick", handler.TooglePickTestResult)
 		result.DELETE("/:work_order_id/test/:test_result_id", handler.DeleteTestResult)
 	}
 

@@ -52,6 +52,7 @@ type ObservationResult struct {
 	Date           time.Time       `json:"date"`
 	AbnormalFlag   JSONStringArray `json:"abnormal_flag" gorm:"type:json"` // Using JSON for the slice
 	Comments       string          `json:"comments"`
+	Picked         bool            `json:"picked" gorm:"not null,default:false"`
 	CreatedAt      time.Time       `json:"created_at" gorm:"not null"`
 	UpdatedAt      time.Time       `json:"updated_at" gorm:"not null"`
 

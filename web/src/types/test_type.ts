@@ -8,6 +8,10 @@ export interface TestType {
     category:       string;
     sub_category:   string;
     description:    string;
-    type: string;
+    types: TestTypeSpecimenType[];
     decimal: number;
+}
+
+export interface TestTypeSpecimenType {
+    type: string;
 }

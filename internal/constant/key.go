@@ -1,5 +1,5 @@
 package constant
 
 const (
-	KeySpecimenBarcodeSequence = "specimen_barcode_sequence"
+	KeyWorkOrderBarcodeSequence = "work_order_barcode_sequence"
 )

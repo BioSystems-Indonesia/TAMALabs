@@ -6,7 +6,6 @@ import (
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql"
-	"github.com/oibacidem/lims-hl-seven/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -25,7 +24,7 @@ func (r *Repository) FindAll(
 	_ context.Context,
 	req *entity.TestTemplateGetManyRequest,
 ) (entity.PaginationResponse[entity.TestTemplate], error) {
-	db := r.DB.Preload("TestType")
+	db := r.DB
 	sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{
 		ProcessSearch: func(db *gorm.DB, query string) *gorm.DB {
 			return db.Where("name like ?", "%"+query+"%").
@@ -37,24 +36,14 @@ func (r *Repository) FindAll(
 		return entity.PaginationResponse[entity.TestTemplate]{}, err
 	}
 
-	for i := range resp.Data {
-		resp.Data[i].TestTypeID = util.Map(resp.Data[i].TestType, func(t entity.TestType) int {
-			return t.ID
-		})
-	}
-
 	return resp, nil
 }
 
 func (r *Repository) FindOneByID(ctx context.Context, id int) (entity.TestTemplate, error) {
 	var data entity.TestTemplate
-	if err := r.DB.Preload("TestType").First(&data, id).Error; err != nil {
+	if err := r.DB.First(&data, id).Error; err != nil {
 		return entity.TestTemplate{}, err
 	}
-
-	data.TestTypeID = util.Map(data.TestType, func(t entity.TestType) int {
-		return t.ID
-	})
 
 	return data, nil
 }
@@ -62,11 +51,6 @@ func (r *Repository) FindOneByID(ctx context.Context, id int) (entity.TestTempla
 func (r *Repository) Create(ctx context.Context, req *entity.TestTemplate) (entity.TestTemplate, error) {
 	err := r.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(req).Error; err != nil {
-			return err
-		}
-
-		err := r.updateRelation(tx, req)
-		if err != nil {
 			return err
 		}
 
@@ -85,11 +69,6 @@ func (r *Repository) Update(ctx context.Context, req *entity.TestTemplate) (enti
 			return err
 		}
 
-		err := r.updateRelation(tx, req)
-		if err != nil {
-			return err
-		}
-
 		return nil
 	})
 	if err != nil {
@@ -97,23 +76,6 @@ func (r *Repository) Update(ctx context.Context, req *entity.TestTemplate) (enti
 	}
 
 	return *req, nil
-}
-
-func (r *Repository) updateRelation(tx *gorm.DB, req *entity.TestTemplate) error {
-	err := tx.Delete(&entity.TestTemplateTestType{}, "test_template_id = ?", req.ID).Error
-	if err != nil {
-		return err
-	}
-
-	for _, testTypeID := range req.TestTypeID {
-		if err := tx.Create(&entity.TestTemplateTestType{
-			TestTemplateID: req.ID,
-			TestTypeID:     testTypeID,
-		}).Error; err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (r *Repository) Delete(ctx context.Context, req *entity.TestTemplate) (entity.TestTemplate, error) {

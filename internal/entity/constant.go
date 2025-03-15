@@ -8,13 +8,20 @@ const (
 type SpecimenType string
 
 const (
-	SpecimenTypeCSF SpecimenType = "CSF"
-	SpecimenTypeLIQ SpecimenType = "LIQ"
-	SpecimenTypePLM SpecimenType = "PLM"
-	SpecimenTypeSEM SpecimenType = "SEM"
+	// SpecimenTypeSER is a specimen type for serum.
 	SpecimenTypeSER SpecimenType = "SER"
+	// SpecimenTypeURI is a specimen type for urine.
 	SpecimenTypeURI SpecimenType = "URI"
+	// SpecimenTypePLM is a specimen type for plasma.
+	SpecimenTypePLM SpecimenType = "PLM"
+	// SpecimenTypeWBL is a specimen type for whole blood.
 	SpecimenTypeWBL SpecimenType = "WBL"
+	// SpecimenTypeCSF is a specimen type for cerebrospinal fluid.
+	SpecimenTypeCSF SpecimenType = "CSF"
+	// SpecimenTypeLIQ is a specimen type for biological liquid.
+	SpecimenTypeLIQ SpecimenType = "LIQ"
+	// SpecimenTypeSEM is a specimen type for semen.
+	SpecimenTypeSEM SpecimenType = "SEM"
 )
 
 // TODO: Change this to real data

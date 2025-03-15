@@ -78,3 +78,17 @@ func (h *ResultHandler) DeleteTestResult(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, result)
 }
+
+func (h *ResultHandler) TooglePickTestResult(c echo.Context) error {
+	testResultID, err := strconv.ParseInt(c.Param("test_result_id"), 10, 64)
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	result, err := h.resultUsecase.TooglePickTestResult(c.Request().Context(), testResultID)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, result)
+}
