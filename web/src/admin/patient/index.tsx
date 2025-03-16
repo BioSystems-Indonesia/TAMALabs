@@ -66,7 +66,7 @@ export function PatientFormField(props: PatientFormProps) {
             <Divider sx={{ my: "1rem" }} />
             <Stack direction={"row"} gap={5} width={"100%"}>
                 <TextInput source="first_name" validate={[required()]} readOnly={props.readonly} />
-                <TextInput source="last_name" validate={[required()]} readOnly={props.readonly} />
+                <TextInput source="last_name" readOnly={props.readonly} />
             </Stack>
             <Stack direction={"row"} gap={3} width={"100%"}>
                 <CustomDateInput source={"birthdate"} label={"Birth Date"} required sx={{

@@ -33,9 +33,9 @@ import {
     useRecordContext,
     useRefresh
 } from "react-admin";
-import Barcode from "react-barcode";
 import { useFormContext } from 'react-hook-form';
 import { useReactToPrint } from "react-to-print";
+import LIMSBarcode from '../../component/Barcode';
 import { trimName } from '../../helper/format';
 import useAxios from '../../hooks/useAxios';
 import { getRefererParam } from '../../hooks/useReferer';
@@ -211,25 +211,19 @@ export function WorkOrderShow() {
                             gap: 2,
                         }}>
                             <Typography variant='subtitle1'>Test Info</Typography>
-                            <WithRecord render={(record: WorkOrder) => {
-
+                            <WithRecord render={(workOrder: WorkOrder) => {
                                 return (
                                     <ArrayField source={"patient.specimen_list"} label={"Specimen"} textAlign="center" >
                                         <Datagrid bulkActionButtons={false} rowClick={false} hover={false}>
                                             <ChipField source={"type"} textAlign={"center"} />
                                             <WrapperField source={"barcode"} label={"Barcode"} textAlign={"center"}>
                                                 <Stack>
-                                                    <WithRecord render={(record: any) => {
+                                                    <WithRecord render={(specimen: any) => {
                                                         return (
-                                                            <Stack gap={0} justifyContent={"center"} alignItems={"center"}>
-                                                                <Barcode value={record.barcode} displayValue={false} />
-                                                                <Typography
-                                                                    className={"barcode-text"}
-                                                                    fontSize={12}
-                                                                    sx={{
-                                                                        margin: 0,
-                                                                    }}>{record.barcode}</Typography>
-                                                            </Stack>
+                                                            <LIMSBarcode
+                                                                barcode={specimen.barcode}
+                                                                name={workOrder.patient.first_name + " " + workOrder.patient.last_name}
+                                                            />
                                                         )
                                                     }} />
                                                 </Stack>
@@ -258,22 +252,28 @@ export function WorkOrderShow() {
             {/*Below is a barcode component for printing only, it will be hidden on the screen*/}
             <WithRecord render={(record: any) => {
                 return (
-                    <Stack ref={barcodeRef}>
+                    <Stack ref={barcodeRef} sx={{
+                        display: "none"
+                    }}>
                         {
                             record.patient?.specimen_list?.map((specimen: any) => {
                                 return (
-                                    <Stack gap={0} justifyContent={"center"} alignItems={"center"}
-                                        className={"barcode-container"} sx={{
-                                            display: "none",
-                                        }}>
-                                        <Typography
-                                            className={"barcode-text"}
-                                            fontSize={8}
-                                            sx={{
-                                                margin: 0,
-                                            }}>{trimName(`${record.patient.first_name} ${record.patient.last_name}`, 14)} | {specimen.barcode}</Typography>
-                                        <Barcode value={specimen.barcode} displayValue={false} height={settings.barcode_height} margin={0} width={settings.barcode_width} />
-                                    </Stack>
+                                    <LIMSBarcode
+                                        barcode={specimen.barcode}
+                                        name={trimName(`${record.patient.first_name} ${record.patient.last_name}`, 14)}
+                                        height={settings.barcode_height}
+                                        width={settings.barcode_width}
+                                    />
+                                    // <Stack gap={0} justifyContent={"center"} alignItems={"center"}
+                                    //     className={"barcode-container"}>
+                                    //     <Typography
+                                    //         className={"barcode-text"}
+                                    //         fontSize={8}
+                                    //         sx={{
+                                    //             margin: 0,
+                                    //         }}>{} | {specimen.barcode}</Typography>
+                                    //     <Barcode value={specimen.barcode} displayValue={false} height={settings.barcode_height} margin={0} width={settings.barcode_width} />
+                                    // </Stack>
                                 )
                             })
                         }

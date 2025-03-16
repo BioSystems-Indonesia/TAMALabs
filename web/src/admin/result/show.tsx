@@ -15,7 +15,6 @@ import {
     useNotify,
     useRefresh
 } from "react-admin";
-import Barcode from 'react-barcode';
 import useAxios from '../../hooks/useAxios';
 import type { ResultColumn } from "../../types/general";
 import { Result, TestResult } from '../../types/observation_result';
@@ -76,18 +75,7 @@ const HeaderInfo = (props: any) => (
                         <Stack direction={"row"} gap={1}>
                             {record.specimen_list.map((specimen: Specimen) => {
                                 return (
-                                    <Stack gap={0} sx={{
-                                        height: "80px",
-                                    }}>
-                                        <Barcode value={specimen.barcode} displayValue={false}
-                                        />
-                                        <Typography
-                                            className={"barcode-text"}
-                                            fontSize={12}
-                                            sx={{
-                                                margin: 0,
-                                            }}>{specimen.barcode}</Typography>
-                                    </Stack>
+                                    <Chip label={specimen.barcode} />
                                 )
                             })}
                         </Stack>
@@ -363,7 +351,7 @@ const HistoryDialog = (props: HistoryDialogProps) => {
             refresh()
 
             props.setHistory({
-                rows: props.rows.map(v => v.id === testResultID ? { ...v, picked: true } : {...v, picked:false}),
+                rows: props.rows.map(v => v.id === testResultID ? { ...v, picked: true } : { ...v, picked: false }),
                 title: props.title,
             })
         } catch (err) {

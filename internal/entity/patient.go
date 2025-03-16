@@ -26,7 +26,7 @@ func (p PatientSex) String() string {
 type Patient struct {
 	ID          int64      `json:"id,omitempty" gorm:"primaryKey;autoIncrement"`
 	FirstName   string     `json:"first_name" gorm:"not null" validate:"required"`
-	LastName    string     `json:"last_name" gorm:"not null" validate:"required"`
+	LastName    string     `json:"last_name" gorm:"not null" validate:""`
 	Birthdate   time.Time  `json:"birthdate" gorm:"not null" validate:"required"`
 	Sex         PatientSex `json:"sex" gorm:"not null" validate:"required,sex"`
 	PhoneNumber string     `json:"phone_number" gorm:"not null" validate:""`
