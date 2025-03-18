@@ -3,6 +3,8 @@ package tcp
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/glebarez/sqlite"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
@@ -10,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"testing"
 )
 
 const ex = `MSH|^~\&|BA200|Biosystems|Host|Host provider|20241213131746||OUL^R22^OUL_R22|a5f12c06-2d66-4a2e-b1bd-f0423978db14|P|2.5.1|||ER|AL||UNICODE UTF-8|||LAB-29^IHE
@@ -88,6 +89,10 @@ OBR||""||URIC ACID^URIC ACID^A400|||||||||||||||||||||||||
 ORC|OK||||CM||||20241213131746
 OBX|1|NM|URIC ACID^URIC ACID^A400||2.88172531|mg/dL^mg/dL^A400||NONE|||F|||||ADMIN||A400^Biosystems~834000237^Biosystems|20241213193229`
 
+const exQuery = `MSH|^~\\&|BA200|Biosystems|Host|Host provider|20250305201642||QBP^Q11^QBP_Q11|dd980fa0-6a3d-4584-8fee-5392f42eca1d|P|2.5.1|||ER|AL||UNICODE UTF-8|||LAB-27^IHE
+QPD|WOS^Work Order Step^IHE_LABTF|dd980fa06a3d45848fee5392f42eca1d|20250107000003
+RCP|I||R`
+
 func TestHlSevenHandler(t *testing.T) {
 	db, _ := initSQLiteDB()
 	type fields struct {
@@ -102,6 +107,23 @@ func TestHlSevenHandler(t *testing.T) {
 		args   args
 		want   string
 	}{
+		{
+			name: "QBP_Q11",
+			fields: fields{
+				AnalyzerUsecase: &analyzer.Usecase{
+					ObservationRequestRepository: &observation_request.Repository{
+						DB: db,
+					},
+					ObservationResultRepository: &observation_result.Repository{
+						DB: db,
+					},
+				},
+			},
+			args: args{
+				message: exQuery,
+			},
+			want: "QBP_Q11 processed",
+		},
 		{
 			name: "OUL_R22_ELGATAMA",
 			fields: fields{

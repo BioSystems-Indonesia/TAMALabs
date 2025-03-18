@@ -94,6 +94,8 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 		if err != nil {
 			return "", fmt.Errorf("process failed: %w", err)
 		}
+	case h251.QBP_Q11:
+		log.Println(m)
 	case h251.OUL_R21:
 		log.Println(m)
 	}
