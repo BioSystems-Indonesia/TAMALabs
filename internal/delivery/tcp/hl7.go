@@ -94,6 +94,18 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 		if err != nil {
 			return "", fmt.Errorf("process failed: %w", err)
 		}
+	case h251.QBP_Q11:
+		msgControlID = m.MSH.MessageControlID
+		qbp11, err := h.qbpDecoder(msgByte)
+		if err != nil {
+			return "", fmt.Errorf("decode failed: %w", err)
+		}
+
+		data, err := MapQBPQ11ToEntity(&qbp11)
+		if err != nil {
+			return "", fmt.Errorf("mapping failed: %w", err)
+		}
+		fmt.Println(data)
 	case h251.OUL_R21:
 		log.Println(m)
 	}
@@ -184,12 +196,65 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 	return string(bb), nil
 }
 
+func (h *HlSevenHandler) qbpDecoder(message []byte) (h251.QBP_Q11, error) {
+	d := hl7.NewDecoder(h251.Registry, nil)
+
+	// get QPD segment
+	qpd := h.getSegment(message, "QPD")
+
+	// manually decode QPD segment
+	qpds := strings.Split(string(qpd), "|")
+	if len(qpds) < 4 {
+		return h251.QBP_Q11{}, fmt.Errorf("QPD segment is not complete")
+	}
+
+	UserParametersInSuccessiveFields := h251.VARIES(qpds[3])
+	manualQPD := h251.QPD{
+		HL7: h251.HL7Name{},
+		MessageQueryName: h251.CE{
+			HL7: h251.HL7Name{},
+			// EntityIdentifier: qpds[0],
+			// NamespaceID:      qpds[1],
+			// UniversalID:      qpds[2],
+			// UniversalIDType:  qpds[3],
+		},
+		QueryTag:                         qpds[2],
+		UserParametersInSuccessiveFields: &UserParametersInSuccessiveFields,
+	}
+
+	// delete QPD segment
+	message = h.deleteSegment(message, "QPD")
+
+	msg, err := d.Decode(message)
+	if err != nil {
+		return h251.QBP_Q11{}, fmt.Errorf("decode failed: %w", err)
+	}
+
+	qbp11 := msg.(h251.QBP_Q11)
+	qbp11.QPD = &manualQPD
+	return qbp11, nil
+
+}
+
 func (h *HlSevenHandler) deleteSegment(message []byte, seg string) []byte {
 	lines := bytes.Split(message, []byte("\n"))
 
 	var filteredLines [][]byte
 	for _, line := range lines {
 		if !bytes.HasPrefix(line, []byte(seg)) {
+			filteredLines = append(filteredLines, line)
+		}
+	}
+
+	return bytes.Join(filteredLines, []byte("\n"))
+}
+
+func (h *HlSevenHandler) getSegment(message []byte, seg string) []byte {
+	lines := bytes.Split(message, []byte("\n"))
+
+	var filteredLines [][]byte
+	for _, line := range lines {
+		if bytes.HasPrefix(line, []byte(seg)) {
 			filteredLines = append(filteredLines, line)
 		}
 	}
