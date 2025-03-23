@@ -4,17 +4,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/kardianos/hl7"
+	"github.com/kardianos/hl7/h251"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase"
+	"github.com/oibacidem/lims-hl-seven/pkg/mllp"
 	"io"
 	"log"
 	"net"
 	"runtime/debug"
 	"strings"
-	"time"
-
-	"github.com/kardianos/hl7"
-	"github.com/kardianos/hl7/h251"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase"
-	"github.com/oibacidem/lims-hl-seven/pkg/mllp"
 )
 
 // HlSevenHandler is a struct that contains the handler of the REST server.
@@ -72,128 +70,14 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 		return "", fmt.Errorf("decode header failed: %w", err)
 	}
 
-	msgControlID := ""
-
 	switch m := header.(type) {
 	case h251.OUL_R22:
-		msgControlID = m.MSH.MessageControlID
-		d := hl7.NewDecoder(h251.Registry, nil)
-		msgByte = h.deleteSegment(msgByte, "ORC")
-		msg, err := d.Decode(msgByte)
-		if err != nil {
-			return "", fmt.Errorf("decode failed: %w", err)
-		}
-
-		oul22 := msg.(h251.OUL_R22)
-		data, err := MapOULR22ToEntity(&oul22)
-		if err != nil {
-			return "", fmt.Errorf("mapping failed: %w", err)
-		}
-
-		err = h.AnalyzerUsecase.ProcessOULR22(ctx, data)
-		if err != nil {
-			return "", fmt.Errorf("process failed: %w", err)
-		}
+		return h.OULR22(ctx, m, msgByte)
 	case h251.QBP_Q11:
-		msgControlID = m.MSH.MessageControlID
-		qbp11, err := h.qbpDecoder(msgByte)
-		if err != nil {
-			return "", fmt.Errorf("decode failed: %w", err)
-		}
-
-		data, err := MapQBPQ11ToEntity(&qbp11)
-		if err != nil {
-			return "", fmt.Errorf("mapping failed: %w", err)
-		}
-		fmt.Println(data)
-	case h251.OUL_R21:
-		log.Println(m)
+		return h.QBPQ11(ctx, m, msgByte)
 	}
 
-	if err != nil {
-		return "", err
-	}
-
-	// MSH segment
-	// TODO: FIXME
-	var msh *h251.MSH
-	switch headerNew := header.(type) {
-	case h251.OUL_R22:
-		msh = headerNew.MSH
-		msh.MessageType = h251.MSG{
-			HL7:              h251.HL7Name{},
-			MessageCode:      "ACK",
-			TriggerEvent:     "R22",
-			MessageStructure: "ACK",
-		}
-	default:
-		msh = &h251.MSH{
-			HL7:                  h251.HL7Name{},
-			FieldSeparator:       "|",
-			EncodingCharacters:   "^~\\&",
-			SendingApplication:   simpleHD("BioLIS"),
-			SendingFacility:      simpleHD("Lab1"),
-			ReceivingApplication: simpleHD("BA200"),
-			ReceivingFacility:    simpleHD("Lab1"),
-			DateTimeOfMessage:    time.Now(),
-			Security:             "",
-			MessageType: h251.MSG{
-				HL7:              h251.HL7Name{},
-				MessageCode:      "ACK",
-				TriggerEvent:     "R22",
-				MessageStructure: "ACK",
-			},
-			MessageControlID:                    msgControlID,
-			ProcessingID:                        h251.PT{ProcessingID: "P"},
-			VersionID:                           h251.VID{VersionID: "2.5.1"},
-			SequenceNumber:                      "",
-			ContinuationPointer:                 "",
-			AcceptAcknowledgmentType:            "ER",
-			ApplicationAcknowledgmentType:       "AL",
-			CountryCode:                         "ID",
-			CharacterSet:                        []string{"UNICODE UTF-8"},
-			PrincipalLanguageOfMessage:          &h251.CE{},
-			AlternateCharacterSetHandlingScheme: "",
-			MessageProfileIdentifier: []h251.EI{
-				{
-					HL7:              h251.HL7Name{},
-					EntityIdentifier: "LAB-28",
-					NamespaceID:      "IHE",
-					UniversalID:      "",
-					UniversalIDType:  "",
-				},
-			},
-		}
-	}
-
-	msa := h251.MSA{
-		AcknowledgmentCode: "AA",
-		MessageControlID:   msh.MessageControlID,
-		TextMessage:        "Message accepted",
-	}
-
-	ackMsg := h251.ACK{
-		HL7: h251.HL7Name{},
-		MSH: msh,
-		SFT: nil,
-		MSA: &msa,
-		ERR: nil,
-	}
-
-	// Create Encoder with options
-	e := hl7.NewEncoder(nil)
-	bb, err := e.Encode(ackMsg)
-	if err != nil {
-		return "", err
-	}
-
-	bbLog := bytes.ReplaceAll(bb, []byte{'\r'}, []byte{'\n'})
-	log.Println("Sending message: ", string(bbLog))
-	//bb = bytes.ReplaceAll(bb, []byte{'\r'}, []byte{'\n'})
-
-	// Encode the message
-
-	return string(bb), nil
+	return "", fmt.Errorf("unknown message type")
 }
 
 func (h *HlSevenHandler) qbpDecoder(message []byte) (h251.QBP_Q11, error) {
