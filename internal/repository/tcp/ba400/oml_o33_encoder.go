@@ -127,7 +127,7 @@ func NewOrder(setID string, date time.Time, testID string, orderControl string, 
 		Tiiming: []h251.OML_O33_Tiiming{
 			{
 				TQ1: &h251.TQ1{
-					SetID: setID,
+					SetID:    setID,
 					Priority: []h251.CWE{{Identifier: h251.ST(priority)}},
 				},
 			},

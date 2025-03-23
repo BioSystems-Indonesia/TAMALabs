@@ -54,7 +54,7 @@ func (r PatientRepository) FindManyByWorkOrderID(
 
 	var patients []entity.Patient
 	err = r.db.WithContext(ctx).Where("id in (?)", patientIDs).
-		Preload("Specimen").
+		Preload("Specimen", "order_id in (?)", workOrderIDs).
 		Preload("Specimen.ObservationRequest").
 		Preload("Specimen.ObservationRequest.TestType").
 		Find(&patients).Error

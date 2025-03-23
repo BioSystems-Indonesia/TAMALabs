@@ -13,6 +13,8 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
+const timeout = 30 * time.Second
+
 // SendToBA400 is a function to send message to BA400 for now its singleton view
 func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.Device, urgent bool) error {
 	encoder := hl7.NewEncoder(&hl7.EncodeOption{
@@ -20,8 +22,34 @@ func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.D
 	})
 
 	const batchSend = 3
+	var splitPatient = []entity.Patient{}
+	for _, p := range patients {
+		for _, s := range p.Specimen {
+			const maxReq = 30
+			for i := 0; i < len(s.ObservationRequest); i += maxReq {
+				requests := []entity.ObservationRequest{}
+				end := i + maxReq
+				if end > len(s.ObservationRequest) {
+					end = len(s.ObservationRequest)
+				}
+
+				r := s.ObservationRequest[i:end]
+				requests = append(requests, r...)
+
+				newSpecimen := s
+				newSpecimen.ObservationRequest = requests
+				newPatient := p
+				newPatient.Specimen = []entity.Specimen{newSpecimen}
+				splitPatient = append(splitPatient, newPatient)
+			}
+		}
+	}
+
 	buf := bytes.Buffer{}
-	for i, p := range patients {
+	for i, p := range splitPatient {
+		slog.Info(fmt.Sprintf("sending patient with len specimen %d", len(p.Specimen)))
+		slog.Info(fmt.Sprintf("sending patient with len request %d", len(p.Specimen[0].ObservationRequest)))
+
 		o := NewOML_O33(p, device, urgent)
 
 		b, err := encoder.Encode(o)
@@ -33,10 +61,10 @@ func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.D
 		buf.Write([]byte{constant.FileSeparator, constant.CarriageReturn})
 		buf.Write([]byte{constant.VerticalTab})
 
-		if ((i+1)%batchSend == 0) || i == len(patients)-1 {
+		if ((i+1)%batchSend == 0) || i == len(splitPatient)-1 {
 			sender := Sender{
 				host:     fmt.Sprintf("%s:%d", device.IPAddress, device.Port),
-				deadline: time.Second * 120,
+				deadline: timeout,
 			}
 			messageToSend := buf.Bytes()
 			slog.Info("sending to BA400",
@@ -53,6 +81,9 @@ func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.D
 				)
 				return fmt.Errorf("failed to send raw: %w", err)
 			}
+			slog.Info("finish sending, waiting for response",
+				"i", i,
+			)
 
 			err = receiveResponse(resp)
 			if err != nil {
@@ -61,6 +92,8 @@ func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.D
 
 			buf.Reset()
 		}
+
+		time.Sleep(time.Second)
 	}
 
 	return nil

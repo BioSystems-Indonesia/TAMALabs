@@ -11,7 +11,7 @@ type TestTemplate struct {
 	ID               int                              `json:"id" gorm:"primaryKey"`
 	Name             string                           `json:"name" gorm:"not null" validate:"required"`
 	Description      string                           `json:"description" gorm:"not null"`
-	TestTypesString  string                           `json:"-" gorm:"not null;column:test_types"`
+	TestTypesString  string                           `json:"-" gorm:"not null;column:test_types;default:{}"`
 	RequestTestTypes []WorkOrderCreateRequestTestType `json:"test_types" gorm:"-" validate:"required"`
 }
 
