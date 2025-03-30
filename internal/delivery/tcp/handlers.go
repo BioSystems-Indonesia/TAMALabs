@@ -3,7 +3,7 @@ package tcp
 import (
 	"context"
 	"fmt"
-	
+
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h251"
 )
@@ -62,9 +62,15 @@ func (h *HlSevenHandler) QBPQ11(ctx context.Context, m h251.QBP_Q11, message []b
 		return "", fmt.Errorf("decode failed: %w", err)
 	}
 
-	_, err = MapQBPQ11ToEntity(&qbp11)
+	msg, err := MapQBPQ11ToEntity(&qbp11)
 	if err != nil {
 		return "", fmt.Errorf("mapping failed: %w", err)
+	}
+
+	if msg.Barcode == "" {
+		return "", fmt.Errorf("barcode is empty")
+	} else {
+
 	}
 
 	var msh *h251.MSH

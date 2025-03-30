@@ -534,3 +534,37 @@ func (r WorkOrderRepository) SyncBarcodeSequence(ctx context.Context) error {
 
 	return nil
 }
+
+func (r WorkOrderRepository) FindOneByBarcode(ctx context.Context, barcode string) (entity.WorkOrder, error) {
+	var workOrder entity.WorkOrder
+	err := r.db.Where("barcode = ?", barcode).
+		Preload("Patient").
+		Preload("Patient.Specimen").
+		Preload("Patient.Specimen.ObservationRequest").
+		Preload("Patient.Specimen.ObservationRequest.TestType").
+		First(&workOrder).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return entity.WorkOrder{}, entity.ErrNotFound
+	}
+
+	if err != nil {
+		return entity.WorkOrder{}, fmt.Errorf("error finding workOrder: %w", err)
+	}
+
+	return workOrder, nil
+}
+
+func (r WorkOrderRepository) FindByStatus(ctx context.Context, status entity.WorkOrderStatus) ([]entity.WorkOrder, error) {
+	var workOrders []entity.WorkOrder
+	err := r.db.Where("status = ?", status).
+		Preload("Patient").
+		Preload("Patient.Specimen").
+		Preload("Patient.Specimen.ObservationRequest").
+		Preload("Patient.Specimen.ObservationRequest.TestType").
+		Find(&workOrders).Error
+	if err != nil {
+		return nil, fmt.Errorf("error finding workOrder: %w", err)
+	}
+
+	return workOrders, nil
+}
