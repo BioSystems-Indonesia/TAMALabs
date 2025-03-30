@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/kardianos/hl7"
-	"github.com/kardianos/hl7/h251"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase"
-	"github.com/oibacidem/lims-hl-seven/pkg/mllp"
 	"io"
 	"log"
 	"net"
 	"runtime/debug"
 	"strings"
+
+	"github.com/kardianos/hl7"
+	"github.com/kardianos/hl7/h251"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase"
+	"github.com/oibacidem/lims-hl-seven/pkg/mllp"
 )
 
 // HlSevenHandler is a struct that contains the handler of the REST server.
@@ -88,10 +89,12 @@ func (h *HlSevenHandler) qbpDecoder(message []byte) (h251.QBP_Q11, error) {
 
 	// manually decode QPD segment
 	qpds := strings.Split(string(qpd), "|")
-	if len(qpds) < 4 {
+	if len(qpds) < 3 {
 		return h251.QBP_Q11{}, fmt.Errorf("QPD segment is not complete")
 	}
-
+	if len(qpds) == 3 {
+		qpds = append(qpds, "")
+	}
 	UserParametersInSuccessiveFields := h251.VARIES(qpds[3])
 	manualQPD := h251.QPD{
 		HL7: h251.HL7Name{},
