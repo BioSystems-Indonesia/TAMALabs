@@ -1,7 +1,7 @@
 import CancelIcon from '@mui/icons-material/Cancel';
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import PrintIcon from '@mui/icons-material/Print';
-import { Card, CardContent, CircularProgress, Grid, type SxProps } from "@mui/material";
+import { Card, CardContent, CircularProgress, GridLegacy as Grid, type SxProps } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMutation } from "@tanstack/react-query";

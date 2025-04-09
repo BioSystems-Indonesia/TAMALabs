@@ -1,5 +1,5 @@
 import HistoryIcon from '@mui/icons-material/History';
-import { Badge, Box, ButtonGroup, Checkbox, Chip, Dialog, DialogContent, DialogTitle, Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Badge, Box, ButtonGroup, Checkbox, Chip, Dialog, DialogContent, DialogTitle, GridLegacy as Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { DataGrid as MuiDatagrid, type DataGridProps, type GridRenderCellParams } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 import { memo, useEffect, useState } from 'react';

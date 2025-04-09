@@ -1,8 +1,7 @@
 import AddIcon from '@mui/icons-material/Add';
-import { Box, Button, Checkbox, Dialog, DialogContent, DialogTitle, MenuItem, Select, type ButtonProps } from "@mui/material";
+import { Box, Button, Checkbox, Dialog, DialogContent, DialogTitle, MenuItem, Select, type ButtonProps, GridLegacy as Grid } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
-import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { DataGrid as MuiDatagrid, useGridApiRef, type GridRenderCellParams } from "@mui/x-data-grid";

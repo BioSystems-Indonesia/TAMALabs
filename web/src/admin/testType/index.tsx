@@ -146,7 +146,7 @@ function TestTypeInput(props: TestTypeFormProps) {
                     return { id: val, name: val }
                 }} />
             <NumberInput source="decimal" readOnly={props.readonly} validate={[required()]} />
-            <ArrayInput source="types" readOnly={props.readonly}>
+            <ArrayInput source="types">
                 <SimpleFormIterator inline>
                     <FeatureList source="type" readOnly={props.readonly} types="specimen-type" >
                         <AutocompleteInput source="type" readOnly={props.readonly} />
