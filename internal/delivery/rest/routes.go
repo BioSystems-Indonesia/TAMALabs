@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/oibacidem/lims-hl-seven/web"
+	"golang.org/x/exp/slices"
 )
 
 // Handler is a struct that contains the handler of the REST server.
@@ -24,6 +25,11 @@ type Handler struct {
 	*UnitHandler
 }
 
+var blackListLoggingOnEndpoint = []string{
+	// This is healthcheck endpoint, so we don't need to log it.
+	"/api/v1/server/status",
+}
+
 func RegisterMiddleware(e *echo.Echo) {
 	slog.Info("registering middleware")
 
@@ -35,13 +41,34 @@ func RegisterMiddleware(e *echo.Echo) {
 		LogError:   true,
 		LogMethod:  true,
 		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
-			slog.Info("request",
-				"method", values.Method,
-				"uri", values.URI,
-				"status", values.Status,
-				"latency", values.Latency,
-				"error", values.Error,
-			)
+			if slices.Contains(blackListLoggingOnEndpoint, values.URI) {
+				return nil
+			}
+
+			if values.Error != nil {
+				slog.Error("request error",
+					"method", values.Method,
+					"uri", values.URI,
+					"status", values.Status,
+					"latency", values.Latency,
+					"error", values.Error,
+				)
+			} else if values.Status >= http.StatusBadRequest {
+				slog.Error("request error",
+					"method", values.Method,
+					"uri", values.URI,
+					"status", values.Status,
+					"latency", values.Latency,
+				)
+			} else {
+				slog.Info("request",
+					"method", values.Method,
+					"uri", values.URI,
+					"status", values.Status,
+					"latency", values.Latency,
+					"error", values.Error,
+				)
+			}
 
 			return nil
 		},
