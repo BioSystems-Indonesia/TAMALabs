@@ -20,7 +20,7 @@ type TestType struct {
 
 	Type []TestTypeSpecimenType `json:"types" gorm:"-"`
 	// TypeDB is a specimen type separated by comma
-	TypeDB string `json:"-" gorm:"type"`
+	TypeDB string `json:"-" gorm:"column:type"`
 }
 
 // TestTypeSpecimenType is a specimen type struct, we need it to conform with react-admin standard

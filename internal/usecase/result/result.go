@@ -71,7 +71,7 @@ func (u *Usecase) PutTestResult(ctx context.Context, result entity.TestResult) (
 
 	obs := entity.ObservationResult{
 		SpecimenID:     result.SpecimenID,
-		Code:           result.Test,
+		TestCode:       result.Test,
 		Unit:           result.Unit,
 		ReferenceRange: result.ReferenceRange,
 	}
@@ -90,7 +90,7 @@ func (u *Usecase) PutTestResult(ctx context.Context, result entity.TestResult) (
 		return result, fmt.Errorf("failed to toogle pick test result: %w", err)
 	}
 
-	obs.TestType, err = u.testTypeRepository.FindOneByCode(ctx, obs.Code)
+	obs.TestType, err = u.testTypeRepository.FindOneByCode(ctx, obs.TestCode)
 	if err != nil {
 		log.Printf("cannot fill test type for result %d: %v", obs.ID, err)
 	}
@@ -162,7 +162,7 @@ func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder) {
 	testResults := map[string][]entity.ObservationResult{}
 	for _, observation := range allObservationResults {
 		// TODO check whether this will create chaos in order or not
-		testResults[observation.Code] = append(testResults[observation.Code], observation)
+		testResults[observation.TestCode] = append(testResults[observation.TestCode], observation)
 	}
 
 	// fill the placeholder

@@ -24,3 +24,11 @@ dev-fe:
 dev-be:
 	air
 
+migrate-hash:
+	atlas migrate hash
+
+migrate-diff: 
+	$(eval ARGS := $(filter-out $@,$(MAKECMDGOALS)))
+
+	./scripts/migrate-diff.sh $(ARGS)
+

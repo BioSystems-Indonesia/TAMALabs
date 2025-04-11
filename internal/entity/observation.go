@@ -43,7 +43,7 @@ type ObservationResultCreate struct {
 type ObservationResult struct {
 	ID             int64           `json:"id" gorm:"primaryKey;autoIncrement"`
 	SpecimenID     int64           `json:"specimen_id"`
-	Code           string          `json:"code"`
+	TestCode       string          `json:"code" gorm:"column:code"`
 	Description    string          `json:"description"`
 	Values         JSONStringArray `json:"values" gorm:"type:json"` // Using JSON for the slice
 	Type           string          `json:"type"`
@@ -56,7 +56,7 @@ type ObservationResult struct {
 	CreatedAt      time.Time       `json:"created_at" gorm:"not null"`
 	UpdatedAt      time.Time       `json:"updated_at" gorm:"not null"`
 
-	TestType TestType `json:"test_type" gorm:"foreignKey:Code;references:Code" validate:"required"`
+	TestType TestType `json:"test_type" gorm:"foreignKey:TestCode;reference:Code" validate:"required"`
 }
 
 // GetFirstValue get the first value from the values

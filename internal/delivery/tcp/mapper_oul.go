@@ -118,7 +118,7 @@ func mapOBRToObservationRequestEntity(obr *h251.OBR) entity.ObservationRequest {
 
 func mapOBXToObservationResultEntity(obx *h251.OBX) entity.ObservationResult {
 	return entity.ObservationResult{
-		Code:           obx.ObservationIdentifier.Identifier,
+		TestCode:       obx.ObservationIdentifier.Identifier,
 		Description:    obx.ObservationIdentifier.Text,
 		Values:         mapObservationValueToValues(obx.ObservationValue),
 		Type:           obx.ValueType,
