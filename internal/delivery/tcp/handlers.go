@@ -67,11 +67,16 @@ func (h *HlSevenHandler) QBPQ11(ctx context.Context, m h251.QBP_Q11, message []b
 		return "", fmt.Errorf("mapping failed: %w", err)
 	}
 
-	if msg.Barcode == "" {
+	if msg.QPD.Barcode == "" {
 		return "", fmt.Errorf("barcode is empty")
 	} else {
 
 	}
+
+	// err = h.AnalyzerUsecase.ProcessQBPQ11(ctx, req)
+	// if err != nil {
+	// 	return "", fmt.Errorf("process failed: %w", err)
+	// }
 
 	var msh *h251.MSH
 	msh.MessageControlID = msgControlID
