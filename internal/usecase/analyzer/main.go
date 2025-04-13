@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	devicerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
@@ -14,6 +15,7 @@ type Usecase struct {
 	ObservationRequestRepository *observation_request.Repository
 	SpecimenRepository           *specimen.Repository
 	WorkOrderRepository          *workOrderrepo.WorkOrderRepository
+	DeviceRepository             *devicerepo.Repository
 	BA400                        *ba400.Repository
 }
 
@@ -23,6 +25,7 @@ func NewUsecase(
 	observationRequestRepository *observation_request.Repository,
 	specimenRepository *specimen.Repository,
 	workOrderRepository *workOrderrepo.WorkOrderRepository,
+	deviceRepository *devicerepo.Repository,
 	ba400 *ba400.Repository,
 ) *Usecase {
 	return &Usecase{
@@ -30,6 +33,7 @@ func NewUsecase(
 		ObservationRequestRepository: observationRequestRepository,
 		SpecimenRepository:           specimenRepository,
 		WorkOrderRepository:          workOrderRepository,
+		DeviceRepository:             deviceRepository,
 		BA400:                        ba400,
 	}
 }

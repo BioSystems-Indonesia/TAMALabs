@@ -67,18 +67,23 @@ func (h *HlSevenHandler) QBPQ11(ctx context.Context, m h251.QBP_Q11, message []b
 		return "", fmt.Errorf("mapping failed: %w", err)
 	}
 
-	if msg.QPD.Barcode == "" {
-		return "", fmt.Errorf("barcode is empty")
-	} else {
-
+	omlO33s, err := h.AnalyzerUsecase.ProcessQBPQ11(ctx, msg)
+	if err != nil {
+		return "", fmt.Errorf("process failed: %w", err)
 	}
 
-	// err = h.AnalyzerUsecase.ProcessQBPQ11(ctx, req)
-	// if err != nil {
-	// 	return "", fmt.Errorf("process failed: %w", err)
-	// }
-
+	for _, omlO33 := range omlO33s {
+		omlO33.MSH.MessageControlID = msgControlID
+		omlO33.MSH.MessageType = h251.MSG{
+			HL7:              h251.HL7Name{},
+			MessageCode:      "ACK",
+			TriggerEvent:     "Q11",
+			MessageStructure: "ACK",
+		}
+	}
+	
 	var msh *h251.MSH
+	msh.MessageControlID = msgControlID
 	msh.MessageControlID = msgControlID
 	msh.MessageType = h251.MSG{
 		HL7:              h251.HL7Name{},
