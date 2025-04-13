@@ -23,12 +23,14 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	"github.com/oibacidem/lims-hl-seven/migrations"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
+	gormSqlite "gorm.io/driver/sqlite"
 
 	"github.com/patrickmn/go-cache"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
+
+	_ "modernc.org/sqlite"
 )
 
 func provideTCP(config *config.Schema) *ba400.TCP {
@@ -119,9 +121,15 @@ func InitSQLiteDB() (*gorm.DB, error) {
 		}
 	}
 
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
+	dialec, err := sql.Open("sqlite", dbFileName)
 	if err != nil {
-		fmt.Println(err)
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+
+	db, err := gorm.Open(gormSqlite.Dialector{
+		Conn: dialec,
+	}, &gorm.Config{})
+	if err != nil {
 		return nil, err
 	}
 	db.Logger = db.Logger.LogMode(logger.Error)
