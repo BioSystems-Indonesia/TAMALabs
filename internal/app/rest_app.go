@@ -5,6 +5,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	configrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
+	device "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
@@ -35,6 +36,7 @@ var restRepositorySet = wire.NewSet(
 	testTypeRepo.NewRepository,
 	observation_result.NewRepository,
 	observation_request.NewRepository,
+	device.NewRepository,
 )
 
 var (

@@ -3,7 +3,7 @@ package tcp
 import (
 	"context"
 	"fmt"
-	
+
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h251"
 )
@@ -62,35 +62,63 @@ func (h *HlSevenHandler) QBPQ11(ctx context.Context, m h251.QBP_Q11, message []b
 		return "", fmt.Errorf("decode failed: %w", err)
 	}
 
-	_, err = MapQBPQ11ToEntity(&qbp11)
+	msg, err := MapQBPQ11ToEntity(&qbp11)
 	if err != nil {
 		return "", fmt.Errorf("mapping failed: %w", err)
 	}
 
-	var msh *h251.MSH
-	msh.MessageControlID = msgControlID
-	msh.MessageType = h251.MSG{
-		HL7:              h251.HL7Name{},
-		MessageCode:      "ACK",
-		TriggerEvent:     "Q11",
-		MessageStructure: "ACK",
+	omlO33s, err := h.AnalyzerUsecase.ProcessQBPQ11(ctx, msg)
+	if err != nil {
+		return "", fmt.Errorf("process failed: %w", err)
 	}
 
-	msa := h251.MSA{
-		AcknowledgmentCode: "AA",
-		MessageControlID:   msh.MessageControlID,
-		TextMessage:        "Message accepted",
+	var resp string
+	for _, omlO33 := range omlO33s {
+		omlO33.MSH.MessageControlID = msgControlID
+		omlO33.MSH.MessageType = h251.MSG{
+			HL7:              h251.HL7Name{},
+			MessageCode:      "ACK",
+			TriggerEvent:     "Q11",
+			MessageStructure: "ACK",
+		}
+
+		e := hl7.NewEncoder(nil)
+		msg, err := e.Encode(omlO33)
+		if err != nil {
+			return "", fmt.Errorf("encode failed: %w", err)
+		}
+
+		resp += string(msg)
+
 	}
 
-	ackMsg := h251.ACK{
-		HL7: h251.HL7Name{},
-		MSH: msh,
-		SFT: nil,
-		MSA: &msa,
-		ERR: nil,
-	}
+	return resp, nil
 
-	return createACKMessage(ackMsg)
+	// var msh *h251.MSH
+	// msh.MessageControlID = msgControlID
+	// msh.MessageControlID = msgControlID
+	// msh.MessageType = h251.MSG{
+	// 	HL7:              h251.HL7Name{},
+	// 	MessageCode:      "ACK",
+	// 	TriggerEvent:     "Q11",
+	// 	MessageStructure: "ACK",
+	// }
+
+	// msa := h251.MSA{
+	// 	AcknowledgmentCode: "AA",
+	// 	MessageControlID:   msh.MessageControlID,
+	// 	TextMessage:        "Message accepted",
+	// }
+
+	// ackMsg := h251.ACK{
+	// 	HL7: h251.HL7Name{},
+	// 	MSH: msh,
+	// 	SFT: nil,
+	// 	MSA: &msa,
+	// 	ERR: nil,
+	// }
+
+	// return createACKMessage(ackMsg)
 }
 
 func createACKMessage(msg h251.ACK) (string, error) {

@@ -10,6 +10,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
@@ -18,6 +19,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/unit"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/config"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
@@ -42,7 +44,10 @@ func InitRestApp() server.RestServer {
 	specimenRepository := specimen.NewRepository(gormDB, schema)
 	cache := provideCache()
 	workOrderRepository := workOrderrepo.NewWorkOrderRepository(gormDB, schema, specimenRepository, cache)
-	usecase := analyzer.NewUsecase(repository, observation_requestRepository, specimenRepository, workOrderRepository)
+	deviceRepository := device.NewRepository(gormDB)
+	ba400TCP := provideTCP(schema)
+	ba400Repository := ba400.NewRepository(ba400TCP)
+	usecase := analyzer.NewUsecase(repository, observation_requestRepository, specimenRepository, workOrderRepository, deviceRepository, ba400Repository)
 	hlSevenHandler := rest.NewHlSevenHandler(usecase)
 	healthCheckHandler := rest.NewHealthCheckHandler(schema)
 	patientRepository := patientrepo.NewPatientRepository(gormDB, schema)
