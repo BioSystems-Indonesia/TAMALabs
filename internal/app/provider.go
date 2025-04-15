@@ -1,6 +1,8 @@
 package app
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"log/slog"
@@ -8,18 +10,27 @@ import (
 	"sync"
 	"time"
 
-	"github.com/glebarez/sqlite"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database"
+	sqliteMigrate "github.com/golang-migrate/migrate/v4/database/sqlite"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
+	"github.com/oibacidem/lims-hl-seven/migrations"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
+	gormSqlite "gorm.io/driver/sqlite"
+
 	"github.com/patrickmn/go-cache"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
+
+	_ "modernc.org/sqlite"
 )
 
 func provideTCP(config *config.Schema) *ba400.TCP {
@@ -83,6 +94,10 @@ func provideRestHandler(
 
 const dbFileName = "./tmp/biosystem-lims.db"
 
+// We init once here so it will not create DB twice
+var initDBOnce sync.Once
+var db *gorm.DB
+
 func fileExists(filename string) bool {
 	info, err := os.Stat(filename)
 	if os.IsNotExist(err) {
@@ -106,9 +121,15 @@ func InitSQLiteDB() (*gorm.DB, error) {
 		}
 	}
 
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
+	dialec, err := sql.Open("sqlite", dbFileName)
 	if err != nil {
-		fmt.Println(err)
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+
+	db, err := gorm.Open(gormSqlite.Dialector{
+		Conn: dialec,
+	}, &gorm.Config{})
+	if err != nil {
 		return nil, err
 	}
 	db.Logger = db.Logger.LogMode(logger.Error)
@@ -116,45 +137,80 @@ func InitSQLiteDB() (*gorm.DB, error) {
 	return db, nil
 }
 
-var initDBOnce sync.Once
-var db *gorm.DB
-
 func InitDatabase() (*gorm.DB, error) {
 	db, err := InitSQLiteDB()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	autoMigrate := []interface{}{
-		&entity.ObservationRequest{},
-		&entity.ObservationResult{},
-		&entity.Patient{},
-		&entity.Specimen{},
-		&entity.WorkOrder{},
-		&entity.WorkOrderDevice{},
-		&entity.Device{},
-		&entity.Unit{},
-		&entity.TestType{},
-		&entity.Config{},
-		&entity.TestTemplate{},
-		&entity.TestTemplateTestType{},
+	sql, err := db.DB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get database connection: %w", err)
 	}
 
-	for _, model := range autoMigrate {
-		log.Printf("auto migrate: %T", model)
-
-		err = db.AutoMigrate(model)
-		if err != nil {
-			return nil, fmt.Errorf("error auto migrate %T: %w", model, err)
-		}
+	err = runMigrations(sql, db.Dialector.Name())
+	if err != nil {
+		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	err = seedTestData(db)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to seed test data: %w", err)
+	}
+
+	err = sql.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
 	return db, nil
+}
+
+// runMigrations performs the database migration.
+func runMigrations(db *sql.DB, databaseDriverName string) error {
+	slog.Info("🏁 Starting database migration process...")
+
+	sourceDriver, err := iofs.New(migrations.Files, ".")
+	if err != nil {
+		return fmt.Errorf("failed to create source driver (iofs): %w", err)
+	}
+	slog.Info("Source driver created (iofs)")
+
+	var dbDriver database.Driver
+	switch databaseDriverName {
+	case "sqlite":
+		dbDriver, err = sqliteMigrate.WithInstance(db, &sqliteMigrate.Config{})
+		if err != nil {
+			return err
+		}
+		slog.Info("Database driver created (sqlite)")
+	default:
+		return errors.New("unsupported database driver for migrations: " + databaseDriverName)
+	}
+
+	m, err := migrate.NewWithInstance(
+		"iofs",
+		sourceDriver,
+		databaseDriverName,
+		dbDriver,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create migration instance: %w", err)
+	}
+	slog.Info("Migration instance created")
+
+	slog.Info("Applying migrations...")
+	err = m.Up()
+	if err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			slog.Info("No new migrations to apply.")
+			return nil
+		}
+		return fmt.Errorf("failed to apply migrations: %w", err)
+	}
+
+	slog.Info("Successfully applied new migrations!")
+	return nil
 }
 
 func seedTestData(db *gorm.DB) error {

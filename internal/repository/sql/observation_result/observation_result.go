@@ -34,7 +34,7 @@ func (r *Repository) FindByID(ctx context.Context, id int64) (result entity.Obse
 func (r *Repository) FindHistory(ctx context.Context, input entity.ObservationResult) (results []entity.ObservationResult, err error) {
 	err = r.DB.
 		Where("specimen_id = ?", input.SpecimenID).
-		Where("code = ?", input.Code).
+		Where("code = ?", input.TestCode).
 		Order("created_at DESC").
 		Find(&results).Error
 	return
@@ -66,7 +66,7 @@ func (r *Repository) PickObservationResult(ctx context.Context, id int64) (entit
 
 		// Update all other observation result picked to false
 		err = tx.Model(&entity.ObservationResult{}).
-			Where("specimen_id = ? AND code = ? AND id != ?", observationResult.SpecimenID, observationResult.Code, id).
+			Where("specimen_id = ? AND code = ? AND id != ?", observationResult.SpecimenID, observationResult.TestCode, id).
 			Update("picked", false).
 			Error
 		if err != nil {

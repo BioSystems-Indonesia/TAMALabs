@@ -5,10 +5,10 @@ build-fe:
 	cd web && npm run build
 
 build-be:
-	go build -o bin/app cmd/rest/main.go
+	go build -o bin/app ./cmd/rest
 
 build-be-win:
-	GOOS=windows GOARCH=amd64 go build -o bin/winapp.exe cmd/rest/main.go
+	GOOS=windows GOARCH=amd64 go build -o bin/winapp.exe ./cmd/rest
 
 build:
 	make build-fe
@@ -24,3 +24,16 @@ dev-fe:
 dev-be:
 	air
 
+migrate-hash:
+	atlas migrate hash
+
+migrate-diff: 
+	$(eval ARGS := $(filter-out $@,$(MAKECMDGOALS)))
+
+	./scripts/migrate-diff.sh $(ARGS)
+
+icon:
+	rsrc -arch 386 -ico favicon.ico -manifest elgatama-lims.exe.manifest
+	rsrc -arch amd64 -ico favicon.ico -manifest elgatama-lims.exe.manifest
+	mv rsrc_windows_amd64.syso cmd/rest
+	mv rsrc_windows_386.syso cmd/rest

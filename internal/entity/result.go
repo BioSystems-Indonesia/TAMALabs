@@ -76,7 +76,7 @@ func (r TestResult) FromObservationResult(observation ObservationResult) TestRes
 	resultTest := TestResult{
 		ID:             observation.ID,
 		SpecimenID:     observation.SpecimenID,
-		Test:           observation.Code,
+		Test:           observation.TestCode,
 		TestTypeID:     int64(observation.TestType.ID),
 		Unit:           observation.TestType.Unit,
 		Category:       observation.TestType.Category,
@@ -150,7 +150,7 @@ func (r TestResult) FillHistory(history []ObservationResult) TestResult {
 		histories[i] = TestResult{
 			ID:             h.ID,
 			SpecimenID:     h.SpecimenID,
-			Test:           h.Code,
+			Test:           h.TestCode,
 			Result:         &result,
 			TestTypeID:     int64(h.TestType.ID),
 			Unit:           h.Unit,
