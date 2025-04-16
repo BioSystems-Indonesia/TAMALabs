@@ -37,7 +37,16 @@ import { RunWorkOrderForm } from "./Show.tsx";
 
 const WorkOrderAction = () => {
     return (
-        <TopToolbar>
+        <TopToolbar sx={{
+            '& .RaTopToolbar-root': {
+                padding: '16px 24px',
+                minHeight: '64px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                gap: '8px',
+            }
+        }}>
             <ShowButton />
         </TopToolbar>
     )

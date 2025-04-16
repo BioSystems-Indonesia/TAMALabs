@@ -149,10 +149,6 @@ export const TestFilterSidebar = ({
             }}
         >
             <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 'medium' }}>
-                    Filters
-                </Typography>
-                <SavedQueriesList />
                 <FilterLiveSearch 
                     placeholder="Search..."
                     source="q"
