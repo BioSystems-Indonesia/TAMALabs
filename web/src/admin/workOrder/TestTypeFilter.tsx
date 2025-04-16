@@ -77,6 +77,14 @@ export const TestFilterSidebar = ({
         };
     };
 
+    const { data } = useGetList(
+        'test-template',
+        {
+            pagination: { page: 1, perPage: 1000 },
+            sort: { field: 'id', order: 'DESC' }
+        }
+    );
+
     const isTemplateSelected = (value: any, filters: any) => {
         const templates = filters.templates || [];
         return templates.includes(value.template.id);
@@ -169,7 +177,7 @@ export const TestFilterSidebar = ({
                         },
                     }}
                 >
-                    {filter?.templates?.map((val: any, i: number) => (
+                    {data?.map((val: any, i: number) => (
                         <FilterListItem 
                             key={i} 
                             label={val.name} 
