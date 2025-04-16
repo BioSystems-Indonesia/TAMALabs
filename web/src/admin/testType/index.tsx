@@ -23,7 +23,6 @@ export const TestTypeDatagrid = (props: any) => {
             <TextField source="unit" />
             <TextField source="type" />
             <TextField source="decimal" />
-            <TextField source="description" />
         </Datagrid>
     )
 }
@@ -49,27 +48,11 @@ export const TestTypeList = () => {
                     borderRadius: 1,
                 },
             }}
-            actions={
-                <Box 
-                    display="flex" 
-                    gap={1} 
-                    alignItems="center"
-                    sx={{
-                        '& .RaButton-root': {
-                            borderRadius: 1,
-                        }
-                    }}
-                >
-                    <CreateButton />
-                    <ExportButton />
-                </Box>
-            }
         >
             <TestTypeDatagrid />
         </List>
     );
 };
-
 
 function ReferenceSection() {
     return (
@@ -229,15 +212,6 @@ function TestTypeInput(props: TestTypeFormProps) {
                     </SimpleFormIterator>
                 </ArrayInput>
             </Box>
-            <Box sx={{ gridColumn: 'span 12' }}>
-                <TextInput 
-                    source="description" 
-                    readOnly={props.readonly}
-                    fullWidth
-                    multiline
-                    rows={4}
-                />
-            </Box>
         </Box>
     )
 }
@@ -249,7 +223,6 @@ function TestTypeForm(props: TestTypeFormProps) {
         </SimpleForm>
     )
 }
-
 
 export function TestTypeEdit() {
     return (

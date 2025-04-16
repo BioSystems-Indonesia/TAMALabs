@@ -57,13 +57,10 @@ export const TestFilterSidebar = ({
         return {
             ...filters,
             categories: categories.includes(value.category)
-                // Remove the category if it was already present
                 ? categories.filter((v: any) => v !== value.category)
-                // Add the category if it wasn't already present
                 : [...categories, value.category],
         };
     };
-
 
     const isSubCategorySelected = (value: any, filters: any) => {
         const subCategories = filters.subCategories || [];
@@ -75,20 +72,10 @@ export const TestFilterSidebar = ({
         return {
             ...filters,
             subCategories: subCategories.includes(value.sub_category)
-                // Remove the category if it was already present
                 ? subCategories.filter((v: any) => v !== value.sub_category)
-                // Add the category if it wasn't already present
                 : [...subCategories, value.sub_category],
         };
     };
-
-    const { data } = useGetList(
-        'test-template',
-        {
-            pagination: { page: 1, perPage: 1000 },
-            sort: { field: 'id', order: 'DESC' }
-        }
-    );
 
     const isTemplateSelected = (value: any, filters: any) => {
         const templates = filters.templates || [];
@@ -96,45 +83,35 @@ export const TestFilterSidebar = ({
     };
 
     const toggleTemplateFilter = (value: any, filters: any) => {
-
         const templates = filters.templates || [];
         const removeTemplate = (value: any, templates: any[]) => {
-            console.log("removeTemplate", value, templates);
             setSelectedData(v => {
                 const newSelectedData = { ...v }
                 const testTypes = value.template.test_types as Record<number, ObservationRequestCreateRequest>
                 Object.entries(testTypes).forEach(([key, value]) => {
                     delete newSelectedData[value.test_type_id]
                 })
-
                 return newSelectedData
             })
-
             return templates.filter((v: any) => v !== value.template.id)
         }
 
         const addTemplate = (value: any, templates: any[]) => {
-            console.log("addTemplate", value, templates);
             setSelectedData(v => {
                 const newSelectedData = { ...v }
                 const testTypes = value.template.test_types as Record<number, ObservationRequestCreateRequest>
                 Object.entries(testTypes).forEach(([key, value]) => {
                     newSelectedData[value.test_type_id] = value
                 })
-                console.log(newSelectedData);
-
                 return newSelectedData
             })
-
             return [...templates, value.template.id]
         }
 
         return {
             ...filters,
             templates: templates.includes(value.template.id)
-                // Remove the category if it was already present
                 ? removeTemplate(value, templates)
-                // Add the category if it wasn't already present
                 : addTemplate(value, templates),
         };
     };
@@ -201,6 +178,8 @@ export const TestFilterSidebar = ({
                             key={i} 
                             label={val.name} 
                             value={{ template: val }}
+                            isSelected={isTemplateSelected}
+                            toggleFilter={toggleTemplateFilter}
                         />
                     ))}
                 </FilterList>
@@ -219,9 +198,12 @@ export const TestFilterSidebar = ({
                             key={i} 
                             label={val} 
                             value={{ category: val }}
+                            isSelected={isCategorySelected}
+                            toggleFilter={toggleCategoryFilter}
                         />
                     ))}
                 </FilterList>
+                <Divider />
                 <FilterList 
                     label="Sub Category" 
                     icon={<SegmentIcon />}
@@ -236,6 +218,8 @@ export const TestFilterSidebar = ({
                             key={i} 
                             label={val} 
                             value={{ sub_category: val }}
+                            isSelected={isSubCategorySelected}
+                            toggleFilter={toggleSubCategoryFilter}
                         />
                     ))}
                 </FilterList>

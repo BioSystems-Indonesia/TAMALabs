@@ -89,7 +89,7 @@ function TestTable({
 }: TestTableProps) {
     const data = useRecordContext<WorkOrder>();
     const { setValue } = useFormContext();
-    const { data: testType, isPending } = useListContext();
+    const { data: testType, isPending, filterValues } = useListContext();
     const [rows, setRows] = useState<TableTestType[]>([]);
     const [allTestType, setAllTestType] = useState<TestType[] | undefined>(undefined);
     const [alreadySetTestType, setAlreadySetTestType] = useState<boolean>(false);
@@ -101,9 +101,33 @@ function TestTable({
         }
 
         if (testType) {
-            setRows(testType)
+            // Apply filters to the data
+            let filteredData = [...testType];
+            
+            // Apply category filter
+            if (filterValues?.categories?.length > 0) {
+                filteredData = filteredData.filter(item => 
+                    filterValues.categories.includes(item.category)
+                );
+            }
+
+            // Apply sub-category filter
+            if (filterValues?.subCategories?.length > 0) {
+                filteredData = filteredData.filter(item => 
+                    filterValues.subCategories.includes(item.sub_category)
+                );
+            }
+
+            // Apply template filter
+            if (filterValues?.templates?.length > 0) {
+                // For template filtering, we'll just show all items since the template selection
+                // is handled by the TestFilterSidebar component through selectedData
+                filteredData = filteredData;
+            }
+
+            setRows(filteredData);
         }
-    }, [testType])
+    }, [testType, filterValues]);
 
     useEffect(() => {
         if (props.initSelectedType && allTestType) {
