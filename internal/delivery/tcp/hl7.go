@@ -124,6 +124,8 @@ func (h *HlSevenHandler) qbpDecoder(message []byte) (h251.QBP_Q11, error) {
 }
 
 func (h *HlSevenHandler) deleteSegment(message []byte, seg string) []byte {
+	// Normalize line endings to \n
+	message = bytes.ReplaceAll(message, []byte("\r"), []byte("\n"))
 	lines := bytes.Split(message, []byte("\n"))
 
 	var filteredLines [][]byte
@@ -137,6 +139,8 @@ func (h *HlSevenHandler) deleteSegment(message []byte, seg string) []byte {
 }
 
 func (h *HlSevenHandler) getSegment(message []byte, seg string) []byte {
+	// Normalize line endings to \n
+	message = bytes.ReplaceAll(message, []byte("\r"), []byte("\n"))
 	lines := bytes.Split(message, []byte("\n"))
 
 	var filteredLines [][]byte
