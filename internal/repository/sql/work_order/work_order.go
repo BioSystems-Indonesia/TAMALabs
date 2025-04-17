@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/config"
@@ -480,10 +482,28 @@ func (r WorkOrderRepository) UpsertDevice(workOrderID int64, deviceID int64) err
 }
 
 func (r WorkOrderRepository) GenerateBarcode(ctx context.Context) string {
-	seq := r.GetBarcodeSequence(ctx)
+	seq := RandomNumber(6)
 	seqPadding := fmt.Sprintf("%06d", seq) // Prints to stdout '000012'
 
 	return fmt.Sprintf("%s%s", time.Now().Format("20060102"), seqPadding)
+}
+
+func RandomNumber(n int) string {
+	if n <= 0 {
+		return "" // Return empty string for non-positive length
+	}
+
+	// More efficient way using strings.Builder and bytes/runes
+	const digits = "0123456789"
+	var sb strings.Builder
+	sb.Grow(n) // Pre-allocate capacity for efficiency
+
+	for i := 0; i < n; i++ {
+		randomIndex := rand.Intn(len(digits)) // Get random index 0-9
+		sb.WriteByte(digits[randomIndex])     // Append the byte corresponding to the digit
+	}
+
+	return sb.String()
 }
 
 func (r WorkOrderRepository) GetBarcodeSequence(ctx context.Context) int64 {
