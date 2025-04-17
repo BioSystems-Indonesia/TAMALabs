@@ -56,7 +56,7 @@ type ObservationResult struct {
 	CreatedAt      time.Time       `json:"created_at" gorm:"not null"`
 	UpdatedAt      time.Time       `json:"updated_at" gorm:"not null"`
 
-	TestType TestType `json:"test_type" gorm:"foreignKey:TestCode;reference:Code" validate:"required"`
+	TestType TestType `json:"test_type" gorm:"foreignKey:TestCode;references:Code" validate:"required"`
 }
 
 // GetFirstValue get the first value from the values
