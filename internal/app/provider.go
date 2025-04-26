@@ -105,6 +105,7 @@ func fileExists(filename string) bool {
 	}
 	return !info.IsDir()
 }
+
 func InitSQLiteDB() (*gorm.DB, error) {
 	if fileExists(dbFileName) {
 		slog.Info("db is existed already")
@@ -121,16 +122,9 @@ func InitSQLiteDB() (*gorm.DB, error) {
 		}
 	}
 
-	dialec, err := sql.Open("sqlite", dbFileName)
+	db, err := gorm.Open(gormSqlite.Open(dbFileName), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
-
-	db, err := gorm.Open(gormSqlite.Dialector{
-		Conn: dialec,
-	}, &gorm.Config{})
-	if err != nil {
-		return nil, err
 	}
 	db.Logger = db.Logger.LogMode(logger.Error)
 

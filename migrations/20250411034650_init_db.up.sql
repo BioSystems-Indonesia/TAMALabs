@@ -141,3 +141,11 @@ CREATE TABLE `test_template_test_types` (
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`test_template_id`, `test_type_id`)
 );
+
+-- create "sequence_daily" table
+CREATE TABLE `sequence_daily` (
+  `id` integer NULL PRIMARY KEY AUTOINCREMENT,
+  `sequence_type` text NOT NULL,
+  `current_value` integer NULL,
+  `last_updated` datetime NULL
+);
