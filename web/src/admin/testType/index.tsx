@@ -8,6 +8,7 @@ import FeatureList from "../../component/FeatureList";
 import type { ActionKeys } from "../../types/props";
 import type { Unit } from "../../types/unit";
 import { TestFilterSidebar } from "../workOrder/TestTypeFilter";
+import { CreateButton, ExportButton } from "react-admin";
 
 export const TestTypeDatagrid = (props: any) => {
     return (
@@ -22,7 +23,6 @@ export const TestTypeDatagrid = (props: any) => {
             <TextField source="unit" />
             <TextField source="type" />
             <TextField source="decimal" />
-            <TextField source="description" />
         </Datagrid>
     )
 }
@@ -31,14 +31,28 @@ export const TestTypeList = () => {
     const [selectedData, setSelectedData] = useState<any>([]);
     
     return (
-    <List aside={<TestFilterSidebar selectedData={selectedData} setSelectedData={setSelectedData} />} title="Test Type" sort={{
-        field: "id",
-        order: "DESC",
-    }}>
-        <TestTypeDatagrid />
-    </List>
-)};
-
+        <List 
+            aside={<TestFilterSidebar selectedData={selectedData} setSelectedData={setSelectedData} />} 
+            title="Test Type" 
+            sort={{
+                field: "id",
+                order: "DESC",
+            }}
+            sx={{
+                '& .RaList-main': {
+                    margin: '16px 0',
+                },
+                '& .RaList-content': {
+                    backgroundColor: 'background.paper',
+                    padding: 2,
+                    borderRadius: 1,
+                },
+            }}
+        >
+            <TestTypeDatagrid />
+        </List>
+    );
+};
 
 function ReferenceSection() {
     return (
@@ -68,7 +82,6 @@ function TestTypeInput(props: TestTypeFormProps) {
         }
     }, [filter, isFilterLoading]);
 
-
     const { data: units, isLoading: isUnitLoading } = useQuery<Unit[]>({
         queryKey: ['unit'],
         queryFn: () => fetch(import.meta.env.VITE_BACKEND_BASE_URL + '/unit').then(res => res.json()),
@@ -77,7 +90,6 @@ function TestTypeInput(props: TestTypeFormProps) {
     const [unit, setUnit] = useState<string[]>([]);
     useEffect(() => {
         if (units && Array.isArray(units)) {
-            // Extract the `value` property from each object in the `units` array
             const unitValues = units.map(unit => unit.value);
             setUnit(unitValues);
         }
@@ -94,68 +106,113 @@ function TestTypeInput(props: TestTypeFormProps) {
     }, [params.has("code")])
 
     return (
-        <>
-            <TextInput source="name" readOnly={props.readonly} validate={[required()]} />
-            <TextInput source="code" readOnly={props.readonly} validate={[required()]} />
-            <AutocompleteInput source="category" readOnly={props.readonly} filterSelectedOptions={false}
-                loading={isFilterLoading}
-                choices={categories.map(val => {
-                    return { id: val, name: val }
-                })}
-                onCreate={val => {
-                    if (!val || categories.includes(val)) {
-                        return;
-                    }
-
-                    const newCategories = [...categories, val];
-                    setCategories(newCategories);
-                    return { id: val, name: val }
-                }} />
-            <AutocompleteInput source="sub_category"
-                readOnly={props.readonly}
-                loading={isFilterLoading}
-                choices={subCategories.map(val => {
-                    return { id: val, name: val }
-                })}
-                onCreate={val => {
-                    console.log("onCreate", val, subCategories);
-                    if (!val || subCategories.includes(val)) {
-                        return;
-                    }
-
-                    const newSubCategories = [...subCategories, val];
-                    setSubCategories(newSubCategories);
-                    return { id: val, name: val }
-                }} />
-            <NumberInput source="low_ref_range" label="Low Range" readOnly={props.readonly} validate={[required()]} />
-            <NumberInput source="high_ref_range" label="High Range" readOnly={props.readonly} validate={[required()]} />
-            <AutocompleteInput source="unit"
-                readOnly={props.readonly}
-                loading={isUnitLoading}
-                choices={unit.map(val => {
-                    return { id: val, name: val }
-                })}
-                onCreate={val => {
-                    console.log("onCreate", val, unit);
-                    if (!val || unit.includes(val)) {
-                        return;
-                    }
-
-                    const newUnit = [...unit, val];
-                    setUnit(newUnit);
-                    return { id: val, name: val }
-                }} />
-            <NumberInput source="decimal" readOnly={props.readonly} validate={[required()]} />
-            <ArrayInput source="types">
-                <SimpleFormIterator inline>
-                    <FeatureList source="type" readOnly={props.readonly} types="specimen-type" >
-                        <AutocompleteInput source="type" readOnly={props.readonly} />
-                    </FeatureList>
-                </SimpleFormIterator>
-            </ArrayInput>
-            <TextInput source="description" readOnly={props.readonly} />
-        </>
-
+        <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(12, 1fr)' }}>
+            <Box sx={{ gridColumn: 'span 6' }}>
+                <TextInput 
+                    source="name" 
+                    readOnly={props.readonly} 
+                    validate={[required()]}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                />
+            </Box>
+            <Box sx={{ gridColumn: 'span 6' }}>
+                <TextInput 
+                    source="code" 
+                    readOnly={props.readonly} 
+                    validate={[required()]}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                />
+            </Box>
+            <Box sx={{ gridColumn: 'span 6' }}>
+                <AutocompleteInput 
+                    source="category" 
+                    readOnly={props.readonly} 
+                    filterSelectedOptions={false}
+                    loading={isFilterLoading}
+                    choices={categories.map(val => ({ id: val, name: val }))}
+                    onCreate={val => {
+                        if (!val || categories.includes(val)) return;
+                        const newCategories = [...categories, val];
+                        setCategories(newCategories);
+                        return { id: val, name: val }
+                    }}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                />
+            </Box>
+            <Box sx={{ gridColumn: 'span 6' }}>
+                <AutocompleteInput 
+                    source="sub_category"
+                    readOnly={props.readonly}
+                    loading={isFilterLoading}
+                    choices={subCategories.map(val => ({ id: val, name: val }))}
+                    onCreate={val => {
+                        if (!val || subCategories.includes(val)) return;
+                        const newSubCategories = [...subCategories, val];
+                        setSubCategories(newSubCategories);
+                        return { id: val, name: val }
+                    }}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                />
+            </Box>
+            <Box sx={{ gridColumn: 'span 4' }}>
+                <NumberInput 
+                    source="low_ref_range" 
+                    label="Low Range" 
+                    readOnly={props.readonly} 
+                    validate={[required()]}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                />
+            </Box>
+            <Box sx={{ gridColumn: 'span 4' }}>
+                <NumberInput 
+                    source="high_ref_range" 
+                    label="High Range" 
+                    readOnly={props.readonly} 
+                    validate={[required()]}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                />
+            </Box>
+            <Box sx={{ gridColumn: 'span 4' }}>
+                <AutocompleteInput 
+                    source="unit"
+                    readOnly={props.readonly}
+                    loading={isUnitLoading}
+                    choices={unit.map(val => ({ id: val, name: val }))}
+                    onCreate={val => {
+                        if (!val || unit.includes(val)) return;
+                        const newUnit = [...unit, val];
+                        setUnit(newUnit);
+                        return { id: val, name: val }
+                    }}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                />
+            </Box>
+            <Box sx={{ gridColumn: 'span 12' }}>
+                <NumberInput 
+                    source="decimal" 
+                    readOnly={props.readonly} 
+                    validate={[required()]}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                />
+            </Box>
+            <Box sx={{ gridColumn: 'span 12' }}>
+                <ArrayInput source="types" sx={{ mb: 2 }}>
+                    <SimpleFormIterator inline>
+                        <FeatureList source="type" readOnly={props.readonly} types="specimen-type">
+                            <AutocompleteInput source="type" readOnly={props.readonly} />
+                        </FeatureList>
+                    </SimpleFormIterator>
+                </ArrayInput>
+            </Box>
+        </Box>
     )
 }
 
@@ -166,7 +223,6 @@ function TestTypeForm(props: TestTypeFormProps) {
         </SimpleForm>
     )
 }
-
 
 export function TestTypeEdit() {
     return (

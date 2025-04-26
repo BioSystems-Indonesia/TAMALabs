@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { FilterList, FilterListItem, FilterLiveSearch, SavedQueriesList, useGetList, useListContext } from "react-admin";
 import type { ObservationRequestCreateRequest } from '../../types/observation_requests';
+import { Typography } from "@mui/material";
 
 type TestFilterSidebarProps = {
     setSelectedData: React.Dispatch<React.SetStateAction<Record<number, ObservationRequestCreateRequest>>>
@@ -22,15 +23,13 @@ export const TestFilterSidebar = ({
     const list = useListContext();
     const [_dataUniqueCategory, setDataUniqueCategory] = useState<Array<any>>([])
     const [_dataUniqueSubCategory, setDataUniqueSubCategory] = useState<Array<any>>([])
-    const hasRunEffect = useRef(false); // Ref to track if the effect has run
+    const hasRunEffect = useRef(false);
 
     useEffect(() => {
         if (!list.data || hasRunEffect.current) {
             return;
         }
 
-
-        // Use Map to ensure uniqueness by 'id'
         const uniqueCategoryMap = new Map<string, any>();
         list.data.forEach((item: any) => {
             uniqueCategoryMap.set(item.category, item);
@@ -58,13 +57,10 @@ export const TestFilterSidebar = ({
         return {
             ...filters,
             categories: categories.includes(value.category)
-                // Remove the category if it was already present
                 ? categories.filter((v: any) => v !== value.category)
-                // Add the category if it wasn't already present
                 : [...categories, value.category],
         };
     };
-
 
     const isSubCategorySelected = (value: any, filters: any) => {
         const subCategories = filters.subCategories || [];
@@ -76,9 +72,7 @@ export const TestFilterSidebar = ({
         return {
             ...filters,
             subCategories: subCategories.includes(value.sub_category)
-                // Remove the category if it was already present
                 ? subCategories.filter((v: any) => v !== value.sub_category)
-                // Add the category if it wasn't already present
                 : [...subCategories, value.sub_category],
         };
     };
@@ -97,45 +91,35 @@ export const TestFilterSidebar = ({
     };
 
     const toggleTemplateFilter = (value: any, filters: any) => {
-
         const templates = filters.templates || [];
         const removeTemplate = (value: any, templates: any[]) => {
-            console.log("removeTemplate", value, templates);
             setSelectedData(v => {
                 const newSelectedData = { ...v }
                 const testTypes = value.template.test_types as Record<number, ObservationRequestCreateRequest>
                 Object.entries(testTypes).forEach(([key, value]) => {
                     delete newSelectedData[value.test_type_id]
                 })
-
                 return newSelectedData
             })
-
             return templates.filter((v: any) => v !== value.template.id)
         }
 
         const addTemplate = (value: any, templates: any[]) => {
-            console.log("addTemplate", value, templates);
             setSelectedData(v => {
                 const newSelectedData = { ...v }
                 const testTypes = value.template.test_types as Record<number, ObservationRequestCreateRequest>
                 Object.entries(testTypes).forEach(([key, value]) => {
                     newSelectedData[value.test_type_id] = value
                 })
-                console.log(newSelectedData);
-
                 return newSelectedData
             })
-
             return [...templates, value.template.id]
         }
 
         return {
             ...filters,
             templates: templates.includes(value.template.id)
-                // Remove the category if it was already present
                 ? removeTemplate(value, templates)
-                // Add the category if it wasn't already present
                 : addTemplate(value, templates),
         };
     };
@@ -146,46 +130,103 @@ export const TestFilterSidebar = ({
     });
 
     return (
-        <Card sx={{
-            order: -1,  width: 200, minWidth: 200,
-            overflow: "visible",
-        }}>
-            <CardContent sx={{
-                position: "sticky",
+        <Card 
+            sx={{ 
+                order: -1,
+                width: 280,
+                position: 'sticky',
                 top: 0,
-            }}>
-                <SavedQueriesList />
-                <FilterLiveSearch onSubmit={(event) => event.preventDefault()} onKeyDown={(e) => { e.key === 'Enter' && e.preventDefault() }}  />
-                <FilterList label="Template" icon={<PagesIcon />} >
-                    {data?.map((val: any, i) => {
-                        return (
-                            <FilterListItem key={i} label={val.name} value={{ template: val }}
-                                toggleFilter={toggleTemplateFilter} isSelected={isTemplateSelected} />
-                        )
-                    })}
+                marginRight: 2,
+                '& .MuiCardContent-root': {
+                    padding: 2,
+                },
+                '& .RaFilterList-root': {
+                    marginTop: 2,
+                },
+                '& .MuiDivider-root': {
+                    margin: '16px 0',
+                },
+                '& .RaFilterListItem-root': {
+                    marginBottom: 1,
+                    transition: 'all 0.2s',
+                    borderRadius: 1,
+                    '&:hover': {
+                        backgroundColor: 'action.hover',
+                    },
+                },
+            }}
+        >
+            <CardContent>
+                <FilterLiveSearch 
+                    placeholder="Search..."
+                    source="q"
+                    sx={{
+                        marginTop: 2,
+                        '& .MuiInputBase-root': {
+                            backgroundColor: 'background.paper',
+                        },
+                    }}
+                />
+                <Divider />
+                <FilterList 
+                    label="Template" 
+                    icon={<PagesIcon />}
+                    sx={{
+                        '& .MuiListItemIcon-root': {
+                            minWidth: 36,
+                        },
+                    }}
+                >
+                    {data?.map((val: any, i: number) => (
+                        <FilterListItem 
+                            key={i} 
+                            label={val.name} 
+                            value={{ template: val }}
+                            isSelected={isTemplateSelected}
+                            toggleFilter={toggleTemplateFilter}
+                        />
+                    ))}
                 </FilterList>
-                <Divider sx={{ marginY: 1 }} />
-                {isFilterLoading ? <LinearProgress /> : (
-                    <>
-                        <FilterList label="Category" icon={<CategoryIcon />}>
-                            {filter?.categories.map((val: string, i: number) => {
-                                return (
-                                    <FilterListItem key={i} label={val} value={{ category: val}}
-                                        toggleFilter={toggleCategoryFilter} isSelected={isCategorySelected} />
-                                )
-                            })}
-                        </FilterList>
-                        <FilterList label="Sub Category" icon={<SegmentIcon />}>
-                            {filter?.sub_categories.map((val: string, i: number) => {
-                                return (
-                                    <FilterListItem key={i} label={val} value={{ sub_category: val}}
-                                        toggleFilter={toggleSubCategoryFilter} isSelected={isSubCategorySelected} />
-                                )
-                            })}
-                        </FilterList>
-                    </>
-
-                )}
+                <Divider />
+                <FilterList 
+                    label="Category" 
+                    icon={<CategoryIcon />}
+                    sx={{
+                        '& .MuiListItemIcon-root': {
+                            minWidth: 36,
+                        },
+                    }}
+                >
+                    {filter?.categories.map((val: string, i: number) => (
+                        <FilterListItem 
+                            key={i} 
+                            label={val} 
+                            value={{ category: val }}
+                            isSelected={isCategorySelected}
+                            toggleFilter={toggleCategoryFilter}
+                        />
+                    ))}
+                </FilterList>
+                <Divider />
+                <FilterList 
+                    label="Sub Category" 
+                    icon={<SegmentIcon />}
+                    sx={{
+                        '& .MuiListItemIcon-root': {
+                            minWidth: 36,
+                        },
+                    }}
+                >
+                    {filter?.sub_categories.map((val: string, i: number) => (
+                        <FilterListItem 
+                            key={i} 
+                            label={val} 
+                            value={{ sub_category: val }}
+                            isSelected={isSubCategorySelected}
+                            toggleFilter={toggleSubCategoryFilter}
+                        />
+                    ))}
+                </FilterList>
             </CardContent>
         </Card>
     )

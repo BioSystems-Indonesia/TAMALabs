@@ -103,7 +103,7 @@ function TestTable({
         if (testType) {
             setRows(testType)
         }
-    }, [testType])
+    }, [testType]);
 
     useEffect(() => {
         if (props.initSelectedType && allTestType) {
