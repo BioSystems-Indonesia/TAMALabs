@@ -6,7 +6,6 @@ import (
 
 	"log/slog"
 
-	"github.com/kardianos/hl7/h251"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	"github.com/oibacidem/lims-hl-seven/internal/util"
@@ -61,59 +60,52 @@ func (u *Usecase) ProcessOULR22(ctx context.Context, data entity.OUL_R22) error 
 }
 
 // ProcessQBPQ11 processes the QBP_Q11 message.
-func (u *Usecase) ProcessQBPQ11(ctx context.Context, data entity.QBP_Q11) ([]h251.OML_O33, error) {
+func (u *Usecase) ProcessQBPQ11(ctx context.Context, data entity.QBP_Q11) error {
 	if data.QPD.Barcode != "" {
-		omlO33, err := u.withBarcode(ctx, data.QPD.Barcode)
-		if err != nil {
-			return nil, err
-		}
-		return []h251.OML_O33{omlO33}, nil
+		return u.withBarcode(ctx, data.QPD.Barcode)
 	}
 	return u.withoutBarcode(ctx)
 }
 
 // withBarcode processes the QBP_Q11 message with a barcode.
-func (u *Usecase) withBarcode(ctx context.Context, barcode string) (h251.OML_O33, error) {
+func (u *Usecase) withBarcode(ctx context.Context, barcode string) error {
 	speciment, err := u.SpecimenRepository.FindByBarcode(ctx, barcode)
 	if err != nil {
-		return h251.OML_O33{}, err
+		return err
 	}
 
 	device, err := u.DeviceRepository.FindByID(ctx, 1)
 	if err != nil {
-		return h251.OML_O33{}, err
+		return err
 	}
 
-	o := ba400.NewOML_O33(speciment.Patient, device, false)
+	err = ba400.SendToBA400(ctx, []entity.Patient{speciment.Patient}, device, false)
 	if err != nil {
-		return h251.OML_O33{}, err
+		return err
 	}
 
-	return o, nil
+	return nil
 }
 
 // withoutBarcode processes the QBP_Q11 message without a barcode.
-func (u *Usecase) withoutBarcode(ctx context.Context) ([]h251.OML_O33, error) {
+func (u *Usecase) withoutBarcode(ctx context.Context) error {
 	device, err := u.DeviceRepository.FindByID(ctx, 1)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// find work order with status WorkOrderStatusNew
 	workOrders, err := u.WorkOrderRepository.FindByStatus(ctx, entity.WorkOrderStatusNew)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if len(workOrders) == 0 {
-		return nil, errors.New("no work order found")
+		return errors.New("no work order found")
 	}
-
-	var omlO33s []h251.OML_O33
 
 	for _, workOrder := range workOrders {
-		o := ba400.NewOML_O33(workOrder.Patient, device, false)
-		omlO33s = append(omlO33s, o)
+		ba400.SendToBA400(ctx, []entity.Patient{workOrder.Patient}, device, false)
 	}
 
-	return omlO33s, nil
+	return nil
 }
