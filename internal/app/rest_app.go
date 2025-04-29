@@ -5,6 +5,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	configrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/daily_sequence"
 	device "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
@@ -15,6 +16,8 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/unit"
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase"
+	barcodeGeneratorUC "github.com/oibacidem/lims-hl-seven/internal/usecase/barcode_generator"
 	configuc "github.com/oibacidem/lims-hl-seven/internal/usecase/config"
 	observation_requestuc "github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
@@ -30,6 +33,8 @@ import (
 var restUsecaseSet = wire.NewSet(
 	testTypeUC.NewUsecase,
 	resultUC.NewUsecase,
+	barcodeGeneratorUC.NewUsecase,
+	wire.Bind(new(usecase.BarcodeGenerator), new(*barcodeGeneratorUC.Usecase)),
 )
 
 var restRepositorySet = wire.NewSet(
@@ -37,6 +42,7 @@ var restRepositorySet = wire.NewSet(
 	observation_result.NewRepository,
 	observation_request.NewRepository,
 	device.NewRepository,
+	daily_sequence.NewRepository,
 )
 
 var (

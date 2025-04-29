@@ -161,7 +161,7 @@ func (r WorkOrderRepository) Create(req *entity.WorkOrderCreateRequest) (entity.
 		workOrder = entity.WorkOrder{
 			Status:    entity.WorkOrderStatusNew,
 			PatientID: req.PatientID,
-			Barcode:   r.GenerateBarcode(tx.Statement.Context),
+			Barcode:   req.Barcode,
 		}
 		err = tx.Save(&workOrder).Error
 		if err != nil {
@@ -479,13 +479,6 @@ func (r WorkOrderRepository) UpsertDevice(workOrderID int64, deviceID int64) err
 	}
 
 	return nil
-}
-
-func (r WorkOrderRepository) GenerateBarcode(ctx context.Context) string {
-	seq := RandomNumber(6)
-	seqPadding := fmt.Sprintf("%06d", seq) // Prints to stdout '000012'
-
-	return fmt.Sprintf("%s%s", time.Now().Format("20060102"), seqPadding)
 }
 
 func RandomNumber(n int) string {

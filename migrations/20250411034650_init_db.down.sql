@@ -36,3 +36,6 @@ DROP TABLE `observation_requests`;
 DROP INDEX `test_types_code`;
 -- reverse: create "test_types" table
 DROP TABLE `test_types`;
+
+-- reverse: create "sequence_daily" table
+DROP TABLE `sequence_daily`;

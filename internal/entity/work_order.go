@@ -14,6 +14,7 @@ const (
 type WorkOrderCreateRequest struct {
 	PatientID int64                            `json:"patient_id" validate:"required"`
 	TestTypes []WorkOrderCreateRequestTestType `json:"test_types" validate:"required"`
+	Barcode   string
 }
 
 type WorkOrderCreateRequestTestType struct {

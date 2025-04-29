@@ -2,25 +2,29 @@ package workOrderuc
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 )
 
 type WorkOrderUseCase struct {
-	cfg           *config.Schema
-	workOrderRepo *workOrderrepo.WorkOrderRepository
-	validate      *validator.Validate
+	cfg                *config.Schema
+	workOrderRepo      *workOrderrepo.WorkOrderRepository
+	validate           *validator.Validate
+	barcodeGeneratorUC usecase.BarcodeGenerator
 }
 
 func NewWorkOrderUseCase(
 	cfg *config.Schema,
 	workOrderRepo *workOrderrepo.WorkOrderRepository,
 	validate *validator.Validate,
+	barcodeGeneratorUC usecase.BarcodeGenerator,
 ) *WorkOrderUseCase {
-	return &WorkOrderUseCase{cfg: cfg, workOrderRepo: workOrderRepo, validate: validate}
+	return &WorkOrderUseCase{cfg: cfg, workOrderRepo: workOrderRepo, validate: validate, barcodeGeneratorUC: barcodeGeneratorUC}
 }
 
 func (p WorkOrderUseCase) FindAll(
@@ -34,6 +38,11 @@ func (p WorkOrderUseCase) FindOneByID(id int64) (entity.WorkOrder, error) {
 }
 
 func (p WorkOrderUseCase) Create(req *entity.WorkOrderCreateRequest) (entity.WorkOrder, error) {
+	barcode, err := p.barcodeGeneratorUC.NextOrderBarcode(context.Background())
+	if err != nil {
+		return entity.WorkOrder{}, fmt.Errorf("failed to p.barcodeGeneratorUC.NextOrderBarcode %w", err)
+	}
+	req.Barcode = barcode
 	return p.workOrderRepo.Create(req)
 }
 
