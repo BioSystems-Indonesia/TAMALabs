@@ -13,6 +13,7 @@ import {
     DateField,
     DeleteButton,
     Edit,
+    FilterLiveForm,
     List,
     ReferenceField,
     SearchInput,
@@ -32,6 +33,7 @@ import type { WorkOrder } from "../../types/work_order.ts";
 import { WorkOrderChipColorMap } from "./ChipFieldStatus.tsx";
 import WorkOrderForm from "./Form.tsx";
 import { RunWorkOrderForm } from "./Show.tsx";
+import SideFilter from "../../component/SideFilter.tsx";
 
 const WorkOrderAction = () => {
     return (
@@ -102,16 +104,23 @@ export function WorkOrderAddTest() {
     )
 }
 
-
-const WorkOrderFilters = [
-    <SearchInput source="q" alwaysOn sx={{}} />,
-    <CustomDateInput label={"Created At Start"} source="created_at_start" disableFuture alwaysOn size="small" sx={{
-        marginBottom: '4px'
-    }}/>,
-    <CustomDateInput label={"Created At End"} source="created_at_end" disableFuture alwaysOn size="small"sx={{
-        marginBottom: '4px'
-    }} />,
-];
+function WorkOrderSideFilters() {
+    return (
+        <SideFilter>
+            <FilterLiveForm debounce={1500}>
+                <Stack>
+                    <SearchInput source="q" alwaysOn sx={{}} />
+                    <CustomDateInput label={"Created At Start"} source="created_at_start" disableFuture alwaysOn size="small" sx={{
+                        marginBottom: '4px'
+                    }} />
+                    <CustomDateInput label={"Created At End"} source="created_at_end" disableFuture alwaysOn size="small" sx={{
+                        marginBottom: '4px'
+                    }} />
+                </Stack>
+            </FilterLiveForm>
+        </SideFilter>
+    )
+}
 
 function getRequestLength(data: WorkOrder): number {
     return data.specimen_list?.reduce((acc, specimen) => acc + specimen.observation_requests.length, 0) || 0
@@ -201,10 +210,18 @@ export const WorkOrderList = () => {
         <List sort={{
             field: "id",
             order: "DESC"
-        }} filters={WorkOrderFilters} title="Lab Request" filterDefaultValues={{
+        }} aside={<WorkOrderSideFilters />} title="Lab Request" filterDefaultValues={{
             created_at_start: dayjs().subtract(7, "day").toISOString(),
             created_at_end: dayjs().toISOString(),
-        }} storeKey={false} exporter={false} disableSyncWithLocation>
+        }} storeKey={false} exporter={false} disableSyncWithLocation
+            sx={{
+                '& .RaList-content': {
+                    backgroundColor: 'background.paper',
+                    padding: 2,
+                    borderRadius: 1,
+                },
+            }}
+        >
             <Datagrid bulkActionButtons={<WorkOrderListBulkActionButtons
                 open={open}
                 setOpen={setOpen}

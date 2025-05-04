@@ -1,8 +1,6 @@
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { Stack } from '@mui/material';
 import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
 import {
@@ -12,8 +10,7 @@ import {
     DateTimeInput,
     Edit,
     FilterListSection,
-    FilterLiveForm,
-    FilterLiveSearch,
+    FilterLiveForm, FilterLiveSearch,
     List,
     ReferenceManyField,
     required,
@@ -25,6 +22,7 @@ import {
 } from "react-admin";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
 import FeatureList from "../../component/FeatureList.tsx";
+import SideFilter from '../../component/SideFilter.tsx';
 import { useRefererRedirect } from "../../hooks/useReferer.ts";
 import { Action, ActionKeys } from "../../types/props.ts";
 import { ResultDataGrid } from "../result/index.tsx";
@@ -127,21 +125,32 @@ export function PatientEdit() {
 }
 
 const PatientFilterSidebar = () => (
-    <Card sx={{ order: -1, mr: 2, mt: 2, width: 300 }}>
-        <CardContent>
-            <FilterLiveSearch />
-            <FilterListSection label="Birth Date" icon={<CalendarMonthIcon />}>
-                <FilterLiveForm debounce={1500}>
-                    <CustomDateInput source={"birthdate"} label={"Birth Date"} clearable />
-                </FilterLiveForm>
-            </FilterListSection>
-        </CardContent>
-    </Card>
+    <SideFilter>
+        <FilterLiveSearch />
+        <FilterLiveForm debounce={1500}>
+            <Stack sx={{
+                marginTop: "1rem"
+            }}>
+                <CustomDateInput source={"birthdate"} label={"Birth Date"} clearable size="small" />
+            </Stack>
+        </FilterLiveForm>
+    </SideFilter>
 );
 
 
 export const PatientList = () => (
-    <List aside={<PatientFilterSidebar />}>
+    <List aside={<PatientFilterSidebar />} sort={{
+        field: "id",
+        order: "DESC"
+    }}
+        storeKey={false} exporter={false}
+        sx={{
+            '& .RaList-content': {
+                backgroundColor: 'background.paper',
+                padding: 2,
+                borderRadius: 1,
+            },
+        }}>
         <Datagrid>
             <TextField source="id" />
             <TextField source="first_name" />

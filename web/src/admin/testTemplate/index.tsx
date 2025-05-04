@@ -8,9 +8,15 @@ import { useFormContext } from "react-hook-form";
 import type { ObservationRequestCreateRequest } from "../../types/observation_requests";
 import type { ActionKeys } from "../../types/props";
 import { TestInput, testTypesField } from '../workOrder/Form';
+import SideFilter from "../../component/SideFilter";
 
 export const TestTemplateList = () => (
-    <List aside={<TestTemplateFilterSidebar />} title="Test Template">
+    <List aside={<TestTemplateFilterSidebar />} title="Test Template" sort={{
+        field: "id",
+        order: "DESC"
+    }}
+        storeKey={false} exporter={false}
+    >
         <Datagrid bulkActionButtons={false}>
             <NumberField source="id" />
             <TextField source="name" />
@@ -21,11 +27,9 @@ export const TestTemplateList = () => (
 
 const TestTemplateFilterSidebar = () => {
     return (
-        <Card sx={{ order: -1, mr: 2, mt: 2, width: 300 }}>
-            <CardContent>
-                <FilterLiveSearch />
-            </CardContent>
-        </Card>
+        <SideFilter>
+            <FilterLiveSearch />
+        </SideFilter>
     )
 };
 

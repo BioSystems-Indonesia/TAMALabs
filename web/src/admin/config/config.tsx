@@ -1,4 +1,4 @@
-import { CircularProgress, Stack, Typography } from "@mui/material";
+import { Card, CardContent, CircularProgress, Stack, Typography } from "@mui/material";
 import { useQuery } from '@tanstack/react-query';
 import { Datagrid, Edit, List, SimpleForm, TextField, TextInput } from "react-admin";
 import MUITextField from "@mui/material/TextField";
@@ -16,40 +16,48 @@ export const ConfigList = () => {
 
     return (
         <Stack gap={5}>
-            <Stack gap={2}>
-                <Typography>
-                    Server Info
-                </Typography>
-                {isPending ? <CircularProgress /> :
-                    <Stack>
-                        <MUITextField label="Server IP" value={data.serverIP} aria-readonly InputProps={{
-                            readOnly: true,
-                        }} />
-                        <MUITextField label="Server Port" value={data.port} aria-readonly InputProps={{
-                            readOnly: true,
-                        }} />
-                        <MUITextField label="Revision" value={data.revision} aria-readonly InputProps={{
-                            readOnly: true,
-                        }} />
-                        <MUITextField label="Version" value={data.version} aria-readonly InputProps={{
-                            readOnly: true,
-                        }} />
+            <Card>
+                <CardContent>
+                    <Stack gap={2}>
+                        <Typography>
+                            Server Info
+                        </Typography>
+                        {isPending ? <CircularProgress /> :
+                            <Stack gap={2}>
+                                <MUITextField label="Server IP" value={data.serverIP} aria-readonly InputProps={{
+                                    readOnly: true,
+                                }} />
+                                <MUITextField label="Server Port" value={data.port} aria-readonly InputProps={{
+                                    readOnly: true,
+                                }} />
+                                <MUITextField label="Revision" value={data.revision} aria-readonly InputProps={{
+                                    readOnly: true,
+                                }} />
+                                <MUITextField label="Version" value={data.version} aria-readonly InputProps={{
+                                    readOnly: true,
+                                }} />
+                            </Stack>
+                        }
                     </Stack>
-                }
-            </Stack>
+                </CardContent>
+            </Card>
 
-            <Stack gap={2}>
-                <Typography>
-                    Config
-                </Typography>
+            <Card>
+                <CardContent>
+                    <Stack gap={2}>
+                        <Typography>
+                            Config
+                        </Typography>
 
-                <List resource="config" actions={false} pagination={false}>
-                    <Datagrid bulkActionButtons={false}>
-                        <TextField source="id" />
-                        <TextField source="value" />
-                    </Datagrid>
-                </List>
-            </Stack>
+                        <List resource="config" actions={false} pagination={false}>
+                            <Datagrid bulkActionButtons={false}>
+                                <TextField source="id" />
+                                <TextField source="value" />
+                            </Datagrid>
+                        </List>
+                    </Stack>
+                </CardContent>
+            </Card>
         </Stack>
     )
 };

@@ -1,9 +1,11 @@
-import { Chip, Typography } from "@mui/material";
+import { Chip, Divider, Stack, Typography } from "@mui/material";
+import dayjs from "dayjs";
 import {
     AutocompleteArrayInput,
     BooleanInput,
     Datagrid,
     DateField,
+    FilterLiveForm,
     Link,
     List,
     NumberField,
@@ -12,6 +14,7 @@ import {
 } from "react-admin";
 import CustomDateInput from "../../component/CustomDateInput";
 import PrintReportButton from "../../component/PrintReport";
+import SideFilter from "../../component/SideFilter";
 import type { WorkOrder } from "../../types/work_order";
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
 import { FilledPercentChip } from "./component";
@@ -19,14 +22,29 @@ import { FilledPercentChip } from "./component";
 
 
 export const ResultList = () => (
-    <List 
-        resource="result" 
-        sort={{ field: "id", order: "DESC" }} 
-        filters={ResultFilters}
-        storeKey={false} 
-        exporter={false} 
-        disableSyncWithLocation 
-        >
+    <List
+        resource="result"
+        sort={{ field: "id", order: "DESC" }}
+        aside={<ResultSideFilter />}
+        filters={ResultMoreFilter}
+        filterDefaultValues={{
+            created_at_start: dayjs().subtract(7, "day").toISOString(),
+            created_at_end: dayjs().toISOString(),
+        }}
+        storeKey={false}
+        exporter={false}
+        disableSyncWithLocation
+        sx={{
+            '& .RaList-main': {
+                marginTop: '-14px'
+            },
+            '& .RaList-content': {
+                backgroundColor: 'background.paper',
+                padding: 2,
+                borderRadius: 1,
+            },
+        }}
+    >
         <ResultDataGrid />
     </List>
 );
@@ -66,11 +84,27 @@ export const ResultDataGrid = (props: any) => {
     )
 }
 
-const ResultFilters = [
-    <ReferenceInput source={"patient_ids"} reference="patient" label={"Patient"} >
-        <AutocompleteArrayInput />
-    </ReferenceInput>,
-    <CustomDateInput label={"Created At Start"} source="created_at_start" />,
-    <CustomDateInput label={"Created At End"} source="created_at_end" />,
+function ResultSideFilter() {
+    return (
+        <SideFilter>
+            <FilterLiveForm debounce={1500}>
+                <Stack>
+                    <ReferenceInput source={"patient_ids"} reference="patient" label={"Patient"} alwaysOn>
+                        <AutocompleteArrayInput size="small" />
+                    </ReferenceInput>
+                    <Divider sx={{
+                        marginBottom: 2,
+                    }} />
+                    <CustomDateInput label={"Created At Start"} source="created_at_start" alwaysOn size="small" disableFuture />
+                    <CustomDateInput label={"Created At End"} source="created_at_end" alwaysOn size="small" disableFuture />
+                </Stack>
+            </FilterLiveForm>
+        </SideFilter>
+    )
+
+}
+
+
+const ResultMoreFilter = [
     <BooleanInput source={"has_result"} label={"Show Only With Result"} />,
-];
+]

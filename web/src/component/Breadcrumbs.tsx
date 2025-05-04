@@ -19,7 +19,7 @@ export default function Breadcrumbs(props: BreadcrumbsProps) {
         <Box sx={{ padding: 2, display: 'flex', justifyContent: 'center' }}>
             <MUIBreadcrumbs separator="›" aria-label="breadcrumb">
                 {
-                    props.links.map((link, index) => {
+                    props.links.length > 1 && props.links.map((link, index) => {
                         return (
                             <Link underline="hover" color={
                                 index == props.links.length - 1 ? "text.primary" : "inherit"}

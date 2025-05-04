@@ -107,7 +107,7 @@ const PickedTest = ({ selectedData }: { selectedData: Record<number, Observation
     }
 
     return (
-        <Paper elevation={2} sx={{ p: 2, backgroundColor: 'background.paper' /* Or 'grey.50' for slight contrast */ }}>
+        <Paper elevation={2} sx={{ p: 2, backgroundColor: 'background.paper', maxWidth: "200px" }}>
             <Stack spacing={2}>
                 {/* Enhanced Title Section */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>

@@ -28,25 +28,24 @@ export const TestTypeDatagrid = (props: any) => {
 
 export const TestTypeList = () => {
     const [selectedData, setSelectedData] = useState<any>([]);
-    
+
     return (
-        <List 
-            aside={<TestFilterSidebar selectedData={selectedData} setSelectedData={setSelectedData} />} 
-            title="Test Type" 
+        <List
+            aside={<TestFilterSidebar selectedData={selectedData} setSelectedData={setSelectedData} />}
+            title="Test Type"
             sort={{
                 field: "id",
                 order: "DESC",
             }}
             sx={{
-                '& .RaList-main': {
-                    margin: '16px 0',
-                },
+                '& .RaList-main': {},
                 '& .RaList-content': {
                     backgroundColor: 'background.paper',
                     padding: 2,
                     borderRadius: 1,
                 },
             }}
+            storeKey={false} exporter={false}
         >
             <TestTypeDatagrid />
         </List>
@@ -107,27 +106,27 @@ function TestTypeInput(props: TestTypeFormProps) {
     return (
         <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(12, 1fr)' }}>
             <Box sx={{ gridColumn: 'span 6' }}>
-                <TextInput 
-                    source="name" 
-                    readOnly={props.readonly} 
+                <TextInput
+                    source="name"
+                    readOnly={props.readonly}
                     validate={[required()]}
                     fullWidth
                     sx={{ mb: 2 }}
                 />
             </Box>
             <Box sx={{ gridColumn: 'span 6' }}>
-                <TextInput 
-                    source="code" 
-                    readOnly={props.readonly} 
+                <TextInput
+                    source="code"
+                    readOnly={props.readonly}
                     validate={[required()]}
                     fullWidth
                     sx={{ mb: 2 }}
                 />
             </Box>
             <Box sx={{ gridColumn: 'span 6' }}>
-                <AutocompleteInput 
-                    source="category" 
-                    readOnly={props.readonly} 
+                <AutocompleteInput
+                    source="category"
+                    readOnly={props.readonly}
                     filterSelectedOptions={false}
                     loading={isFilterLoading}
                     choices={categories.map(val => ({ id: val, name: val }))}
@@ -142,7 +141,7 @@ function TestTypeInput(props: TestTypeFormProps) {
                 />
             </Box>
             <Box sx={{ gridColumn: 'span 6' }}>
-                <AutocompleteInput 
+                <AutocompleteInput
                     source="sub_category"
                     readOnly={props.readonly}
                     loading={isFilterLoading}
@@ -158,27 +157,27 @@ function TestTypeInput(props: TestTypeFormProps) {
                 />
             </Box>
             <Box sx={{ gridColumn: 'span 4' }}>
-                <NumberInput 
-                    source="low_ref_range" 
-                    label="Low Range" 
-                    readOnly={props.readonly} 
+                <NumberInput
+                    source="low_ref_range"
+                    label="Low Range"
+                    readOnly={props.readonly}
                     validate={[required()]}
                     fullWidth
                     sx={{ mb: 2 }}
                 />
             </Box>
             <Box sx={{ gridColumn: 'span 4' }}>
-                <NumberInput 
-                    source="high_ref_range" 
-                    label="High Range" 
-                    readOnly={props.readonly} 
+                <NumberInput
+                    source="high_ref_range"
+                    label="High Range"
+                    readOnly={props.readonly}
                     validate={[required()]}
                     fullWidth
                     sx={{ mb: 2 }}
                 />
             </Box>
             <Box sx={{ gridColumn: 'span 4' }}>
-                <AutocompleteInput 
+                <AutocompleteInput
                     source="unit"
                     readOnly={props.readonly}
                     loading={isUnitLoading}
@@ -194,9 +193,9 @@ function TestTypeInput(props: TestTypeFormProps) {
                 />
             </Box>
             <Box sx={{ gridColumn: 'span 12' }}>
-                <NumberInput 
-                    source="decimal" 
-                    readOnly={props.readonly} 
+                <NumberInput
+                    source="decimal"
+                    readOnly={props.readonly}
                     validate={[required()]}
                     fullWidth
                     sx={{ mb: 2 }}
