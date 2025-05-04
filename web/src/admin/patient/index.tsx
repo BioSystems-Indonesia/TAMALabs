@@ -34,9 +34,9 @@ export type PatientFormProps = {
 
 function ReferenceSection() {
     return (
-        <Box sx={{ width: "100%" }}>
+        <Box sx={{ width: "100%", padding: 2 }}>
             <Divider sx={{ my: "1rem" }} />
-            <Typography variant={"h6"}>Result</Typography>
+            <Typography variant={"subtitle1"}>Result</Typography>
             <ReferenceManyField label={"Result"} reference="result" target="patient_ids">
                 <ResultDataGrid />
             </ReferenceManyField>
