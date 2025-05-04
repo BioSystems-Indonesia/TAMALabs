@@ -196,7 +196,9 @@ func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder) {
 	workOrder.TotalRequest = int64(len(allObservationRequests))
 	workOrder.TotalResultFilled = int64(totalResultFilled)
 	workOrder.HaveCompleteData = len(allObservationRequests) == totalResultFilled
-	workOrder.PercentComplete = float64(totalResultFilled) / float64(len(allObservationRequests))
+	if len(allObservationRequests) != 0 {
+		workOrder.PercentComplete = float64(totalResultFilled) / float64(len(allObservationRequests))
+	}
 	workOrder.TestResult = allTests
 }
 
