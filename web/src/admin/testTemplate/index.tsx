@@ -1,6 +1,4 @@
 import { Divider } from "@mui/material";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import Stack from "@mui/material/Stack";
 import { useEffect, useState } from "react";
 import { Create, Datagrid, DeleteButton, Edit, FilterLiveSearch, List, NumberField, SaveButton, SimpleForm, TextField, TextInput, Toolbar, required, useEditContext, useNotify, useSaveContext } from "react-admin";

@@ -1,8 +1,6 @@
 import CategoryIcon from '@mui/icons-material/Category';
 import PagesIcon from '@mui/icons-material/Pages';
 import SegmentIcon from '@mui/icons-material/Segment';
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import Divider from "@mui/material/Divider";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";

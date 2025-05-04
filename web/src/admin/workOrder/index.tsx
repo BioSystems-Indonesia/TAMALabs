@@ -1,5 +1,5 @@
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
-import { Box, CircularProgress, Dialog, DialogContent, DialogTitle } from "@mui/material";
+import { CircularProgress, Dialog, DialogContent, DialogTitle } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
