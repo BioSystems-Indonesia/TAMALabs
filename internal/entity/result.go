@@ -21,6 +21,8 @@ type ResultPaginationResponse struct {
 type ResultDetail struct {
 	WorkOrder
 	TestResult map[string][]TestResult `json:"test_result"`
+	PrevID     int64                   `json:"prev_id"`
+	NextID     int64                   `json:"next_id"`
 }
 
 type UpdateManyResultTestReq struct {

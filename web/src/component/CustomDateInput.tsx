@@ -26,35 +26,35 @@ export default function CustomDateInput({
     const { field, fieldState } = useInput({ source });
     const [value, setValue] = React.useState<Dayjs | null>(field.value ? dayjs(field.value) : null);
 
+    const labelText = label + ' ' + requiredAstrix(required);
+    const slotProps ={
+        field: {
+            clearable: clearable,
+            onBlur: field.onBlur
+        },
+        textField: { size: size }
+    };
+
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker label={`${label} ${requiredAstrix(required)}`} format={"DD-MM-YYYY"}
+            <DatePicker
+                label={labelText}
+                format={"DD-MM-YYYY"}
                 onChange={(date) => {
                     setValue(date);
                     field.onChange(date?.toISOString());
                 }}
-                slotProps={
-                    {
-                        field: {
-                            clearable: clearable, onBlur: field.onBlur
-                        }, 
-                        textField: {
-                            size: size
-                        }
-                    }
-                }
-                sx={{
-                    //@ts-ignore this is perfectly fine
-                    maxWidth: "280px",
-                    ...sx
-                }}
+                slotProps={slotProps}
+                // sx={{
+                //     //@ts-ignore this is perfectly fine
+                //     maxWidth: "280px",
+                //     ...sx
+                // }}
+                // size={'small'}
                 ref={field.ref}
                 name={field.name}
                 value={value}
                 disabled={field.disabled}
-                size={'small'}
-
-                readOnly={readonly}
                 disableFuture={disableFuture}
                 disablePast={disablePast}
             />

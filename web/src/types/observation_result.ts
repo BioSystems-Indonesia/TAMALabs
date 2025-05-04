@@ -65,4 +65,6 @@ export interface Result {
   patient:     Patient;
   devices:     null;
   test_result: TestResult;
+  prev_id:     number;
+  next_id:     number
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"sort"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -57,9 +58,24 @@ func (u *Usecase) ResultDetail(ctx context.Context, workOrderID int64) (entity.R
 	}
 	u.fillResultDetail(&workOrder)
 
+	// Why inverted? preve is get from next and next from get
+	// because the default of ordering in front end are from the latest
+	// maybe we need to config this..
+	prevID, err := u.workOrderRepository.FindNextID(ctx, workOrderID)
+	if err != nil {
+		slog.ErrorContext(ctx, err.Error())
+	}
+
+	nextID, err := u.workOrderRepository.FindPrevID(ctx, workOrderID)
+	if err != nil {
+		slog.ErrorContext(ctx, err.Error())
+	}
+
 	return entity.ResultDetail{
 		WorkOrder:  workOrder,
 		TestResult: u.groupResultInCategory(workOrder.TestResult),
+		NextID:     prevID,
+		PrevID:     nextID,
 	}, nil
 }
 

@@ -581,3 +581,25 @@ func (r WorkOrderRepository) FindByStatus(ctx context.Context, status entity.Wor
 
 	return workOrders, nil
 }
+
+func (r WorkOrderRepository) FindNextID(ctx context.Context, currentWorkOrderID int64) (int64, error) {
+	return r.findNearestNumber(ctx, "id > ?", currentWorkOrderID, "ASC")
+}
+
+func (r WorkOrderRepository) FindPrevID(ctx context.Context, currentWorkOrderID int64) (int64, error) {
+	return r.findNearestNumber(ctx, "id < ?", currentWorkOrderID, "DESC")
+}
+
+func (r WorkOrderRepository) findNearestNumber(ctx context.Context, where string, curID int64, dir string) (int64, error) {
+	var id int64
+
+	err := r.db.WithContext(ctx).
+		Model(entity.WorkOrder{}).
+		Select("id").
+		Where(where, curID).
+		Order("id " + dir).
+		Limit(1).
+		Scan(&id).Error
+
+	return id, err
+}

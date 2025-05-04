@@ -1,5 +1,20 @@
 import HistoryIcon from '@mui/icons-material/History';
-import { Badge, Box, ButtonGroup, Checkbox, Chip, Dialog, DialogContent, DialogTitle, GridLegacy as Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import {
+  Badge,
+  Box,
+  Button,
+  ButtonGroup,
+  Checkbox,
+  Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  GridLegacy as Grid,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography
+} from "@mui/material";
 import { DataGrid as MuiDatagrid, type DataGridProps, type GridRenderCellParams } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 import { memo, useEffect, useState } from 'react';
@@ -31,34 +46,44 @@ export const ResultShow = (props: any) => {
     });
 
     return (
-        <Show title="Edit Result">
-            <SimpleShowLayout >
-                <HeaderInfo />
-                <WithRecord label="Test Result" render={(record: Result) => (
-                    <>
-                        {
-                            Object.entries(record?.test_result).map(([category, rows]) => (
-                                <TestResultTableGroup
-                                    key={category}
-                                    category={category}
-                                    rows={rows}
-                                    setHistory={setHistory}
-                                    setOpenHistory={setOpenHistory}
-                                />
-                            ))
-                        }
-                        <HistoryDialog
-                            workOrderID={record.id}
-                            title={history.title}
-                            open={openHistory}
-                            onClose={() => setOpenHistory(false)}
-                            rows={history.rows}
-                            setHistory={setHistory}
-                        />
-                    </>)
-                } />
-            </SimpleShowLayout>
-        </Show>
+      <Show title="Edit Result">
+        <SimpleShowLayout >
+          <HeaderInfo />
+          <WithRecord label="Test Result" render={(record: Result) => (
+            <>
+              {
+                Object.entries(record?.test_result).map(([category, rows]) => (
+                  <TestResultTableGroup
+                    key={category}
+                    category={category}
+                    rows={rows}
+                    setHistory={setHistory}
+                    setOpenHistory={setOpenHistory}
+                  />
+                ))
+              }
+
+              <Stack direction="row" spacing={2} mt={2}>
+                <Button component={Link} to={`/result/${record.prev_id}/show`} disabled={record.prev_id === 0}>
+                  Previous
+                </Button>
+                <Button component={Link} to={`/result/${record.next_id}/show`} disabled={record.next_id === 0}>
+                  Next
+                </Button>
+              </Stack>
+              <HistoryDialog
+                workOrderID={record.id}
+                title={history.title}
+                open={openHistory}
+                onClose={() => setOpenHistory(false)}
+                rows={history.rows}
+                setHistory={setHistory}
+              />
+            </>)
+          } />
+
+        </SimpleShowLayout>
+      </Show>
     )
 }
 
@@ -86,7 +111,7 @@ const HeaderInfo = (props: any) => (
         <Grid item xs={12} md={4}>
             <Labeled>
                 <WithRecord label="Patient" render={(record: any) => (
-                    <Link to={`/patient/${record.order_id}/show`} resource="patient" label={"Patient"} onClick={e => e.stopPropagation()}>
+                    <Link to={`/patient/${record.patient?.id}/show`} resource="patient" label={"Patient"} onClick={e => e.stopPropagation()}>
                         #{record.patient?.id}-{record.patient?.first_name} {record.patient?.last_name}
                     </Link>
                 )} />
