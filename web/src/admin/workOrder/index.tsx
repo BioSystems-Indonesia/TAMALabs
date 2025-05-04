@@ -1,5 +1,5 @@
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
-import { CircularProgress, Dialog, DialogContent, DialogTitle } from "@mui/material";
+import { Box, CircularProgress, Dialog, DialogContent, DialogTitle } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -33,8 +33,6 @@ import { WorkOrderChipColorMap } from "./ChipFieldStatus.tsx";
 import WorkOrderForm from "./Form.tsx";
 import { RunWorkOrderForm } from "./Show.tsx";
 
-
-
 const WorkOrderAction = () => {
     return (
         <TopToolbar sx={{
@@ -54,7 +52,7 @@ const WorkOrderAction = () => {
 
 export function WorkOrderCreate() {
     return (
-        <Create redirect={"show"} actions={<WorkOrderAction />} sx={{
+        <Create redirect={"show"} sx={{
             "& .RaCreate-card": {
                 overflow: "visible",
             }
@@ -106,9 +104,13 @@ export function WorkOrderAddTest() {
 
 
 const WorkOrderFilters = [
-    <SearchInput source="q" alwaysOn />,
-    <CustomDateInput label={"Created At Start"} source="created_at_start" alwaysOn />,
-    <CustomDateInput label={"Created At End"} source="created_at_end" alwaysOn />,
+    <SearchInput source="q" alwaysOn sx={{}} />,
+    <CustomDateInput label={"Created At Start"} source="created_at_start" disableFuture alwaysOn size="small" sx={{
+        marginBottom: '4px'
+    }}/>,
+    <CustomDateInput label={"Created At End"} source="created_at_end" disableFuture alwaysOn size="small"sx={{
+        marginBottom: '4px'
+    }} />,
 ];
 
 function getRequestLength(data: WorkOrder): number {

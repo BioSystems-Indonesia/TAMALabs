@@ -4,12 +4,11 @@ import SegmentIcon from '@mui/icons-material/Segment';
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Divider from "@mui/material/Divider";
-import LinearProgress from "@mui/material/LinearProgress";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { FilterList, FilterListItem, FilterLiveSearch, SavedQueriesList, useGetList, useListContext } from "react-admin";
+import { FilterList, FilterListItem, FilterLiveSearch, useGetList, useListContext } from "react-admin";
+import { stopEnterPropagation } from '../../helper/component';
 import type { ObservationRequestCreateRequest } from '../../types/observation_requests';
-import { Typography } from "@mui/material";
 
 type TestFilterSidebarProps = {
     setSelectedData: React.Dispatch<React.SetStateAction<Record<number, ObservationRequestCreateRequest>>>
@@ -124,7 +123,7 @@ export const TestFilterSidebar = ({
         };
     };
 
-    const { data: filter, isLoading: isFilterLoading } = useQuery({
+    const { data: filter} = useQuery({
         queryKey: ['filterTestType'],
         queryFn: () => fetch(import.meta.env.VITE_BACKEND_BASE_URL + '/test-type/filter').then(res => res.json()),
     });
@@ -166,11 +165,12 @@ export const TestFilterSidebar = ({
                             backgroundColor: 'background.paper',
                         },
                     }}
+                    onKeyDown={stopEnterPropagation}
                 />
                 <Divider />
                 <FilterList 
                     label="Template" 
-                    icon={<PagesIcon />}
+                    icon={<PagesIcon color="primary"/>}
                     sx={{
                         '& .MuiListItemIcon-root': {
                             minWidth: 36,
@@ -190,7 +190,7 @@ export const TestFilterSidebar = ({
                 <Divider />
                 <FilterList 
                     label="Category" 
-                    icon={<CategoryIcon />}
+                    icon={<CategoryIcon color="primary"/>}
                     sx={{
                         '& .MuiListItemIcon-root': {
                             minWidth: 36,
@@ -210,7 +210,7 @@ export const TestFilterSidebar = ({
                 <Divider />
                 <FilterList 
                     label="Sub Category" 
-                    icon={<SegmentIcon />}
+                    icon={<SegmentIcon color="primary"/>}
                     sx={{
                         '& .MuiListItemIcon-root': {
                             minWidth: 36,

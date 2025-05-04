@@ -1,12 +1,13 @@
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { Breadcrumbs, Stack } from '@mui/material';
+import { Stack } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import { useEffect, useState, type ReactNode } from 'react';
 import { AppBar, Button, CheckForApplicationUpdate, Layout, Link, LoadingIndicator, TitlePortal, ToggleThemeButton } from 'react-admin';
 import { useLocation, useNavigate } from "react-router-dom";
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { toTitleCase } from '../helper/format';
 import AppIndicator from '../component/AppIndicator';
+import Breadcrumbs, { type BreadcrumbsLink } from '../component/Breadcrumbs';
+import { toTitleCase } from '../helper/format';
 
 
 const SettingsButton = () => (
@@ -58,10 +59,9 @@ type PathConfiguration = {
 
 const DynamicBreadcrumbs = () => {
     const location = useLocation();
-    const [paths, setPaths] = useState<Array<PathConfiguration>>([])
+    const [breadCrumbsLinks, setBreadCrumbsLinks] = useState<Array<BreadcrumbsLink>>([])
 
     useEffect(() => {
-        // Remove first slash then split
         const pathSplit = location.pathname.substring(1).split("/")
 
         const pathsConfig: Array<PathConfiguration> = []
@@ -72,42 +72,47 @@ const DynamicBreadcrumbs = () => {
             })
         })
 
-        setPaths(pathsConfig)
+
+        const currentBreadCrumb: Array<BreadcrumbsLink> = []
+        pathsConfig.forEach((val, i) => {
+            const generateHref = (): string => {
+                const pathUntil = pathsConfig.slice(0, i + 1)
+                return "/" + pathUntil.map(v => v.path).filter(v => v).join("/") + location.search
+            }
+
+            currentBreadCrumb.push({
+                label: toTitleCase(val.path),
+                href: generateHref(),
+                // icon: val.type == "general" ? <Icon /> : <Icon />,
+                active: i == pathsConfig.length - 1,
+            })
+        })
+
+        console.log(currentBreadCrumb)
+
+        setBreadCrumbsLinks(currentBreadCrumb)
     }, [location.pathname])
 
-    return (
-        <Breadcrumbs sx={{ py: 2 }} aria-label="breadcrumb">
-            {paths.map((val, i) => {
-                const generateHref = (): string => {
-                    const pathUntil = paths.slice(0, i + 1)
-                    return "/" + pathUntil.map(v => v.path).filter(v => v).join("/") + location.search
-                }
+    const navigate = useNavigate();
 
-                return (
-                    <Link underline="hover" color={
-                        i == paths.length - 1 ? "text.primary" : "inherit"}
-                        to={generateHref()} key={i} >
-                        {toTitleCase(val.path)}
-                    </Link>
-                )
-            })}
-        </Breadcrumbs>
+    return (
+        <Stack direction={"row"}>
+            <Button label='Back' variant='contained' onClick={() => navigate(-1)} sx={{
+                display: location.pathname.split("/").length > 2 ? 'flex' : 'none',
+                my: 1.25,
+            }}>
+                <ArrowBackIcon />
+            </Button>
+            <Breadcrumbs links={breadCrumbsLinks}>
+            </Breadcrumbs>
+        </Stack>
     )
 }
 
 export const DefaultLayout = ({ children }: { children: ReactNode }) => {
-    const navigate = useNavigate();
-    const location = useLocation();
-
     return (
         <Layout sx={{}} appBar={MyAppBar}>
             <Stack direction={"row"} gap={2}>
-                <Button label='Back' variant='contained' onClick={() => navigate(-1)} sx={{
-                    display: location.pathname.split("/").length > 2 ? 'flex' : 'none',
-                    my: 1.25, 
-                }}>
-                    <ArrowBackIcon />
-                </Button>
 
                 <DynamicBreadcrumbs />
             </Stack>

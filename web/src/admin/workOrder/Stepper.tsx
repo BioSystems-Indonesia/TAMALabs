@@ -60,7 +60,9 @@ export default function FormStepper({
                 })}
             </Stepper>
             <React.Fragment>
-                <Typography sx={{ mt: 2, mb: 1 }}>Step {activeStep + 1}</Typography>
+                <Box sx={{
+                    my:1,
+                }}/>
                 {children}
                 <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
                     <Button
