@@ -46,7 +46,7 @@ const App = () => {
             options={{
                 label: "Lab Request"
             }}
-            recordRepresentation={record => `#${record.id} - ${dateFormatter(record.created_at)})`}
+            recordRepresentation={record => `#${record.id} - ${dateFormatter(record.created_at)}`}
         >
             <Route path="/:id/show/device/create" element={<DeviceCreate />} />
         </Resource>
@@ -65,20 +65,6 @@ const App = () => {
             icon={UserIcon}
             recordRepresentation={record => `#${record.id} - ${record.first_name} ${record.last_name}`}
         />
-        {/* <Resource name="specimen" list={SpecimenList} show={SpecimenShow}
-            hasCreate={false}
-            hasEdit={false}
-            hasShow={true}
-            icon={ScienceIcon}
-            recordRepresentation={record => `#${record.id} - ${record.type}`}
-        />
-        <Resource name="observation-request" list={ObservationRequestList} show={ObservationRequestShow}
-            hasCreate={false}
-            hasEdit={false}
-            hasShow={true}
-            icon={ListIcon}
-            recordRepresentation={record => `#${record.id} - ${record.type}`}
-        /> */}
         <Resource name="test-type" list={TestTypeList}
             create={TestTypeCreate}
             edit={TestTypeEdit}
@@ -86,6 +72,9 @@ const App = () => {
             hasEdit={true}
             icon={BiotechIcon}
             recordRepresentation={record => `#${record.id} - ${record.code}`}
+            options={{
+                label: "Test Type"
+            }}
         />
         <Resource name="test-template" list={TestTemplateList}
             create={TestTemplateCreate}
@@ -95,6 +84,9 @@ const App = () => {
             hasShow={false}
             icon={TableViewIcon}
             recordRepresentation={record => `${record.name}`}
+            options={{
+                label: "Test Template"
+            }}
         />
         <Resource name="device" list={DeviceList} show={DeviceShow} edit={DeviceEdit}
             create={DeviceCreate}

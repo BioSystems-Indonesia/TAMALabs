@@ -20,6 +20,7 @@ import {
 import FeatureList from "../../component/FeatureList.tsx";
 import { Action, ActionKeys } from "../../types/props.ts";
 import { useRefererRedirect } from "../../hooks/useReferer.ts";
+import SideFilter from "../../component/SideFilter.tsx";
 
 type DeviceFormProps = {
     readonly?: boolean
@@ -82,16 +83,20 @@ export function DeviceEdit() {
 }
 
 const DeviceFilterSidebar = () => (
-    <Card sx={{ order: -1, mr: 2, mt: 2, width: 300 }}>
-        <CardContent>
-            <FilterLiveSearch />
-        </CardContent>
-    </Card>
+    <SideFilter>
+        <FilterLiveSearch />
+    </SideFilter>
 );
 
 
 export const DeviceList = () => (
-    <List aside={<DeviceFilterSidebar />} resource="device">
+    <List aside={<DeviceFilterSidebar />} resource="device"
+        storeKey={false} exporter={false}
+        sort={{
+            field: "id",
+            order: "DESC"
+        }}
+    >
         <Datagrid>
             <TextField source="id" />
             <TextField source="name" />

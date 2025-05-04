@@ -1,11 +1,14 @@
 import AddIcon from '@mui/icons-material/Add';
-import { Box, Button, Checkbox, Dialog, DialogContent, DialogTitle, MenuItem, Select, type ButtonProps, GridLegacy as Grid } from "@mui/material";
+import { Box, Button, Checkbox, Dialog, DialogContent, DialogTitle, MenuItem, Select, type ButtonProps, GridLegacy as Grid, ListItem, ListItemText, Paper, Tooltip } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import MUIList from "@mui/material/List";
 import { DataGrid as MuiDatagrid, useGridApiRef, type GridRenderCellParams } from "@mui/x-data-grid";
+import TouchAppIcon from '@mui/icons-material/TouchApp';
 import React, { useEffect, useState } from "react";
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import {
     AutocompleteInput,
     DateInput,
@@ -32,6 +35,7 @@ import { WorkOrder } from '../../types/work_order.ts';
 import { PatientFormField } from "../patient/index.tsx";
 import FormStepper from "./Stepper.tsx";
 import { TestFilterSidebar } from "./TestTypeFilter.tsx";
+import ListAltIcon from '@mui/icons-material/ListAlt';
 
 
 type WorkOrderActionKeys = ActionKeys | "ADD_TEST";
@@ -41,6 +45,56 @@ type WorkOrderFormProps = {
     mode: WorkOrderActionKeys
 }
 
+function TestSelectorPrompt() {
+    return (
+        <Box
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 1,
+                margin: 1,
+                border: '2px',
+                borderRadius: 2,
+                textAlign: 'center',
+                maxWidth: '200px',
+                backgroundColor: 'background.paper',
+                boxShadow: 1,
+            }}
+        >
+            <TouchAppIcon color="primary" sx={{ fontSize: 32, mb: 1 }} />
+            <Typography variant="h6" component="p" gutterBottom>
+                Please select tests
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Check the tests you want to run
+            </Typography>
+            <Divider sx={{ width: '80%', mb: 2 }} />
+
+            <Box sx={{ textAlign: 'left', width: '100%', px: 2 }}>
+                <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center', color: 'secondary.main' }}>
+                    <InfoOutlinedIcon sx={{ mr: 1, fontSize: '1.2rem' }} /> Quick Tips:
+                </Typography>
+                <MUIList dense>
+                    <ListItem disablePadding>
+                        <ListItemText
+                            primary="You can filter with the sidebar"
+                            primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                        />
+                    </ListItem>
+                    <ListItem disablePadding>
+                        <ListItemText
+                            primary={<p>For recurring tests across multiple patients, consider using <u>Test Templates</u></p>}
+                            primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+                        />
+                    </ListItem>
+                </MUIList >
+            </Box>
+        </Box>
+    );
+}
+
 
 export const testTypesField = "test_types";
 
@@ -48,25 +102,46 @@ export const testTypesField = "test_types";
 const PickedTest = ({ selectedData }: { selectedData: Record<number, ObservationRequestCreateRequest> }) => {
     if (Object.keys(selectedData).length === 0) {
         return (
-            <Typography fontSize={16}>Please select test to run</Typography>
+            <TestSelectorPrompt />
         )
     }
 
     return (
-        <Stack spacing={2}>
-            <Typography fontSize={16}>Selected Test</Typography>
-            <Grid container spacing={1}>
-                {
-                    Object.entries(selectedData).map(([key, value]) => {
+        <Paper elevation={2} sx={{ p: 2, backgroundColor: 'background.paper', maxWidth: "200px" }}>
+            <Stack spacing={2}>
+                {/* Enhanced Title Section */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <ListAltIcon color="primary" sx={{ mr: 1 }} /> {/* Icon before title */}
+                    <Typography variant="h6" fontSize={18} fontWeight="medium"> {/* More prominent title */}
+                        Selected Tests
+                    </Typography>
+                </Box>
+                <Divider/>
+                {/* Grid container for the chips */}
+                <Grid container spacing={1}> {/* Adjust spacing as needed */}
+                    {Object.entries(selectedData).map(([key, value]) => {
+                        // Convert the key back to a number if you need it for handlers like onRemoveTest
+                        const testId = Number(key);
+
+                        // Determine the text to show in the tooltip (use full name if available, otherwise code)
+                        const tooltipTitle = `${value.test_type_code} (${value.specimen_type})`;
+
                         return (
-                            <Grid item key={key}>
-                                <Chip label={value.test_type_code} />
+                            <Grid item key={testId}>
+                                <Tooltip title={tooltipTitle} arrow placement="top">
+                                    <Chip
+                                        label={value.test_type_code}
+                                        color="primary"
+                                        variant="filled"
+                                        size="medium"
+                                    />
+                                </Tooltip>
                             </Grid>
-                        )
-                    })
-                }
-            </Grid>
-        </Stack>
+                        );
+                    })}
+                </Grid>
+            </Stack>
+        </Paper>
     )
 }
 
@@ -185,7 +260,7 @@ function TestTable({
     const apiRef = useGridApiRef();
 
     return <Grid container spacing={2}>
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={9}>
             <MuiDatagrid
                 pageSizeOptions={[-1]}
                 hideFooter
@@ -229,9 +304,16 @@ function TestTable({
                         renderCell: (params: GridRenderCellParams) => {
                             const testType = params.row as TestType
 
+                            if (testType.types.length == 1) {
+                                return testType.types[0].type
+                            }
+
                             return <Select defaultValue={testType.types[0]?.type} value={params.row.picked_type} onChange={(e) => {
                                 const newRow = { ...params.row, picked_type: e.target.value }
                                 updateSelectedData(newRow)
+                            }} sx={{
+                                padding: '0px',
+                                maxHeight: "30px",
                             }}>
                                 {testType.types.map((type: TestTypeSpecimenType) => {
                                     return <MenuItem value={type.type}>{type.type}</MenuItem>
@@ -244,7 +326,7 @@ function TestTable({
                 rows={rows}
             />
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={3}>
             <PickedTest selectedData={selectedData} />
         </Grid>
     </Grid>;
