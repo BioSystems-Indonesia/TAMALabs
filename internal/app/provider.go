@@ -122,9 +122,16 @@ func InitSQLiteDB() (*gorm.DB, error) {
 		}
 	}
 
-	db, err := gorm.Open(gormSqlite.Open(dbFileName), &gorm.Config{})
+	dialec, err := sql.Open("sqlite", dbFileName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+
+	db, err := gorm.Open(gormSqlite.Dialector{
+		Conn: dialec,
+	}, &gorm.Config{})
+	if err != nil {
+		return nil, err
 	}
 	db.Logger = db.Logger.LogMode(logger.Error)
 
