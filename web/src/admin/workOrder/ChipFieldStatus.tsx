@@ -17,7 +17,9 @@ export function WorkOrderChipColorMap(value: string) {
         case 'SUCCESS':
             return 'success';
         case 'CANCELLED':
-            return 'error';
+            return 'warning';
+        case "INCOMPLETE_SEND":
+            return "error";
         default:
             return 'default';
     }

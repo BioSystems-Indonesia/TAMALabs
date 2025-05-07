@@ -32,8 +32,8 @@ import useAxios from "../../hooks/useAxios.ts";
 import type { WorkOrder } from "../../types/work_order.ts";
 import { WorkOrderChipColorMap } from "./ChipFieldStatus.tsx";
 import WorkOrderForm from "./Form.tsx";
-import { RunWorkOrderForm } from "./Show.tsx";
 import SideFilter from "../../component/SideFilter.tsx";
+import RunWorkOrderForm from "./RunWorkOrderForm.tsx";
 
 const WorkOrderAction = () => {
     return (
@@ -174,11 +174,22 @@ type RunWorkOrderProps = {
 
 function RunWorkOrderDialog(props: RunWorkOrderProps) {
     const { selectedIds } = useListContext();
+    const [processing, setProcessing] = useState(false)
+    const notify = useNotify();
 
     return (
         <Dialog
             open={props.open}
-            onClose={props.onClose}
+            onClose={() => {
+                if (processing) {
+                    notify('Cannot close dialog while processing', {
+                        type: 'error',
+                    });
+                    return;
+                }
+
+                props.onClose()
+            }}
             fullWidth
             sx={{
                 width: "100%",
@@ -190,7 +201,7 @@ function RunWorkOrderDialog(props: RunWorkOrderProps) {
                 Run Work Order
             </DialogTitle>
             <DialogContent sx={{}}>
-                <RunWorkOrderForm workOrderIDs={selectedIds} />
+                <RunWorkOrderForm workOrderIDs={selectedIds} setIsProcessing={setProcessing} isProcessing={processing} />
             </DialogContent>
         </Dialog >
     )

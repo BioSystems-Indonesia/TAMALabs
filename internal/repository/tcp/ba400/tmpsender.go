@@ -13,44 +13,32 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
-const timeout = 30 * time.Second
+const (
+	timeout                 = 15 * time.Second
+	batchObservationRequest = 30
+	batchSend               = 3
+)
 
 // SendToBA400 is a function to send message to BA400 for now its singleton view
-func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.Device, urgent bool) error {
+func SendToBA400(
+	ctx context.Context, req *entity.SendPayloadRequest,
+) error {
 	encoder := hl7.NewEncoder(&hl7.EncodeOption{
 		TrimTrailingSeparator: true,
 	})
 
-	const batchSend = 3
-	var splitPatient = []entity.Patient{}
-	for _, p := range patients {
-		for _, s := range p.Specimen {
-			const maxReq = 30
-			for i := 0; i < len(s.ObservationRequest); i += maxReq {
-				requests := []entity.ObservationRequest{}
-				end := i + maxReq
-				if end > len(s.ObservationRequest) {
-					end = len(s.ObservationRequest)
-				}
-
-				r := s.ObservationRequest[i:end]
-				requests = append(requests, r...)
-
-				newSpecimen := s
-				newSpecimen.ObservationRequest = requests
-				newPatient := p
-				newPatient.Specimen = []entity.Specimen{newSpecimen}
-				splitPatient = append(splitPatient, newPatient)
-			}
-		}
+	splitObservationRequest := splitPatientsBasedOnObservationRequest(req.Patients)
+	err := writeProgress(req, 0, entity.WorkOrderStreamingResponseStatusInProgress)
+	if err != nil {
+		return fmt.Errorf("failed to write progress: %w", err)
 	}
 
 	buf := bytes.Buffer{}
-	for i, p := range splitPatient {
+	for i, p := range splitObservationRequest {
 		slog.Info(fmt.Sprintf("sending patient with len specimen %d", len(p.Specimen)))
 		slog.Info(fmt.Sprintf("sending patient with len request %d", len(p.Specimen[0].ObservationRequest)))
 
-		o := NewOML_O33(p, device, urgent)
+		o := NewOML_O33(p, req.Device, req.Urgent)
 
 		b, err := encoder.Encode(o)
 		if err != nil {
@@ -61,9 +49,9 @@ func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.D
 		buf.Write([]byte{constant.FileSeparator, constant.CarriageReturn})
 		buf.Write([]byte{constant.VerticalTab})
 
-		if ((i+1)%batchSend == 0) || i == len(splitPatient)-1 {
+		if ((i+1)%batchSend == 0) || i == len(splitObservationRequest)-1 {
 			sender := Sender{
-				host:     fmt.Sprintf("%s:%d", device.IPAddress, device.Port),
+				host:     fmt.Sprintf("%s:%d", req.Device.IPAddress, req.Device.Port),
 				deadline: timeout,
 			}
 			messageToSend := buf.Bytes()
@@ -94,9 +82,55 @@ func SendToBA400(ctx context.Context, patients []entity.Patient, device entity.D
 		}
 
 		time.Sleep(time.Second)
+
+		percentageComplete := float64(i+1) / float64(len(splitObservationRequest)) * 100
+		err = writeProgress(req, percentageComplete, entity.WorkOrderStreamingResponseStatusInProgress)
+		if err != nil {
+			return fmt.Errorf("failed to write progress: %w", err)
+		}
 	}
 
 	return nil
+}
+
+func writeProgress(req *entity.SendPayloadRequest, percentage float64, status entity.WorkOrderStreamingResponseStatus) error {
+	if req.Writer == nil || req.Flusher == nil {
+		return nil
+	}
+
+	_, err := req.Writer.Write([]byte(entity.NewWorkOrderStreamingResponse(percentage, status)))
+	if err != nil {
+		return fmt.Errorf("failed to write response: %w", err)
+	}
+
+	req.Flusher.Flush()
+
+	return nil
+}
+
+func splitPatientsBasedOnObservationRequest(patients []entity.Patient) []entity.Patient {
+	var splitPatient []entity.Patient
+	for _, p := range patients {
+		for _, s := range p.Specimen {
+			for i := 0; i < len(s.ObservationRequest); i += batchObservationRequest {
+				requests := []entity.ObservationRequest{}
+				end := i + batchObservationRequest
+				if end > len(s.ObservationRequest) {
+					end = len(s.ObservationRequest)
+				}
+
+				r := s.ObservationRequest[i:end]
+				requests = append(requests, r...)
+
+				newSpecimen := s
+				newSpecimen.ObservationRequest = requests
+				newPatient := p
+				newPatient.Specimen = []entity.Specimen{newSpecimen}
+				splitPatient = append(splitPatient, newPatient)
+			}
+		}
+	}
+	return splitPatient
 }
 
 // receiveResponse is a function to receive response from BA400

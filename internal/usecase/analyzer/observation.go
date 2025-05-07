@@ -79,7 +79,11 @@ func (u *Usecase) withBarcode(ctx context.Context, barcode string) error {
 		return err
 	}
 
-	err = ba400.SendToBA400(ctx, []entity.Patient{speciment.Patient}, device, false)
+	err = ba400.SendToBA400(ctx, &entity.SendPayloadRequest{
+		Patients: []entity.Patient{speciment.Patient},
+		Device:   device,
+		Urgent:   false,
+	})
 	if err != nil {
 		return err
 	}
@@ -104,7 +108,11 @@ func (u *Usecase) withoutBarcode(ctx context.Context) error {
 	}
 
 	for _, workOrder := range workOrders {
-		ba400.SendToBA400(ctx, []entity.Patient{workOrder.Patient}, device, false)
+		ba400.SendToBA400(ctx, &entity.SendPayloadRequest{
+			Patients: []entity.Patient{workOrder.Patient},
+			Device:   device,
+			Urgent:   false,
+		})
 	}
 
 	return nil

@@ -1,25 +1,18 @@
 import CancelIcon from '@mui/icons-material/Cancel';
-import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import PrintIcon from '@mui/icons-material/Print';
-import { Card, CardContent, CircularProgress, GridLegacy as Grid, type SxProps } from "@mui/material";
+import { Card, CardContent } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import {
     ArrayField,
-    AutocompleteInput,
-    BooleanInput,
     Button,
     ChipField,
     Datagrid,
     DateField,
     EditButton,
-    Form,
-    InputHelperText,
-    Link,
     RecordContextProvider,
-    ReferenceInput,
     Show,
     SingleFieldList,
     TabbedShowLayout,
@@ -27,24 +20,20 @@ import {
     TopToolbar,
     WithRecord,
     WrapperField,
-    required,
     useGetRecordId,
     useNotify,
     useRecordContext,
     useRefresh
 } from "react-admin";
-import { useFormContext } from 'react-hook-form';
 import { useReactToPrint } from "react-to-print";
 import LIMSBarcode from '../../component/Barcode';
 import { trimName } from '../../helper/format';
-import useAxios from '../../hooks/useAxios';
-import { getRefererParam } from '../../hooks/useReferer';
 import useSettings from '../../hooks/useSettings';
 import type { BarcodeStyle } from '../../types/general';
 import type { WorkOrder } from '../../types/work_order';
-import { DeviceForm } from "../device";
 import { PatientForm } from '../patient';
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
+import RunWorkOrderForm from './RunWorkOrderForm';
 
 const barcodePageStyle = (style: BarcodeStyle) => `
 @media all {
@@ -170,6 +159,7 @@ export function WorkOrderShow() {
     const barcodeRef = React.useRef<any>(null);
     const workOrderID = useGetRecordId();
     const [settings] = useSettings();
+    const [isProcessing, setIsProcessing] = React.useState(false);
 
     return (
         <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef} workOrderID={Number(workOrderID)} />}>
@@ -183,7 +173,7 @@ export function WorkOrderShow() {
                             gap: 2,
                         }}>
                             <WorkOrderStatusChipField source='status' />
-                            <RunWorkOrderForm />
+                            <RunWorkOrderForm isProcessing={isProcessing} setIsProcessing={setIsProcessing}/>
                         </CardContent>
                     </Card>
                     <Card>
@@ -286,102 +276,5 @@ export function WorkOrderShow() {
 
 export type RunWorkOrderFormProps = {
     workOrderIDs?: number[];
-}
-
-export function RunWorkOrderForm(props: RunWorkOrderFormProps) {
-    const notify = useNotify();
-    const refresh = useRefresh();
-    const axios = useAxios();
-    const { mutate, isPending } = useMutation({
-        mutationFn: async (data: any) => {
-            const response = await axios.post(`/work-order/run`, data, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.status != 200) {
-                throw new Error(response.data?.error);
-            }
-
-            return response.data;
-        },
-        onSuccess: () => {
-            notify('Success run', {
-                type: 'success',
-            });
-            refresh()
-        },
-        onError: (error) => {
-            notify('Error:' + error.message, {
-                type: 'error',
-            });
-        },
-    })
-
-    const onSubmit = (data: any) => {
-        if (!data.device_id) {
-            notify('Please select device to run', {
-                type: 'error',
-            });
-            return;
-        }
-
-        mutate({
-            work_order_ids: props.workOrderIDs ?? [data.id],
-            device_id: data.device_id,
-            urgent: data.urgent,
-        });
-    }
-
-    return <Form disabled={isPending} onSubmit={onSubmit}>
-        <Grid direction={"row"} sx={{
-            width: "100%",
-        }} container>
-            <Grid item xs={12} md={9} sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-            }}>
-                <ReferenceInput source={"device_id"} reference={"device"} disabled={isPending} >
-                    <AutocompleteInput source={"device_id"} validate={[required()]} create={<DeviceForm />} sx={{
-                        margin: 0,
-                    }} disabled={isPending} helperText={
-                        <Link to={"/device/create?" + getRefererParam()}>
-                            <InputHelperText helperText="Create new device"></InputHelperText>
-                        </Link>
-                    }
-                    />
-                </ReferenceInput>
-            </Grid>
-            <Grid item xs={12} md={3} sx={{
-                display: "flex",
-                paddingLeft: "24px",
-                justifyContent: "start",
-                alignItems: "center",
-            }}>
-                <BooleanInput source={"urgent"} disabled={isPending} label="Urgent" />
-            </Grid>
-        </Grid>
-        <RunWorkOrderSubmit isPending={isPending} sx={{
-            marginTop: "12px",
-        }} />
-    </Form>;
-}
-
-function RunWorkOrderSubmit({ isPending, sx }: { isPending: boolean, sx: SxProps }) {
-    const { watch } = useFormContext()
-
-
-    return (
-        <Stack sx={sx}>
-            <Button label="Run Work Order" disabled={isPending || !watch("device_id")} variant="contained" type='submit' sx={{
-                cursor: "pointer"
-            }} >
-                {isPending ? <CircularProgress size={12} variant='indeterminate' color='primary' /> : <PlayCircleFilledIcon />}
-            </Button>
-            {!isPending && !watch("device_id") && <Typography color='error' fontSize={12}>Please pick device to run</Typography>}
-        </Stack>
-    );
 }
 
