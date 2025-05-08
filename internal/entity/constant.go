@@ -24,23 +24,25 @@ const (
 	SpecimenTypeSEM SpecimenType = "SEM"
 )
 
-// TODO: Change this to real data
-func (s SpecimenType) Code() string {
+func (s SpecimenType) Name() string {
 	switch s {
 	case SpecimenTypeSER:
-		return "1"
+		return "Serum"
 	case SpecimenTypeURI:
-		return "2"
-	case SpecimenTypeCSF:
-		return "3"
-	case SpecimenTypeLIQ:
-		return "4"
+		return "Urine"
 	case SpecimenTypePLM:
-		return "5"
+		return "Plasma"
+	case SpecimenTypeWBL:
+		return "Whole blood"
+	case SpecimenTypeCSF:
+		return "Cerebrospinal fluid"
+	case SpecimenTypeLIQ:
+		return "Biological liquid"
 	case SpecimenTypeSEM:
-		return "6"
+		return "Semen"
+	default:
+		return ""
 	}
-	return "9"
 }
 
 type Priority string

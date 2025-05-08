@@ -244,13 +244,13 @@ export const WorkOrderList = () => {
                 )} />
                 <ReferenceField source="patient_id" reference="patient">
                 </ReferenceField>
+                <TextField source="barcode" />
                 <WithRecord label="Request" render={(record: any) => (
                     <Typography variant="body2" >
                         {getRequestLength(record)}
                     </Typography>
                 )} />
                 <DateField source="created_at" />
-                <DateField source="updated_at" />
                 <WrapperField label="Actions" sortable={false} >
                     <Stack direction={"row"} spacing={2}>
                         <ShowButton variant="contained" />

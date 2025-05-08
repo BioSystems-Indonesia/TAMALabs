@@ -34,16 +34,6 @@ func NewOML_O33_Specimen(index int, s entity.Specimen, obr []entity.ObservationR
 		orders = append(orders, NewOrder(strconv.Itoa(i+1), date, o.TestCode, o.GetOrderControlNode(), urgent))
 	}
 
-	specimenType := Serum
-	switch s.Type {
-	case string(entity.SpecimenTypeSER):
-		specimenType = Serum
-	case string(entity.SpecimenTypeWBL):
-		specimenType = WBL
-	case string(entity.SpecimenTypeURI):
-		specimenType = Urine
-	}
-
 	return h251.OML_O33_Specimen{
 		HL7: h251.HL7Name{},
 		SPM: &h251.SPM{
@@ -56,8 +46,12 @@ func NewOML_O33_Specimen(index int, s entity.Specimen, obr []entity.ObservationR
 				},
 			},
 			SpecimenParentIDs: []h251.EIP{},
-			SpecimenType:      specimenType,
-			SpecimenRole:      []h251.CWE{{Identifier: "P"}},
+			SpecimenType: h251.CWE{
+				Identifier:         string(s.Type),
+				Text:               entity.SpecimenType(s.Type).Name(),
+				NameOfCodingSystem: "HL70369",
+			},
+			SpecimenRole: []h251.CWE{{Identifier: "P"}},
 		},
 		Order: orders,
 	}
