@@ -2,25 +2,34 @@ import { GridLegacy as Grid, LinearProgress, SxProps } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 
-import { useFormContext } from 'react-hook-form';
+import { SubmitHandler, useFormContext } from 'react-hook-form';
 import Typography from '@mui/material/Typography';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { AutocompleteInput, BooleanInput, Button, Form, InputHelperText, Link, ReferenceInput, required, useNotify } from 'react-admin';
+import { AutocompleteInput, BooleanInput, Button, Form, InputHelperText, Link, RecordContextProvider, ReferenceInput, required, useNotify, useRefresh, WithRecord } from 'react-admin';
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
 import { getRefererParam } from '../../hooks/useReferer';
 import { DeviceForm } from '../device';
 import WarningIcon from '@mui/icons-material/Warning';
 import useAxios from '../../hooks/useAxios';
+import { propsStateInitializer } from '@mui/x-data-grid/internals';
 
 
 type WorkOrderStatus = 'IDLE' | 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'INCOMPLETE' | 'ERROR';
 type StreamStatus = 'DONE' | 'IN_PROGRESS' | 'INCOMPLETE';
 type ProgressCallback = (percentage: number, status: StreamStatus) => void;
+const WorkOrderAction = {
+    run: "run",
+    cancel: "cancel",
+} as const
+type WorkOrderActionValue = typeof WorkOrderAction[keyof typeof WorkOrderAction];
+
+
 
 type RunWorkOrder = {
     work_order_ids: number[];
     device_id: number;
     urgent: boolean;
+    action: WorkOrderActionValue;
 }
 
 interface StreamResult {
@@ -165,8 +174,11 @@ async function processSSEStream(
 }
 
 type RunWorkOrderFormProps = {
-    workOrderIDs?: number[];
+    workOrderIDs: number[];
+    showCancelButton?: boolean;
+    showRunButton?: boolean;
     isProcessing: boolean;
+    defaultDeviceID?: number;
     setIsProcessing: (isProcessing: boolean) => void;
 }
 
@@ -176,6 +188,7 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
+    const refresh = useRefresh();
 
     // Callback passed to the stream processor to update component state during streaming
     const handleProgressUpdate: ProgressCallback = useCallback((newPercentage, newStatus) => {
@@ -201,7 +214,17 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
         setStatus('PENDING');
 
         try {
-            const response: Response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`, {
+            let url
+            switch (data.action) {
+                case WorkOrderAction.run:
+                    url = `${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`;
+                    break;
+                case WorkOrderAction.cancel:
+                    url = `${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/cancel`;
+                    break;
+            }
+
+            const response: Response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Accept': 'text/event-stream',
@@ -226,18 +249,18 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
             setStatus(finalResult.status);
             setPercentage(finalResult.percentage);
             if (finalResult.status === 'INCOMPLETE') {
-                console.log("Work order processing was incomplete (likely aborted).");
                 notify(`Error on sent work order: ${finalResult.errorCause}`, {
                     type: 'error',
                     multiLine: true,
                     autoHideDuration: 3000,
                 })
+                refresh();
             } else {
-                console.log("Work order processing finished successfully.");
                 notify("Work order sent successfully", {
                     type: 'success',
                     autoHideDuration: 3000,
                 })
+                refresh();
             }
 
         } catch (error: unknown) {
@@ -302,7 +325,7 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
     }, [isLoading, status, props.setIsProcessing]);
     const notify = useNotify();
 
-    const onSubmit = (data: any) => {
+    const onSubmit: SubmitHandler<any> = (data, event) => {
         console.log("Run work order", data)
         if (!data.device_id) {
             notify('Please select device to run', {
@@ -311,71 +334,115 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
             return;
         }
 
+        const submitter = (event?.nativeEvent as SubmitEvent | undefined)?.submitter as HTMLButtonElement | undefined;
+        const action = submitter?.value as WorkOrderActionValue | undefined;
+
         startWorkOrder({
             work_order_ids: props.workOrderIDs ?? [data.id],
             device_id: data.device_id,
             urgent: data.urgent,
+            action: action ?? WorkOrderAction.run,
         });
     }
 
-    return <Form disabled={props.isProcessing} onSubmit={onSubmit}>
-        <Grid direction={"row"} sx={{
-            width: "100%",
-        }} container>
-            <Grid item xs={12} md={9} sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-            }}>
-                <ReferenceInput source={"device_id"} reference={"device"} disabled={props.isProcessing} >
-                    <AutocompleteInput source={"device_id"} validate={[required()]} create={<DeviceForm />} sx={{
-                        margin: 0,
-                    }} disabled={props.isProcessing} helperText={
-                        <Link to={"/device/create?" + getRefererParam()}>
-                            <InputHelperText helperText="Create new device"></InputHelperText>
-                        </Link>
-                    }
-                    />
-                </ReferenceInput>
+    return <RecordContextProvider value={{
+        device_id: props.defaultDeviceID ?? undefined,
+    }}>
+        <Form disabled={props.isProcessing} onSubmit={onSubmit}>
+            <Grid direction={"row"} sx={{
+                width: "100%",
+            }} container>
+                <Grid item xs={12} md={9} sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                }}>
+                    <ReferenceInput source={"device_id"} reference={"device"} disabled={props.isProcessing} >
+                        <AutocompleteInput source={"device_id"} validate={[required()]} create={<DeviceForm />} sx={{
+                            margin: 0,
+                        }} disabled={props.isProcessing} helperText={
+                            <Link to={"/device/create?" + getRefererParam()}>
+                                <InputHelperText helperText="Create new device"></InputHelperText>
+                            </Link>
+                        }
+                        />
+                    </ReferenceInput>
+                </Grid>
+                <Grid item xs={12} md={3} sx={{
+                    display: "flex",
+                    paddingLeft: "24px",
+                    justifyContent: "start",
+                    alignItems: "center",
+                }}>
+                    <BooleanInput source={"urgent"} disabled={props.isProcessing} label="Urgent" />
+                </Grid>
             </Grid>
-            <Grid item xs={12} md={3} sx={{
-                display: "flex",
-                paddingLeft: "24px",
-                justifyContent: "start",
-                alignItems: "center",
-            }}>
-                <BooleanInput source={"urgent"} disabled={props.isProcessing} label="Urgent" />
-            </Grid>
-        </Grid>
-        <RunWorkOrderSubmit isPending={props.isProcessing} sx={{
-            marginTop: "12px",
-        }} percentage={percentage} status={status} />
-    </Form>;
+            <RunWorkOrderSubmit isPending={props.isProcessing} sx={{
+                marginTop: "12px",
+            }} percentage={percentage} status={status} showCancelButton={props.showCancelButton} showRunButton={props.showRunButton ?? true} />
+        </Form>
+    </RecordContextProvider>
 }
 
-function RunWorkOrderSubmit({ isPending, percentage, status, sx }: { isPending: boolean, percentage: number, status: WorkOrderStatus, sx: SxProps }) {
+
+type RunWorkOrderSubmitProps = {
+    isPending: boolean;
+    percentage: number;
+    status: WorkOrderStatus;
+    sx?: SxProps;
+    showCancelButton?: boolean;
+    showRunButton?: boolean;
+}
+
+function RunWorkOrderSubmit({ isPending, percentage, status, sx, showCancelButton, showRunButton }: RunWorkOrderSubmitProps) {
     const { watch } = useFormContext()
 
     return (
         <Stack sx={sx}>
             <Stack spacing={1} width="100%">
-                <Button
-                    label="Run Work Order"
-                    disabled={isPending || !watch("device_id")}
-                    variant="contained"
-                    type='submit'
-                    sx={{
-                        cursor: "pointer"
-                    }}
-                >
-                    {isPending ? <CircularProgress size={12} variant='indeterminate' color='primary' /> : <PlayCircleFilledIcon />}
-                </Button>
+                <Stack direction={"row"} width={"100%"} spacing={2}>
+                    {
+                        showCancelButton &&
+                        <Button
+                            label="Cancel Work Order"
+                            disabled={isPending || !watch("device_id")}
+                            variant="contained"
+                            type='submit'
+                            name="formAction"
+                            value={WorkOrderAction.cancel}
+                            color='error'
+                            sx={{
+                                width: showRunButton ? "20%" : "100%",
+                                cursor: "pointer"
+                            }}
+                        >
+                            {isPending ? <CircularProgress size={12} variant='indeterminate' color='primary' /> : <PlayCircleFilledIcon />}
+                        </Button>
+                    }
+                    {
+                        showRunButton &&
+                        <Button
+                            label="Run Work Order"
+                            disabled={isPending || !watch("device_id")}
+                            variant="contained"
+                            type='submit'
+                            name="formAction"
+                            value={WorkOrderAction.run}
+                            sx={{
+                                width: showCancelButton ? "80%" : "100%",
+                                cursor: "pointer"
+                            }}
+                        >
+                            {isPending ? <CircularProgress size={12} variant='indeterminate' color='primary' /> : <PlayCircleFilledIcon />}
+                        </Button>
+                    }
+                </Stack>
                 {isPending && (
                     <Stack spacing={1} width="100%">
-                        <Stack 
-                            direction="row" 
-                            spacing={1} 
-                            alignItems="center" 
+                        <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
                             justifyContent="center"
                             sx={{
                                 backgroundColor: 'warning.light',
@@ -392,14 +459,14 @@ function RunWorkOrderSubmit({ isPending, percentage, status, sx }: { isPending: 
                                 }
                             }}
                         >
-                            <WarningIcon 
-                                sx={{ 
+                            <WarningIcon
+                                sx={{
                                     color: 'dark',
                                     fontSize: '24px',
                                     animation: 'pulse 2s infinite'
-                                }} 
+                                }}
                             />
-                            <Typography 
+                            <Typography
                                 variant="body2"
                                 sx={{
                                     color: 'dark',

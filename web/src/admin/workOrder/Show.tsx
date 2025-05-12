@@ -30,7 +30,7 @@ import LIMSBarcode from '../../component/Barcode';
 import { trimName } from '../../helper/format';
 import useSettings from '../../hooks/useSettings';
 import type { BarcodeStyle } from '../../types/general';
-import type { WorkOrder } from '../../types/work_order';
+import { workOrderStatusDontShowRun, workOrderStatusShowCancel, type WorkOrder } from '../../types/work_order';
 import { PatientForm } from '../patient';
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
 import RunWorkOrderForm from './RunWorkOrderForm';
@@ -142,12 +142,8 @@ const CancelButton = ({ workOrderID }: { workOrderID: number }) => {
 
 
 function WorkOrderShowActions({ barcodeRef, workOrderID }: { barcodeRef: React.RefObject<any>, workOrderID: number }) {
-    const data = useRecordContext()
     return (
         <TopToolbar>
-            {data?.status === "PENDING" &&
-                <CancelButton workOrderID={workOrderID} />
-            }
             <PrintBarcodeButton barcodeRef={barcodeRef} />
             <EditButton />
         </TopToolbar>
@@ -166,15 +162,24 @@ export function WorkOrderShow() {
             <TabbedShowLayout>
                 <TabbedShowLayout.Tab label="Test">
                     <Card>
-                        <CardContent sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            flexDirection: "column",
-                            gap: 2,
-                        }}>
-                            <WorkOrderStatusChipField source='status' />
-                            <RunWorkOrderForm isProcessing={isProcessing} setIsProcessing={setIsProcessing}/>
-                        </CardContent>
+                        <WithRecord render={(data: WorkOrder) => {
+                            console.log(data);
+                            return (
+                                <CardContent sx={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    flexDirection: "column",
+                                    gap: 2,
+                                }}>
+                                    <WorkOrderStatusChipField source='status' />
+                                    <RunWorkOrderForm isProcessing={isProcessing} setIsProcessing={setIsProcessing} showCancelButton={workOrderStatusShowCancel.includes(data?.status)}
+                                        workOrderIDs={[data?.id]}
+                                        showRunButton={!workOrderStatusDontShowRun.includes(data?.status)}
+                                        defaultDeviceID={data?.devices && data?.devices.length > 0 ? data?.devices[0]?.id : undefined}
+                                    />
+                                </CardContent>
+                            )
+                        }} />
                     </Card>
                     <Card>
                         <CardContent sx={{

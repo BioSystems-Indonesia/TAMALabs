@@ -19,6 +19,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	barcodeGeneratorUC "github.com/oibacidem/lims-hl-seven/internal/usecase/barcode_generator"
 	configuc "github.com/oibacidem/lims-hl-seven/internal/usecase/config"
+	deviceuc "github.com/oibacidem/lims-hl-seven/internal/usecase/device"
 	observation_requestuc "github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	resultUC "github.com/oibacidem/lims-hl-seven/internal/usecase/result"
@@ -72,6 +73,7 @@ var (
 		configuc.NewConfigUseCase,
 		test_template_uc.NewUsecase,
 		unitUC.NewUnitUseCase,
+		deviceuc.NewDeviceUseCase,
 
 		rest.NewHlSevenHandler,
 		rest.NewHealthCheckHandler,

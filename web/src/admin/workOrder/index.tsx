@@ -5,7 +5,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMutation } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Button,
     Create,
@@ -29,7 +29,7 @@ import {
 import { useParams, useSearchParams } from "react-router-dom";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
 import useAxios from "../../hooks/useAxios.ts";
-import type { WorkOrder } from "../../types/work_order.ts";
+import { workOrderStatusDontShowRun, workOrderStatusShowCancel, type WorkOrder } from "../../types/work_order.ts";
 import { WorkOrderChipColorMap } from "./ChipFieldStatus.tsx";
 import WorkOrderForm from "./Form.tsx";
 import SideFilter from "../../component/SideFilter.tsx";
@@ -173,9 +173,62 @@ type RunWorkOrderProps = {
 }
 
 function RunWorkOrderDialog(props: RunWorkOrderProps) {
-    const { selectedIds } = useListContext();
+    const { selectedIds, data } = useListContext<WorkOrder>();
     const [processing, setProcessing] = useState(false)
     const notify = useNotify();
+    const [dataMap, setDataMap] = useState<Record<number, WorkOrder>>({})
+    useEffect(() => {
+        if (data) {
+            const map: Record<number, WorkOrder> = {}
+            data.forEach((workOrder) => {
+                map[workOrder.id] = workOrder
+            })
+            setDataMap(map)
+        }
+    }, [data])
+
+    function determineShowCancelButton(selectedIds: number[], dataMap: Record<number, WorkOrder>): boolean | undefined {
+        if (selectedIds.length === 0) {
+            return undefined
+        }
+
+        for (const id of selectedIds) {
+            if (workOrderStatusShowCancel.includes(dataMap[id].status)) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    function determineShowRunButton(selectedIds: number[], dataMap: Record<number, WorkOrder>): boolean | undefined {
+        if (selectedIds.length === 0) {
+            return undefined
+        }
+
+        for (const id of selectedIds) {
+            if (!workOrderStatusDontShowRun.includes(dataMap[id].status)) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    function determineDefaultDeviceID(selectedIds: number[], dataMap: Record<number, WorkOrder>): number | undefined {
+        if (selectedIds.length === 0) {
+            return undefined
+        }
+
+        for (const id of selectedIds) {
+            const workOrder = dataMap[id]
+            if (workOrder.devices && workOrder?.devices?.length > 0) {
+                return workOrder?.devices[0].id
+            }
+        }
+
+        return undefined
+    }
 
     return (
         <Dialog
@@ -201,7 +254,11 @@ function RunWorkOrderDialog(props: RunWorkOrderProps) {
                 Run Work Order
             </DialogTitle>
             <DialogContent sx={{}}>
-                <RunWorkOrderForm workOrderIDs={selectedIds} setIsProcessing={setProcessing} isProcessing={processing} />
+                <RunWorkOrderForm workOrderIDs={selectedIds} setIsProcessing={setProcessing} isProcessing={processing}
+                    showCancelButton={determineShowCancelButton(selectedIds, dataMap)}
+                    showRunButton={determineShowRunButton(selectedIds, dataMap)}
+                    defaultDeviceID={determineDefaultDeviceID(selectedIds, dataMap)}
+                />
             </DialogContent>
         </Dialog >
     )

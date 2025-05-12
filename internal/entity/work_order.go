@@ -63,11 +63,6 @@ type WorkOrderRunRequest struct {
 	Urgent       bool    `json:"urgent" gorm:"-"`
 }
 
-type WorkOrderCancelRequest struct {
-	WorkOrderID int64 `json:"work_order_id" gorm:"-" validate:"required"`
-	DeviceID    int64 `json:"device_id" gorm:"-" validate:"required"`
-}
-
 type WorkOrderGetManyRequest struct {
 	GetManyRequest
 	PatientIDs  []int64 `query:"patient_ids"`
