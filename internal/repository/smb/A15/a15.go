@@ -20,11 +20,10 @@ type Sample struct {
 	TestTubType string
 }
 
-func SendToA15(ctx context.Context, req entity.SendPayloadRequest) {
+func SendToA15(ctx context.Context, req *entity.SendPayloadRequest) error {
 	conn, err := net.Dial("tcp", net.JoinHostPort(req.Device.IPAddress, strconv.Itoa(req.Device.Port)))
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 	defer conn.Close()
 
@@ -37,28 +36,27 @@ func SendToA15(ctx context.Context, req entity.SendPayloadRequest) {
 
 	s, err := d.Dial(conn)
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 	defer s.Logoff()
 
 	fs, err := s.Mount(req.Device.Path)
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 
 	defer fs.Umount()
 
 	err = fs.WriteFile("import.txt", createContentFile(req), 0644)
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
+
 	log.Println("Send to A15")
+	return nil
 }
 
-func createContentFile(req entity.SendPayloadRequest) []byte {
+func createContentFile(req *entity.SendPayloadRequest) []byte {
 	var samples []Sample
 	for _, p := range req.Patients {
 		for _, s := range p.Specimen {
@@ -87,7 +85,7 @@ func createContentFile(req entity.SendPayloadRequest) []byte {
 	return w.Bytes()
 }
 
-func row(req entity.SendPayloadRequest, p entity.Patient, s entity.Specimen, r entity.ObservationRequest) Sample {
+func row(req *entity.SendPayloadRequest, p entity.Patient, s entity.Specimen, r entity.ObservationRequest) Sample {
 	class := "N"
 	if req.Urgent {
 		class = "U"

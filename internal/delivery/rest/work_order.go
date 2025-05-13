@@ -9,6 +9,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	a15 "github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	deviceuc "github.com/oibacidem/lims-hl-seven/internal/usecase/device"
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
@@ -162,18 +163,38 @@ func (h *WorkOrderHandler) runWorkOrder(c echo.Context, action constant.WorkOrde
 	}
 
 	sendDone := make(chan error, 1)
+
 	go panics.CapturePanic(ctx, func() {
-		// TODO: Change this to strategy pattern using device type
-		err := ba400.SendToBA400(ctx, &entity.SendPayloadRequest{
+		req := &entity.SendPayloadRequest{
 			Patients: patients,
 			Device:   device,
 			Urgent:   req.Urgent,
 
 			Writer:  writer,
 			Flusher: flusher,
-		})
+		}
+
+		var err error
+
+		// TODO: Change this to strategy pattern using device type
+		switch req.Device.Type {
+		case "BA400", "BA200":
+			err = ba400.SendToBA400(ctx, req)
+			if err != nil {
+				err = fmt.Errorf("error sending to ba400: %w", err)
+			}
+
+		case "A15":
+			err = a15.SendToA15(ctx, req)
+			if err != nil {
+				err = fmt.Errorf("error sending to a15: %w", err)
+			}
+		default:
+			err = fmt.Errorf("cannot send device type %s", req.Device.Type)
+		}
+
 		if err != nil {
-			sendDone <- fmt.Errorf("error sending to ba400: %w", err)
+			sendDone <- err
 			return
 		}
 
