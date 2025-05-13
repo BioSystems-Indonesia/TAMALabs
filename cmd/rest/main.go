@@ -14,8 +14,8 @@ import (
 )
 
 func main() {
-	l := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{ AddSource: true, }))
-	//l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
+	//l := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{ AddSource: true, }))
+	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
 	slog.SetDefault(l)
 
 	server := app.InitRestApp()

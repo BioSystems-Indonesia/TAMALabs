@@ -21,7 +21,7 @@ import FeatureList from "../../component/FeatureList.tsx";
 import { Action, ActionKeys } from "../../types/props.ts";
 import { useRefererRedirect } from "../../hooks/useReferer.ts";
 import SideFilter from "../../component/SideFilter.tsx";
-import { Device, DeviceType, DeviceTypeValue } from "../../types/device.ts";
+import { DeviceType, DeviceTypeValue } from "../../types/device.ts";
 import { Typography } from "@mui/material";
 
 type DeviceFormProps = {
