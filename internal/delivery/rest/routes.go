@@ -159,6 +159,7 @@ func RegisterRoutes(
 	result := v1.Group("/result")
 	{
 		result.GET("", handler.ListResult)
+		result.POST("/refresh", handler.RefreshResult)
 		result.GET("/:work_order_id", handler.GetResult)
 		result.PUT("/:work_order_id/test", handler.AddTestResult)
 		result.PUT("/:work_order_id/test/:test_result_id/pick", handler.TooglePickTestResult)

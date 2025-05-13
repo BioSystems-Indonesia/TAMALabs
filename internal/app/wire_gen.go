@@ -76,7 +76,7 @@ func InitRestApp() server.RestServer {
 	test_typeUsecase := test_type2.NewUsecase(test_typeRepository)
 	testTypeHandler := rest.NewTestTypeHandler(schema, test_typeUsecase)
 	resultUsecase := result.NewUsecase(repository, workOrderRepository, specimenRepository, test_typeRepository)
-	resultHandler := rest.NewResultHandler(schema, resultUsecase)
+	resultHandler := rest.NewResultHandler(schema, resultUsecase, usecase)
 	configrepoRepository := configrepo.NewRepository(gormDB, schema)
 	configUseCase := configuc.NewConfigUseCase(schema, configrepoRepository, validate)
 	configHandler := rest.NewConfigHandler(schema, configUseCase)
