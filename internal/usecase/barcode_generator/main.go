@@ -29,5 +29,5 @@ func (u *Usecase) NextOrderBarcode(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("failed to u.dailySequenceRepo.Incr: %w", err)
 	}
 
-	return fmt.Sprintf("%s%s", now.Format("20060102"), fmt.Sprintf("%03d", nextSeq)), nil
+	return fmt.Sprintf("%s%s", now.Format("060102"), fmt.Sprintf("%03d", nextSeq)), nil
 }
