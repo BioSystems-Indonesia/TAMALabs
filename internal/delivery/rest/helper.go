@@ -17,6 +17,24 @@ func handleError(
 	err error,
 	extraInfo ...map[string]interface{},
 ) error {
+	code, payload := getErrorPayload(extraInfo, err, c)
+
+	return c.JSON(code, payload)
+}
+
+func handleErrorSSE(
+	c echo.Context,
+	w http.ResponseWriter,
+	err error,
+	extraInfo ...map[string]interface{},
+) error {
+	code, payload := getErrorPayload(extraInfo, err, c)
+	w.Write([]byte(fmt.Sprintf("event: error\ndata: %s\n\n", payload.Error)))
+
+	return c.NoContent(code)
+}
+
+func getErrorPayload(extraInfo []map[string]interface{}, err error, c echo.Context) (int, entity.ErrorPayload) {
 	var extraInfoMap map[string]interface{}
 	if len(extraInfo) > 0 {
 		extraInfoMap = extraInfo[0]
@@ -40,8 +58,7 @@ func handleError(
 		ExtraInfo:  extraInfoMap,
 	}
 	logError(payload)
-
-	return c.JSON(code, payload)
+	return code, payload
 }
 
 func logError(
@@ -68,4 +85,20 @@ func bindAndValidate(c echo.Context, v interface{}) error {
 func successPaginationResponse[T any](c echo.Context, result entity.PaginationResponse[T]) error {
 	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(int(result.Total)))
 	return c.JSON(http.StatusOK, result.Data)
+}
+
+// createSSEWriter creates a new server send event writer.
+func createSSEWriter(c echo.Context) (http.ResponseWriter, http.Flusher, error) {
+	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+	c.Response().Header().Set(echo.HeaderCacheControl, "no-cache")
+	c.Response().Header().Set(echo.HeaderConnection, "keep-alive")
+	c.Response().WriteHeader(http.StatusOK)
+
+	sseWriter := c.Response().Writer
+	flusher, ok := sseWriter.(http.Flusher)
+	if !ok {
+		return nil, nil, entity.ErrInternalServerError.WithInternal(errors.New("streaming unsupported"))
+	}
+
+	return sseWriter, flusher, nil
 }

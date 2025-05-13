@@ -5,7 +5,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMutation } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Button,
     Create,
@@ -29,11 +29,11 @@ import {
 import { useParams, useSearchParams } from "react-router-dom";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
 import useAxios from "../../hooks/useAxios.ts";
-import type { WorkOrder } from "../../types/work_order.ts";
+import { workOrderStatusDontShowRun, workOrderStatusShowCancel, type WorkOrder } from "../../types/work_order.ts";
 import { WorkOrderChipColorMap } from "./ChipFieldStatus.tsx";
 import WorkOrderForm from "./Form.tsx";
-import { RunWorkOrderForm } from "./Show.tsx";
 import SideFilter from "../../component/SideFilter.tsx";
+import RunWorkOrderForm from "./RunWorkOrderForm.tsx";
 
 const WorkOrderAction = () => {
     return (
@@ -173,12 +173,76 @@ type RunWorkOrderProps = {
 }
 
 function RunWorkOrderDialog(props: RunWorkOrderProps) {
-    const { selectedIds } = useListContext();
+    const { selectedIds, data } = useListContext<WorkOrder>();
+    const [processing, setProcessing] = useState(false)
+    const notify = useNotify();
+    const [dataMap, setDataMap] = useState<Record<number, WorkOrder>>({})
+    useEffect(() => {
+        if (data) {
+            const map: Record<number, WorkOrder> = {}
+            data.forEach((workOrder) => {
+                map[workOrder.id] = workOrder
+            })
+            setDataMap(map)
+        }
+    }, [data])
+
+    function determineShowCancelButton(selectedIds: number[], dataMap: Record<number, WorkOrder>): boolean | undefined {
+        if (selectedIds.length === 0) {
+            return undefined
+        }
+
+        for (const id of selectedIds) {
+            if (workOrderStatusShowCancel.includes(dataMap[id].status)) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    function determineShowRunButton(selectedIds: number[], dataMap: Record<number, WorkOrder>): boolean | undefined {
+        if (selectedIds.length === 0) {
+            return undefined
+        }
+
+        for (const id of selectedIds) {
+            if (!workOrderStatusDontShowRun.includes(dataMap[id].status)) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    function determineDefaultDeviceID(selectedIds: number[], dataMap: Record<number, WorkOrder>): number | undefined {
+        if (selectedIds.length === 0) {
+            return undefined
+        }
+
+        for (const id of selectedIds) {
+            const workOrder = dataMap[id]
+            if (workOrder.devices && workOrder?.devices?.length > 0) {
+                return workOrder?.devices[0].id
+            }
+        }
+
+        return undefined
+    }
 
     return (
         <Dialog
             open={props.open}
-            onClose={props.onClose}
+            onClose={() => {
+                if (processing) {
+                    notify('Cannot close dialog while processing', {
+                        type: 'error',
+                    });
+                    return;
+                }
+
+                props.onClose()
+            }}
             fullWidth
             sx={{
                 width: "100%",
@@ -190,7 +254,11 @@ function RunWorkOrderDialog(props: RunWorkOrderProps) {
                 Run Work Order
             </DialogTitle>
             <DialogContent sx={{}}>
-                <RunWorkOrderForm workOrderIDs={selectedIds} />
+                <RunWorkOrderForm workOrderIDs={selectedIds} setIsProcessing={setProcessing} isProcessing={processing}
+                    showCancelButton={determineShowCancelButton(selectedIds, dataMap)}
+                    showRunButton={determineShowRunButton(selectedIds, dataMap)}
+                    defaultDeviceID={determineDefaultDeviceID(selectedIds, dataMap)}
+                />
             </DialogContent>
         </Dialog >
     )
@@ -233,13 +301,13 @@ export const WorkOrderList = () => {
                 )} />
                 <ReferenceField source="patient_id" reference="patient">
                 </ReferenceField>
+                <TextField source="barcode" />
                 <WithRecord label="Request" render={(record: any) => (
                     <Typography variant="body2" >
                         {getRequestLength(record)}
                     </Typography>
                 )} />
                 <DateField source="created_at" />
-                <DateField source="updated_at" />
                 <WrapperField label="Actions" sortable={false} >
                     <Stack direction={"row"} spacing={2}>
                         <ShowButton variant="contained" />

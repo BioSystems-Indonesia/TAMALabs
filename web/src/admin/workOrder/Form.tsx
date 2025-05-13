@@ -5,7 +5,7 @@ import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import MUIList from "@mui/material/List";
-import { DataGrid as MuiDatagrid, useGridApiRef, type GridRenderCellParams } from "@mui/x-data-grid";
+import { GridRowId, DataGrid as MuiDatagrid, useGridApiRef, type GridRenderCellParams } from "@mui/x-data-grid";
 import TouchAppIcon from '@mui/icons-material/TouchApp';
 import React, { useEffect, useState } from "react";
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -116,7 +116,7 @@ const PickedTest = ({ selectedData }: { selectedData: Record<number, Observation
                         Selected Tests
                     </Typography>
                 </Box>
-                <Divider/>
+                <Divider />
                 {/* Grid container for the chips */}
                 <Grid container spacing={1}> {/* Adjust spacing as needed */}
                     {Object.entries(selectedData).map(([key, value]) => {
@@ -258,6 +258,59 @@ function TestTable({
     }
 
     const apiRef = useGridApiRef();
+    const lastClickedRowIdRef = React.useRef<GridRowId | null>(null); // To track for shift-click
+    // Main handler for checkbox changes (click, shift+click, keyboard)
+    const handleCheckboxInteraction = (rowId: GridRowId, newCheckedState: boolean, isShiftKey: boolean) => {
+        let newRows = [...rows];
+
+        if (isShiftKey && lastClickedRowIdRef.current !== null && lastClickedRowIdRef.current !== rowId) {
+            const lastIdx = newRows.findIndex(r => r.id === lastClickedRowIdRef.current);
+            const currentIdx = newRows.findIndex(r => r.id === rowId);
+
+            if (lastIdx !== -1 && currentIdx !== -1) {
+                const start = Math.min(lastIdx, currentIdx);
+                const end = Math.max(lastIdx, currentIdx);
+
+                // Get the checked state of the row that initiated the shift-click range.
+                // The desired behavior might be to set all in range to `newCheckedState` (state of current click)
+                // or to the state of `newRows[lastIdx].checked`. For simplicity, using `newCheckedState`.
+                const targetCheckedStateForRowRange = newRows[lastIdx].checked;
+
+
+                for (let i = start; i <= end; i++) {
+                    newRows[i] = { ...newRows[i], checked: targetCheckedStateForRowRange };
+                    updateSelectedData(newRows[i])
+                }
+                // Also ensure the currently clicked row (the end of the range) gets the intended newCheckedState
+                // const clickedRowInRange = newRows.find(r => r.id === rowId);
+                // if (clickedRowInRange) {
+                //     newRows = newRows.map(r => r.id === rowId ? { ...r, checked: newCheckedState } : r);
+                //     updateSelectedData(clickedRowInRange)
+                // }
+
+            } else { // Fallback to single toggle if indices are invalid
+                const targetRowIndex = newRows.findIndex(r => r.id === rowId);
+                if (targetRowIndex !== -1) {
+                    newRows[targetRowIndex] = { ...newRows[targetRowIndex], checked: newCheckedState };
+                    updateSelectedData(newRows[targetRowIndex])
+                }
+            }
+        } else {
+            // Single toggle
+            const targetRowIndex = newRows.findIndex(r => r.id === rowId);
+            if (targetRowIndex !== -1) {
+                newRows[targetRowIndex] = { ...newRows[targetRowIndex], checked: newCheckedState };
+                updateSelectedData(newRows[targetRowIndex])
+            }
+        }
+
+        setRows(newRows);
+
+        // Update lastClickedRowIdRef only on non-shift clicks or if it's the first click in a potential shift-sequence
+        if (!isShiftKey) {
+            lastClickedRowIdRef.current = rowId;
+        }
+    };
 
     return <Grid container spacing={2}>
         <Grid item xs={12} md={9}>
@@ -269,15 +322,75 @@ function TestTable({
                 loading={isPending}
                 columns={[
                     {
-                        field: 'checked',
+                        field: 'customChecked',
                         headerName: 'Checked',
-                        flex: 1,
+                        flex: 0.5,
                         filterable: false,
-                        renderCell: (params: GridRenderCellParams) => {
-                            return <Checkbox checked={params.row.checked} onChange={(e: any) => {
-                                const newRow = { ...params.row, checked: e.target.checked }
-                                updateSelectedData(newRow)
-                            }} />
+                        sortable: false,
+
+                        renderHeader: () => {
+                            const allRowsChecked = rows.length > 0 && rows.every(row => row.checked);
+                            const someRowsChecked = rows.some(row => row.checked);
+                            const isIndeterminate = someRowsChecked && !allRowsChecked;
+
+                            return (
+                                <Checkbox
+                                    checked={allRowsChecked}
+                                    indeterminate={isIndeterminate}
+                                    onChange={(event, checked) => {
+                                        setRows(prevRows => prevRows.map(row => {
+                                            const newRow = { ...row, checked }
+                                            updateSelectedData(newRow)
+                                            return newRow
+                                        }));
+                                        lastClickedRowIdRef.current = null; // Reset shift-click anchor
+                                    }}
+                                />
+                            );
+                        },
+                        renderCell: (params: GridRenderCellParams<any, TestType>) => {
+                            const handleKeyDown = (event: React.KeyboardEvent) => {
+                                if (event.key === ' ' || event.key === 'Enter') {
+                                    event.preventDefault();  // Prevent default browser action (e.g., scrolling on space)
+                                    event.stopPropagation(); // Prevent event from bubbling to DataGrid, which might move focus
+                                    handleCheckboxInteraction(params.row.id, !params.row.checked, false);
+                                }
+                            };
+
+                            return (
+                                // Wrapper to make the cell focusable and handle keyboard events
+                                <Box
+                                    tabIndex={0} // Make it focusable
+                                    onKeyDown={handleKeyDown}
+                                    sx={{
+                                        width: '100%',
+                                        height: '100%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        outline: 'none', // Remove default focus outline if desired, or style it
+                                        '&:focus-visible': { // Modern way to style keyboard focus
+                                            boxShadow: `0 0 0 2px rgba(0,123,255,.5)`, // Example focus ring
+                                        }
+                                    }}
+                                    onClick={(e) => {
+                                        // This outer click can be used if you want the whole cell to be clickable
+                                        // For now, relying on Checkbox's own click
+                                    }}
+                                >
+                                    <Checkbox
+                                        checked={!!params.row.checked} // Ensure it's a boolean
+                                        onChange={(event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+                                            const isShift = (event.nativeEvent instanceof MouseEvent && (event.nativeEvent as MouseEvent).shiftKey);
+                                            handleCheckboxInteraction(params.row.id, checked, isShift);
+                                        }}
+                                        // Prevent clicks on the checkbox from propagating to the row's onRowClick (if any)
+                                        onClick={(e) => e.stopPropagation()}
+                                        inputProps={{ 'aria-label': `Select row ${params.row.name || params.row.id}` }}
+
+                                    />
+                                </Box>
+                            );
                         },
                     },
                     {
@@ -520,50 +633,6 @@ function CreatePatientButton(props: CreatePatientButtonProps) {
     </Button>;
 }
 
-export const WorkOrderSaveButton = ({ disabled }: { disabled?: boolean }) => {
-    const { getValues } = useFormContext();
-    const { save } = useSaveContext();
-    const notify = useNotify();
-    const handleClick = (e: any) => {
-        e.preventDefault(); // necessary to prevent default SaveButton submit logic
-        const { ...data } = getValues();
-
-        if (data == undefined) {
-            notify("Please fill in all required fields", {
-                type: "error",
-            });
-            return;
-        }
-
-        if (!data[patientIDField] || data[patientIDField].length === 0) {
-            notify("Please select patient", {
-                type: "error",
-            });
-            return;
-        }
-
-        if (!data[testTypesField] || data[testTypesField].length === 0) {
-            notify("Please select test", {
-                type: "error",
-            });
-            return;
-        }
-
-        if (save) {
-            const observationRequest = data[testTypesField] as TestType[]
-            save({
-                ...data,
-                observation_requests: observationRequest.map((test: TestType) => {
-                    return test.code
-                })
-            });
-        }
-    };
-
-
-    return <SaveButton type="button" onClick={handleClick} alwaysEnable size="small" />
-}
-
 
 const steps = ['Patient', 'Test'];
 
@@ -587,7 +656,7 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
             return;
         }
 
-        if (!data[testTypesField] || data[testTypesField].length === 0) {
+        if (!data[testTypesField] || Object.entries(data[testTypesField]).length === 0) {
             notify("Please select test", {
                 type: "error",
             });
@@ -596,11 +665,13 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
 
         if (save) {
             const observationRequest = data[testTypesField] as Record<number, ObservationRequestCreateRequest>
+            const testTypes = Object.entries(observationRequest).map(([_, value]) => {
+                return value
+            })
+
             save({
                 patient_id: data[patientIDField],
-                test_types: Object.entries(observationRequest).map(([_, value]) => {
-                    return value
-                })
+                test_types: testTypes,
             });
         }
     };

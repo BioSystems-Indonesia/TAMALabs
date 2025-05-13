@@ -1,19 +1,25 @@
 package entity
 
-import "time"
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"time"
+)
 
 type WorkOrderStatus string
 
 const (
-	WorkOrderStatusNew       WorkOrderStatus = "NEW"
-	WorkOrderStatusPending   WorkOrderStatus = "PENDING"
-	WorkOrderCancelled       WorkOrderStatus = "CANCELLED"
-	WorkOrderStatusCompleted WorkOrderStatus = "SUCCESS"
+	WorkOrderStatusNew            WorkOrderStatus = "NEW"
+	WorkOrderStatusIncompleteSend WorkOrderStatus = "INCOMPLETE_SEND"
+	WorkOrderStatusPending        WorkOrderStatus = "PENDING"
+	WorkOrderCancelled            WorkOrderStatus = "CANCELLED"
+	WorkOrderStatusCompleted      WorkOrderStatus = "SUCCESS"
 )
 
 type WorkOrderCreateRequest struct {
 	PatientID int64                            `json:"patient_id" validate:"required"`
-	TestTypes []WorkOrderCreateRequestTestType `json:"test_types" validate:"required"`
+	TestTypes []WorkOrderCreateRequestTestType `json:"test_types" validate:"required,min=1"`
 	Barcode   string
 }
 
@@ -57,13 +63,30 @@ type WorkOrderRunRequest struct {
 	Urgent       bool    `json:"urgent" gorm:"-"`
 }
 
-type WorkOrderCancelRequest struct {
-	WorkOrderID int64 `json:"work_order_id" gorm:"-" validate:"required"`
-	DeviceID    int64 `json:"device_id" gorm:"-" validate:"required"`
-}
-
 type WorkOrderGetManyRequest struct {
 	GetManyRequest
 	PatientIDs  []int64 `query:"patient_ids"`
 	SpecimenIDs []int64 `query:"specimen_ids"`
+}
+
+type WorkOrderStreamingResponseStatus string
+
+const (
+	WorkOrderStreamingResponseStatusDone       WorkOrderStreamingResponseStatus = "DONE"
+	WorkOrderStreamingResponseStatusInProgress WorkOrderStreamingResponseStatus = "IN_PROGRESS"
+)
+
+type WorkOrderStreamingResponse string
+
+func NewWorkOrderStreamingResponse(percentage float64, status WorkOrderStreamingResponseStatus) string {
+	return fmt.Sprintf("data: percentage=%d&status=%s\n\n", int(percentage), status)
+}
+
+type SendPayloadRequest struct {
+	Patients []Patient
+	Device   Device
+	Urgent   bool
+
+	Writer  io.Writer
+	Flusher http.Flusher
 }

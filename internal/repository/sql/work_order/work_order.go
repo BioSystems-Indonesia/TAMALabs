@@ -125,7 +125,8 @@ func (r WorkOrderRepository) FindAll(ctx context.Context, req *entity.WorkOrderG
 	db = db.Debug().
 		Preload("Patient").
 		Preload("Specimen").
-		Preload("Specimen.ObservationRequest")
+		Preload("Specimen.ObservationRequest").
+		Preload("Devices")
 
 	return sql.GetWithPaginationResponse[entity.WorkOrder](db, req.GetManyRequest)
 }
@@ -137,6 +138,7 @@ func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
 		Preload("Patient.Specimen", "order_id = ?", id).
 		Preload("Patient.Specimen.ObservationRequest").
 		Preload("Patient.Specimen.ObservationRequest.TestType").
+		Preload("Devices").
 		First(&workOrder).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return entity.WorkOrder{}, entity.ErrNotFound

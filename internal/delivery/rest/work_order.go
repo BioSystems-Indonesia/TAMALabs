@@ -10,14 +10,17 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
+	deviceuc "github.com/oibacidem/lims-hl-seven/internal/usecase/device"
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	workOrderuc "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
+	"github.com/oibacidem/lims-hl-seven/pkg/panics"
 	"gorm.io/gorm"
 )
 
 type WorkOrderHandler struct {
 	cfg              *config.Schema
 	workOrderUsecase *workOrderuc.WorkOrderUseCase
+	deviceUsecase    *deviceuc.DeviceUseCase
 	patientUsecase   *patientuc.PatientUseCase
 	db               *gorm.DB
 }
@@ -25,8 +28,9 @@ type WorkOrderHandler struct {
 func NewWorkOrderHandler(
 	cfg *config.Schema, workOrderUsecase *workOrderuc.WorkOrderUseCase, db *gorm.DB,
 	patientUsecase *patientuc.PatientUseCase,
+	deviceUsecase *deviceuc.DeviceUseCase,
 ) *WorkOrderHandler {
-	return &WorkOrderHandler{cfg: cfg, workOrderUsecase: workOrderUsecase, db: db, patientUsecase: patientUsecase}
+	return &WorkOrderHandler{cfg: cfg, workOrderUsecase: workOrderUsecase, db: db, patientUsecase: patientUsecase, deviceUsecase: deviceUsecase}
 }
 
 func (h *WorkOrderHandler) FindWorkOrders(c echo.Context) error {
@@ -109,93 +113,142 @@ func (h *WorkOrderHandler) EditWorkOrder(c echo.Context) error {
 }
 
 func (h *WorkOrderHandler) RunWorkOrder(c echo.Context) error {
-	var req entity.WorkOrderRunRequest
-	if err := bindAndValidate(c, &req); err != nil {
-		return handleError(c, err)
-	}
-
-	querySpeciment := h.db.Model(entity.Specimen{}).Where("order_id in (?)", req.WorkOrderIDs).Select("id")
-	err := h.db.Model(entity.ObservationRequest{}).Where("specimen_id in (?)", querySpeciment).
-		Update("result_status", constant.ResultStatusSpecimenPending).Error
-	if err != nil {
-		return handleError(c, err)
-	}
-
-	patients, err := h.patientUsecase.FindManyByWorkOrderID(c.Request().Context(), req.WorkOrderIDs)
-	if err != nil {
-		return handleError(c, err)
-	}
-
-	device := entity.Device{}
-	tx := h.db.First(&device, req.DeviceID)
-	if tx.Error != nil {
-		return handleError(c, fmt.Errorf("error finding device: %w", tx.Error))
-	}
-
-	err = ba400.SendToBA400(c.Request().Context(), patients, device, req.Urgent)
-	if err != nil {
-		return handleError(c, err)
-	}
-
-	for _, workOrderID := range req.WorkOrderIDs {
-		workOrder, err := h.workOrderUsecase.FindOneByID(workOrderID)
-		if err != nil {
-			return handleError(c, err)
-		}
-
-		workOrder.Status = entity.WorkOrderStatusPending
-		err = h.workOrderUsecase.UpsertDevice(workOrderID, int64(device.ID))
-		if err != nil {
-			return handleError(c, err)
-		}
-
-		err = h.workOrderUsecase.Update(&workOrder)
-		if err != nil {
-			return handleError(c, err)
-		}
-	}
-
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "ok",
-	})
+	return h.runWorkOrder(c, constant.WorkOrderRunActionRun)
 }
 
 func (h *WorkOrderHandler) CancelOrder(c echo.Context) error {
-	var req entity.WorkOrderCancelRequest
-	if err := bindAndValidate(c, &req); err != nil {
-		return handleError(c, err)
-	}
+	return h.runWorkOrder(c, constant.WorkOrderRunActionCancel)
+}
 
-	querySpeciment := h.db.Model(entity.Specimen{}).Where("order_id = ?", req.WorkOrderID).Select("id")
-	err := h.db.Model(entity.ObservationRequest{}).Where("specimen_id in (?)", querySpeciment).
-		Update("result_status", constant.ResultStatusDelete).Error
+func (h *WorkOrderHandler) runWorkOrder(c echo.Context, action constant.WorkOrderRunAction) error {
+	ctx := c.Request().Context()
+	writer, flusher, err := createSSEWriter(c)
 	if err != nil {
-		return handleError(c, err)
+		return handleErrorSSE(c, writer, err)
+	}
+	defer flusher.Flush()
+
+	var req entity.WorkOrderRunRequest
+	if err = bindAndValidate(c, &req); err != nil {
+		return handleErrorSSE(c, writer, err)
 	}
 
-	workOrders, err := h.workOrderUsecase.FindOneByID(req.WorkOrderID)
+	// TODO: Change this to strategy pattern
+	switch action {
+	case constant.WorkOrderRunActionRun:
+		querySpeciment := h.db.Model(entity.Specimen{}).Where("order_id in (?)", req.WorkOrderIDs).Select("id")
+		err = h.db.Model(entity.ObservationRequest{}).Where("specimen_id in (?)", querySpeciment).
+			Update("result_status", constant.ResultStatusSpecimenPending).Error
+		if err != nil {
+			return handleErrorSSE(c, writer, err)
+		}
+	case constant.WorkOrderRunActionCancel:
+		querySpeciment := h.db.Model(entity.Specimen{}).Where("order_id in (?)", req.WorkOrderIDs).Select("id")
+		err = h.db.Model(entity.ObservationRequest{}).Where("specimen_id in (?)", querySpeciment).
+			Update("result_status", constant.ResultStatusDelete).Error
+		if err != nil {
+			return handleErrorSSE(c, writer, err)
+		}
+	}
+
+	patients, err := h.patientUsecase.FindManyByWorkOrderID(ctx, req.WorkOrderIDs)
 	if err != nil {
-		return handleError(c, err)
+		return handleErrorSSE(c, writer, err)
 	}
 
-	device := entity.Device{}
-	tx := h.db.First(&device, req.DeviceID)
-	if tx.Error != nil {
-		return handleError(c, fmt.Errorf("error finding device: %w", tx.Error))
-	}
-
-	workOrders.Status = entity.WorkOrderCancelled
-	err = ba400.SendToBA400(c.Request().Context(), []entity.Patient{workOrders.Patient}, device, false)
+	device, err := h.deviceUsecase.FindByID(ctx, req.DeviceID)
 	if err != nil {
-		return handleError(c, err)
+		return handleErrorSSE(c, writer, fmt.Errorf("error finding device: %w", err))
 	}
 
-	err = h.workOrderUsecase.Update(&workOrders)
-	if err != nil {
-		return handleError(c, err)
-	}
+	sendDone := make(chan error, 1)
+	go panics.CapturePanic(ctx, func() {
+		// TODO: Change this to strategy pattern using device type
+		err := ba400.SendToBA400(ctx, &entity.SendPayloadRequest{
+			Patients: patients,
+			Device:   device,
+			Urgent:   req.Urgent,
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "ok",
+			Writer:  writer,
+			Flusher: flusher,
+		})
+		if err != nil {
+			sendDone <- fmt.Errorf("error sending to ba400: %w", err)
+			return
+		}
+
+		sendDone <- nil
 	})
+
+	select {
+	case err := <-sendDone:
+		if err != nil {
+			errCancel := h.runWorkOrder(c, constant.WorkOrderRunActionCancel)
+			if errCancel != nil {
+				return handleErrorSSE(c, writer, errCancel, map[string]interface{}{
+					"error_cancel": errCancel.Error(),
+				})
+			}
+
+			return handleErrorSSE(c, writer, err)
+		}
+
+		for _, workOrderID := range req.WorkOrderIDs {
+			// TODO: Change this to strategy pattern
+			switch action {
+			case constant.WorkOrderRunActionRun:
+				err := h.updateWorkOrderStatus(c, writer, workOrderID, device, entity.WorkOrderStatusPending)
+				if err != nil {
+					return handleErrorSSE(c, writer, err)
+				}
+			case constant.WorkOrderRunActionCancel:
+				err := h.updateWorkOrderStatus(c, writer, workOrderID, device, entity.WorkOrderCancelled)
+				if err != nil {
+					return handleErrorSSE(c, writer, err)
+				}
+			}
+		}
+
+		_, err = writer.Write([]byte(entity.NewWorkOrderStreamingResponse(100, entity.WorkOrderStreamingResponseStatusDone)))
+		if err != nil {
+			return handleErrorSSE(c, writer, err)
+		}
+
+		return c.NoContent(http.StatusOK)
+	case <-ctx.Done():
+		for _, workOrderID := range req.WorkOrderIDs {
+			err := h.updateWorkOrderStatus(c, writer, workOrderID, device, entity.WorkOrderStatusIncompleteSend)
+			if err != nil {
+				return handleErrorSSE(c, writer, err)
+			}
+		}
+
+		errCancel := h.runWorkOrder(c, constant.WorkOrderRunActionCancel)
+		if errCancel != nil {
+			return handleErrorSSE(c, writer, errCancel, map[string]interface{}{
+				"error_cancel": errCancel.Error(),
+			})
+		}
+
+		return handleErrorSSE(c, writer, ctx.Err())
+	}
+}
+
+func (h *WorkOrderHandler) updateWorkOrderStatus(c echo.Context, writer http.ResponseWriter, workOrderID int64, device entity.Device, status entity.WorkOrderStatus) error {
+	workOrder, err := h.workOrderUsecase.FindOneByID(workOrderID)
+	if err != nil {
+		return handleErrorSSE(c, writer, err)
+	}
+
+	workOrder.Status = status
+	err = h.workOrderUsecase.UpsertDevice(workOrderID, int64(device.ID))
+	if err != nil {
+		return handleErrorSSE(c, writer, err)
+	}
+
+	err = h.workOrderUsecase.Update(&workOrder)
+	if err != nil {
+		return handleErrorSSE(c, writer, err)
+	}
+	return nil
 }
