@@ -1,9 +1,7 @@
-import CancelIcon from '@mui/icons-material/Cancel';
 import PrintIcon from '@mui/icons-material/Print';
 import { Card, CardContent } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import {
     ArrayField,
@@ -20,10 +18,7 @@ import {
     TopToolbar,
     WithRecord,
     WrapperField,
-    useGetRecordId,
-    useNotify,
-    useRecordContext,
-    useRefresh
+    useGetRecordId
 } from "react-admin";
 import { useReactToPrint } from "react-to-print";
 import LIMSBarcode from '../../component/Barcode';
@@ -98,47 +93,6 @@ const PrintBarcodeButton = ({ barcodeRef }: { barcodeRef: React.RefObject<any> }
     );
 }
 
-
-const CancelButton = ({ workOrderID }: { workOrderID: number }) => {
-    const notify = useNotify();
-    const refresh = useRefresh();
-    const { mutate, isPending } = useMutation({
-        mutationFn: async (data: any) => {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/cancel`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
-            if (!response.ok) {
-                const responseJson = await response.json();
-                throw new Error(responseJson.error);
-            }
-            return response.json();
-        },
-        onSuccess: () => {
-            notify('Success cancel', {
-                type: 'success',
-            });
-            refresh()
-        },
-        onError: (error) => {
-            notify('Error:' + error.message, {
-                type: 'error',
-            });
-        },
-    })
-    return (
-        <Button label="Cancel" onClick={() => {
-            mutate({
-                work_order_id: workOrderID
-            });
-        }} disabled={isPending} color="error" variant="contained">
-            <CancelIcon />
-        </Button>
-    );
-}
 
 
 function WorkOrderShowActions({ barcodeRef, workOrderID }: { barcodeRef: React.RefObject<any>, workOrderID: number }) {

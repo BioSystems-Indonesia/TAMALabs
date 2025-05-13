@@ -2,16 +2,14 @@ import { GridLegacy as Grid, LinearProgress, SxProps } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 
-import { SubmitHandler, useFormContext } from 'react-hook-form';
-import Typography from '@mui/material/Typography';
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { AutocompleteInput, BooleanInput, Button, Form, InputHelperText, Link, RecordContextProvider, ReferenceInput, required, useNotify, useRefresh, WithRecord } from 'react-admin';
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
+import WarningIcon from '@mui/icons-material/Warning';
+import Typography from '@mui/material/Typography';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AutocompleteInput, BooleanInput, Button, Form, InputHelperText, Link, RecordContextProvider, ReferenceInput, required, useNotify, useRefresh } from 'react-admin';
+import { SubmitHandler, useFormContext } from 'react-hook-form';
 import { getRefererParam } from '../../hooks/useReferer';
 import { DeviceForm } from '../device';
-import WarningIcon from '@mui/icons-material/Warning';
-import useAxios from '../../hooks/useAxios';
-import { propsStateInitializer } from '@mui/x-data-grid/internals';
 
 
 type WorkOrderStatus = 'IDLE' | 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'INCOMPLETE' | 'ERROR';
@@ -186,7 +184,7 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
     const [percentage, setPercentage] = useState<number>(0);
     const [status, setStatus] = useState<WorkOrderStatus>('IDLE');
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
+    const [_, setError] = useState<string | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
     const refresh = useRefresh();
 
@@ -296,27 +294,6 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
             }
         };
     }, []);
-
-    const getStatusColor = (): string => {
-        switch (status) {
-            case 'PENDING': return 'bg-gray-400';
-            case 'IN_PROGRESS': return 'bg-blue-500';
-            case 'DONE': return 'bg-green-500';
-            case 'INCOMPLETE': return 'bg-yellow-500';
-            case 'ERROR': return 'bg-red-500';
-            case 'IDLE':
-            default: return 'bg-gray-300';
-        }
-    };
-
-    const getAlertVariant = (): "default" | "destructive" => {
-        switch (status) {
-            case 'ERROR': return 'destructive';
-            case 'DONE':
-            case 'INCOMPLETE':
-            default: return 'default';
-        }
-    }
 
     useEffect(() => {
         if (props.setIsProcessing) {
