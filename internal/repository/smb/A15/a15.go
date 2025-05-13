@@ -1,10 +1,14 @@
 package a15
 
 import (
+	"bytes"
 	"context"
 	"encoding/csv"
-	"strings"
+	"log"
+	"net"
+	"strconv"
 
+	"github.com/hirochachacha/go-smb2"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
@@ -17,11 +21,44 @@ type Sample struct {
 }
 
 func SendToA15(ctx context.Context, req entity.SendPayloadRequest) {
-	s := createContentFile(req)
-	println(s)
+	conn, err := net.Dial("tcp", net.JoinHostPort(req.Device.IPAddress, strconv.Itoa(req.Device.Port)))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer conn.Close()
+
+	d := &smb2.Dialer{
+		Initiator: &smb2.NTLMInitiator{
+			User:     req.Device.Username,
+			Password: req.Device.Password,
+		},
+	}
+
+	s, err := d.Dial(conn)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer s.Logoff()
+
+	fs, err := s.Mount(req.Device.Path)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	defer fs.Umount()
+
+	err = fs.WriteFile("import.txt", createContentFile(req), 0644)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	log.Println("Send to A15")
 }
 
-func createContentFile(req entity.SendPayloadRequest) string {
+func createContentFile(req entity.SendPayloadRequest) []byte {
 	var samples []Sample
 	for _, p := range req.Patients {
 		for _, s := range p.Specimen {
@@ -32,7 +69,7 @@ func createContentFile(req entity.SendPayloadRequest) string {
 		}
 	}
 
-	w := &strings.Builder{}
+	w := &bytes.Buffer{}
 	cw := csv.NewWriter(w)
 	cw.Comma = '\t'
 
@@ -47,7 +84,7 @@ func createContentFile(req entity.SendPayloadRequest) string {
 	}
 
 	cw.Flush()
-	return w.String()
+	return w.Bytes()
 }
 
 func row(req entity.SendPayloadRequest, p entity.Patient, s entity.Specimen, r entity.ObservationRequest) Sample {

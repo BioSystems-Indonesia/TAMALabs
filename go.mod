@@ -7,6 +7,7 @@ require (
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/google/wire v0.6.0
+	github.com/hirochachacha/go-smb2 v1.1.0
 	github.com/kardianos/hl7 v1.1.2
 	github.com/labstack/echo/v4 v4.13.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -21,6 +22,7 @@ require (
 	ariga.io/atlas-go-sdk v0.7.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/geoffgarside/ber v1.1.0 // indirect
 	github.com/glebarez/go-sqlite v1.21.2 // indirect
 	github.com/go-sql-driver/mysql v1.9.2 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
