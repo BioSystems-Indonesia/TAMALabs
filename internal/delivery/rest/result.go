@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
 	"net/http"
 	"strconv"
 
@@ -12,14 +13,16 @@ import (
 )
 
 type ResultHandler struct {
-	cfg           *config.Schema
-	resultUsecase *result.Usecase
+	cfg             *config.Schema
+	resultUsecase   *result.Usecase
+	analyzerUsecase *analyzer.Usecase
 }
 
-func NewResultHandler(cfg *config.Schema, resultUsecase *result.Usecase) *ResultHandler {
+func NewResultHandler(cfg *config.Schema, resultUsecase *result.Usecase, analyzerUsecase *analyzer.Usecase) *ResultHandler {
 	return &ResultHandler{
-		cfg:           cfg,
-		resultUsecase: resultUsecase,
+		cfg:             cfg,
+		resultUsecase:   resultUsecase,
+		analyzerUsecase: analyzerUsecase,
 	}
 }
 
@@ -91,4 +94,13 @@ func (h *ResultHandler) TooglePickTestResult(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, result)
+}
+
+func (h Handler) RefreshResult(c echo.Context) error {
+	err := h.analyzerUsecase.ProcessA15(c.Request().Context())
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.NoContent(http.StatusOK)
 }
