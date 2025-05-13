@@ -113,9 +113,10 @@ const (
 )
 
 var TableDeviceType = Tables{
-	{ID: "BA400", Name: "BA400"},
-	{ID: "BA200", Name: "BA200"},
-	{ID: "OTHER", Name: "OTHER"},
+	{ID: string(DeviceTypeBA400), Name: string(DeviceTypeBA400)},
+	{ID: string(DeviceTypeBA200), Name: string(DeviceTypeBA200)},
+	{ID: string(DeviceTypeA15), Name: string(DeviceTypeA15)},
+	{ID: string(DeviceTypeOther), Name: string(DeviceTypeOther)},
 }
 
 var TableList = map[string]Tables{
