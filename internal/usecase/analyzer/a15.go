@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"strconv"
 	"strings"
@@ -53,7 +54,8 @@ func (u *Usecase) ProcessA15(ctx context.Context) error {
 	for _, lr := range lrs {
 		speciment, err := u.SpecimenRepository.FindByBarcode(ctx, lr.PatientID)
 		if err != nil {
-			return err
+			slog.Error("specimen not found", "barcode", lr.PatientID, "error", err)
+			continue
 		}
 
 		observation := entity.ObservationResult{
@@ -67,7 +69,8 @@ func (u *Usecase) ProcessA15(ctx context.Context) error {
 
 		err = u.ObservationResultRepository.Create(ctx, &observation)
 		if err != nil {
-			return err
+			slog.Error("failed to create observation result", "specimen_id", speciment.ID, "test_code", lr.TestName, "error", err)
+			continue
 		}
 	}
 
@@ -94,7 +97,8 @@ func connectToSamba(device entity.Device) ([]A15Result, error) {
 	}
 	defer s.Logoff()
 
-	fs, err := s.Mount(device.Type)
+	//fs, err := s.Mount(device.Path)
+	fs, err := s.Mount("Export")
 	if err != nil {
 		return nil, err
 	}

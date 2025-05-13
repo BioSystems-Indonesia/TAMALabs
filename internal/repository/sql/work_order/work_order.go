@@ -573,6 +573,7 @@ func (r WorkOrderRepository) FindByStatus(ctx context.Context, status entity.Wor
 	var workOrders []entity.WorkOrder
 	err := r.db.Where("status = ?", status).
 		Preload("Patient").
+		Preload("Devices").
 		Preload("Patient.Specimen").
 		Preload("Patient.Specimen.ObservationRequest").
 		Preload("Patient.Specimen.ObservationRequest.TestType").
