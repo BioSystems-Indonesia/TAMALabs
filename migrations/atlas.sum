@@ -1,3 +1,5 @@
-h1:1mBBb6Dr7MnkLVTFnkm76ZIgBSVcCgre5YSAA9CAcAU=
-20250411034650_init_db.down.sql h1:+vnINTmO3D037aPN7qYuRj5iBNjObtPJIkDdFJBPG8I=
-20250411034650_init_db.up.sql h1:NbozCTM3ER2vjBq5wPyLGantQ8nDDxlqN6g1Ot8Bifc=
+h1:iY0qDOo6v1KO3FR1UAcbix04LwL6nteoA/PzdPavFwU=
+20250411034650_init_db.down.sql h1:5hm+2mteOlvdGCQOJyM/UN4C0rMsUAY6/SNSAWruiuY=
+20250411034650_init_db.up.sql h1:xKynUJoA4Nlr0wgcJgs7wxOyt/UNLZCUwvh8qsUkmpw=
+20250513065507_adding_device_config_samba.down.sql h1:EPlWKe6sBPrUm6XFDzhLS4WBE/lKyqIfvKoQ0msacWk=
+20250513065507_adding_device_config_samba.up.sql h1:Pv90I8gG8XA3EacONtTL4JcCH9p6/Con1Bo9KwsPblI=

@@ -6,8 +6,10 @@ import {
     Datagrid,
     Edit,
     FilterLiveSearch,
+    FormDataConsumer,
     List,
     NumberInput,
+    PasswordInput,
     required,
 
     Show,
@@ -19,6 +21,8 @@ import FeatureList from "../../component/FeatureList.tsx";
 import { Action, ActionKeys } from "../../types/props.ts";
 import { useRefererRedirect } from "../../hooks/useReferer.ts";
 import SideFilter from "../../component/SideFilter.tsx";
+import { Device, DeviceType, DeviceTypeValue } from "../../types/device.ts";
+import { Typography } from "@mui/material";
 
 type DeviceFormProps = {
     readonly?: boolean
@@ -31,6 +35,8 @@ function ReferenceSection() {
         </Box>
     )
 }
+
+const showFileConfig = [DeviceType.A15] as DeviceTypeValue[];
 
 export function DeviceForm(props: DeviceFormProps) {
     return (
@@ -51,6 +57,18 @@ export function DeviceForm(props: DeviceFormProps) {
             </FeatureList>
             <TextInput source="ip_address" validate={[required()]} readOnly={props.readonly} />
             <NumberInput source="port" validate={[required()]} readOnly={props.readonly} />
+
+            <FormDataConsumer<{ type: DeviceTypeValue }>>
+                {({ formData, ...rest }) => showFileConfig.includes(formData.type) &&
+                    <>
+                        <Typography component="p" gutterBottom>File Sender Config</Typography>
+                        <Divider />
+                        <TextInput source="username" readOnly={props.readonly} />
+                        <PasswordInput source="password" readOnly={props.readonly} />
+                        <TextInput source="path" readOnly={props.readonly} />
+                    </>
+                }
+            </FormDataConsumer>
         </SimpleForm>
     )
 }
