@@ -2,6 +2,7 @@ package patientuc
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/oibacidem/lims-hl-seven/config"
@@ -40,6 +41,20 @@ func (p PatientUseCase) FindOneByID(id int64) (entity.Patient, error) {
 }
 
 func (p PatientUseCase) Create(req *entity.Patient) error {
+	exists, err := p.patientRepo.IsExists(req)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return fmt.Errorf(
+			"patient %s %s with %s already exists",
+			req.FirstName,
+			req.LastName,
+			req.Birthdate.Format("2006-01-02"),
+		)
+	}
+
 	return p.patientRepo.Create(req)
 }
 

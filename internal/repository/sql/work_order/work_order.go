@@ -572,6 +572,7 @@ func (r WorkOrderRepository) FindOneByBarcode(ctx context.Context, barcode strin
 func (r WorkOrderRepository) FindByStatus(ctx context.Context, status entity.WorkOrderStatus) ([]entity.WorkOrder, error) {
 	var workOrders []entity.WorkOrder
 	err := r.db.Where("status = ?", status).
+		Preload("Devices").
 		Preload("Patient").
 		Preload("Devices").
 		Preload("Patient.Specimen").
