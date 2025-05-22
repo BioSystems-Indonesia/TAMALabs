@@ -8,6 +8,7 @@ import FeatureList from "../../component/FeatureList";
 import type { ActionKeys } from "../../types/props";
 import type { Unit } from "../../types/unit";
 import { TestFilterSidebar } from "../workOrder/TestTypeFilter";
+import useAxios from "../../hooks/useAxios";
 
 export const TestTypeDatagrid = (props: any) => {
     return (
@@ -65,9 +66,10 @@ type TestTypeFormProps = {
 }
 
 function TestTypeInput(props: TestTypeFormProps) {
+    const axios = useAxios()
     const { data: filter, isLoading: isFilterLoading } = useQuery({
         queryKey: ['filterTestType'],
-        queryFn: () => fetch(import.meta.env.VITE_BACKEND_BASE_URL + '/test-type/filter').then(res => res.json()),
+        queryFn: () => axios.get('/test-type/filter').then(res => res.data),
     });
 
     const [categories, setCategories] = useState<string[]>([]);
@@ -82,7 +84,7 @@ function TestTypeInput(props: TestTypeFormProps) {
 
     const { data: units, isLoading: isUnitLoading } = useQuery<Unit[]>({
         queryKey: ['unit'],
-        queryFn: () => fetch(import.meta.env.VITE_BACKEND_BASE_URL + '/unit').then(res => res.json()),
+        queryFn: () => axios.get('/unit').then(res => res.data),
     });
 
     const [unit, setUnit] = useState<string[]>([]);

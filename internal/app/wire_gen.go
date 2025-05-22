@@ -9,25 +9,31 @@ package app
 import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
+	"github.com/oibacidem/lims-hl-seven/internal/middleware"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/daily_sequence"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/role"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_template"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/unit"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/admin"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/auth"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/barcode_generator"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/config"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/device"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/role"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/test_template"
 	test_type2 "github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
@@ -96,6 +102,15 @@ func InitRestApp() server.RestServer {
 	test_templateRepository := test_template.NewRepository(gormDB, schema)
 	test_template_ucUsecase := test_template_uc.NewUsecase(test_templateRepository)
 	testTemplateHandler := rest.NewTestTemplateHandler(schema, test_template_ucUsecase)
-	restServer := provideRestServer(schema, handler, validate, deviceHandler, serverControllerHandler, testTemplateHandler)
+	adminRepository := adminrepo.NewAdminRepository(gormDB, schema)
+	authUseCase := auth_uc.NewAuthUseCase(adminRepository, schema)
+	authHandler := rest.NewAuthHandler(authUseCase)
+	roleRepository := rolerepo.NewRoleRepository(gormDB, schema)
+	adminUsecase := admin_uc.NewAdminUsecase(adminRepository, roleRepository)
+	adminHandler := rest.NewAdminHandler(schema, adminUsecase)
+	roleUsecase := role_uc.NewRoleUsecase(roleRepository)
+	roleHandler := rest.NewRoleHandler(schema, roleUsecase)
+	jwtMiddleware := middleware.NewJWTMiddleware(schema)
+	restServer := provideRestServer(schema, handler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, jwtMiddleware)
 	return restServer
 }

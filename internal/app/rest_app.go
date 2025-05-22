@@ -4,12 +4,15 @@ import (
 	"github.com/google/wire"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
+	"github.com/oibacidem/lims-hl-seven/internal/middleware"
+	adminrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
 	configrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/daily_sequence"
 	device "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
+	rolerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/role"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_template"
 	testTypeRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
@@ -17,12 +20,15 @@ import (
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
+	admin_uc "github.com/oibacidem/lims-hl-seven/internal/usecase/admin"
+	auth_uc "github.com/oibacidem/lims-hl-seven/internal/usecase/auth"
 	barcodeGeneratorUC "github.com/oibacidem/lims-hl-seven/internal/usecase/barcode_generator"
 	configuc "github.com/oibacidem/lims-hl-seven/internal/usecase/config"
 	deviceuc "github.com/oibacidem/lims-hl-seven/internal/usecase/device"
 	observation_requestuc "github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	resultUC "github.com/oibacidem/lims-hl-seven/internal/usecase/result"
+	role_uc "github.com/oibacidem/lims-hl-seven/internal/usecase/role"
 	specimenuc "github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
 	test_template_uc "github.com/oibacidem/lims-hl-seven/internal/usecase/test_template"
 	testTypeUC "github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
@@ -61,7 +67,9 @@ var (
 		specimen.NewRepository,
 		configrepo.NewRepository,
 		test_template.NewRepository,
+		adminrepo.NewAdminRepository,
 		unit.NewRepository,
+		rolerepo.NewRoleRepository,
 
 		restUsecaseSet,
 		tcpUsecaseSet,
@@ -72,8 +80,11 @@ var (
 		observation_requestuc.NewObservationRequestUseCase,
 		configuc.NewConfigUseCase,
 		test_template_uc.NewUsecase,
+		admin_uc.NewAdminUsecase,
+		auth_uc.NewAuthUseCase,
 		unitUC.NewUnitUseCase,
 		deviceuc.NewDeviceUseCase,
+		role_uc.NewRoleUsecase,
 
 		rest.NewHlSevenHandler,
 		rest.NewHealthCheckHandler,
@@ -85,8 +96,13 @@ var (
 		rest.NewTestTypeHandler,
 		rest.NewResultHandler,
 		rest.NewConfigHandler,
+		rest.NewAdminHandler,
+		rest.NewAuthHandler,
 		rest.NewUnitHandler,
+		rest.NewRoleHandler,
 		wire.Struct(new(rest.DeviceHandler), "*"),
+
+		middleware.NewJWTMiddleware,
 
 		rest.NewTestTemplateHandler,
 		provideTCP,

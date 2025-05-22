@@ -3,6 +3,13 @@ package entity
 const (
 	// HeaderXTotalCount is a header for react admin. Expected value is a number with a total of the results
 	HeaderXTotalCount = "X-Total-Count"
+	// HeaderAuthorization is a header for auth. Expected value is a JWT token
+	HeaderAuthorization = "Authorization"
+)
+
+const (
+	// ContextKeyUser is a key for user in context
+	ContextKeyUser = "user"
 )
 
 type SpecimenType string

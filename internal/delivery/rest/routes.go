@@ -7,6 +7,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/oibacidem/lims-hl-seven/web"
+
+	appMiddleware "github.com/oibacidem/lims-hl-seven/internal/middleware"
 	"golang.org/x/exp/slices"
 )
 
@@ -92,16 +94,23 @@ func RegisterRoutes(
 	deviceHandler *DeviceHandler,
 	serverControllerHandler *ServerControllerHandler,
 	testTemplateHandler *TestTemplateHandler,
+	adminHandler *AdminHandler,
+	authHandler *AuthHandler,
+	roleHandler *RoleHandler,
+	authMiddleware *appMiddleware.JWTMiddleware,
 ) {
 	slog.Info("registering routes")
 
 	registerFrontendPath(e)
 
 	api := e.Group("/api")
-	v1 := api.Group("/v1")
-	v1.GET("/ping", handler.Ping)
+	unauthenticatedV1 := api.Group("/v1")
+	unauthenticatedV1.GET("/ping", handler.Ping)
+	unauthenticatedV1.POST("/login", authHandler.Login)
 
-	patient := v1.Group("/patient")
+	authenticatedV1 := api.Group("/v1", authMiddleware.Middleware())
+	authenticatedV1.GET("/check-auth", handler.Ping)
+	patient := authenticatedV1.Group("/patient")
 	{
 		patient.GET("", handler.FindPatients)
 		patient.GET("/:id", handler.GetOnePatient)
@@ -110,19 +119,19 @@ func RegisterRoutes(
 		patient.DELETE("/:id", handler.DeletePatient)
 	}
 
-	specimen := v1.Group("/specimen")
+	specimen := authenticatedV1.Group("/specimen")
 	{
 		specimen.GET("", handler.FindSpecimens)
 		specimen.GET("/:id", handler.GetOneSpecimen)
 	}
 
-	observationRequest := v1.Group("/observation-request")
+	observationRequest := authenticatedV1.Group("/observation-request")
 	{
 		observationRequest.GET("", handler.FindObservationRequests)
 		observationRequest.GET("/:id", handler.GetOneObservationRequest)
 	}
 
-	workOrder := v1.Group("/work-order")
+	workOrder := authenticatedV1.Group("/work-order")
 	{
 		workOrder.GET("", handler.FindWorkOrders)
 		workOrder.POST("", handler.CreateWorkOrder)
@@ -133,11 +142,11 @@ func RegisterRoutes(
 		workOrder.DELETE("/:id", handler.DeleteWorkOrder)
 	}
 
-	deviceHandler.RegisterRoute(v1.Group("/device"))
+	deviceHandler.RegisterRoute(authenticatedV1.Group("/device"))
 
-	serverControllerHandler.RegisterRoute(v1.Group("/server"))
+	serverControllerHandler.RegisterRoute(authenticatedV1.Group("/server"))
 
-	testType := v1.Group("/test-type")
+	testType := authenticatedV1.Group("/test-type")
 	{
 		testType.GET("", handler.ListTestType)
 		testType.GET("/filter", handler.ListTestTypeFilter)
@@ -147,7 +156,7 @@ func RegisterRoutes(
 		testType.DELETE("/:id", handler.DeleteTestType)
 	}
 
-	testTemplate := v1.Group("/test-template")
+	testTemplate := authenticatedV1.Group("/test-template")
 	{
 		testTemplate.GET("", testTemplateHandler.ListTestTemplate)
 		testTemplate.GET("/:id", testTemplateHandler.GetOneTestTemplate)
@@ -156,7 +165,7 @@ func RegisterRoutes(
 		testTemplate.DELETE("/:id", testTemplateHandler.DeleteTestTemplate)
 	}
 
-	result := v1.Group("/result")
+	result := authenticatedV1.Group("/result")
 	{
 		result.GET("", handler.ListResult)
 		result.POST("/refresh", handler.RefreshResult)
@@ -166,19 +175,34 @@ func RegisterRoutes(
 		result.DELETE("/:work_order_id/test/:test_result_id", handler.DeleteTestResult)
 	}
 
-	config := v1.Group("/config")
+	config := authenticatedV1.Group("/config")
 	{
 		config.GET("", handler.ListConfig)
 		config.GET("/:key", handler.GetConfig)
 		config.PUT("/:key", handler.EditConfig)
 	}
 
-	unit := v1.Group("/unit")
+	unit := authenticatedV1.Group("/unit")
 	{
 		unit.GET("", handler.ListUnit)
 	}
 
-	handler.RegisterFeatureList(v1)
+	admin := authenticatedV1.Group("/user")
+	{
+		admin.GET("", adminHandler.FindAdmins)
+		admin.GET("/:id", adminHandler.GetOneAdmin)
+		admin.POST("", adminHandler.CreateAdmin)
+		admin.PUT("/:id", adminHandler.UpdateAdmin)
+		admin.DELETE("/:id", adminHandler.DeleteAdmin)
+	}
+
+	role := authenticatedV1.Group("/role")
+	{
+		role.GET("", roleHandler.FindRoles)
+		role.GET("/:id", roleHandler.GetOneRole)
+	}
+
+	handler.RegisterFeatureList(authenticatedV1)
 }
 
 func registerFrontendPath(e *echo.Echo) {

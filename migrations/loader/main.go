@@ -23,6 +23,8 @@ func main() {
 		&entity.Config{},
 		&entity.TestTemplate{},
 		&entity.TestTemplateTestType{},
+		&entity.Admin{},
+		&entity.Role{},
 	}
 
 	stmts, err := gormschema.New("sqlite").Load(models...)

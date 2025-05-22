@@ -1,5 +1,7 @@
-h1:iY0qDOo6v1KO3FR1UAcbix04LwL6nteoA/PzdPavFwU=
+h1:0r/lMJlF3Bik3fDZQQ6Sygo9Q0F2sGl57jtFbyBxd+U=
 20250411034650_init_db.down.sql h1:5hm+2mteOlvdGCQOJyM/UN4C0rMsUAY6/SNSAWruiuY=
 20250411034650_init_db.up.sql h1:xKynUJoA4Nlr0wgcJgs7wxOyt/UNLZCUwvh8qsUkmpw=
-20250513065507_adding_device_config_samba.down.sql h1:EPlWKe6sBPrUm6XFDzhLS4WBE/lKyqIfvKoQ0msacWk=
-20250513065507_adding_device_config_samba.up.sql h1:Pv90I8gG8XA3EacONtTL4JcCH9p6/Con1Bo9KwsPblI=
+20250513065507_adding_device_config_samba.down.sql h1:0P2wpw/9EzMNmMXTh1QafC+XGuBHICThZ6J/xphzNIc=
+20250513065507_adding_device_config_samba.up.sql h1:Ro2CgenE9+M2/EDcuGB9NNlGStkeVsfquRoEdabm9c0=
+20250518160510_adding_admin.down.sql h1:qnRZ55wgMKtMXeZv2wzz+CrrEx2Onqk9GQtJw/Rf6rg=
+20250518160510_adding_admin.up.sql h1:xPPQhU4ufd4+Ayvh0oMhRJhuqa8paAdO+mPNErYCmlc=

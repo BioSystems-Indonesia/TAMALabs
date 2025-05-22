@@ -20,6 +20,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/oibacidem/lims-hl-seven/internal/middleware"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	"github.com/oibacidem/lims-hl-seven/migrations"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
@@ -57,10 +58,22 @@ func provideRestServer(
 	deviceHandler *rest.DeviceHandler,
 	serverControllerHandler *rest.ServerControllerHandler,
 	testTemplateHandler *rest.TestTemplateHandler,
+	authHandler *rest.AuthHandler,
+	adminHandler *rest.AdminHandler,
+	roleHandler *rest.RoleHandler,
+	authMiddleware *middleware.JWTMiddleware,
 ) server.RestServer {
 	serv := server.NewRest(config.Port, validate)
 	rest.RegisterMiddleware(serv.GetClient())
-	rest.RegisterRoutes(serv.GetClient(), handlers, deviceHandler, serverControllerHandler, testTemplateHandler)
+	rest.RegisterRoutes(serv.GetClient(), handlers,
+		deviceHandler,
+		serverControllerHandler,
+		testTemplateHandler,
+		adminHandler,
+		authHandler,
+		roleHandler,
+		authMiddleware,
+	)
 	return serv
 }
 
@@ -251,9 +264,26 @@ func seedTestData(db *gorm.DB) error {
 		}
 	}
 
+	for _, admin := range seedAdmin {
+		err := db.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(&admin).Error
+		if err != nil {
+			return err
+		}
+	}
+
 	for _, unit := range seedUnits {
 		err := db.Clauses(clause.OnConflict{DoNothing: true}).
 			Create(&unit).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, role := range seedRole {
+		err := db.Clauses(clause.OnConflict{UpdateAll: true}).
+			Create(&role).Error
 		if err != nil {
 			return err
 		}

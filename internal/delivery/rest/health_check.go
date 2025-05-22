@@ -2,10 +2,13 @@ package rest
 
 import (
 	"errors"
+	"fmt"
 	"net"
+	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/oibacidem/lims-hl-seven/config"
+	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
 type HealthCheckHandler struct {
@@ -79,12 +82,26 @@ func (h HealthCheckHandler) Ping(c echo.Context) error {
 		serverIP = localIP.String()
 	}
 
-	return c.JSON(200, map[string]string{
+	return c.JSON(http.StatusOK, map[string]string{
 		"status":   "OK",
 		"version":  h.cfg.Version,
 		"revision": h.cfg.Revision,
 		"logLevel": h.cfg.LogLevel,
 		"serverIP": serverIP,
 		"port":     h.cfg.Port,
+	})
+}
+
+func (h HealthCheckHandler) CheckAuth(c echo.Context) error {
+	admin := c.Get(entity.ContextKeyUser).(entity.AdminClaims)
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"status":     "OK",
+		"id":         fmt.Sprintf("%d", admin.ID),
+		"fullname":   admin.Fullname,
+		"email":      admin.Email,
+		"is_active":  fmt.Sprintf("%t", admin.IsActive),
+		"created_at": admin.CreatedAt,
+		"updated_at": admin.UpdatedAt,
 	})
 }

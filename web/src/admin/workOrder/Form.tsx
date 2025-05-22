@@ -555,6 +555,15 @@ function NoPatient(props: CreatePatientButtonProps) {
 }
 
 
+// function NoDoctor(props: CreatePatientButtonProps) {
+//     return (
+//         <Stack sx={{ width: "100%" }} spacing={2}>
+//             <Typography fontSize={16}>No Doctor Found</Typography>
+//             <CreatePatientButton setOpen={props.setOpen} />
+//         </Stack>
+//     )
+// }
+
 function PatientInput(props: WorkOrderFormProps) {
     const [open, setOpen] = useState(false);
     const [patientID, setPatientID] = useState<number | undefined>(undefined);
@@ -591,9 +600,14 @@ function PatientInput(props: WorkOrderFormProps) {
             <Stack sx={{
                 marginBottom: "2rem",
             }}>
+                {/* <Divider sx={{
+                    my: "0.5rem",
+                }}/>
+                <Typography variant="subtitle1" sx={{
+                    mb: "0.5rem",
+                }}>Required</Typography> */}
                 <ReferenceInput source="patient_id" reference="patient" target="patient_id" label="Patient Name">
                     <AutocompleteInput
-                        shouldRenderSuggestions={(val: string) => { return val.trim().length > 2 }}
                         suggestionLimit={10}
                         noOptionsText={<NoPatient setOpen={setOpen} />}
                     />
@@ -615,6 +629,24 @@ function PatientInput(props: WorkOrderFormProps) {
                         </Stack>
                     </>
                 }
+                {/* <Divider sx={{
+                    my: "0.5rem",
+                }}/>
+                <Typography variant="subtitle1" sx={{
+                    mb: "0.5rem",
+                }}>Optional</Typography>
+                <ReferenceInput source="requester_id" reference="user" target="requester_id" label="Requester">
+                    <AutocompleteInput
+                        suggestionLimit={10}
+                        noOptionsText={<NoPatient setOpen={setOpen} />}
+                    />
+                </ReferenceInput>
+                <ReferenceInput source="verificator_id" reference="user" target="verificator_id" label="Requester">
+                    <AutocompleteInput
+                        suggestionLimit={10}
+                        noOptionsText={<NoPatient setOpen={setOpen} />}
+                    />
+                </ReferenceInput> */}
             </Stack>
             <PatientFormModal open={open} onClose={() => setOpen(false)} setPatientID={setPatientID} />
         </>
@@ -634,7 +666,7 @@ function CreatePatientButton(props: CreatePatientButtonProps) {
 }
 
 
-const steps = ['Patient', 'Test'];
+const steps = ['Info', 'Test'];
 
 
 export default function WorkOrderForm(props: WorkOrderFormProps) {

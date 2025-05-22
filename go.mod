@@ -5,6 +5,7 @@ go 1.23.2
 require (
 	ariga.io/atlas-provider-gorm v0.5.1
 	github.com/go-playground/validator/v10 v10.23.0
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/google/wire v0.6.0
 	github.com/hirochachacha/go-smb2 v1.1.0
@@ -84,7 +85,7 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/crypto v0.37.0 // indirect
+	golang.org/x/crypto v0.37.0
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect

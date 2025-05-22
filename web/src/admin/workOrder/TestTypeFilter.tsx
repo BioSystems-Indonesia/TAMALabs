@@ -8,6 +8,7 @@ import { FilterList, FilterListItem, FilterLiveSearch, useGetList, useListContex
 import { stopEnterPropagation } from '../../helper/component';
 import type { ObservationRequestCreateRequest } from '../../types/observation_requests';
 import SideFilter from '../../component/SideFilter';
+import useAxios from '../../hooks/useAxios';
 
 type TestFilterSidebarProps = {
     setSelectedData: React.Dispatch<React.SetStateAction<Record<number, ObservationRequestCreateRequest>>>
@@ -122,9 +123,10 @@ export const TestFilterSidebar = ({
         };
     };
 
+    const axios = useAxios()
     const { data: filter } = useQuery({
         queryKey: ['filterTestType'],
-        queryFn: () => fetch(import.meta.env.VITE_BACKEND_BASE_URL + '/test-type/filter').then(res => res.json()),
+        queryFn: () => axios.get('/test-type/filter').then(res => res.data),
     });
 
     return (

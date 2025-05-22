@@ -10,6 +10,7 @@ import { AutocompleteInput, BooleanInput, Button, Form, InputHelperText, Link, R
 import { SubmitHandler, useFormContext } from 'react-hook-form';
 import { getRefererParam } from '../../hooks/useReferer';
 import { DeviceForm } from '../device';
+import useAxios from '../../hooks/useAxios';
 
 
 type WorkOrderStatus = 'IDLE' | 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'INCOMPLETE' | 'ERROR';
@@ -187,6 +188,7 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
     const [_, setError] = useState<string | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
     const refresh = useRefresh();
+    const axios = useAxios();
 
     // Callback passed to the stream processor to update component state during streaming
     const handleProgressUpdate: ProgressCallback = useCallback((newPercentage, newStatus) => {
@@ -215,34 +217,44 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
             let url
             switch (data.action) {
                 case WorkOrderAction.run:
-                    url = `${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`;
+                    url = `/work-order/run`;
                     break;
                 case WorkOrderAction.cancel:
-                    url = `${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/cancel`;
+                    url = `/work-order/cancel`;
                     break;
             }
 
-            const response: Response = await fetch(url, {
+            const response = await axios({
                 method: 'POST',
+                url,
                 headers: {
                     'Accept': 'text/event-stream',
-                    // 'Authorization': 'Bearer YOUR_TOKEN',
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data),
+                data: data,
                 signal,
+                responseType: 'stream'
             });
 
-            if (!response.ok) {
+            if (response.status !== 200) {
                 let errorBody = `Server responded with status ${response.status}`;
                 try {
-                    const text: string = await response.text();
-                    errorBody += `: ${text || '(no details provided)'}`;
+                    const text = response.data?.toString() || '(no details provided)';
+                    errorBody += `: ${text}`;
                 } catch (_) { }
                 throw new Error(errorBody);
             }
 
-            const finalResult: StreamResult = await processSSEStream(response, handleProgressUpdate, signal);
+            // Convert Axios response to Fetch Response format
+            const fetchResponse = new Response(response.data, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: new Headers({
+                    'Content-Type': response.headers['content-type'] || 'text/event-stream'
+                })
+            });
+
+            const finalResult: StreamResult = await processSSEStream(fetchResponse, handleProgressUpdate, signal);
 
             setStatus(finalResult.status);
             setPercentage(finalResult.percentage);

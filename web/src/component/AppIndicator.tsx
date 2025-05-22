@@ -2,6 +2,7 @@ import WifiIcon from '@mui/icons-material/Wifi';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
 import { IconButton, Tooltip } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
+import useAxios from '../hooks/useAxios';
 
 const AppIndicator = () => {
     var [state, setState] = useState("loading");
@@ -10,11 +11,11 @@ const AppIndicator = () => {
         hl7tcp: "",
     });
     var timer = useRef<ReturnType<typeof setInterval> | null>(null)
+    const axios = useAxios()
     const fetchData = async () => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/server/status`);
-            const data = await response.json();
-            setDetailState(data);
+            const response = await axios.get(`/server/status`);
+            setDetailState(response.data);
             setState("online");
         } catch {
             setState("offline")

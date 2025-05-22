@@ -4,9 +4,10 @@ import BiotechIcon from '@mui/icons-material/Biotech';
 import BuildIcon from '@mui/icons-material/Build';
 import LanIcon from '@mui/icons-material/Lan';
 import UserIcon from '@mui/icons-material/Person';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import TableViewIcon from '@mui/icons-material/TableView';
 import jsonServerProvider from "ra-data-json-server";
-import { Admin, CustomRoutes, Resource } from "react-admin";
+import { Admin, CustomRoutes, fetchUtils, HttpError, Resource } from "react-admin";
 import { Route } from "react-router-dom";
 import { dateFormatter } from '../helper/format.ts';
 import { ConfigEdit, ConfigList } from "./config/config.tsx";
@@ -21,15 +22,69 @@ import { TestTypeCreate, TestTypeEdit, TestTypeList } from "./testType";
 import { WorkOrderCreate, WorkOrderEdit, WorkOrderList } from "./workOrder";
 import { WorkOrderShow } from "./workOrder/Show.tsx";
 import { radiantLightTheme, radiantDarkTheme } from './theme.tsx';
+import { useAuthProvider } from '../hooks/authProvider.ts';
+import { LOCAL_STORAGE_ACCESS_TOKEN } from '../types/constant.ts';
+import { UserCreate, UserEdit, UserList, UserShow } from './User/index.tsx';
+import { ErrorPayload } from '../types/errors.ts';
 
-const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL);
+const httpClient = async (url: string, options?: fetchUtils.Options) => {
+    if (!options) {
+        options = {};
+    }
+
+    if (!options.headers) {
+        options.headers = new Headers({ Accept: 'application/json' });
+    }
+
+
+    const accessToken = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN)
+    if (accessToken) {
+        //@ts-ignore
+        options.headers.set('Authorization', `Bearer ${accessToken}`);
+    }
+
+    const requestHeaders = fetchUtils.createHeadersFromOptions(options);
+
+    return fetch(url, { ...options, headers: requestHeaders })
+        .then(response =>
+            response.text().then(text => ({
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers,
+                body: text,
+            }))
+        )
+        .then(({ status, statusText, headers, body }) => {
+            let json;
+            try {
+                json = JSON.parse(body);
+            } catch (e) {
+                // not json, no big deal
+            }
+            if (status < 200 || status >= 300) {
+                const errorPayload = json as ErrorPayload;
+                return Promise.reject(
+                    new HttpError(
+                        (errorPayload?.error) || statusText,
+                        status,
+                        errorPayload
+                    )
+                );
+            }
+            return Promise.resolve({ status, headers, body, json });
+        });
+
+};
+
+const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL, httpClient);
 
 const App = () => {
-    return (<Admin 
-    dataProvider={dataProvider} 
-    layout={DefaultLayout}
-    theme={radiantLightTheme}
-    darkTheme={radiantDarkTheme}
+    return (<Admin
+        dataProvider={dataProvider}
+        layout={DefaultLayout}
+        theme={radiantLightTheme}
+        darkTheme={radiantDarkTheme}
+        authProvider={useAuthProvider()}
     >
         <CustomRoutes>
             <Route path="/settings/*" element={<Settings />} />
@@ -95,6 +150,14 @@ const App = () => {
             hasShow={true}
             icon={LanIcon}
             recordRepresentation={record => `#${record.id} - ${record.name}`}
+        />
+        <Resource name="user" list={UserList} show={UserShow} edit={UserEdit}
+            create={UserCreate}
+            hasCreate={true}
+            hasEdit={true}
+            hasShow={true}
+            icon={AdminPanelSettingsIcon}
+            recordRepresentation={record => `#${record.id} - ${record.fullname}`}
         />
         <Resource name="config" list={ConfigList} edit={ConfigEdit}
             hasCreate={false}

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var seedPatient = []entity.Patient{
@@ -210,4 +211,43 @@ var seedUnits = []entity.Unit{
 
 	// Immunology Units
 	{Value: "IU/mL", Base: Immunology},
+}
+
+var seedAdmin = []entity.Admin{
+	initAdmin(),
+}
+
+func initAdmin() entity.Admin {
+	const defaultEmail = "admin@admin.com"
+	const defaultUsername = "admin"
+	const defaultPassword = "123456"
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+
+	return entity.Admin{
+		ID:           1,
+		Username:     defaultUsername,
+		Fullname:     "First Admin",
+		Email:        defaultEmail,
+		PasswordHash: string(hash),
+		IsActive:     true,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+}
+
+var seedRole = []entity.Role{
+	{
+		ID:          1,
+		Name:        string(entity.RoleAdmin),
+		Description: "Admin able to do most of LIMS features, including sending and receive lab request, create patient, and manage users",
+	},
+	{
+		ID:          2,
+		Name:        string(entity.RoleDoctor),
+		Description: "Doctor can be assigned as lab request doctor, able to view all patient and lab request",
+	},
 }

@@ -1,19 +1,19 @@
 import HistoryIcon from '@mui/icons-material/History';
 import {
-  Badge,
-  Box,
-  Button,
-  ButtonGroup,
-  Checkbox,
-  Chip,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  GridLegacy as Grid,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography
+    Badge,
+    Box,
+    Button,
+    ButtonGroup,
+    Checkbox,
+    Chip,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    GridLegacy as Grid,
+    IconButton,
+    Stack,
+    Tooltip,
+    Typography
 } from "@mui/material";
 import { DataGrid as MuiDatagrid, type DataGridProps, type GridRenderCellParams } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
@@ -46,44 +46,44 @@ export const ResultShow = (props: any) => {
     });
 
     return (
-      <Show title="Edit Result">
-        <SimpleShowLayout >
-          <HeaderInfo />
-          <WithRecord label="Test Result" render={(record: Result) => (
-            <>
-              {
-                Object.entries(record?.test_result).map(([category, rows]) => (
-                  <TestResultTableGroup
-                    key={category}
-                    category={category}
-                    rows={rows}
-                    setHistory={setHistory}
-                    setOpenHistory={setOpenHistory}
-                  />
-                ))
-              }
+        <Show title="Edit Result">
+            <SimpleShowLayout >
+                <HeaderInfo />
+                <WithRecord label="Test Result" render={(record: Result) => (
+                    <>
+                        {
+                            Object.entries(record?.test_result).map(([category, rows]) => (
+                                <TestResultTableGroup
+                                    key={category}
+                                    category={category}
+                                    rows={rows}
+                                    setHistory={setHistory}
+                                    setOpenHistory={setOpenHistory}
+                                />
+                            ))
+                        }
 
-              <Stack direction="row" spacing={2} mt={2}>
-                <Button component={Link} to={`/result/${record.prev_id}/show`} disabled={record.prev_id === 0}>
-                  Previous
-                </Button>
-                <Button component={Link} to={`/result/${record.next_id}/show`} disabled={record.next_id === 0}>
-                  Next
-                </Button>
-              </Stack>
-              <HistoryDialog
-                workOrderID={record.id}
-                title={history.title}
-                open={openHistory}
-                onClose={() => setOpenHistory(false)}
-                rows={history.rows}
-                setHistory={setHistory}
-              />
-            </>)
-          } />
+                        <Stack direction="row" spacing={2} mt={2}>
+                            <Button component={Link} to={`/result/${record.prev_id}/show`} disabled={record.prev_id === 0}>
+                                Previous
+                            </Button>
+                            <Button component={Link} to={`/result/${record.next_id}/show`} disabled={record.next_id === 0}>
+                                Next
+                            </Button>
+                        </Stack>
+                        <HistoryDialog
+                            workOrderID={record.id}
+                            title={history.title}
+                            open={openHistory}
+                            onClose={() => setOpenHistory(false)}
+                            rows={history.rows}
+                            setHistory={setHistory}
+                        />
+                    </>)
+                } />
 
-        </SimpleShowLayout>
-      </Show>
+            </SimpleShowLayout>
+        </Show>
     )
 }
 
@@ -176,6 +176,7 @@ type TestResultTableProps = {
 
 const TestResultTable = (props: TestResultTableProps) => {
     const notify = useNotify();
+    const axios = useAxios();
 
     function onUpdateError(error: any): void {
         notify(`Error update ${error}`, { type: 'error' });
@@ -185,24 +186,15 @@ const TestResultTable = (props: TestResultTableProps) => {
         if (newRow.result === _oldRow.result && newRow.unit === _oldRow.unit) {
             return _oldRow
         }
-
-        const url = `${import.meta.env.VITE_BACKEND_BASE_URL}/result/${newRow.specimen_id}/test`
-
-        const response = await fetch(url, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newRow)
-        });
-
-        if (!response.ok) {
-            const responseJson = await response.json();
-            throw new Error(responseJson?.error);
+        const url = `/result/${newRow.specimen_id}/test`
+        
+        try {
+            const response = await axios.put(url, newRow);
+            notify(`Success update ${newRow.test}`, { type: 'success' });
+            return response.data;
+        } catch (error: any) {
+            notify(`Error update ${error}`, { type: 'error' });
         }
-
-        const respJSON = await response.json();
-        notify(`Success update ${newRow.test}`, { type: 'success' });
-
-        return respJSON
     }
 
     let negID = -1

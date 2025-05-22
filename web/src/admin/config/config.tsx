@@ -2,14 +2,15 @@ import { Card, CardContent, CircularProgress, Stack, Typography } from "@mui/mat
 import { useQuery } from '@tanstack/react-query';
 import { Datagrid, Edit, List, SimpleForm, TextField, TextInput } from "react-admin";
 import MUITextField from "@mui/material/TextField";
+import useAxios from "../../hooks/useAxios";
 
 export const ConfigList = () => {
+    const axios = useAxios()
     const { data, isPending } = useQuery({
         queryKey: ['server-info'],
         queryFn: async ({ signal }) => {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/ping`)
-
-            return await response.json()
+            const { data } = await axios.get('/ping')
+            return data
         }
     });
 
