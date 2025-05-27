@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net"
 	"runtime/debug"
 	"strings"
@@ -48,6 +49,8 @@ func (h *HlSevenHandler) Handle(conn *net.TCPConn) {
 	if err != nil {
 		log.Println(err)
 	}
+
+	slog.Info(fmt.Sprintf("ack message: %s", res))
 
 	mc.Write([]byte(res))
 }

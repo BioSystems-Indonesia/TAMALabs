@@ -3,9 +3,11 @@ package tcp
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h251"
+	"github.com/oibacidem/lims-hl-seven/internal/constant"
 )
 
 // OULR22 handles the OULR22 message.
@@ -29,15 +31,41 @@ func (h *HlSevenHandler) OULR22(ctx context.Context, m h251.OUL_R22, message []b
 		return "", fmt.Errorf("process failed: %w", err)
 	}
 
-	var msh *h251.MSH
-	msh.MessageControlID = msgControlID
-	msh.MessageType = h251.MSG{
-		HL7:              h251.HL7Name{},
-		MessageCode:      "ACK",
-		TriggerEvent:     "R22",
-		MessageStructure: "ACK",
+	msh := h251.MSH{
+		HL7:                  h251.HL7Name{},
+		FieldSeparator:       "|",
+		EncodingCharacters:   "^~\\&",
+		ReceivingApplication: SimpleHD(constant.ThisApplication),
+		ReceivingFacility:    SimpleHD(constant.ThisFacility), // TODO maybe need device location
+		DateTimeOfMessage:    time.Now(),
+		Security:             "",
+		MessageType: h251.MSG{
+			HL7:              h251.HL7Name{},
+			MessageCode:      "ACK",
+			TriggerEvent:     "R22",
+			MessageStructure: "ACK",
+		},
+		MessageControlID:                    msgControlID,
+		ProcessingID:                        h251.PT{ProcessingID: "P"},
+		VersionID:                           h251.VID{VersionID: "2.5.1"},
+		SequenceNumber:                      "",
+		ContinuationPointer:                 "",
+		AcceptAcknowledgmentType:            "ER",
+		ApplicationAcknowledgmentType:       "AL",
+		CountryCode:                         "ID",
+		CharacterSet:                        []string{"UNICODE UTF-8"},
+		PrincipalLanguageOfMessage:          &h251.CE{},
+		AlternateCharacterSetHandlingScheme: "",
+		MessageProfileIdentifier: []h251.EI{
+			{
+				HL7:              h251.HL7Name{},
+				EntityIdentifier: "LAB-28",
+				NamespaceID:      "IHE",
+				UniversalID:      "",
+				UniversalIDType:  "",
+			},
+		},
 	}
-
 	msa := h251.MSA{
 		AcknowledgmentCode: "AA",
 		MessageControlID:   msh.MessageControlID,
@@ -46,7 +74,7 @@ func (h *HlSevenHandler) OULR22(ctx context.Context, m h251.OUL_R22, message []b
 
 	ackMsg := h251.ACK{
 		HL7: h251.HL7Name{},
-		MSH: msh,
+		MSH: &msh,
 		SFT: nil,
 		MSA: &msa,
 		ERR: nil,
@@ -110,4 +138,13 @@ func createACKMessage(msg h251.ACK) (string, error) {
 	//log.Println("Sending message: ", string(bbLog))
 
 	return string(ack), nil
+}
+
+func SimpleHD(id string) *h251.HD {
+	return &h251.HD{
+		HL7:             h251.HL7Name{},
+		NamespaceID:     id,
+		UniversalID:     "",
+		UniversalIDType: "",
+	}
 }
