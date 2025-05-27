@@ -47,10 +47,12 @@ func (h *HlSevenHandler) Handle(conn *net.TCPConn) {
 
 	res, err := h.HL7Handler(context.Background(), string(b))
 	if err != nil {
-		log.Println(err)
+		slog.Error(err.Error())
 	}
 
-	slog.Info(fmt.Sprintf("ack message: %s", res))
+	if res != "" {
+		slog.Info(fmt.Sprintf("ack message: %s", res))
+	}
 
 	mc.Write([]byte(res))
 }
