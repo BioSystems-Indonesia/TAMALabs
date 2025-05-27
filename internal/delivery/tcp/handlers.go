@@ -35,6 +35,8 @@ func (h *HlSevenHandler) OULR22(ctx context.Context, m h251.OUL_R22, message []b
 		HL7:                  h251.HL7Name{},
 		FieldSeparator:       "|",
 		EncodingCharacters:   "^~\\&",
+		SendingApplication:   m.MSH.SendingApplication,
+		SendingFacility:      m.MSH.SendingFacility,
 		ReceivingApplication: SimpleHD(constant.ThisApplication),
 		ReceivingFacility:    SimpleHD(constant.ThisFacility), // TODO maybe need device location
 		DateTimeOfMessage:    time.Now(),
