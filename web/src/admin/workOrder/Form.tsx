@@ -10,6 +10,7 @@ import TouchAppIcon from '@mui/icons-material/TouchApp';
 import React, { useEffect, useState } from "react";
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import {
+    AutocompleteArrayInput,
     AutocompleteInput,
     DateInput,
     Form,
@@ -19,6 +20,7 @@ import {
     SimpleForm,
     TextInput,
     Toolbar,
+    useAuthProvider,
     useCreate,
     useListContext,
     useNotify,
@@ -36,6 +38,9 @@ import { PatientFormField } from "../patient/index.tsx";
 import FormStepper from "./Stepper.tsx";
 import { TestFilterSidebar } from "./TestTypeFilter.tsx";
 import ListAltIcon from '@mui/icons-material/ListAlt';
+import { Search } from '@mui/icons-material';
+import { RoleNameValue } from '../../types/role.ts';
+import { useCurrentUser } from '../../hooks/currentUser.ts';
 
 
 type WorkOrderActionKeys = ActionKeys | "ADD_TEST";
@@ -44,6 +49,11 @@ type WorkOrderFormProps = {
     readonly?: boolean
     mode: WorkOrderActionKeys
 }
+
+type InputProps = {
+    setDisableNext: React.Dispatch<React.SetStateAction<boolean>>
+} & WorkOrderFormProps
+
 
 function TestSelectorPrompt() {
     return (
@@ -146,6 +156,8 @@ const PickedTest = ({ selectedData }: { selectedData: Record<number, Observation
 }
 
 const patientIDField = "patient_id";
+const analystIDField = "analyzer_ids";
+const doctorIDField = "doctor_ids";
 
 type TableTestType = TestType & {
     checked: boolean
@@ -188,9 +200,11 @@ function TestTable({
     }, [props.initSelectedType, allTestType])
 
     useEffect(() => {
-        setValue(testTypesField, selectedData);
+        if (Object.keys(selectedData).length > 0) {
+            setValue(testTypesField, selectedData);
+        }
 
-        if (testType && selectedData) {
+        if (testType && Object.keys(selectedData).length > 0) {
             setRows(rows => {
                 const newRows = rows.map(row => {
                     if (selectedData[row.id]) {
@@ -451,13 +465,20 @@ type TestInputProps = {
 
 export function TestInput(props: TestInputProps) {
     const [selectedData, setSelectedData] = useState<Record<number, ObservationRequestCreateRequest>>({});
+    const { getValues, setValue } = useFormContext();
+    useEffect(() => {
+        const testFields = getValues(testTypesField);
+        if (testFields && Object.keys(testFields).length > 0) {
+            setSelectedData(testFields);
+        }
+    }, [])
     return (
         <Box sx={{
             maxHeight: "calc(70vh - 48px)",
             overflow: "scroll",
             width: "100%",
         }}>
-            <List resource={"test-type"} exporter={false} aside={<TestFilterSidebar setSelectedData={setSelectedData} selectedData={selectedData} />}
+            <List resource={"test-type"} exporter={false} aside={<TestFilterSidebar setSelectedData={setSelectedData} selectedData={selectedData} setValue={setValue}/>}
                 perPage={999999}
                 storeKey={false}
                 actions={false}
@@ -564,7 +585,7 @@ function NoPatient(props: CreatePatientButtonProps) {
 //     )
 // }
 
-function PatientInput(props: WorkOrderFormProps) {
+function PatientInput(props: InputProps) {
     const [open, setOpen] = useState(false);
     const [patientID, setPatientID] = useState<number | undefined>(undefined);
     const { setValue, watch, getValues } = useFormContext()
@@ -580,9 +601,11 @@ function PatientInput(props: WorkOrderFormProps) {
     useEffect(() => {
         const patientID = getValues("patient_id");
         if (!patientID) {
+            props.setDisableNext(true);
             return;
         }
 
+        props.setDisableNext(false);
         axios.get(`patient/${patientID}`).then((res) => {
             console.log(res)
             for (const [key, value] of Object.entries(res.data)) {
@@ -594,6 +617,8 @@ function PatientInput(props: WorkOrderFormProps) {
             });
         })
     }, [watch("patient_id")])
+
+    const currentUser = useCurrentUser();
 
     return (
         <>
@@ -616,7 +641,7 @@ function PatientInput(props: WorkOrderFormProps) {
                     watch("patient_id") && <>
                         <Divider sx={{ my: "1rem" }} />
                         <Stack>
-                            <Typography variant="subtitle1">Patient Info</Typography>
+                            <Typography variant="subtitle1">Patient Info Preview</Typography>
                             <Stack direction={"row"} gap={5} width={"100%"}>
                                 <TextInput source="patient_id" label="Patient ID" readOnly />
                                 <TextInput source="first_name" readOnly />
@@ -629,24 +654,9 @@ function PatientInput(props: WorkOrderFormProps) {
                         </Stack>
                     </>
                 }
-                {/* <Divider sx={{
+                <Divider sx={{
                     my: "0.5rem",
-                }}/>
-                <Typography variant="subtitle1" sx={{
-                    mb: "0.5rem",
-                }}>Optional</Typography>
-                <ReferenceInput source="requester_id" reference="user" target="requester_id" label="Requester">
-                    <AutocompleteInput
-                        suggestionLimit={10}
-                        noOptionsText={<NoPatient setOpen={setOpen} />}
-                    />
-                </ReferenceInput>
-                <ReferenceInput source="verificator_id" reference="user" target="verificator_id" label="Requester">
-                    <AutocompleteInput
-                        suggestionLimit={10}
-                        noOptionsText={<NoPatient setOpen={setOpen} />}
-                    />
-                </ReferenceInput> */}
+                }} />
             </Stack>
             <PatientFormModal open={open} onClose={() => setOpen(false)} setPatientID={setPatientID} />
         </>
@@ -665,14 +675,55 @@ function CreatePatientButton(props: CreatePatientButtonProps) {
     </Button>;
 }
 
+function AdditionalInput(props: InputProps) {
+    const currentUser = useCurrentUser();
 
-const steps = ['Info', 'Test'];
+    return (
+        <>
+            <Stack sx={{
+                marginBottom: "2rem",
+            }}>
+                <Typography variant="subtitle1" sx={{
+                    mb: "0.5rem",
+                }}>Optional</Typography>
+                <Stack gap={1}>
+                    <ReferenceInput source={doctorIDField} reference="user" resource='user' target="id" label="Doctor" filter={{
+                        role: [RoleNameValue.DOCTOR, RoleNameValue.ADMIN]
+                    }}>
+                        <AutocompleteArrayInput
+                            suggestionLimit={10}
+                            // noOptionsText={<NoPatient setOpen={setOpen} />}
+                            filterToQuery={(searchText) => ({
+                                q: searchText,
+                                role: [RoleNameValue.DOCTOR, RoleNameValue.ADMIN]
+                            })}
+                            helperText="Leave blank if do not need verification"
+                        />
+                    </ReferenceInput>
+                    <ReferenceInput source={analystIDField} reference="user" target="id" label="Analyst">
+                        <AutocompleteArrayInput
+                            suggestionLimit={10}
+                            // noOptionsText={<NoPatient setOpen={setOpen} />}
+                            defaultValue={[currentUser?.id]}
+                            helperText="Default to current user"
+                        />
+                    </ReferenceInput>
+                </Stack>
+            </Stack>
+        </>
+    )
+}
+
+
+const steps = ['Info', 'Test', 'Additional'];
 
 
 export default function WorkOrderForm(props: WorkOrderFormProps) {
     const [activeStep, setActiveStep] = React.useState(0);
     const { save } = useSaveContext();
     const notify = useNotify();
+    const [disableNext, setDisableNext] = React.useState(false);
+    const currentUser = useCurrentUser();
     const onFinish = (data: any) => {
         if (data == undefined) {
             notify("Please fill in all required fields", {
@@ -704,6 +755,9 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
             save({
                 patient_id: data[patientIDField],
                 test_types: testTypes,
+                created_by: currentUser?.id,
+                analyzer_ids: data[analystIDField],
+                doctor_ids: data[doctorIDField],
             });
         }
     };
@@ -713,12 +767,15 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
             <Box sx={{
                 margin: '24px',
             }}>
-                <FormStepper activeStep={activeStep} setActiveStep={setActiveStep} steps={steps} onFinish={onFinish} >
+                <FormStepper activeStep={activeStep} setActiveStep={setActiveStep} steps={steps} onFinish={onFinish} disableNext={disableNext}>
                     {
-                        activeStep === 0 && <PatientInput {...props} />
+                        activeStep === 0 && <PatientInput {...props} setDisableNext={setDisableNext} />
                     }
                     {
                         activeStep === 1 && <TestInput />
+                    }
+                    {
+                        activeStep === 2 && <AdditionalInput {...props} setDisableNext={setDisableNext} />
                     }
                 </FormStepper>
             </Box>

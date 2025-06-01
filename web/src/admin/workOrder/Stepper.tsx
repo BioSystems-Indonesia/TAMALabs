@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import { useFormContext } from "react-hook-form";
+import { propsStateInitializer } from '@mui/x-data-grid/internals';
 
 
 export type FormStepperProps = {
@@ -16,6 +17,7 @@ export type FormStepperProps = {
     children: React.ReactNode;
     steps: string[];
     onFinish?: (data: any) => void
+    disableNext?: boolean;
 };
 
 export default function FormStepper({
@@ -24,6 +26,7 @@ export default function FormStepper({
     children,
     steps,
     onFinish,
+    disableNext,
 }: FormStepperProps) {
     const isStepOptional = (step: number) => {
         return false;
@@ -89,6 +92,7 @@ export default function FormStepper({
                             width: '120px',
                         }}
                         endIcon={<ArrowForwardIosIcon />}
+                        disabled={disableNext}
                     >
                         {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
                     </Button>

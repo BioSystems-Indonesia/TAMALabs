@@ -179,6 +179,7 @@ const (
 type ResultGetManyRequest struct {
 	GetManyRequest
 	PatientIDs      []int64  `query:"patient_ids"`
+	DoctorIDs       []int64  `query:"doctor_ids"`
 	HasResult       bool     `query:"has_result"`
 	WorkOrderStatus []string `query:"work_order_status"`
 }

@@ -7,11 +7,6 @@ const (
 	HeaderAuthorization = "Authorization"
 )
 
-const (
-	// ContextKeyUser is a key for user in context
-	ContextKeyUser = "user"
-)
-
 type SpecimenType string
 
 const (

@@ -236,6 +236,11 @@ func initAdmin() entity.Admin {
 		IsActive:     true,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
+		Roles: []entity.Role{
+			{
+				ID: 1,
+			},
+		},
 	}
 }
 
@@ -243,11 +248,16 @@ var seedRole = []entity.Role{
 	{
 		ID:          1,
 		Name:        string(entity.RoleAdmin),
-		Description: "Admin able to do most of LIMS features, including sending and receive lab request, create patient, and manage users",
+		Description: "Admin able to do all of LIMS features, including manage users. Only give admin permissions to highest authority user",
 	},
 	{
 		ID:          2,
 		Name:        string(entity.RoleDoctor),
-		Description: "Doctor can be assigned as lab request doctor, able to view all patient and lab request",
+		Description: "Doctor can be assigned as lab request doctor and able to approve result",
+	},
+	{
+		ID:          3,
+		Name:        string(entity.RoleAnalyzer),
+		Description: "Analyzer can be assigned as lab request technician and able to perform lab request, but not approve result",
 	},
 }

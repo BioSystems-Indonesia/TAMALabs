@@ -264,9 +264,17 @@ func seedTestData(db *gorm.DB) error {
 		}
 	}
 
+	for _, role := range seedRole {
+		err := db.Clauses(clause.OnConflict{UpdateAll: true}).
+			Create(&role).Error
+		if err != nil {
+			return err
+		}
+	}
+
 	for _, admin := range seedAdmin {
 		err := db.Clauses(clause.OnConflict{
-			DoNothing: true,
+			UpdateAll: true,
 		}).Create(&admin).Error
 		if err != nil {
 			return err
@@ -276,14 +284,6 @@ func seedTestData(db *gorm.DB) error {
 	for _, unit := range seedUnits {
 		err := db.Clauses(clause.OnConflict{DoNothing: true}).
 			Create(&unit).Error
-		if err != nil {
-			return err
-		}
-	}
-
-	for _, role := range seedRole {
-		err := db.Clauses(clause.OnConflict{UpdateAll: true}).
-			Create(&role).Error
 		if err != nil {
 			return err
 		}

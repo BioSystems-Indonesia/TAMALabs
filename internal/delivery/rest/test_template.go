@@ -57,6 +57,10 @@ func (h *TestTemplateHandler) CreateTestTemplate(c echo.Context) error {
 		return handleError(c, err)
 	}
 
+	user := entity.GetEchoContextUser(c)
+	req.CreatedBy = user.ID
+	req.LastUpdatedBy = user.ID
+
 	testTemplate, err := h.testTemplateUsecase.Create(c.Request().Context(), &req)
 	if err != nil {
 		return handleError(c, err)
@@ -76,7 +80,10 @@ func (h *TestTemplateHandler) UpdateTestTemplate(c echo.Context) error {
 		return handleError(c, err)
 	}
 
+	user := entity.GetEchoContextUser(c)
+
 	req.ID = id
+	req.LastUpdatedBy = user.ID
 	testTemplate, err := h.testTemplateUsecase.Update(c.Request().Context(), &req)
 	if err != nil {
 		return handleError(c, err)

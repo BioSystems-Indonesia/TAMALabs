@@ -13,7 +13,6 @@ import (
 // simplifiedJWTConfig is a minimal config for JWT middleware.
 type simplifiedJWTConfig struct {
 	SigningKey []byte
-	ContextKey string
 }
 
 // JWTMiddleware struct holds the simplified JWT middleware and its config.
@@ -26,7 +25,6 @@ type JWTMiddleware struct {
 func NewJWTMiddleware(cfg *config.Schema) *JWTMiddleware {
 	conf := simplifiedJWTConfig{
 		SigningKey: []byte(cfg.SigningKey),
-		ContextKey: entity.ContextKeyUser,
 	}
 
 	return &JWTMiddleware{config: conf}
@@ -61,7 +59,7 @@ func (m *JWTMiddleware) Middleware() echo.MiddlewareFunc {
 			}
 
 			if token.Valid {
-				c.Set(m.config.ContextKey, claims)
+				entity.SetEchoContextUser(c, claims)
 				return next(c)
 			}
 

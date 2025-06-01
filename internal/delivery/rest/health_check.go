@@ -93,7 +93,7 @@ func (h HealthCheckHandler) Ping(c echo.Context) error {
 }
 
 func (h HealthCheckHandler) CheckAuth(c echo.Context) error {
-	admin := c.Get(entity.ContextKeyUser).(entity.AdminClaims)
+	admin := entity.GetEchoContextUser(c)
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"status":     "OK",

@@ -1,12 +1,14 @@
 import { Divider } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import { useEffect, useState } from "react";
-import { Create, Datagrid, DeleteButton, Edit, FilterLiveSearch, List, NumberField, SaveButton, SimpleForm, TextField, TextInput, Toolbar, required, useEditContext, useNotify, useSaveContext } from "react-admin";
+import { AutocompleteArrayInput, Create, Datagrid, DateField, DeleteButton, Edit, FilterLiveSearch, List, NumberField, ReferenceField, ReferenceInput, SaveButton, SimpleForm, TextField, TextInput, Toolbar, required, useEditContext, useNotify, useSaveContext } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import type { ObservationRequestCreateRequest } from "../../types/observation_requests";
 import type { ActionKeys } from "../../types/props";
 import { TestInput, testTypesField } from '../workOrder/Form';
 import SideFilter from "../../component/SideFilter";
+import { RoleNameValue } from "../../types/role";
+import { useCurrentUser } from "../../hooks/currentUser";
 
 export const TestTemplateList = () => (
     <List aside={<TestTemplateFilterSidebar />} title="Test Template" sort={{
@@ -19,6 +21,10 @@ export const TestTemplateList = () => (
             <NumberField source="id" />
             <TextField source="name" />
             <TextField source="description" />
+            <DateField source="created_at" showTime/>
+            <DateField source="updated_at" showTime/>
+            <ReferenceField source="created_by" reference="user"/>
+            <ReferenceField source="last_updated_by" reference="user"/>
         </Datagrid>
     </List>
 );
@@ -71,6 +77,7 @@ function TestTemplateForm(props: TestTemplateFormProps) {
         return <></>
     }
 
+    const currentUser = useCurrentUser()
     return (
         <SimpleForm disabled={props.readonly} toolbar={false}>
             <TestTypeToolbar />
@@ -79,6 +86,27 @@ function TestTemplateForm(props: TestTemplateFormProps) {
             }} />
             <TextInput source="name" readOnly={props.readonly} validate={[required()]} />
             <TextInput source="description" readOnly={props.readonly} multiline />
+            <ReferenceInput source={"doctor_ids"} reference="user" resource='user' target="id" label="Doctor" filter={{
+                role: [RoleNameValue.DOCTOR, RoleNameValue.ADMIN]
+            }}>
+                <AutocompleteArrayInput
+                    suggestionLimit={10}
+                    filterToQuery={(searchText) => ({
+                        q: searchText,
+                        role: [RoleNameValue.DOCTOR, RoleNameValue.ADMIN]
+                    })}
+                />
+            </ReferenceInput>
+            <ReferenceInput source={"analyzers_ids"} reference="user" resource='user' target="id" label="Analyzer" filter={{
+            }}>
+                <AutocompleteArrayInput
+                    suggestionLimit={10}
+                    filterToQuery={(searchText) => ({
+                        q: searchText,
+                    })}
+                    defaultValue={[currentUser?.id]}
+                />
+            </ReferenceInput>
             <TestInput initSelectedType={selectedType} />
         </SimpleForm>
     )

@@ -1,44 +1,45 @@
-import RefreshIcon from '@mui/icons-material/Refresh';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { Chip, Divider, Button as MUIButton, Stack, Typography } from "@mui/material";
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { Button, Chip, Divider, Stack, Typography } from "@mui/material";
+import { useMutation } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { useState } from "react";
 import {
     AutocompleteArrayInput,
-    BooleanInput,
-    Button,
     Datagrid,
     DateField,
     FilterLiveForm,
     Link,
     List,
     NumberField,
-    ReferenceArrayField,
     ReferenceInput,
-    TopToolbar,
     useNotify,
+    useRefresh,
     WithRecord
 } from "react-admin";
 import CustomDateInput from "../../component/CustomDateInput";
-import PrintReportButton from "../../component/PrintReport";
 import SideFilter from "../../component/SideFilter";
-import useAxios from "../../hooks/useAxios";
+import { useCurrentUser } from "../../hooks/currentUser";
 import type { WorkOrder } from "../../types/work_order";
+import { FilledPercentChip, VerifiedChip } from '../result/component';
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
-import { FilledPercentChip, VerifiedChip } from "./component";
+import useAxios from '../../hooks/useAxios';
 
 
-export const ResultList = () => (
+export const ApprovalList = () => {
+    const currentUser = useCurrentUser();
+
+    return (
     <List
         resource="result"
         sort={{ field: "id", order: "DESC" }}
-        aside={<ResultSideFilter />}
-        filters={ResultMoreFilter}
+        aside={<ApprovalSideFilter />}
         filterDefaultValues={{
             created_at_start: dayjs().subtract(7, "day").toISOString(),
             created_at_end: dayjs().toISOString(),
         }}
-        actions={<ResultActions />}
+        filter={{
+            doctor_ids: [currentUser?.id],
+        }}
         storeKey={false}
         exporter={false}
         disableSyncWithLocation
@@ -53,38 +54,43 @@ export const ResultList = () => (
             },
         }}
     >
-        <ResultDataGrid />
+        <ApprovalDataGrid />
     </List>
-);
+)};
 
-function ResultActions() {
-    const axios = useAxios()
-    const notify = useNotify()
-    return (
-        <TopToolbar>
-            <Button label={"Refresh"} onClick={() => {
-                axios.post("/result/refresh").then(() => {
-                    notify("Refresh Result Success", {
-                        type: "success"
-                    })
-                }).catch(() => {
-                    notify("Refresh Result Failed", {
-                        type: "error"
-                    })
-                })
-            }}>
-                <RefreshIcon />
-            </Button>
-        </TopToolbar>
-    )
-}
+export const ApprovalDataGrid = (props: any) => {
+    const axios = useAxios();
+    const refresh = useRefresh();
+    const notify = useNotify();
+    const { mutate: verifyResult, isPending: verifyIsPending } = useMutation({
+        mutationFn: (id: number) => axios.post(`/result/${id}/approve`),
+        onSuccess: () => {
+            refresh()
+            notify('Result verified successfully', {
+                type: 'success',
+            })
+        },
+        onError: () => {
+            notify('Result verified failed', {
+                type:'error',
+            })
+        }
+    });
 
-export const ResultDataGrid = (props: any) => {
-    const [openDoctorModal, setOpenDoctorModal] = useState(false)
-    const handleCloseDoctorModal = () => {
-        setOpenDoctorModal(false)
-    }
-
+    const { mutate: rejectResult, isPending: rejectIsPending } = useMutation({
+        mutationFn: (id: number) => axios.post(`/result/${id}/reject`),
+        onSuccess: () => {
+            refresh()
+            notify('Result rejected successfully', {
+                type:'success',
+            })
+        },
+        onError: () => {
+            notify('Result rejected failed', {
+                type:'error',
+            })
+        }
+    });
     return (
         <Datagrid bulkActionButtons={false} >
             <NumberField source="id" />
@@ -115,40 +121,44 @@ export const ResultDataGrid = (props: any) => {
             <WithRecord label="Verified" render={(record: WorkOrder) => (
                 <VerifiedChip verified={record.verified_status !== '' ? record.verified_status : "VERIFIED"} />
             )} />
-            <ReferenceArrayField label="Doctor" source="doctor_ids" reference="user" />
             <DateField source="created_at" showDate showTime />
-            <WithRecord label="Print Result" render={(record: WorkOrder) => {
-                if (record.verified_status !== "" && record.verified_status !== "VERIFIED") {
-                    return (
-                        <MUIButton
-                            variant="contained"
-                            color="warning"
-                            startIcon={<WarningAmberIcon />}
-                            size="small"
-                            sx={{
-                                textTransform: 'none',
-                                fontSize: '12px',
-                                whiteSpace: 'nowrap',
-                                '&:hover': {
-                                    backgroundColor: 'warning.main',
-                                    cursor: 'default'
-                                }
-                            }}
-                        >
-                            Not verified
-                        </MUIButton>
-                    )
-                }
-
-                return (
-                    <PrintReportButton results={record.test_result} patient={record.patient} workOrder={record} />
-                )
-            }} />
+            <WithRecord label="Action" render={(record: WorkOrder) => (
+                <Stack direction="row" spacing={1}>
+                    <Button
+                        variant="contained"
+                        loading={verifyIsPending}
+                        color="success"
+                        startIcon={<CheckCircleOutlineIcon />}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            verifyResult(record.id);
+                        }}
+                        size="small"
+                        disabled={record.verified_status === "VERIFIED"} 
+                    >
+                        Verify
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        loading={rejectIsPending}
+                        startIcon={<CancelOutlinedIcon />}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            rejectResult(record.id);
+                        }}
+                        size="small"
+                        disabled={record.verified_status === "REJECTED"} 
+                    >
+                        Reject
+                    </Button>
+                </Stack>
+            )} />
         </Datagrid>
     )
 }
 
-function ResultSideFilter() {
+function ApprovalSideFilter() {
     return (
         <SideFilter>
             <FilterLiveForm debounce={1500}>
@@ -170,7 +180,3 @@ function ResultSideFilter() {
 
 }
 
-
-const ResultMoreFilter = [
-    <BooleanInput source={"has_result"} label={"Show Only With Result"} />,
-]

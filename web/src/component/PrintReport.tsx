@@ -65,7 +65,7 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
     // }, [prop.patient]);
 
     return (
-        <BlobProvider document={<ReportDocument data={data} patientData={prop.patient} />}>
+        <BlobProvider document={<ReportDocument data={data} patientData={prop.patient} workOrderData={prop.workOrder} />}>
             {({ url, loading, error }) => {
                 if (error) {
                     return <span color='red'>Error generating PDF: {error.message}</span>;

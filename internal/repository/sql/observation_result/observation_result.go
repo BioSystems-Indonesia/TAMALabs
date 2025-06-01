@@ -86,3 +86,41 @@ func (r *Repository) PickObservationResult(ctx context.Context, id int64) (entit
 	observationResult.Picked = true
 	return observationResult, err
 }
+
+func (r *Repository) ApproveResult(context context.Context, workOrderID int64) error {
+	db := r.DB.Model(&entity.WorkOrder{})
+	err := db.Transaction(func(tx *gorm.DB) error {
+		err := tx.Where("id =?", workOrderID).
+			Update("verified_status", entity.WorkOrderVerifiedStatusVerified).
+			Error
+		if err != nil {
+			return fmt.Errorf("failed to update verified status: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository) RejectResult(context context.Context, workOrderID int64) error {
+	db := r.DB.Model(&entity.WorkOrder{})
+	err := db.Transaction(func(tx *gorm.DB) error {
+		err := tx.Where("id =?", workOrderID).
+			Update("verified_status", entity.WorkOrderVerifiedStatusRejected).
+			Error
+		if err != nil {
+			return fmt.Errorf("failed to update verified status: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -27,10 +27,13 @@ dev-be:
 migrate-hash:
 	atlas migrate hash
 
-migrate-diff: 
+migrate-diff:
 	$(eval ARGS := $(filter-out $@,$(MAKECMDGOALS)))
-
 	./scripts/migrate-diff.sh $(ARGS)
+
+# Catch-all target to allow passing arguments
+%:
+	@:
 
 icon:
 	rsrc -arch 386 -ico favicon.ico -manifest elgatama-lims.exe.manifest

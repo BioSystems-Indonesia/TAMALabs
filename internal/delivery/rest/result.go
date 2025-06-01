@@ -1,9 +1,10 @@
 package rest
 
 import (
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
 	"net/http"
 	"strconv"
+
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
@@ -98,6 +99,36 @@ func (h *ResultHandler) TooglePickTestResult(c echo.Context) error {
 
 func (h Handler) RefreshResult(c echo.Context) error {
 	err := h.analyzerUsecase.ProcessA15(c.Request().Context())
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func (h ResultHandler) ApproveResult(c echo.Context) error {
+	workOrderID, err := strconv.ParseInt(c.Param("work_order_id"), 10, 64)
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	admin := entity.GetEchoContextUser(c)
+	err = h.resultUsecase.ApproveResult(c.Request().Context(), workOrderID, admin.ID)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func (h ResultHandler) RejectResult(c echo.Context) error {
+	workOrderID, err := strconv.ParseInt(c.Param("work_order_id"), 10, 64)
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	admin := entity.GetEchoContextUser(c)
+	err = h.resultUsecase.RejectResult(c.Request().Context(), workOrderID, admin.ID)
 	if err != nil {
 		return handleError(c, err)
 	}

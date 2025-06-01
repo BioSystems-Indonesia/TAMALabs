@@ -25,6 +25,7 @@ func main() {
 		&entity.TestTemplateTestType{},
 		&entity.Admin{},
 		&entity.Role{},
+		&entity.SequenceDaily{},
 	}
 
 	stmts, err := gormschema.New("sqlite").Load(models...)

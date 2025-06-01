@@ -45,7 +45,9 @@ func (r *WorkOrderRepository) FindAllForResult(ctx context.Context, req *entity.
 		Preload("Specimen.ObservationRequest").
 		Preload("Specimen.ObservationRequest.TestType").
 		Preload("Specimen.ObservationResult").
-		Preload("Specimen.ObservationResult.TestType")
+		Preload("Specimen.ObservationResult.TestType").
+		Preload("Doctors").
+		Preload("Analyzers")
 
 	if len(req.PatientIDs) > 0 {
 		db = db.Where("work_orders.patient_id in (?)", req.PatientIDs)
@@ -53,6 +55,12 @@ func (r *WorkOrderRepository) FindAllForResult(ctx context.Context, req *entity.
 
 	if len(req.WorkOrderStatus) > 0 {
 		db = db.Joins("work_orders.status in (?)", req.WorkOrderStatus)
+	}
+
+	if len(req.DoctorIDs) > 0 {
+		subQuery := r.db.Table("work_order_doctors").Select("work_order_doctors.work_order_id").
+			Where("work_order_doctors.admin_id in (?)", req.DoctorIDs)
+		db = db.Where("work_orders.id in (?)", subQuery)
 	}
 
 	if !req.CreatedAtStart.IsZero() {
@@ -74,7 +82,16 @@ func (r *WorkOrderRepository) FindAllForResult(ctx context.Context, req *entity.
 		TableName: "work_orders",
 	})
 
-	return sql.GetWithPaginationResponse[entity.WorkOrder](db, req.GetManyRequest)
+	resp, err := sql.GetWithPaginationResponse[entity.WorkOrder](db, req.GetManyRequest)
+	if err != nil {
+		return entity.PaginationResponse[entity.WorkOrder]{}, fmt.Errorf("error finding workOrders: %w", err)
+	}
+
+	for i := range resp.Data {
+		resp.Data[i].FillData()
+	}
+
+	return resp, nil
 }
 
 func (r WorkOrderRepository) FindOneForResult(id int64) (entity.WorkOrder, error) {
@@ -86,6 +103,8 @@ func (r WorkOrderRepository) FindOneForResult(id int64) (entity.WorkOrder, error
 		Preload("Specimen.ObservationRequest.TestType").
 		Preload("Specimen.ObservationResult").
 		Preload("Specimen.ObservationResult.TestType").
+		Preload("Doctors").
+		Preload("Analyzers").
 		First(&workOrder).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return entity.WorkOrder{}, entity.ErrNotFound
@@ -95,6 +114,7 @@ func (r WorkOrderRepository) FindOneForResult(id int64) (entity.WorkOrder, error
 		return entity.WorkOrder{}, fmt.Errorf("error finding workOrder: %w", err)
 	}
 
+	workOrder.FillData()
 	return workOrder, nil
 }
 
@@ -122,13 +142,24 @@ func (r WorkOrderRepository) FindAll(ctx context.Context, req *entity.WorkOrderG
 		db = db.Joins("join work_order_patients on work_order_patients.work_order_id = work_orders.id and work_order_patients.patient_id in (?)", req.PatientIDs)
 	}
 
-	db = db.Debug().
+	db = db.
 		Preload("Patient").
 		Preload("Specimen").
 		Preload("Specimen.ObservationRequest").
-		Preload("Devices")
+		Preload("Devices").
+		Preload("Doctors").
+		Preload("Analyzers")
 
-	return sql.GetWithPaginationResponse[entity.WorkOrder](db, req.GetManyRequest)
+	resp, err := sql.GetWithPaginationResponse[entity.WorkOrder](db, req.GetManyRequest)
+	if err != nil {
+		return entity.PaginationResponse[entity.WorkOrder]{}, fmt.Errorf("error finding workOrders: %w", err)
+	}
+
+	for i := range resp.Data {
+		resp.Data[i].FillData()
+	}
+
+	return resp, nil
 }
 
 func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
@@ -139,6 +170,8 @@ func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
 		Preload("Patient.Specimen.ObservationRequest").
 		Preload("Patient.Specimen.ObservationRequest.TestType").
 		Preload("Devices").
+		Preload("Doctors").
+		Preload("Analyzers").
 		First(&workOrder).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return entity.WorkOrder{}, entity.ErrNotFound
@@ -148,6 +181,7 @@ func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {
 		return entity.WorkOrder{}, fmt.Errorf("error finding workOrder: %w", err)
 	}
 
+	workOrder.FillData()
 	return workOrder, nil
 }
 
@@ -160,10 +194,20 @@ func (r WorkOrderRepository) Create(req *entity.WorkOrderCreateRequest) (entity.
 			return fmt.Errorf("error finding patient: %w", err)
 		}
 
+		verifiedStatus := string(entity.WorkOrderVerifiedStatusPending)
+		if len(req.DoctorIDs) == 0 {
+			verifiedStatus = string(entity.WorkOrderVerifiedStatusVerified)
+		}
+
 		workOrder = entity.WorkOrder{
-			Status:    entity.WorkOrderStatusNew,
-			PatientID: req.PatientID,
-			Barcode:   req.Barcode,
+			Status:         entity.WorkOrderStatusNew,
+			VerifiedStatus: verifiedStatus,
+			PatientID:      req.PatientID,
+			Barcode:        req.Barcode,
+			AnalyzerIDs:    req.AnalyzerIDs,
+			DoctorIDs:      req.DoctorIDs,
+			CreatedBy:      req.CreatedBy,
+			LastUpdatedBy:  req.CreatedBy,
 		}
 		err = tx.Save(&workOrder).Error
 		if err != nil {
@@ -200,12 +244,21 @@ func (r WorkOrderRepository) Edit(id int, req *entity.WorkOrderCreateRequest) (e
 			Preload("Patient.Specimen", "order_id = ?", id).
 			Preload("Patient.Specimen.ObservationRequest").
 			Preload("Patient.Specimen.ObservationRequest.TestType").
+			Preload("Doctors").
+			Preload("Analyzers").
 			First(&workOrder).Error
 		if err != nil {
 			return fmt.Errorf("error finding workOrder: %w", err)
 		}
 		workOrder.Status = entity.WorkOrderStatusNew
+		if len(workOrder.DoctorIDs) == 0 {
+			workOrder.VerifiedStatus = string(entity.WorkOrderVerifiedStatusVerified)
+		} else {
+			workOrder.VerifiedStatus = string(entity.WorkOrderVerifiedStatusPending)
+		}
 		workOrder.PatientID = req.PatientID
+		workOrder.LastUpdatedBy = req.CreatedBy
+		workOrder.FillData()
 
 		err = tx.Save(&workOrder).Error
 		if err != nil {
@@ -226,7 +279,45 @@ func (r WorkOrderRepository) Edit(id int, req *entity.WorkOrderCreateRequest) (e
 	return workOrder, err
 }
 
-func (r WorkOrderRepository) deleteUnusedRelation(tx *gorm.DB, req *entity.WorkOrderCreateRequest, workOrder *entity.WorkOrder) error {
+func (r WorkOrderRepository) deleteUnusedRelation(
+	tx *gorm.DB,
+	req *entity.WorkOrderCreateRequest,
+	workOrder *entity.WorkOrder,
+) error {
+	toDeleteDoctorIDs, _ := util.CompareSlices(
+		workOrder.DoctorIDs,
+		req.DoctorIDs,
+	)
+	for _, doctorID := range toDeleteDoctorIDs {
+		err := tx.Where("work_order_id =? AND admin_id =?", workOrder.ID, doctorID).
+			Delete(&entity.WorkOrderDoctor{}).Error
+		if err != nil {
+			return fmt.Errorf("error deleting workOrderDoctor: %w", err)
+		}
+	}
+	slog.Info("deleteUnusedRelation",
+		"workOrder.DoctorIDs", workOrder.DoctorIDs,
+		"req.DoctorIDs", req.DoctorIDs,
+		"toDeleteDoctorIDs", toDeleteDoctorIDs,
+	)
+
+	toDeleteAnalyzerIDs, _ := util.CompareSlices(
+		workOrder.AnalyzerIDs,
+		req.AnalyzerIDs,
+	)
+	for _, analyzerID := range toDeleteAnalyzerIDs {
+		err := tx.Where("work_order_id =? AND admin_id =?", workOrder.ID, analyzerID).
+			Delete(&entity.WorkOrderAnalyzer{}).Error
+		if err != nil {
+			return fmt.Errorf("error deleting workOrderAnalyzer: %w", err)
+		}
+	}
+	slog.InfoContext(tx.Statement.Context, "deleteUnusedRelation",
+		"workOrder.AnalyzerIDs", workOrder.AnalyzerIDs,
+		"req.AnalyzerIDs", req.AnalyzerIDs,
+		"toDeleteAnalyzerIDs", toDeleteAnalyzerIDs,
+	)
+
 	for _, specimen := range workOrder.Patient.Specimen {
 		oldTestTypeIDs := util.Unique(
 			util.Map(specimen.ObservationRequest, func(observationRequest entity.ObservationRequest) int64 {
@@ -293,6 +384,32 @@ func (r WorkOrderRepository) upsertRelation(
 	patient *entity.Patient,
 	workOrder *entity.WorkOrder,
 ) error {
+	for _, adminID := range req.DoctorIDs {
+		workOrderDoctor := entity.WorkOrderDoctor{
+			WorkOrderID: workOrder.ID,
+			AdminID:     adminID,
+		}
+		err := trx.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(&workOrderDoctor).Error
+		if err != nil {
+			return fmt.Errorf("error upserting workOrderDoctor: %w", err)
+		}
+	}
+
+	for _, analyzerID := range req.AnalyzerIDs {
+		workOrderAnalyzer := entity.WorkOrderAnalyzer{
+			WorkOrderID: workOrder.ID,
+			AdminID:     analyzerID,
+		}
+		err := trx.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(&workOrderAnalyzer).Error
+		if err != nil {
+			return fmt.Errorf("error upserting workOrderAnalyzer: %w", err)
+		}
+	}
+
 	specimenTestTypes, err := r.groupBySpecimenType(trx, req)
 	if err != nil {
 		return fmt.Errorf("error grouping specimen type: %w", err)
@@ -308,7 +425,7 @@ func (r WorkOrderRepository) upsertRelation(
 		}
 		specimenQuery := trx.Clauses(clause.OnConflict{
 			DoNothing: true,
-		}).Debug().Create(&specimen)
+		}).Create(&specimen)
 		err = specimenQuery.Error
 		if err != nil {
 			return err
@@ -420,6 +537,7 @@ func (r WorkOrderRepository) Delete(id int64) error {
 		if err != nil {
 			return fmt.Errorf("error finding workOrder: %w", err)
 		}
+		workOrder.FillData()
 
 		queryGetSpecimenID := tx.Model(entity.Specimen{}).
 			Where("order_id = ? and patient_id = ?", workOrder.ID, workOrder.PatientID).
@@ -447,6 +565,18 @@ func (r WorkOrderRepository) Delete(id int64) error {
 			Delete(&entity.WorkOrder{}).Error
 		if err != nil {
 			return fmt.Errorf("error deleting workOrder: %w", err)
+		}
+
+		err = tx.Where("work_order_id =?", workOrder.ID).
+			Delete(&entity.WorkOrderDoctor{}).Error
+		if err != nil {
+			return fmt.Errorf("error deleting workOrderDoctor: %w", err)
+		}
+
+		err = tx.Where("work_order_id =?", workOrder.ID).
+			Delete(&entity.WorkOrderAnalyzer{}).Error
+		if err != nil {
+			return fmt.Errorf("error deleting workOrderAnalyzer: %w", err)
 		}
 
 		return nil

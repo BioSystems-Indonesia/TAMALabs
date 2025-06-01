@@ -1,5 +1,7 @@
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import PrintIcon from '@mui/icons-material/Print';
-import { Card, CardContent } from "@mui/material";
+import ScienceIcon from '@mui/icons-material/Science';
+import { Avatar, Card, CardContent, Grid, List, ListItem, ListItemAvatar, ListItemText } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import React from "react";
@@ -10,7 +12,9 @@ import {
     Datagrid,
     DateField,
     EditButton,
+    Link,
     RecordContextProvider,
+    ReferenceField,
     Show,
     SingleFieldList,
     TabbedShowLayout,
@@ -25,6 +29,7 @@ import LIMSBarcode from '../../component/Barcode';
 import { trimName } from '../../helper/format';
 import useSettings from '../../hooks/useSettings';
 import type { BarcodeStyle } from '../../types/general';
+import { User } from '../../types/user';
 import { workOrderStatusDontShowRun, workOrderStatusShowCancel, type WorkOrder } from '../../types/work_order';
 import { PatientForm } from '../patient';
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
@@ -142,23 +147,6 @@ export function WorkOrderShow() {
                             flexDirection: "column",
                             gap: 2,
                         }}>
-                            <Typography variant='subtitle1'>Patient Info</Typography>
-                            <WithRecord render={(record: WorkOrder) => {
-                                return (
-                                    <RecordContextProvider value={record.patient}>
-                                        <PatientForm readonly mode={"SHOW"} />
-                                    </RecordContextProvider>
-                                )
-                            }} />
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            flexDirection: "column",
-                            gap: 2,
-                        }}>
                             <Typography variant='subtitle1'>Test Info</Typography>
                             <WithRecord render={(workOrder: WorkOrder) => {
                                 return (
@@ -191,11 +179,66 @@ export function WorkOrderShow() {
                             }} />
                         </CardContent>
                     </Card>
+                    <Card>
+                        <CardContent sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            flexDirection: "column",
+                            gap: 2,
+                        }}>
+                            <Typography variant='subtitle1'>Patient Info</Typography>
+                            <WithRecord render={(record: WorkOrder) => {
+                                return (
+                                    <RecordContextProvider value={record.patient}>
+                                        <PatientForm readonly mode={"SHOW"} />
+                                    </RecordContextProvider>
+                                )
+                            }} />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            flexDirection: "column",
+                            gap: 2,
+                        }}>
+                            <WithRecord render={(record: WorkOrder) => {
+                                return (
+                                    <Grid container spacing={2}>
+                                        <Grid size={6} >
+                                            <Stack gap={1}>
+                                                <Typography variant='subtitle1' sx={{
+                                                    textAlign: "center",
+                                                }}>Doctor</Typography>
+                                                <RecordContextProvider value={record.doctors}>
+                                                    <AdminShow icon={<MedicalServicesIcon />} />
+                                                </RecordContextProvider>
+                                            </Stack>
+                                        </Grid>
+                                        <Grid size={6}>
+                                            <Stack gap={1}>
+                                                <Typography variant='subtitle1' sx={{
+                                                    textAlign: "center",
+                                                }}>Analyzer</Typography>
+                                                <RecordContextProvider value={record.analyzers}>
+                                                    <AdminShow icon={<ScienceIcon />} />
+                                                </RecordContextProvider>
+                                            </Stack>
+                                        </Grid>
+                                    </Grid>
+                                )
+
+                            }} />
+                        </CardContent>
+                    </Card>
                 </TabbedShowLayout.Tab>
                 <TabbedShowLayout.Tab label="Detail">
                     <TextField source="id" />
                     <DateField source="created_at" showTime />
                     <DateField source="updated_at" showTime />
+                    <ReferenceField source="created_by" reference='user' />
+                    <ReferenceField source="last_updated_by" reference='user' />
                 </TabbedShowLayout.Tab>
             </TabbedShowLayout>
             {/*Below is a barcode component for printing only, it will be hidden on the screen*/}
@@ -230,6 +273,77 @@ export function WorkOrderShow() {
                 )
             }} />
         </Show >
+    )
+}
+
+type AdminShowProps = {
+    icon?: React.ReactNode;
+}
+
+function AdminShow(props: AdminShowProps) {
+    return (
+        <WithRecord render={(record: User[]) => {
+            return (
+                <List sx={{
+                    width: '100%',
+                    bgcolor: 'background.paper',
+                    borderRadius: 1,
+                    boxShadow: 1,
+                }}>
+                    {record.map((user, index) => (
+                        <Link
+                            to={`/user/${user.id}`}
+                            key={user.id}>
+                            <ListItem
+                                key={user.id}
+                                divider={index !== record.length - 1}
+                                sx={{
+                                    py: 1.5,
+                                    transition: 'all 0.2s ease-in-out',
+                                    '&:hover': {
+                                        backgroundColor: 'action.hover',
+                                        boxShadow: 1,
+                                    },
+                                    '&:active': {
+                                        transform: 'translateX(8px) scale(0.98)',
+                                    }
+                                }}
+                            >
+                                <ListItemAvatar>
+                                    <Avatar
+                                        sx={{
+                                            bgcolor: 'primary.main',
+                                            transition: 'transform 0.2s ease-in-out',
+                                            '&:hover': {
+                                                transform: 'scale(1.1)',
+                                            }
+                                        }}
+                                    >
+                                        {props.icon}
+                                    </Avatar>
+                                </ListItemAvatar>
+                                <ListItemText
+                                    primary={user.fullname}
+                                    secondary={user.email}
+                                    slotProps={{
+                                        primary: {
+                                            fontWeight: 'medium',
+                                            color: 'text.primary',
+                                            sx: {
+                                                textDecoration: 'none',
+                                            }
+                                        },
+                                        secondary: {
+                                            color: 'text.secondary'
+                                        }
+                                    }}
+                                />
+                            </ListItem>
+                        </Link>
+                    ))}
+                </List>
+            )
+        }} />
     )
 }
 

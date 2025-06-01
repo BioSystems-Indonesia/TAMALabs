@@ -1,9 +1,17 @@
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import CheckIcon from '@mui/icons-material/CheckCircleOutline'; // Using outline for a slightly different style
+import CloseIcon from '@mui/icons-material/HighlightOff'; // Using a different close icon for variety
+
+import { useLocation, useNavigate } from "react-router-dom";
 import HistoryIcon from '@mui/icons-material/History';
 import {
     Badge,
     Box,
     Button,
     ButtonGroup,
+    Card,
+    CardActions,
     Checkbox,
     Chip,
     Dialog,
@@ -28,15 +36,20 @@ import {
     TextField,
     WithRecord,
     useNotify,
+    useRecordContext,
+    useRedirect,
     useRefresh
 } from "react-admin";
 import useAxios from '../../hooks/useAxios';
 import type { ResultColumn } from "../../types/general";
 import { Result, TestResult } from '../../types/observation_result';
 import type { Specimen } from '../../types/specimen';
+import { User } from '../../types/user';
 import type { WorkOrder } from '../../types/work_order';
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
-import { FilledPercentChip } from './component';
+import { FilledPercentChip, VerifiedChip } from './component';
+import { Verified } from '@mui/icons-material';
+import { useCurrentUser } from '../../hooks/currentUser';
 
 export const ResultShow = (props: any) => {
     const [openHistory, setOpenHistory] = useState(false);
@@ -46,8 +59,27 @@ export const ResultShow = (props: any) => {
     });
 
     return (
-        <Show title="Edit Result">
-            <SimpleShowLayout >
+        <Show title="Edit Result" sx={{
+            overflow: 'visible',
+            "& .RaShow-main": {
+                overflow: 'visible',
+            },
+            "& .RaShow-card": {
+                overflow: 'visible',
+            }
+        }}>
+            <SimpleShowLayout sx={{
+                overflow: 'visible',
+                position: 'relative',
+                "& .RaSimpleShowLayout-stack": {
+                    display: 'block',
+                    overflow: 'visible',
+                },
+                "& .RaSimpleShowLayout-row": {
+                    overflow: 'visible',
+                },
+            }}>
+                <ActionButton />
                 <HeaderInfo />
                 <WithRecord label="Test Result" render={(record: Result) => (
                     <>
@@ -63,14 +95,6 @@ export const ResultShow = (props: any) => {
                             ))
                         }
 
-                        <Stack direction="row" spacing={2} mt={2}>
-                            <Button component={Link} to={`/result/${record.prev_id}/show`} disabled={record.prev_id === 0}>
-                                Previous
-                            </Button>
-                            <Button component={Link} to={`/result/${record.next_id}/show`} disabled={record.next_id === 0}>
-                                Next
-                            </Button>
-                        </Stack>
                         <HistoryDialog
                             workOrderID={record.id}
                             title={history.title}
@@ -86,6 +110,121 @@ export const ResultShow = (props: any) => {
         </Show>
     )
 }
+
+const ActionButton = () => {
+    const record = useRecordContext<Result>()
+    const redirect = useRedirect()
+    const notify = useNotify();
+    const axios = useAxios();
+    const refresh = useRefresh();
+    const currentUser = useCurrentUser();
+
+    return (
+        <Card
+            sx={{
+                position: 'sticky',
+                overflow: 'visible',
+                top: 0,
+                zIndex: 100,
+                borderRadius: '12px', // Rounded corners for the card
+                p: 1, // Padding inside the card
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)', // A subtle shadow
+                width: '100%', // Make card take full width of its container
+            }}
+        >
+            <CardActions
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    width: '100%',
+                    p: 0, // No padding for CardActions to use the card's padding
+                    flexWrap: 'wrap', // Allow buttons to wrap on very small screens
+                    gap: 1, // Gap between button groups if they wrap
+                }}
+            >
+                {/* Left side: Previous and Next buttons */}
+                <Box sx={{ display: 'flex', gap: 1, flexGrow: 1, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
+                    <Button
+                        variant="outlined"
+                        startIcon={<ArrowBackIcon />}
+                        onClick={() => redirect(`/result/${record?.prev_id}/show`)}
+                        disabled={record?.prev_id === 0}
+                        sx={{ borderRadius: '8px', textTransform: 'none' }}
+                        aria-label="Previous item"
+                    >
+                        Previous
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        endIcon={<ArrowForwardIcon />}
+                        onClick={() => redirect(`/result/${record?.next_id}/show`)}
+                        disabled={record?.next_id === 0}
+                        sx={{ borderRadius: '8px', textTransform: 'none' }}
+                        aria-label="Next item"
+                    >
+                        Next
+                    </Button>
+                </Box>
+
+                {
+                    record?.doctors?.map(v => v.id).includes(currentUser?.id ?? 0) && (
+                        <Box sx={{ display: 'flex', gap: 1, flexGrow: 1, justifyContent: { xs: 'center', sm: 'flex-end' } }}>
+                            <Button
+                                variant="contained"
+                                color="success"
+                                startIcon={<CheckIcon />}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    axios.post(`/result/${record?.id}/approve`, {})
+                                        .then((response) => {
+                                            notify(`Success approve result`, { type: 'success' });
+                                            refresh()
+                                        })
+                                        .catch((error) => {
+                                            notify(`Error approve result ${error}`, { type: 'error' });
+                                        });
+                                }}
+                                disabled={record?.verified_status === "VERIFIED"}
+                                sx={{
+                                    borderRadius: '8px',
+                                    textTransform: 'none',
+                                }}
+                                aria-label="Approve item"
+                            >
+                                Approve
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="error"
+                                startIcon={<CloseIcon />}
+                                disabled={record?.verified_status === "REJECTED"}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    axios.post(`/result/${record?.id}/reject`, {})
+                                        .then((response) => {
+                                            notify(`Success reject result`, { type: 'success' });
+                                            refresh()
+                                        })
+                                        .catch((error) => {
+                                            notify(`Error reject result ${error}`, { type: 'error' });
+                                        });
+                                }}
+                                sx={{
+                                    borderRadius: '8px',
+                                    textTransform: 'none',
+                                }}
+                            >
+                                Reject
+                            </Button>
+                        </Box>
+                    )
+                }
+            </CardActions>
+        </Card>
+    );
+};
+
 
 const HeaderInfo = (props: any) => (
     <Grid sx={{
@@ -148,6 +287,45 @@ const HeaderInfo = (props: any) => (
                 )} />
             </Labeled>
         </Grid>
+        <Grid item xs={12} md={4} >
+            <Labeled>
+                <WithRecord label="Doctors" render={(record: WorkOrder) => {
+                    return (
+                        <Stack direction={"row"} gap={1}>
+                            {record?.doctors?.map((user: User) => {
+                                return (
+                                    <Chip label={`${user.id} - ${user.fullname}`} />
+                                )
+                            })}
+                        </Stack>
+                    )
+                }} />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={4} >
+            <Labeled>
+                <WithRecord label="Analyzers" render={(record: WorkOrder) => {
+                    return (
+                        <Stack direction={"row"} gap={1}>
+                            {record?.analyzers?.map((user: User) => {
+                                return (
+                                    <Chip label={`${user.id} - ${user.fullname}`} />
+                                )
+                            })}
+                        </Stack>
+                    )
+                }} />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={4} >
+            <Labeled>
+                <WithRecord label="Verified" render={(record: WorkOrder) => {
+                    return (
+                        <VerifiedChip verified={record.verified_status !== '' ? record.verified_status : "VERIFIED"} />
+                    )
+                }} />
+            </Labeled>
+        </Grid>
     </Grid>
 )
 
@@ -187,7 +365,7 @@ const TestResultTable = (props: TestResultTableProps) => {
             return _oldRow
         }
         const url = `/result/${newRow.specimen_id}/test`
-        
+
         try {
             const response = await axios.put(url, newRow);
             notify(`Success update ${newRow.test}`, { type: 'success' });

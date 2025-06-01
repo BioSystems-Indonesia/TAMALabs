@@ -9,9 +9,9 @@ import (
 type RoleName string
 
 const (
-	RoleAdmin       RoleName = "Admin"
-	RoleDoctor      RoleName = "Doctor"
-	RoleVerificator RoleName = "Verificator"
+	RoleAdmin    RoleName = "Admin"
+	RoleDoctor   RoleName = "Doctor"
+	RoleAnalyzer RoleName = "Analyzer"
 )
 
 // Admin represents a user within the system.
@@ -55,6 +55,7 @@ type AdminClaims struct {
 
 type GetManyRequestAdmin struct {
 	GetManyRequest
+	Role []string `query:"role"`
 }
 
 type GetManyRequestRole struct {

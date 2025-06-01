@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { FilterList, FilterListItem, FilterLiveSearch, useGetList, useListContext } from "react-admin";
 import { stopEnterPropagation } from '../../helper/component';
+import { FieldValues, UseFormSetValue } from 'react-hook-form'
 import type { ObservationRequestCreateRequest } from '../../types/observation_requests';
 import SideFilter from '../../component/SideFilter';
 import useAxios from '../../hooks/useAxios';
@@ -13,11 +14,13 @@ import useAxios from '../../hooks/useAxios';
 type TestFilterSidebarProps = {
     setSelectedData: React.Dispatch<React.SetStateAction<Record<number, ObservationRequestCreateRequest>>>
     selectedData: Record<number, ObservationRequestCreateRequest>
+    setValue?: UseFormSetValue<FieldValues>
 }
 
 export const TestFilterSidebar = ({
     setSelectedData,
     selectedData,
+    setValue,
 }: TestFilterSidebarProps) => {
     const list = useListContext();
     const [_dataUniqueCategory, setDataUniqueCategory] = useState<Array<any>>([])
@@ -100,6 +103,7 @@ export const TestFilterSidebar = ({
                 })
                 return newSelectedData
             })
+
             return templates.filter((v: any) => v !== value.template.id)
         }
 
@@ -112,6 +116,13 @@ export const TestFilterSidebar = ({
                 })
                 return newSelectedData
             })
+            const doctorIDs = value.template.doctor_ids
+            const analyzersIDs = value.template.analyzer_ids
+            if (setValue) {
+                setValue('doctor_ids', doctorIDs)
+                setValue('analyzer_ids', analyzersIDs)
+            }
+
             return [...templates, value.template.id]
         }
 

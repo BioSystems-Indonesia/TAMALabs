@@ -1,4 +1,5 @@
 import Chip from "@mui/material/Chip";
+import { VerifiedStatus } from "../../types/work_order";
 
 export function FilledPercentChip(props: { percent: number }) {
     // const [color, setColor] = useState<'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' | undefined>(undefined);
@@ -18,5 +19,20 @@ export function FilledPercentChip(props: { percent: number }) {
 
     return (
         <Chip label={`${(props.percent * 100).toFixed(2)}%`} color={color} />
+    )
+}
+
+export function VerifiedChip(props: { verified: VerifiedStatus }) {
+    let color: 'default' | 'primary' |'secondary' | 'error' | 'info' |'success' | 'warning' | undefined = 'default';
+    if (props.verified === "PENDING") {
+        color = 'default';
+    } else if (props.verified === "VERIFIED") {
+        color = 'success';
+    } else if (props.verified === "REJECTED") {
+        color = 'error';
+    }
+
+    return (
+        <Chip label={props.verified} color={color} />
     )
 }

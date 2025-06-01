@@ -24,13 +24,29 @@ func (r AdminRepository) FindAll(
 	ctx context.Context,
 	req *entity.GetManyRequestAdmin,
 ) (entity.PaginationResponse[entity.Admin], error) {
+	var roleIDs []int64
+	if len(req.Role) > 0 {
+		dbRole := r.db.WithContext(ctx).Model(&entity.Role{})
+		dbRole = dbRole.Where("name in ?", req.Role)
+		err := dbRole.Pluck("id", &roleIDs).Error
+		if err != nil {
+			return entity.PaginationResponse[entity.Admin]{}, fmt.Errorf("error finding roles: %w", err)
+		}
+	}
+
 	db := r.db.WithContext(ctx).Preload("Roles")
 	db = sql.ProcessGetMany(db, req.GetManyRequest,
 		sql.Modify{
 			ProcessSearch: func(db *gorm.DB, query string) *gorm.DB {
-				return db.Where("fullname like ? or email like ? or username like ?", query+"%", query+"%", query+"%")
+				db = db.Where("fullname like ? or email like ? or username like ?", query+"%", query+"%", query+"%")
+				return db
 			},
 		})
+
+	if len(roleIDs) > 0 {
+		db = db.Distinct("id", "fullname", "email", "username")
+		db = db.Joins("join admin_roles on admin_roles.admin_id = admins.id and admin_roles.role_id in?", roleIDs)
+	}
 
 	return sql.GetWithPaginationResponse[entity.Admin](db, req.GetManyRequest)
 }

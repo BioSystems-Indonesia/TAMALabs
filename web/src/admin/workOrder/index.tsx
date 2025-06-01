@@ -15,6 +15,7 @@ import {
     Edit,
     FilterLiveForm,
     List,
+    ReferenceArrayField,
     ReferenceField,
     SearchInput,
     ShowButton,
@@ -307,6 +308,8 @@ export const WorkOrderList = () => {
                         {getRequestLength(record)}
                     </Typography>
                 )} />
+                <ReferenceArrayField source="doctor_ids" reference="user"/>
+                <ReferenceArrayField source="analyzer_ids" reference="user"/>
                 <DateField source="created_at" />
                 <WrapperField label="Actions" sortable={false} >
                     <Stack direction={"row"} spacing={2}>

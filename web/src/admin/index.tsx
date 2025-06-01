@@ -1,6 +1,7 @@
 // in src/admin/index.tsx
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import BiotechIcon from '@mui/icons-material/Biotech';
+import ApprovalIcon from '@mui/icons-material/Approval';
 import BuildIcon from '@mui/icons-material/Build';
 import LanIcon from '@mui/icons-material/Lan';
 import UserIcon from '@mui/icons-material/Person';
@@ -26,6 +27,7 @@ import { useAuthProvider } from '../hooks/authProvider.ts';
 import { LOCAL_STORAGE_ACCESS_TOKEN } from '../types/constant.ts';
 import { UserCreate, UserEdit, UserList, UserShow } from './User/index.tsx';
 import { ErrorPayload } from '../types/errors.ts';
+import { ApprovalList } from './approval/index.tsx';
 
 const httpClient = async (url: string, options?: fetchUtils.Options) => {
     if (!options) {
@@ -111,6 +113,13 @@ const App = () => {
             hasEdit={false}
             hasShow={true}
             icon={AssessmentIcon}
+            recordRepresentation={record => `#${record.barcode}}`}
+        />
+        <Resource name="approval" list={ApprovalList} show={ResultShow}
+            hasCreate={false}
+            hasEdit={false}
+            hasShow={true}
+            icon={ApprovalIcon}
             recordRepresentation={record => `#${record.barcode}}`}
         />
         <Resource name="patient" list={PatientList} show={PatientShow} edit={PatientEdit} create={PatientCreate}

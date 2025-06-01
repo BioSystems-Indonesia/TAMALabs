@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"slices"
 	"sort"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -220,4 +221,30 @@ func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder) {
 
 func (u *Usecase) TooglePickTestResult(ctx context.Context, testResultID int64) (entity.ObservationResult, error) {
 	return u.resultRepository.PickObservationResult(ctx, testResultID)
+}
+
+func (u *Usecase) ApproveResult(context context.Context, workOrderID int64, adminID int64) error {
+	workOrder, err := u.workOrderRepository.FindOne(workOrderID)
+	if err != nil {
+		return err
+	}
+
+	if !slices.Contains(workOrder.DoctorIDs, adminID) {
+		return entity.ErrForbidden
+	}
+
+	return u.resultRepository.ApproveResult(context, workOrderID)
+}
+
+func (u *Usecase) RejectResult(context context.Context, workOrderID int64, adminID int64) error {
+	workOrder, err := u.workOrderRepository.FindOne(workOrderID)
+	if err != nil {
+		return err
+	}
+
+	if !slices.Contains(workOrder.DoctorIDs, adminID) {
+		return entity.ErrForbidden
+	}
+
+	return u.resultRepository.RejectResult(context, workOrderID)
 }

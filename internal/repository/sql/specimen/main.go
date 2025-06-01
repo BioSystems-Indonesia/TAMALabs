@@ -91,7 +91,7 @@ func (r Repository) FindOne(ctx context.Context, id int64) (entity.Specimen, err
 
 func (r Repository) FindByBarcode(ctx context.Context, barcode string) (entity.Specimen, error) {
 	var specimen entity.Specimen
-	err := r.db.Debug().WithContext(ctx).
+	err := r.db.WithContext(ctx).
 		Where("barcode = ?", barcode).
 		Preload("ObservationResult").
 		Preload("ObservationResult.TestType").

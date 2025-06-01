@@ -23,11 +23,20 @@ echo "Running: atlas migrate diff --env gorm ${MIGRATION_NAME}"
 
 # Execute the actual command
 atlas migrate diff --env gorm ${MIGRATION_NAME}
-
-# Optional: Check if the atlas command succeeded
 ATLAS_EXIT_CODE=$?
 if [ ${ATLAS_EXIT_CODE} -ne 0 ]; then
     echo "Error: Atlas command failed with exit code ${ATLAS_EXIT_CODE}" >&2
+    exit ${ATLAS_EXIT_CODE} # Exit with the same error code as atlas
+fi
+
+atlas migrate lint --env gorm
+ATLAS_EXIT_CODE=$?
+if [ ${ATLAS_EXIT_CODE} -ne 0 ]; then
+    echo "Error: Lint migration failed with exit code ${ATLAS_EXIT_CODE}" >&2
+    echo "Please do the following:" >&2
+    echo "1. REMOVE the new migration file and revert the atlas.sum" >&2
+    echo "2. Modify the GORM entity to match the correct schema" >&2
+    echo "3. Run this script again" >&2
     exit ${ATLAS_EXIT_CODE} # Exit with the same error code as atlas
 fi
 

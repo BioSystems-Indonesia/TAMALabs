@@ -9,8 +9,9 @@ import {
 } from '@react-pdf/renderer';
 import useSettings from '../hooks/useSettings';
 import logo from '../assets/elgatama-logo.png'
-import type { ReportData  } from '../types/observation_result';
-import {Patient} from "../types/patient.ts";
+import type { ReportData } from '../types/observation_result';
+import { Patient } from "../types/patient.ts";
+import { WorkOrder } from '../types/work_order.ts';
 
 Font.register({
     family: 'Helvetica',
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
         borderBottomColor: '#112131',
     },
     companyInfo: {
-        maxWidth: '80%', 
+        maxWidth: '80%',
         display: 'flex',
         gap: "2px",
     },
@@ -200,15 +201,15 @@ const Header = () => {
     )
 };
 
-const PatientInfo = ({ patient }: { patient: Patient }) => (
+const PatientInfo = ({ patient, workOrder }: { patient: Patient, workOrder: WorkOrder }) => (
     <View style={styles.rectangleContainer}>
         <View style={styles.gridContainer}>
             {/* Row 1 */}
             <View style={styles.row}>
                 <View style={styles.leftColumn}>
                     <Text style={styles.labelValue}>
-                        <Text style={styles.label}>Barcode No     </Text>
-                        <Text style={styles.value}>: - </Text>
+                        <Text style={styles.label}>Barcode No    </Text>
+                        <Text style={styles.value}>: {workOrder.barcode} </Text>
                     </Text>
                 </View>
                 <View style={styles.rightColumn}>
@@ -239,7 +240,7 @@ const PatientInfo = ({ patient }: { patient: Patient }) => (
             <View style={styles.row}>
                 <View style={styles.leftColumn}>
                     <Text style={styles.labelValue}>
-                        <Text style={styles.label}>Address           </Text>
+                        <Text style={styles.label}>Address          </Text>
                         <Text style={styles.value}>: {patient.address}</Text>
                     </Text>
                 </View>
@@ -247,6 +248,21 @@ const PatientInfo = ({ patient }: { patient: Patient }) => (
                     <Text style={styles.labelValue}>
                         <Text style={styles.label}>Gender         </Text>
                         <Text style={styles.value}>: {formatGender(patient.sex)}</Text>
+                    </Text>
+                </View>
+            </View>
+
+            <View style={styles.row}>
+                <View style={styles.leftColumn}>
+                    <Text style={styles.labelValue}>
+                        <Text style={styles.label}>Doctor             </Text>
+                        <Text style={styles.value}>: {workOrder.doctors?.length > 0 ? workOrder.doctors[0].fullname : ""}</Text>
+                    </Text>
+                </View>
+                <View style={styles.rightColumn}>
+                    <Text style={styles.labelValue}>
+                        <Text style={styles.label}>Analyst         </Text>
+                        <Text style={styles.value}>: {workOrder.analyzers?.length > 0 ? workOrder.analyzers[0].fullname : ""}</Text>
                     </Text>
                 </View>
             </View>
@@ -272,14 +288,14 @@ const groupData = (data: ReportData[]) => {
     return grouped;
 };
 
-export const ReportDocument = ({ data, patientData }: { data: ReportData[]; patientData: Patient }) => {
+export const ReportDocument = ({ data, patientData, workOrderData }: { data: ReportData[], patientData: Patient, workOrderData: WorkOrder }) => {
     const groupedData = groupData(data);
 
     return (
         <Document>
             <Page size={"A4"} style={styles.page} wrap>
                 <Header />
-                <PatientInfo patient={patientData} />
+                <PatientInfo patient={patientData} workOrder={workOrderData}/>
                 {Object.entries(groupedData).map(([category, items]) => (
                     <View key={category} wrap>
                         <Text style={styles.category}>{category}</Text>

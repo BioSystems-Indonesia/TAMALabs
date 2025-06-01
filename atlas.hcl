@@ -22,7 +22,7 @@ env "gorm" {
 
   # Defines where migration files are stored (e.g., ./migrations directory).
   migration {
-    dir = "file://migrations"
+    dir = "file://migrations?format=golang-migrate"
     format = "golang-migrate"
   }
 
@@ -30,5 +30,30 @@ env "gorm" {
     migrate {
       diff = "{{ sql . \"  \" }}"
     }
+  }
+
+  lint {
+    non_linear {
+      error = true
+    }
+
+    destructive {
+      error = true
+    }
+
+    data_depend {
+      error = true
+    }
+
+    incompatible {
+      error = true
+    }
+
+    naming {
+      match   = "^[a-z]+$"
+      message = "must be lowercase"
+    }
+
+    latest = 1
   }
 }

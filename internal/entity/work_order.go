@@ -17,10 +17,22 @@ const (
 	WorkOrderStatusCompleted      WorkOrderStatus = "SUCCESS"
 )
 
+type WorkOrderVerifiedStatus string
+
+const (
+	WorkOrderVerifiedStatusPending  WorkOrderVerifiedStatus = "PENDING"
+	WorkOrderVerifiedStatusVerified WorkOrderVerifiedStatus = "VERIFIED"
+	WorkOrderVerifiedStatusRejected WorkOrderVerifiedStatus = "REJECTED"
+)
+
 type WorkOrderCreateRequest struct {
-	PatientID int64                            `json:"patient_id" validate:"required"`
-	TestTypes []WorkOrderCreateRequestTestType `json:"test_types" validate:"required,min=1"`
-	Barcode   string
+	PatientID   int64                            `json:"patient_id" validate:"required"`
+	TestTypes   []WorkOrderCreateRequestTestType `json:"test_types" validate:"required,min=1"`
+	CreatedBy   int64                            `json:"created_by" validate:"required"`
+	DoctorIDs   []int64                          `json:"doctor_ids" gorm:"-"`
+	AnalyzerIDs []int64                          `json:"analyzer_ids" gorm:"-"`
+
+	Barcode string `json:"-"`
 }
 
 type WorkOrderCreateRequestTestType struct {
@@ -34,20 +46,55 @@ type WorkOrder struct {
 	Status             WorkOrderStatus `json:"status" gorm:"not null" validate:"work-order-status"`
 	PatientID          int64           `json:"patient_id" gorm:"type:not null;default:0"`
 	DeviceIDDeprecated int64           `json:"device_id" gorm:"column:device_id;type:not null;default:0"`
-	CreatedAt          time.Time       `json:"created_at" gorm:"index:work_order_created_at"`
-	Barcode            string          `json:"barcode" gorm:"column:barcode;type:varchar(255);default:'';index:work_order_barcode,unique"`
-	UpdatedAt          time.Time       `json:"updated_at" gorm:""`
+	//nolint:lll // tag cannot be shorter
+	Barcode        string    `json:"barcode" gorm:"column:barcode;type:varchar(255);default:'';index:work_order_barcode,unique"`
+	VerifiedStatus string    `json:"verified_status" gorm:"column:verified_status;type:varchar(255);default:''"`
+	CreatedBy      int64     `json:"created_by" gorm:"column:created_by;type:bigint;default:0"`
+	LastUpdatedBy  int64     `json:"last_updated_by" gorm:"column:last_updated_by;type:bigint;default:0"`
+	CreatedAt      time.Time `json:"created_at" gorm:"index:work_order_created_at"`
+	UpdatedAt      time.Time `json:"updated_at" gorm:""`
 
-	Patient  Patient    `json:"patient" gorm:"foreignKey:PatientID;->" validate:"-"`
-	Specimen []Specimen `json:"specimen_list,omitempty" gorm:"foreignKey:OrderID;->" validate:"-"`
-	// nolint:lll // tag cannot be shorter
-	Devices []Device `json:"devices" gorm:"many2many:work_order_devices;->" validate:"-"`
+	DoctorIDs   []int64 `json:"doctor_ids" gorm:"-"`
+	AnalyzerIDs []int64 `json:"analyzer_ids" gorm:"-"`
+
+	Patient          Patient    `json:"patient" gorm:"foreignKey:PatientID;->" validate:"-"`
+	Specimen         []Specimen `json:"specimen_list,omitempty" gorm:"foreignKey:OrderID;->" validate:"-"`
+	Devices          []Device   `json:"devices" gorm:"many2many:work_order_devices;->" validate:"-"`
+	CreatedByUser    Admin      `json:"created_by_user" gorm:"foreignKey:CreatedBy;->" validate:"-"`
+	LastUpdateByUser Admin      `json:"last_updated_by_user" gorm:"foreignKey:LastUpdatedBy;->" validate:"-"`
+	Doctors          []Admin    `json:"doctors" gorm:"many2many:work_order_doctors;->" validate:"-"`
+	Analyzers        []Admin    `json:"analyzers" gorm:"many2many:work_order_analyzers;->" validate:"-"`
 
 	TestResult        []TestResult `json:"test_result" gorm:"-"`
 	TotalRequest      int64        `json:"total_request" gorm:"-"`
 	TotalResultFilled int64        `json:"total_result_filled" gorm:"-"`
 	PercentComplete   float64      `json:"percent_complete" gorm:"-"`
 	HaveCompleteData  bool         `json:"have_complete_data" gorm:"-"`
+}
+
+func (wo *WorkOrder) FillData() {
+	var doctorIDs []int64
+	for _, d := range wo.Doctors {
+		doctorIDs = append(doctorIDs, d.ID)
+	}
+
+	var analyzerIDs []int64
+	for _, a := range wo.Analyzers {
+		analyzerIDs = append(analyzerIDs, a.ID)
+	}
+
+	wo.DoctorIDs = doctorIDs
+	wo.AnalyzerIDs = analyzerIDs
+}
+
+type WorkOrderDoctor struct {
+	WorkOrderID int64 `json:"work_order_id" gorm:"primaryKey" validate:"required"`
+	AdminID     int64 `json:"admin_id" gorm:"primaryKey" validate:"required"`
+}
+
+type WorkOrderAnalyzer struct {
+	WorkOrderID int64 `json:"work_order_id" gorm:"primaryKey" validate:"required"`
+	AdminID     int64 `json:"admin_id" gorm:"primaryKey" validate:"required"`
 }
 
 type WorkOrderDevice struct {

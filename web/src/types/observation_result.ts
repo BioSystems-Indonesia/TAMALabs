@@ -1,6 +1,8 @@
 import type { Patient } from "./patient";
+import { User } from "./user";
+import { VerifiedStatus, WorkOrder } from "./work_order";
 
-export interface ObservationResult {
+export type ObservationResult = {
   id: number;
   specimen_id: number;
   code: string;
@@ -17,7 +19,7 @@ export interface ObservationResult {
   test_type: TestType;
 }
 
-export interface TestResult {
+export type TestResult = {
   id: number;
   test_type_id: number;
   specimen_id: number;
@@ -32,7 +34,7 @@ export interface TestResult {
   history: TestResult[] | null;
 }
 
-export interface TestType {
+export type TestType ={
   id: number;
   name: string;
   code: string;
@@ -45,7 +47,7 @@ export interface TestType {
 }
 
 export type ReportDataAbnormality = "High" | "Low" | "Normal" | "No Data";
-export interface ReportData {
+export type ReportData = {
   category: string;
   subCategory: string;
   parameter: string;
@@ -55,16 +57,23 @@ export interface ReportData {
   abnormality: ReportDataAbnormality;
 }
 
-export interface Result {
-  id:          number;
-  status:      string;
-  patient_id:  number;
-  device_id:   number;
-  created_at:  string;
-  updated_at:  string;
-  patient:     Patient;
-  devices:     null;
-  test_result: TestResult;
-  prev_id:     number;
-  next_id:     number
-}
+export type Result = {
+  id: number;
+  status: string;
+  patient_id: number;
+  device_id: number;
+  verified_status: VerifiedStatus;
+  created_at: string;
+  updated_at: string;
+  patient: Patient;
+  devices: null;
+  created_by: number;
+  last_updated_by: number;
+
+  doctors: User[];
+  analyzers: User[];
+
+  test_result: Record<string, TestResult[]>;
+  prev_id: number;
+  next_id: number
+} ;
