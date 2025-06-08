@@ -14,6 +14,7 @@ import {
     EditButton,
     Link,
     RecordContextProvider,
+    ReferenceArrayField,
     ReferenceField,
     Show,
     SingleFieldList,
@@ -239,6 +240,7 @@ export function WorkOrderShow() {
                     <DateField source="updated_at" showTime />
                     <ReferenceField source="created_by" reference='user' />
                     <ReferenceField source="last_updated_by" reference='user' />
+                    <ReferenceArrayField source="test_template_ids" reference='test-template' />
                 </TabbedShowLayout.Tab>
             </TabbedShowLayout>
             {/*Below is a barcode component for printing only, it will be hidden on the screen*/}

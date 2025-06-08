@@ -27,6 +27,9 @@ dev-be:
 migrate-hash:
 	atlas migrate hash
 
+migrate-down:
+	migrate -path ./migrations -database 'sqlite3://tmp/biosystem-lims.db' down 1
+
 migrate-diff:
 	$(eval ARGS := $(filter-out $@,$(MAKECMDGOALS)))
 	./scripts/migrate-diff.sh $(ARGS)

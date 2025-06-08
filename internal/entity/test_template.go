@@ -3,6 +3,7 @@ package entity
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"gorm.io/gorm"
@@ -75,21 +76,30 @@ func (t *TestTemplate) AfterFind(tx *gorm.DB) error {
 	var testTypes []WorkOrderCreateRequestTestType
 	err := json.Unmarshal([]byte(t.TestTypesString), &testTypes)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling test_types: %w", err)
+		slog.ErrorContext(tx.Statement.Context, "error unmarshalling test_types", slog.Attr{
+			Key:   "error",
+			Value: slog.AnyValue(err),
+		})
 	}
 	t.RequestTestTypes = testTypes
 
 	var doctorIDs []int64
 	err = json.Unmarshal([]byte(t.DoctorIDsString), &doctorIDs)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling doctor_ids: %w", err)
+		slog.ErrorContext(tx.Statement.Context, "error unmarshalling doctor_ids", slog.Attr{
+			Key:   "error",
+			Value: slog.AnyValue(err),
+		})
 	}
 	t.DoctorIDs = doctorIDs
 
 	var analyzerIDs []int64
 	err = json.Unmarshal([]byte(t.AnalyzerIDsString), &analyzerIDs)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling analyzer_ids: %w", err)
+		slog.ErrorContext(tx.Statement.Context, "error unmarshalling analyzer_ids", slog.Attr{
+			Key:   "error",
+			Value: slog.AnyValue(err),
+		})
 	}
 	t.AnalyzerIDs = analyzerIDs
 
@@ -105,4 +115,9 @@ type TestTemplateTestType struct {
 
 type TestTemplateGetManyRequest struct {
 	GetManyRequest
+}
+
+type TestTemplateObservationRequestDifference struct {
+	ToCreate []ObservationRequest
+	ToDelete []ObservationRequest
 }

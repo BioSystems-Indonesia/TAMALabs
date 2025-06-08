@@ -1,3 +1,5 @@
+import { WorkOrder } from "./work_order";
+
 export interface TestType {
     id:             number;
     name:           string;
@@ -10,6 +12,7 @@ export interface TestType {
     description:    string;
     types: TestTypeSpecimenType[];
     decimal: number;
+    work_order: WorkOrder;
 }
 
 export interface TestTypeSpecimenType {

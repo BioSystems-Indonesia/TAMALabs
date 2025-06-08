@@ -162,6 +162,7 @@ func RegisterRoutes(
 		testTemplate.GET("/:id", testTemplateHandler.GetOneTestTemplate)
 		testTemplate.POST("", testTemplateHandler.CreateTestTemplate)
 		testTemplate.PUT("/:id", testTemplateHandler.UpdateTestTemplate)
+		testTemplate.PUT("/:id/update-diff", testTemplateHandler.CheckUpdateDifferenceTestTemplate)
 		testTemplate.DELETE("/:id", testTemplateHandler.DeleteTestTemplate)
 	}
 

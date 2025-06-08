@@ -2,6 +2,7 @@ package test_template_uc
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_template"
@@ -28,7 +29,19 @@ func (u *Usecase) Create(ctx context.Context, req *entity.TestTemplate) (entity.
 }
 
 func (u *Usecase) Update(ctx context.Context, req *entity.TestTemplate) (entity.TestTemplate, error) {
-	return u.repository.Update(ctx, req)
+	diff, err := u.repository.GetObservationRequestDifference(ctx, req)
+	if err != nil {
+		return entity.TestTemplate{}, fmt.Errorf("error getting observation request difference: %w", err)
+	}
+
+	return u.repository.Update(ctx, req, &diff)
+}
+
+func (u *Usecase) CheckUpdateDifference(
+	ctx context.Context,
+	req *entity.TestTemplate,
+) (entity.TestTemplateObservationRequestDifference, error) {
+	return u.repository.GetObservationRequestDifference(ctx, req)
 }
 
 func (u *Usecase) Delete(ctx context.Context, req *entity.TestTemplate) (entity.TestTemplate, error) {

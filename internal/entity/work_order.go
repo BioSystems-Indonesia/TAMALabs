@@ -26,11 +26,12 @@ const (
 )
 
 type WorkOrderCreateRequest struct {
-	PatientID   int64                            `json:"patient_id" validate:"required"`
-	TestTypes   []WorkOrderCreateRequestTestType `json:"test_types" validate:"required,min=1"`
-	CreatedBy   int64                            `json:"created_by" validate:"required"`
-	DoctorIDs   []int64                          `json:"doctor_ids" gorm:"-"`
-	AnalyzerIDs []int64                          `json:"analyzer_ids" gorm:"-"`
+	PatientID       int64                            `json:"patient_id" validate:"required"`
+	TestTypes       []WorkOrderCreateRequestTestType `json:"test_types" validate:"required,min=1"`
+	CreatedBy       int64                            `json:"created_by" validate:"required"`
+	DoctorIDs       []int64                          `json:"doctor_ids" gorm:"-"`
+	AnalyzerIDs     []int64                          `json:"analyzer_ids" gorm:"-"`
+	TestTemplateIDs []int64                          `json:"test_template_ids" gorm:"-"`
 
 	Barcode string `json:"-"`
 }
@@ -54,16 +55,18 @@ type WorkOrder struct {
 	CreatedAt      time.Time `json:"created_at" gorm:"index:work_order_created_at"`
 	UpdatedAt      time.Time `json:"updated_at" gorm:""`
 
-	DoctorIDs   []int64 `json:"doctor_ids" gorm:"-"`
-	AnalyzerIDs []int64 `json:"analyzer_ids" gorm:"-"`
+	DoctorIDs       []int64 `json:"doctor_ids" gorm:"-"`
+	AnalyzerIDs     []int64 `json:"analyzer_ids" gorm:"-"`
+	TestTemplateIDs []int64 `json:"test_template_ids" gorm:"-"`
 
-	Patient          Patient    `json:"patient" gorm:"foreignKey:PatientID;->" validate:"-"`
-	Specimen         []Specimen `json:"specimen_list,omitempty" gorm:"foreignKey:OrderID;->" validate:"-"`
-	Devices          []Device   `json:"devices" gorm:"many2many:work_order_devices;->" validate:"-"`
-	CreatedByUser    Admin      `json:"created_by_user" gorm:"foreignKey:CreatedBy;->" validate:"-"`
-	LastUpdateByUser Admin      `json:"last_updated_by_user" gorm:"foreignKey:LastUpdatedBy;->" validate:"-"`
-	Doctors          []Admin    `json:"doctors" gorm:"many2many:work_order_doctors;->" validate:"-"`
-	Analyzers        []Admin    `json:"analyzers" gorm:"many2many:work_order_analyzers;->" validate:"-"`
+	Patient          Patient        `json:"patient" gorm:"foreignKey:PatientID;->" validate:"-"`
+	Specimen         []Specimen     `json:"specimen_list,omitempty" gorm:"foreignKey:OrderID;->" validate:"-"`
+	Devices          []Device       `json:"devices" gorm:"many2many:work_order_devices;->" validate:"-"`
+	CreatedByUser    Admin          `json:"created_by_user" gorm:"foreignKey:CreatedBy;->" validate:"-"`
+	LastUpdateByUser Admin          `json:"last_updated_by_user" gorm:"foreignKey:LastUpdatedBy;->" validate:"-"`
+	Doctors          []Admin        `json:"doctors" gorm:"many2many:work_order_doctors;->" validate:"-"`
+	Analyzers        []Admin        `json:"analyzers" gorm:"many2many:work_order_analyzers;->" validate:"-"`
+	TestTemplates    []TestTemplate `json:"test_template" gorm:"many2many:work_order_test_templates;->" validate:"-"`
 
 	TestResult        []TestResult `json:"test_result" gorm:"-"`
 	TotalRequest      int64        `json:"total_request" gorm:"-"`
@@ -83,8 +86,14 @@ func (wo *WorkOrder) FillData() {
 		analyzerIDs = append(analyzerIDs, a.ID)
 	}
 
+	var testTemplateIDs []int64
+	for _, t := range wo.TestTemplates {
+		testTemplateIDs = append(testTemplateIDs, int64(t.ID))
+	}
+
 	wo.DoctorIDs = doctorIDs
 	wo.AnalyzerIDs = analyzerIDs
+	wo.TestTemplateIDs = testTemplateIDs
 }
 
 type WorkOrderDoctor struct {
@@ -95,6 +104,11 @@ type WorkOrderDoctor struct {
 type WorkOrderAnalyzer struct {
 	WorkOrderID int64 `json:"work_order_id" gorm:"primaryKey" validate:"required"`
 	AdminID     int64 `json:"admin_id" gorm:"primaryKey" validate:"required"`
+}
+
+type WorkOrderTestTemplate struct {
+	WorkOrderID    int64 `json:"work_order_id" gorm:"primaryKey" validate:"required"`
+	TestTemplateID int64 `json:"test_template_id" gorm:"primaryKey" validate:"required"`
 }
 
 type WorkOrderDevice struct {

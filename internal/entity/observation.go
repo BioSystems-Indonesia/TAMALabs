@@ -18,7 +18,8 @@ type ObservationRequest struct {
 	CreatedAt       time.Time `json:"created_at" gorm:"not null"`
 	UpdatedAt       time.Time `json:"updated_at" gorm:"not null"`
 
-	TestType TestType `json:"test_type" gorm:"foreignKey:TestCode;references:Code" validate:"-"`
+	TestType  TestType  `json:"test_type" gorm:"foreignKey:TestCode;references:Code;->" validate:"-"`
+	WorkOrder WorkOrder `json:"work_order" gorm:"-" validate:"-"`
 }
 
 func (o ObservationRequest) GetOrderControlNode() string {

@@ -158,6 +158,7 @@ const PickedTest = ({ selectedData }: { selectedData: Record<number, Observation
 const patientIDField = "patient_id";
 const analystIDField = "analyzer_ids";
 const doctorIDField = "doctor_ids";
+const testTemplateIDField = "test_template_ids";
 
 type TableTestType = TestType & {
     checked: boolean
@@ -478,7 +479,11 @@ export function TestInput(props: TestInputProps) {
             overflow: "scroll",
             width: "100%",
         }}>
-            <List resource={"test-type"} exporter={false} aside={<TestFilterSidebar setSelectedData={setSelectedData} selectedData={selectedData} setValue={setValue}/>}
+            <List resource={"test-type"} exporter={false}
+                aside={
+                    <TestFilterSidebar setSelectedData={setSelectedData}
+                        selectedData={selectedData} setValue={setValue} getValues={getValues} />
+                }
                 perPage={999999}
                 storeKey={false}
                 actions={false}
@@ -758,6 +763,7 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
                 created_by: currentUser?.id,
                 analyzer_ids: data[analystIDField],
                 doctor_ids: data[doctorIDField],
+                test_template_ids: data[testTemplateIDField],
             });
         }
     };

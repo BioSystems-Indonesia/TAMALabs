@@ -92,6 +92,29 @@ func (h *TestTemplateHandler) UpdateTestTemplate(c echo.Context) error {
 	return c.JSON(http.StatusOK, testTemplate)
 }
 
+func (h *TestTemplateHandler) CheckUpdateDifferenceTestTemplate(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	var req entity.TestTemplate
+	if err := bindAndValidate(c, &req); err != nil {
+		return handleError(c, err)
+	}
+
+	user := entity.GetEchoContextUser(c)
+
+	req.ID = id
+	req.LastUpdatedBy = user.ID
+	updateDifference, err := h.testTemplateUsecase.CheckUpdateDifference(c.Request().Context(), &req)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, updateDifference)
+}
+
 func (h *TestTemplateHandler) DeleteTestTemplate(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

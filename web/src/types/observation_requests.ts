@@ -1,4 +1,5 @@
 import type { TestType } from "./test_type";
+import { WorkOrder } from "./work_order";
 
 export type ObservationRequest = {
   id: number;
@@ -11,6 +12,7 @@ export type ObservationRequest = {
   updated_at: string;
 
   test_type: TestType;
+  work_order?: WorkOrder;
 };
 
 export type ObservationRequestCreateRequest = {

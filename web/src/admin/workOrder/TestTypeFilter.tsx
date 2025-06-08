@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { FilterList, FilterListItem, FilterLiveSearch, useGetList, useListContext } from "react-admin";
 import { stopEnterPropagation } from '../../helper/component';
-import { FieldValues, UseFormSetValue } from 'react-hook-form'
+import { FieldValues, UseFormGetValues, UseFormSetValue } from 'react-hook-form'
 import type { ObservationRequestCreateRequest } from '../../types/observation_requests';
 import SideFilter from '../../component/SideFilter';
 import useAxios from '../../hooks/useAxios';
@@ -15,12 +15,14 @@ type TestFilterSidebarProps = {
     setSelectedData: React.Dispatch<React.SetStateAction<Record<number, ObservationRequestCreateRequest>>>
     selectedData: Record<number, ObservationRequestCreateRequest>
     setValue?: UseFormSetValue<FieldValues>
+    getValues?: UseFormGetValues<FieldValues>
 }
 
 export const TestFilterSidebar = ({
     setSelectedData,
     selectedData,
     setValue,
+    getValues,
 }: TestFilterSidebarProps) => {
     const list = useListContext();
     const [_dataUniqueCategory, setDataUniqueCategory] = useState<Array<any>>([])
@@ -88,12 +90,28 @@ export const TestFilterSidebar = ({
     );
 
     const isTemplateSelected = (value: any, filters: any) => {
+        if (getValues) {
+            const testTemplateIDs = getValues('test_template_ids')
+            if (!testTemplateIDs?.includes(value.template.id)) {
+                return false
+            }
+
+            return true
+        }
+
         const templates = filters.templates || [];
         return templates.includes(value.template.id);
     };
 
     const toggleTemplateFilter = (value: any, filters: any) => {
-        const templates = filters.templates || [];
+        let templates = filters.templates || [];
+        if (getValues) {
+            const testTemplateIDs = getValues('test_template_ids')
+            if (testTemplateIDs) {
+                templates = testTemplateIDs
+            }
+        }
+
         const removeTemplate = (value: any, templates: any[]) => {
             setSelectedData(v => {
                 const newSelectedData = { ...v }
@@ -103,6 +121,12 @@ export const TestFilterSidebar = ({
                 })
                 return newSelectedData
             })
+            if (setValue && getValues) {
+                const testTemplateIDs = getValues('test_template_ids')
+                if (testTemplateIDs?.includes(value.template.id)) {
+                    setValue('test_template_ids', testTemplateIDs.filter((v: number) => v!== value.template.id))
+                }
+            }
 
             return templates.filter((v: any) => v !== value.template.id)
         }
@@ -121,6 +145,15 @@ export const TestFilterSidebar = ({
             if (setValue) {
                 setValue('doctor_ids', doctorIDs)
                 setValue('analyzer_ids', analyzersIDs)
+            }
+
+            if (setValue && getValues) {
+                const testTemplateIDs = getValues('test_template_ids')
+                if (!testTemplateIDs){
+                    setValue('test_template_ids', [value.template.id])
+                } else if (!testTemplateIDs.includes(value.template.id)) {
+                    setValue('test_template_ids', [...testTemplateIDs, value.template.id])
+                }
             }
 
             return [...templates, value.template.id]
@@ -190,7 +223,7 @@ export const TestFilterSidebar = ({
                     <FilterListItem
                         key={i}
                         label={val.name}
-                        value={{ template: val }}
+                        value={{ template: val}}
                         isSelected={isTemplateSelected}
                         toggleFilter={toggleTemplateFilter}
                     />
