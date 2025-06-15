@@ -108,3 +108,34 @@ func (r Repository) FindByBarcode(ctx context.Context, barcode string) (entity.S
 
 	return specimen, nil
 }
+
+func (r Repository) FindAllByWorkOrderIDs(ctx context.Context, ids []int64) ([]entity.Specimen, error) {
+	var specimen []entity.Specimen
+	err := r.db.Model(entity.Specimen{}).Where("order_id in (?)", ids).
+		Preload("ObservationRequest").Find(&specimen).Error
+	if err != nil {
+		return specimen, fmt.Errorf("error finding Specimen by work order ids: %w", err)
+	}
+
+	return specimen, nil
+}
+
+func (r Repository) BulkUpdate(ctx context.Context, specimens []entity.Specimen) error {
+	var newSpecimens []entity.Specimen
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		for _, specimen := range specimens {
+			err := tx.Model(&specimen).Updates(specimen).Error
+			if err != nil {
+				return fmt.Errorf("error updating specimen: %w", err)
+			}
+
+			newSpecimens = append(newSpecimens, specimen)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

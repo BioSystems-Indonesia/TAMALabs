@@ -74,12 +74,12 @@ func (u *Usecase) withBarcode(ctx context.Context, barcode string) error {
 		return err
 	}
 
-	device, err := u.DeviceRepository.FindByID(ctx, 1)
+	device, err := u.DeviceRepository.FindOne(1)
 	if err != nil {
 		return err
 	}
 
-	err = ba400.SendToBA400(ctx, &entity.SendPayloadRequest{
+	err = ba400.NewBa400().Send(ctx, &entity.SendPayloadRequest{
 		Patients: []entity.Patient{speciment.Patient},
 		Device:   device,
 		Urgent:   false,
@@ -93,7 +93,7 @@ func (u *Usecase) withBarcode(ctx context.Context, barcode string) error {
 
 // withoutBarcode processes the QBP_Q11 message without a barcode.
 func (u *Usecase) withoutBarcode(ctx context.Context) error {
-	device, err := u.DeviceRepository.FindByID(ctx, 1)
+	device, err := u.DeviceRepository.FindOne(1)
 	if err != nil {
 		return err
 	}
@@ -108,11 +108,14 @@ func (u *Usecase) withoutBarcode(ctx context.Context) error {
 	}
 
 	for _, workOrder := range workOrders {
-		ba400.SendToBA400(ctx, &entity.SendPayloadRequest{
+		err := ba400.NewBa400().Send(ctx, &entity.SendPayloadRequest{
 			Patients: []entity.Patient{workOrder.Patient},
 			Device:   device,
 			Urgent:   false,
 		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

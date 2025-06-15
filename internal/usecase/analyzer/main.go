@@ -15,7 +15,7 @@ type Usecase struct {
 	ObservationRequestRepository *observation_request.Repository
 	SpecimenRepository           *specimen.Repository
 	WorkOrderRepository          *workOrderrepo.WorkOrderRepository
-	DeviceRepository             *devicerepo.Repository
+	DeviceRepository             *devicerepo.DeviceRepository
 	BA400                        *ba400.Repository
 }
 
@@ -25,7 +25,7 @@ func NewUsecase(
 	observationRequestRepository *observation_request.Repository,
 	specimenRepository *specimen.Repository,
 	workOrderRepository *workOrderrepo.WorkOrderRepository,
-	deviceRepository *devicerepo.Repository,
+	deviceRepository *devicerepo.DeviceRepository,
 	ba400 *ba400.Repository,
 ) *Usecase {
 	return &Usecase{

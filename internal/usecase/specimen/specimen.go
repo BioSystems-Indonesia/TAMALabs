@@ -32,3 +32,11 @@ func (p SpecimenUseCase) FindAll(
 func (p SpecimenUseCase) FindOneByID(id int64) (entity.Specimen, error) {
 	return p.SpecimenRepo.FindOne(context.TODO(), id)
 }
+
+func (p SpecimenUseCase) FindAllByWorkOrderIDs(ctx context.Context, workOrderIDs []int64) ([]entity.Specimen, error) {
+	return p.SpecimenRepo.FindAllByWorkOrderIDs(ctx, workOrderIDs)
+}
+
+func (p SpecimenUseCase) BulkUpdateSpecimen(ctx context.Context, specimens []entity.Specimen) error {
+	return p.SpecimenRepo.BulkUpdate(ctx, specimens)
+}

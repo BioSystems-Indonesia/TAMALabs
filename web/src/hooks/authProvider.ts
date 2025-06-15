@@ -55,11 +55,17 @@ const authProvider: AuthProvider = {
     }
   },
   async checkAuth() {
-    const axios = createAxiosInstance();
-
-    const response = await axios.get("/check-auth");
-    if (response.data.status !== "OK") {
-      throw new Error("Session expired");
+    try {
+      const axios = createAxiosInstance();
+      await axios.get("/check-auth");
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        if (error.response) {
+          if (error.response.status === 401) {
+            throw new Error("Session expired");
+          }
+        }
+      }
     }
   },
   async logout() {

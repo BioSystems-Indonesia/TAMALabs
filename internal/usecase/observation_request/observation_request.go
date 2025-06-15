@@ -32,3 +32,7 @@ func (p ObservationRequestUseCase) FindAll(
 func (p ObservationRequestUseCase) FindOneByID(ctx context.Context, id int64) (entity.ObservationRequest, error) {
 	return p.ObservationRequestRepo.FindOne(ctx, id)
 }
+
+func (p ObservationRequestUseCase) BulkUpdate(ctx context.Context, request []entity.ObservationRequest) error {
+	return p.ObservationRequestRepo.BulkUpdate(ctx, request)
+}

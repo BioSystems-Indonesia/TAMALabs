@@ -10,6 +10,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/daily_sequence"
@@ -39,6 +40,9 @@ import (
 	test_type2 "github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
 	unit2 "github.com/oibacidem/lims-hl-seven/internal/usecase/unit"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner/postrun"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner/prerun"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
 
@@ -58,7 +62,7 @@ func InitRestApp() server.RestServer {
 	specimenRepository := specimen.NewRepository(gormDB, schema)
 	cache := provideCache()
 	workOrderRepository := workOrderrepo.NewWorkOrderRepository(gormDB, schema, specimenRepository, cache)
-	deviceRepository := device.NewRepository(gormDB)
+	deviceRepository := devicerepo.NewDeviceRepository(gormDB, schema)
 	ba400TCP := provideTCP(schema)
 	ba400Repository := ba400.NewRepository(ba400TCP)
 	usecase := analyzer.NewUsecase(repository, observation_requestRepository, specimenRepository, workOrderRepository, deviceRepository, ba400Repository)
@@ -72,11 +76,19 @@ func InitRestApp() server.RestServer {
 	specimenHandler := rest.NewSpecimenHandler(schema, specimenUseCase)
 	daily_sequenceRepository := daily_sequence.NewRepository(gormDB)
 	barcode_generatorUsecase := barcode_generator.NewUsecase(daily_sequenceRepository)
-	workOrderUseCase := workOrderuc.NewWorkOrderUseCase(schema, workOrderRepository, validate, barcode_generatorUsecase)
-	deviceUseCase := deviceuc.NewDeviceUseCase(deviceRepository)
-	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, gormDB, patientUseCase, deviceUseCase)
-	featureListHandler := rest.NewFeatureListHandler()
+	runAction := prerun.NewRunAction(observation_requestRepository, specimenRepository)
+	cancelAction := prerun.NewCancelAction(observation_requestRepository, specimenRepository)
+	postrunRunAction := postrun.NewRunAction(workOrderRepository)
+	postrunCancelAction := postrun.NewCancelAction(workOrderRepository)
+	incompleteSendAction := postrun.NewIncompleteSendAction(workOrderRepository)
+	ba400Ba400 := ba400.NewBa400()
+	a15A15 := a15.NewA15()
+	strategy := runner.NewStrategy(runAction, cancelAction, postrunRunAction, postrunCancelAction, incompleteSendAction, ba400Ba400, a15A15)
+	deviceUseCase := deviceuc.NewDeviceUseCase(schema, deviceRepository, strategy)
+	workOrderUseCase := workOrderuc.NewWorkOrderUseCase(schema, workOrderRepository, validate, barcode_generatorUsecase, patientUseCase, deviceUseCase, strategy)
 	observationRequestUseCase := observation_requestuc.NewObservationRequestUseCase(schema, observation_requestRepository, validate)
+	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, gormDB, patientUseCase, deviceUseCase, specimenUseCase, observationRequestUseCase)
+	featureListHandler := rest.NewFeatureListHandler()
 	observationRequestHandler := rest.NewObservationRequestHandler(schema, observationRequestUseCase)
 	test_typeRepository := test_type.NewRepository(gormDB, schema)
 	test_typeUsecase := test_type2.NewUsecase(test_typeRepository)
@@ -90,9 +102,7 @@ func InitRestApp() server.RestServer {
 	unitUseCase := unit2.NewUnitUseCase(schema, unitRepository, validate)
 	unitHandler := rest.NewUnitHandler(schema, unitUseCase)
 	handler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler, unitHandler)
-	deviceHandler := &rest.DeviceHandler{
-		DB: gormDB,
-	}
+	deviceHandler := rest.NewDeviceHandler(deviceUseCase)
 	tcpHlSevenHandler := tcp.NewHlSevenHandler(usecase)
 	serverTCP := provideTCPServer(schema, tcpHlSevenHandler)
 	serverControllerHandler := &rest.ServerControllerHandler{

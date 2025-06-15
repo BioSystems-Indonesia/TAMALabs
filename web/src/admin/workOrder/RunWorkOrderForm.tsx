@@ -6,11 +6,12 @@ import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
 import WarningIcon from '@mui/icons-material/Warning';
 import Typography from '@mui/material/Typography';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AutocompleteInput, BooleanInput, Button, Form, InputHelperText, Link, RecordContextProvider, ReferenceInput, required, useNotify, useRefresh } from 'react-admin';
+import { AutocompleteInput, BooleanInput, Button, Form, InputHelperText, Link, RecordContextProvider, ReferenceInput, required, useAuthProvider, useNotify, useRefresh } from 'react-admin';
 import { SubmitHandler, useFormContext } from 'react-hook-form';
 import { getRefererParam } from '../../hooks/useReferer';
 import { DeviceForm } from '../device';
 import useAxios from '../../hooks/useAxios';
+import { LOCAL_STORAGE_ACCESS_TOKEN } from '../../types/constant';
 
 
 type WorkOrderStatus = 'IDLE' | 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'INCOMPLETE' | 'ERROR';
@@ -188,7 +189,6 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
     const [_, setError] = useState<string | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
     const refresh = useRefresh();
-    const axios = useAxios();
 
     // Callback passed to the stream processor to update component state during streaming
     const handleProgressUpdate: ProgressCallback = useCallback((newPercentage, newStatus) => {
@@ -217,44 +217,34 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
             let url
             switch (data.action) {
                 case WorkOrderAction.run:
-                    url = `/work-order/run`;
+                    url = `${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/run`;
                     break;
                 case WorkOrderAction.cancel:
-                    url = `/work-order/cancel`;
+                    url = `${import.meta.env.VITE_BACKEND_BASE_URL}/work-order/cancel`;
                     break;
             }
 
-            const response = await axios({
+            const response: Response = await fetch(url, {
                 method: 'POST',
-                url,
                 headers: {
                     'Accept': 'text/event-stream',
+                    'Authorization': `Bearer ${localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN)}`,
                     'Content-Type': 'application/json',
                 },
-                data: data,
+                body: JSON.stringify(data),
                 signal,
-                responseType: 'stream'
             });
 
-            if (response.status !== 200) {
+            if (!response.ok) {
                 let errorBody = `Server responded with status ${response.status}`;
                 try {
-                    const text = response.data?.toString() || '(no details provided)';
-                    errorBody += `: ${text}`;
+                    const text: string = await response.text();
+                    errorBody += `: ${text || '(no details provided)'}`;
                 } catch (_) { }
                 throw new Error(errorBody);
             }
 
-            // Convert Axios response to Fetch Response format
-            const fetchResponse = new Response(response.data, {
-                status: response.status,
-                statusText: response.statusText,
-                headers: new Headers({
-                    'Content-Type': response.headers['content-type'] || 'text/event-stream'
-                })
-            });
-
-            const finalResult: StreamResult = await processSSEStream(fetchResponse, handleProgressUpdate, signal);
+            const finalResult: StreamResult = await processSSEStream(response, handleProgressUpdate, signal);
 
             setStatus(finalResult.status);
             setPercentage(finalResult.percentage);

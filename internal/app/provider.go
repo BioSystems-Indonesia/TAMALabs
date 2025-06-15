@@ -139,6 +139,7 @@ func InitSQLiteDB() (*gorm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
+	dialec.SetMaxOpenConns(1)
 
 	db, err := gorm.Open(gormSqlite.Dialector{
 		Conn: dialec,

@@ -28,5 +28,6 @@ type Specimen struct {
 
 type SpecimenGetManyRequest struct {
 	GetManyRequest
-	PatientID int64 `query:"patient_id"`
+	PatientID   int64 `query:"patient_id"`
+	WorkOrderID int64 `query:"work_order_id"`
 }

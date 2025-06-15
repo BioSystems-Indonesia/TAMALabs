@@ -49,3 +49,16 @@ func (r *Repository) FindOne(ctx context.Context, id int64) (entity.ObservationR
 
 	return ObservationRequest, nil
 }
+
+func (r *Repository) BulkUpdate(ctx context.Context, request []entity.ObservationRequest) error {
+	return r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, req := range request {
+			if err := tx.Model(&entity.ObservationRequest{}).Where("id = ?", req.ID).
+				Updates(req).Error; err != nil {
+				return fmt.Errorf("error updating ObservationRequest: %w", err)
+			}
+		}
+
+		return nil
+	})
+}

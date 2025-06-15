@@ -20,7 +20,7 @@ var tcpUsecaseSet = wire.NewSet(
 var tcpRepositorySet = wire.NewSet(
 	observation_result.NewRepository,
 	observation_request.NewRepository,
-	device.NewRepository,
+	device.NewDeviceRepository,
 )
 
 var (

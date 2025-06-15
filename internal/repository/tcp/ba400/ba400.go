@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
+	"strconv"
 	"time"
 
 	"github.com/kardianos/hl7"
@@ -19,10 +21,13 @@ const (
 	batchSend               = 3
 )
 
-// SendToBA400 is a function to send message to BA400 for now its singleton view
-func SendToBA400(
-	ctx context.Context, req *entity.SendPayloadRequest,
-) error {
+type Ba400 struct{}
+
+func NewBa400() *Ba400 {
+	return &Ba400{}
+}
+
+func (b Ba400) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 	encoder := hl7.NewEncoder(&hl7.EncodeOption{
 		TrimTrailingSeparator: true,
 	})
@@ -93,17 +98,27 @@ func SendToBA400(
 	return nil
 }
 
-func writeProgress(req *entity.SendPayloadRequest, percentage float64, status entity.WorkOrderStreamingResponseStatus) error {
-	if req.Writer == nil || req.Flusher == nil {
-		return nil
-	}
-
-	_, err := req.Writer.Write([]byte(entity.NewWorkOrderStreamingResponse(percentage, status)))
+func (b Ba400) CheckConnection(ctx context.Context, device entity.Device) error {
+	conn, err := net.Dial("tcp", net.JoinHostPort(device.IPAddress, strconv.Itoa(device.Port)))
 	if err != nil {
-		return fmt.Errorf("failed to write response: %w", err)
+		return fmt.Errorf("cannot connect to %s:%d", device.IPAddress, device.Port)
 	}
+	defer func() {
+		if err := conn.Close(); err != nil {
+			slog.Error("error closing connection", "error", err)
+		}
+	}()
 
-	req.Flusher.Flush()
+	return nil
+}
+
+func writeProgress(req *entity.SendPayloadRequest, percentage float64, status entity.WorkOrderStreamingResponseStatus) error {
+	if req.ProgressWriter != nil {
+		req.ProgressWriter <- entity.WorkOrderRunStreamMessage{
+			Percentage: percentage,
+			Status:     status,
+		}
+	}
 
 	return nil
 }

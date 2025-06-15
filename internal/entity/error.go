@@ -99,4 +99,7 @@ var (
 	ErrCookieNotFound         = errors.New("cookie not found")
 	ErrInvalidCertOrKeyType   = errors.New("invalid cert or key type, must be string or []byte")
 	ErrInvalidListenerNetwork = errors.New("invalid listener network")
+
+	// Custom errors
+	ErrDeviceTypeNotSupport = errors.New("device type not support")
 )

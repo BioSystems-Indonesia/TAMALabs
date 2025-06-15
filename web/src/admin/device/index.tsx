@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import {
     AutocompleteInput,
+    Button,
     Create,
     Datagrid,
     Edit,
@@ -15,14 +16,19 @@ import {
     Show,
     SimpleForm,
     TextField,
-    TextInput
+    TextInput,
+    WithRecord
 } from "react-admin";
 import FeatureList from "../../component/FeatureList.tsx";
 import { Action, ActionKeys } from "../../types/props.ts";
 import { useRefererRedirect } from "../../hooks/useReferer.ts";
 import SideFilter from "../../component/SideFilter.tsx";
-import { DeviceType, DeviceTypeValue } from "../../types/device.ts";
+import { Device, DeviceType, DeviceTypeValue } from "../../types/device.ts";
 import { Typography } from "@mui/material";
+import useAxios from "../../hooks/useAxios.ts";
+import { ConnectionStatus } from './ConnectionStatus';
+import { DeviceConnectionManager } from './DeviceConnectionManager';
+import { useState, useEffect } from 'react';
 
 type DeviceFormProps = {
     readonly?: boolean
@@ -104,21 +110,55 @@ const DeviceFilterSidebar = () => (
     </SideFilter>
 );
 
+export const DeviceList = () => {
+    const [deviceIds, setDeviceIds] = useState<number[]>([]);
+    const [connectionStatuses, setConnectionStatuses] = useState<Record<number, any>>({});
 
-export const DeviceList = () => (
-    <List aside={<DeviceFilterSidebar />} resource="device"
-        storeKey={false} exporter={false}
-        sort={{
-            field: "id",
-            order: "DESC"
-        }}
-    >
-        <Datagrid>
-            <TextField source="id" />
-            <TextField source="name" />
-            <TextField source="type" />
-            <TextField source="ip_address" />
-            <TextField source="port" />
-        </Datagrid>
-    </List>
-);
+    const handleStatusUpdate = (deviceId: number, status: any) => {
+        setConnectionStatuses(prev => ({
+            ...prev,
+            [deviceId]: status
+        }));
+    };
+
+    return (
+        <>
+            <DeviceConnectionManager 
+                deviceIds={deviceIds}
+                onStatusUpdate={handleStatusUpdate}
+            />
+            <List aside={<DeviceFilterSidebar />} resource="device"
+                storeKey={false} exporter={false}
+                sort={{
+                    field: "id",
+                    order: "DESC"
+                }}
+            >
+                <Datagrid>
+                    <TextField source="id" />
+                    <TextField source="name" />
+                    <TextField source="type" />
+                    <TextField source="ip_address" />
+                    <TextField source="port" />
+                    <WithRecord label="Connection Status" render={(record: Device) => {
+                        useEffect(() => {
+                            setDeviceIds(prev => {
+                                if (!prev.includes(record.id)) {
+                                    return [...prev, record.id];
+                                }
+                                return prev;
+                            });
+                        }, [record.id]);
+
+                        return (
+                            <ConnectionStatus 
+                                deviceId={record.id}
+                                status={connectionStatuses[record.id]}
+                            />
+                        );
+                    }}/>
+                </Datagrid>
+            </List>
+        </>
+    );
+};

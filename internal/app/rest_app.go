@@ -5,6 +5,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
+	a15 "github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
 	adminrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
 	configrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/daily_sequence"
@@ -34,6 +35,9 @@ import (
 	testTypeUC "github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
 	unitUC "github.com/oibacidem/lims-hl-seven/internal/usecase/unit"
 	workOrderuc "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner/postrun"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner/prerun"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
 
@@ -48,7 +52,7 @@ var restRepositorySet = wire.NewSet(
 	testTypeRepo.NewRepository,
 	observation_result.NewRepository,
 	observation_request.NewRepository,
-	device.NewRepository,
+	device.NewDeviceRepository,
 	daily_sequence.NewRepository,
 )
 
@@ -70,12 +74,20 @@ var (
 		adminrepo.NewAdminRepository,
 		unit.NewRepository,
 		rolerepo.NewRoleRepository,
+		hlsRepo.NewBa400,
+		a15.NewA15,
 
 		restUsecaseSet,
 		tcpUsecaseSet,
 
 		patientuc.NewPatientUseCase,
 		specimenuc.NewSpecimenUseCase,
+		prerun.NewRunAction,
+		prerun.NewCancelAction,
+		postrun.NewCancelAction,
+		postrun.NewRunAction,
+		postrun.NewIncompleteSendAction,
+		runner.NewStrategy,
 		workOrderuc.NewWorkOrderUseCase,
 		observation_requestuc.NewObservationRequestUseCase,
 		configuc.NewConfigUseCase,
@@ -100,7 +112,7 @@ var (
 		rest.NewAuthHandler,
 		rest.NewUnitHandler,
 		rest.NewRoleHandler,
-		wire.Struct(new(rest.DeviceHandler), "*"),
+		rest.NewDeviceHandler,
 
 		middleware.NewJWTMiddleware,
 

@@ -2,8 +2,6 @@ package entity
 
 import (
 	"fmt"
-	"io"
-	"net/http"
 	"time"
 )
 
@@ -122,6 +120,38 @@ type WorkOrderRunRequest struct {
 	DeviceID     int64   `json:"device_id" gorm:"-" validate:"required"`
 	WorkOrderIDs []int64 `json:"work_order_ids" gorm:"-" validate:"required"`
 	Urgent       bool    `json:"urgent" gorm:"-"`
+
+	progressWriter chan WorkOrderRunStreamMessage
+	patients       []Patient
+	device         Device
+}
+
+func (w *WorkOrderRunRequest) SetPatients(patients []Patient) {
+	w.patients = patients
+}
+
+func (w *WorkOrderRunRequest) GetPatients() []Patient {
+	return w.patients
+}
+
+func (w *WorkOrderRunRequest) SetDevice(device Device) {
+	w.device = device
+}
+
+func (w *WorkOrderRunRequest) GetDevice() Device {
+	return w.device
+}
+
+func (w *WorkOrderRunRequest) ProgressWriter() chan WorkOrderRunStreamMessage {
+	if w.progressWriter == nil {
+		w.progressWriter = make(chan WorkOrderRunStreamMessage)
+	}
+
+	return w.progressWriter
+}
+
+func (w *WorkOrderRunRequest) SetProgressWriter(progress chan WorkOrderRunStreamMessage) {
+	w.progressWriter = progress
 }
 
 type WorkOrderGetManyRequest struct {
@@ -148,6 +178,13 @@ type SendPayloadRequest struct {
 	Device   Device
 	Urgent   bool
 
-	Writer  io.Writer
-	Flusher http.Flusher
+	ProgressWriter chan WorkOrderRunStreamMessage
+}
+
+// WorkOrderRunStreamMessage represents a message sent from the use case to the controller.
+type WorkOrderRunStreamMessage struct {
+	Percentage float64
+	Status     WorkOrderStreamingResponseStatus
+	Error      error
+	IsDone     bool
 }
