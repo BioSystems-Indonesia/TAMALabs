@@ -291,7 +291,11 @@ export const WorkOrderList = () => {
                 },
             }}
         >
-            <Datagrid bulkActionButtons={<WorkOrderListBulkActionButtons
+            <Datagrid 
+            rowClick={(id, resource, record) => {
+                return false
+            }}
+            bulkActionButtons={<WorkOrderListBulkActionButtons
                 open={open}
                 setOpen={setOpen}
                 onClose={() => setOpen(false)}

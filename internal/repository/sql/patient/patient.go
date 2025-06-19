@@ -108,6 +108,7 @@ func (r PatientRepository) Delete(id int64) error {
 func (r PatientRepository) IsExists(patient *entity.Patient) (bool, error) {
 	var c int64
 	err := r.db.
+		Model(&entity.Patient{}).
 		Where("first_name = ?", patient.FirstName).
 		Where("last_name = ?", patient.LastName).
 		Where("date(birthdate) = ?", patient.Birthdate.Format("2006-01-02")).
