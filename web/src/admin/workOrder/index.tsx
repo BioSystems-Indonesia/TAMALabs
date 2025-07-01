@@ -282,7 +282,7 @@ export const WorkOrderList = () => {
         }} aside={<WorkOrderSideFilters />} title="Lab Request" filterDefaultValues={{
             created_at_start: dayjs().subtract(7, "day").toISOString(),
             created_at_end: dayjs().toISOString(),
-        }} storeKey={false} exporter={false} disableSyncWithLocation
+        }} exporter={false} 
             sx={{
                 '& .RaList-content': {
                     backgroundColor: 'background.paper',

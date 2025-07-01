@@ -40,9 +40,7 @@ export const ApprovalList = () => {
         filter={{
             doctor_ids: [currentUser?.id],
         }}
-        storeKey={false}
         exporter={false}
-        disableSyncWithLocation
         sx={{
             '& .RaList-main': {
                 marginTop: '-14px'

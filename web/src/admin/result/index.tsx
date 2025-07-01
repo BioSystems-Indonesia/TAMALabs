@@ -38,9 +38,7 @@ export const ResultList = () => (
             created_at_end: dayjs().toISOString(),
         }}
         actions={<ResultActions />}
-        storeKey={false}
         exporter={false}
-        disableSyncWithLocation
         sx={{
             '& .RaList-main': {
                 marginTop: '-14px'
