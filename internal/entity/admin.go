@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -29,6 +30,24 @@ type Admin struct {
 
 	RolesID []int  `json:"roles_id" gorm:"-"`
 	Roles   []Role `json:"roles" gorm:"many2many:admin_roles;"`
+}
+
+func (a Admin) GetLastName() string {
+	split := strings.Split(a.Fullname, " ")
+	if len(split) > 1 {
+		return split[len(split)-1]
+	}
+
+	return ""
+}
+
+func (a Admin) GetFirstName() string {
+	split := strings.Split(a.Fullname, " ")
+	if len(split) > 1 {
+		return strings.Join(split[:len(split)-1], " ")
+	}
+
+	return ""
 }
 
 // Role represents a user role within the system.

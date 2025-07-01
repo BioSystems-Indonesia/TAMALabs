@@ -1,26 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
-import { Refresh as RefreshIcon } from '@mui/icons-material';
-import useAxios from '../../hooks/useAxios';
-import { LOCAL_STORAGE_ACCESS_TOKEN } from '../../types/constant';
+import { Box, Tooltip, Typography } from '@mui/material';
+import React from 'react';
 
-interface ConnectionStatusProps {
+export interface ConnectionStatusProps {
     deviceId: number;
     status: ConnectionResponse;
 }
 
-interface ConnectionResponse {
+export interface ConnectionResponse {
     device_id: number;
     message: string;
-    status: 'connected' | 'not_supported' | 'disconnected';
+    status: 'connected' | 'not_supported' | 'disconnected' | 'standby';
 }
 
-export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ deviceId, status}) => {
+export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ deviceId, status }) => {
     const getStatusColor = () => {
         switch (status?.status) {
             case 'connected':
                 return '#4caf50'; // Green
             case 'not_supported':
+                return '#9e9e9e'; // Grey
+            case 'standby':
                 return '#ff9800'; // Yellow
             case 'disconnected':
                 return '#f44336'; // Red

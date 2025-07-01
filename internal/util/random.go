@@ -23,3 +23,11 @@ func GenerateRandomDigits(n int) (string, error) {
 
 	return builder.String(), nil
 }
+
+func RandomNumber(start, end int) int {
+	num, err := rand.Int(rand.Reader, big.NewInt(int64(end-start)))
+	if err != nil {
+		return 0
+	}
+	return int(num.Int64()) + start
+}

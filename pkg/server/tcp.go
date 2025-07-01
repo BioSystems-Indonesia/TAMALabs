@@ -2,8 +2,12 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"log/slog"
 	"net"
+	"time"
+
+	"github.com/oibacidem/lims-hl-seven/internal/constant"
 )
 
 // TCPHandler is an interface for TCP handler
@@ -19,10 +23,11 @@ func (t TCPHandlerFunc) Handle(c *net.TCPConn) {
 
 // TCP structure
 type TCP struct {
-	port     string
-	listener *net.TCPListener
-	handler  TCPHandler
-	serving  bool
+	port            string
+	listener        *net.TCPListener
+	handler         TCPHandler
+	state           constant.ServerState
+	timeLastConnect time.Time
 }
 
 // NewTCP returns a new TCP server
@@ -66,31 +71,48 @@ func (t *TCP) Start() error {
 	return nil
 }
 
+const disconnectTimeout = 10 * time.Second
+
 // Serve
 func (t *TCP) Serve() {
-	t.serving = true
-	defer func() { t.serving = false }()
+	t.state = constant.ServerStateServing
+	defer func() { t.state = constant.ServerStateStopped }()
 	for {
+		if t.state == constant.ServerStateStopped {
+			slog.Info("server stopped", "state", t.state, "port", t.port)
+			return
+		}
+
+		if t.state == constant.ServerStateConnect {
+			if time.Since(t.timeLastConnect) > disconnectTimeout {
+				t.state = constant.ServerStateServing
+				log.Println("disconnect timeout, change to serving")
+			}
+		}
+
 		conn, err := t.listener.AcceptTCP()
 		if err != nil {
 			slog.Error("error accepting connection", "error", err)
+			time.Sleep(1 * time.Second)
 			continue
 		}
+
+		t.timeLastConnect = time.Now()
+		t.state = constant.ServerStateConnect
+
 		t.handler.Handle(conn)
 		conn.Close()
 	}
 }
 
 // State
-func (t *TCP) State() string {
-	if t.serving {
-		return "serving"
-	}
-	return "stoped"
+func (t *TCP) State() constant.ServerState {
+	return t.state
 }
 
 // Stop
 func (t *TCP) Stop() error {
 	// TODO try to do wait of unfinished handle func
+	t.state = constant.ServerStateStopped
 	return t.listener.Close()
 }

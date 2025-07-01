@@ -3,7 +3,6 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CheckIcon from '@mui/icons-material/CheckCircleOutline'; // Using outline for a slightly different style
 import CloseIcon from '@mui/icons-material/HighlightOff'; // Using a different close icon for variety
 
-import { useLocation, useNavigate } from "react-router-dom";
 import HistoryIcon from '@mui/icons-material/History';
 import {
     Badge,
@@ -40,6 +39,7 @@ import {
     useRedirect,
     useRefresh
 } from "react-admin";
+import { useCurrentUser } from '../../hooks/currentUser';
 import useAxios from '../../hooks/useAxios';
 import type { ResultColumn } from "../../types/general";
 import { Result, TestResult } from '../../types/observation_result';
@@ -48,8 +48,6 @@ import { User } from '../../types/user';
 import type { WorkOrder } from '../../types/work_order';
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
 import { FilledPercentChip, VerifiedChip } from './component';
-import { Verified } from '@mui/icons-material';
-import { useCurrentUser } from '../../hooks/currentUser';
 
 export const ResultShow = (props: any) => {
     const [openHistory, setOpenHistory] = useState(false);

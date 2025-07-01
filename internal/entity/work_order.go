@@ -73,6 +73,14 @@ type WorkOrder struct {
 	HaveCompleteData  bool         `json:"have_complete_data" gorm:"-"`
 }
 
+func (wo *WorkOrder) GetFirstDoctor() Admin {
+	if len(wo.Doctors) > 0 {
+		return wo.Doctors[0]
+	}
+
+	return Admin{}
+}
+
 func (wo *WorkOrder) FillData() {
 	var doctorIDs []int64
 	for _, d := range wo.Doctors {

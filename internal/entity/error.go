@@ -50,6 +50,28 @@ func (he *HTTPError) Unwrap() error {
 	return he.Internal
 }
 
+type UserError struct {
+	code    UserErrorType
+	message string
+}
+
+func (ue *UserError) Error() string {
+	return ue.message
+}
+
+type UserErrorType string
+
+const (
+	UserErrorDeviceAlreadyExistsReceivePort UserErrorType = "U00"
+)
+
+func NewUserError(code UserErrorType, message string) *UserError {
+	return &UserError{
+		code:    code,
+		message: message,
+	}
+}
+
 // Errors
 var (
 	ErrBadRequest                    = NewHTTPError(http.StatusBadRequest)                    // HTTP 400 Bad Request
@@ -101,5 +123,6 @@ var (
 	ErrInvalidListenerNetwork = errors.New("invalid listener network")
 
 	// Custom errors
-	ErrDeviceTypeNotSupport = errors.New("device type not support")
+	ErrDeviceTypeNotSupport = errors.New("device type not supported")
+	ErrDeviceNotConnected   = errors.New("device not connected to LIS, standby mode")
 )

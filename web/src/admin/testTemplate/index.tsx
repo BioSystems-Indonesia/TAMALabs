@@ -1,20 +1,20 @@
+import CloseIcon from '@mui/icons-material/Close';
+import WarningIcon from '@mui/icons-material/WarningAmber';
 import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import Stack from "@mui/material/Stack";
+import { AxiosError } from "axios";
 import { useEffect, useMemo, useState } from "react";
-import { AutocompleteArrayInput, Confirm, Create, Datagrid, DateField, DeleteButton, Edit, FilterLiveSearch, List, NumberField, ReferenceField, ReferenceInput, SaveButton, SimpleForm, TextField, TextInput, Toolbar, required, useEditContext, useNotify, useSaveContext } from "react-admin";
+import { AutocompleteArrayInput, Create, Datagrid, DateField, DeleteButton, Edit, FilterLiveSearch, List, NumberField, ReferenceField, ReferenceInput, SaveButton, SimpleForm, TextField, TextInput, Toolbar, required, useEditContext, useNotify, useSaveContext } from "react-admin";
 import { useFormContext } from "react-hook-form";
-import type { ObservationRequest, ObservationRequestCreateRequest } from "../../types/observation_requests";
-import type { ActionKeys } from "../../types/props";
-import { TestInput, testTypesField } from '../workOrder/Form';
 import SideFilter from "../../component/SideFilter";
-import { RoleNameValue } from "../../types/role";
 import { useCurrentUser } from "../../hooks/currentUser";
 import useAxios from "../../hooks/useAxios";
-import { AxiosError } from "axios";
+import type { ObservationRequest, ObservationRequestCreateRequest } from "../../types/observation_requests";
+import type { ActionKeys } from "../../types/props";
+import { RoleNameValue } from "../../types/role";
 import { TestTemplate, TestTemplateDiff } from "../../types/test_templates";
 import { WorkOrder } from "../../types/work_order";
-import WarningIcon from '@mui/icons-material/WarningAmber';
-import CloseIcon from '@mui/icons-material/Close';
+import { TestInput, testTypesField } from '../workOrder/Form';
 
 
 export const TestTemplateList = () => (
@@ -122,7 +122,6 @@ function TestTemplateForm(props: TestTemplateFormProps) {
 const TestTemplateSaveButton = ({ disabled }: { disabled?: boolean }) => {
     const [open, setOpen] = useState(false);
     const [diffData, setDiffData] = useState<TestTemplateDiff | null>(null)
-    const [isPending, setIsPending] = useState(false);
 
     const { getValues } = useFormContext();
     const { save } = useSaveContext();

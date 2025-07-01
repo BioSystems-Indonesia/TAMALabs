@@ -1,6 +1,6 @@
 import type { Patient } from "./patient";
 import { User } from "./user";
-import { VerifiedStatus, WorkOrder } from "./work_order";
+import { VerifiedStatus } from "./work_order";
 
 export type ObservationResult = {
   id: number;

@@ -165,7 +165,7 @@ func (p WorkOrderUseCase) runWorkOrder(
 		Urgent:         req.Urgent,
 		ProgressWriter: req.ProgressWriter(),
 	}
-	sender, err := p.runnerStrategy.ChooseSendRunner(ctx, payload.Device)
+	sender, err := p.deviceUsecase.ChooseDeviceSender(ctx, payload.Device)
 	if err != nil {
 		return fmt.Errorf("failed to p.runnerStrategy.ChooseSendRunner %w", err)
 	}

@@ -2,7 +2,6 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { Chip, Divider, Button as MUIButton, Stack, Typography } from "@mui/material";
 import dayjs from "dayjs";
-import { useState } from "react";
 import {
     AutocompleteArrayInput,
     BooleanInput,
@@ -80,11 +79,6 @@ function ResultActions() {
 }
 
 export const ResultDataGrid = (props: any) => {
-    const [openDoctorModal, setOpenDoctorModal] = useState(false)
-    const handleCloseDoctorModal = () => {
-        setOpenDoctorModal(false)
-    }
-
     return (
         <Datagrid bulkActionButtons={false} >
             <NumberField source="id" />

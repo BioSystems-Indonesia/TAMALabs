@@ -17,6 +17,7 @@
     "@mui/x-data-grid": "^7.24.1",
     "@mui/x-date-pickers": "^7.23.2",
     "@react-pdf/renderer": "^4.1.6",
+    "@swc/core": "^1.12.1",
     "@types/react-date-range": "^1.4.9",
     "axios": "^1.7.9",
     "dayjs": "^1.11.13",

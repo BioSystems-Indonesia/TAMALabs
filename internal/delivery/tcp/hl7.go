@@ -19,13 +19,13 @@ import (
 
 // HlSevenHandler is a struct that contains the handler of the REST server.
 type HlSevenHandler struct {
-	AnalyzerUsecase usecase.Analyzer
+	analyzerUsecase usecase.Analyzer
 }
 
 // NewHlSevenHandler creates a new instance of HlSevenHandler.
 func NewHlSevenHandler(analyzerUsecase usecase.Analyzer) *HlSevenHandler {
 	return &HlSevenHandler{
-		AnalyzerUsecase: analyzerUsecase,
+		analyzerUsecase: analyzerUsecase,
 	}
 }
 
@@ -51,7 +51,8 @@ func (h *HlSevenHandler) Handle(conn *net.TCPConn) {
 	}
 
 	if res != "" {
-		slog.Info(fmt.Sprintf("ack message: %s", res))
+		resLog := strings.ReplaceAll(res, "\r", "\n")
+		slog.Info(fmt.Sprintf("ack message: %s", resLog))
 	}
 
 	mc.Write([]byte(res))
@@ -59,15 +60,13 @@ func (h *HlSevenHandler) Handle(conn *net.TCPConn) {
 
 // HL7Handler handles the HL7 message.
 func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string, error) {
-	if message != "" {
-		logMsg := strings.ReplaceAll(message, "\r", "\n")
-		log.Println("received message: ", logMsg)
-	}
-
 	// don't do anything if the message is empty
 	if message == "" {
 		return "", nil
 	}
+
+	logMsg := strings.ReplaceAll(message, "\r", "\n")
+	log.Println("received message: ", logMsg)
 
 	msgByte := []byte(message)
 	headerDecoder := hl7.NewDecoder(h251.Registry, &hl7.DecodeOption{HeaderOnly: true})
@@ -83,7 +82,7 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 		return h.QBPQ11(ctx, m, msgByte)
 	}
 
-	return "", fmt.Errorf("unknown message type")
+	return "", fmt.Errorf("unknown message type, %T", header)
 }
 
 func (h *HlSevenHandler) qbpDecoder(message []byte) (h251.QBP_Q11, error) {

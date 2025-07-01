@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
+
+	"github.com/oibacidem/lims-hl-seven/internal/constant"
 )
 
 const (
@@ -58,8 +61,11 @@ func (c *Client) ReadAll() ([]byte, error) {
 		}
 		return nil, fmt.Errorf("cannot read the first byte of mllp message, %w", err)
 	}
+	slog.Info("received_message", "byte", string(b), "byteraw", b)
 	if b != mllpStartBlock {
-		return nil, errors.New("mllp: protocol error, missing Start Block")
+		c.w.Write([]byte{constant.Acknowledge})
+		slog.Error("Invalid mllp start block")
+		return nil, nil
 	}
 	payload, err := c.r.ReadBytes(mllpEndBlock)
 	if err != nil {

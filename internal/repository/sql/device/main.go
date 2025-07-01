@@ -74,3 +74,17 @@ func (r DeviceRepository) Delete(id int) error {
 
 	return nil
 }
+
+func (r DeviceRepository) FindOneByReceivePort(port int) (entity.Device, error) {
+	var device entity.Device
+	err := r.db.Where("receive_port = ?", port).First(&device).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return entity.Device{}, entity.ErrNotFound
+	}
+
+	if err != nil {
+		return entity.Device{}, fmt.Errorf("error finding device: %w", err)
+	}
+
+	return device, nil
+}

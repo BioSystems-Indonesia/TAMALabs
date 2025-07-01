@@ -6,12 +6,11 @@ import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
 import WarningIcon from '@mui/icons-material/Warning';
 import Typography from '@mui/material/Typography';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AutocompleteInput, BooleanInput, Button, Form, InputHelperText, Link, RecordContextProvider, ReferenceInput, required, useAuthProvider, useNotify, useRefresh } from 'react-admin';
+import { AutocompleteInput, BooleanInput, Button, Form, InputHelperText, Link, RecordContextProvider, ReferenceInput, required, useNotify, useRefresh } from 'react-admin';
 import { SubmitHandler, useFormContext } from 'react-hook-form';
 import { getRefererParam } from '../../hooks/useReferer';
-import { DeviceForm } from '../device';
-import useAxios from '../../hooks/useAxios';
 import { LOCAL_STORAGE_ACCESS_TOKEN } from '../../types/constant';
+import { DeviceForm } from '../device';
 
 
 type WorkOrderStatus = 'IDLE' | 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'INCOMPLETE' | 'ERROR';

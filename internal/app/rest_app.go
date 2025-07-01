@@ -4,7 +4,11 @@ import (
 	"github.com/google/wire"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
+	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
+	analyxtrias "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
+	swelabalfa "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
+	"github.com/oibacidem/lims-hl-seven/internal/repository"
 	a15 "github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
 	adminrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
 	configrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
@@ -20,8 +24,10 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/unit"
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/server"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	admin_uc "github.com/oibacidem/lims-hl-seven/internal/usecase/admin"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
 	auth_uc "github.com/oibacidem/lims-hl-seven/internal/usecase/auth"
 	barcodeGeneratorUC "github.com/oibacidem/lims-hl-seven/internal/usecase/barcode_generator"
 	configuc "github.com/oibacidem/lims-hl-seven/internal/usecase/config"
@@ -38,7 +44,6 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner/postrun"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner/prerun"
-	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
 
 var restUsecaseSet = wire.NewSet(
@@ -65,7 +70,6 @@ var (
 		provideCache,
 
 		restRepositorySet,
-		hlsRepo.NewRepository,
 		patientrepo.NewPatientRepository,
 		workOrderrepo.NewWorkOrderRepository,
 		specimen.NewRepository,
@@ -76,9 +80,10 @@ var (
 		rolerepo.NewRoleRepository,
 		hlsRepo.NewBa400,
 		a15.NewA15,
+		server.NewTCPServerRepository,
+		provideAllDevices,
 
 		restUsecaseSet,
-		tcpUsecaseSet,
 
 		patientuc.NewPatientUseCase,
 		specimenuc.NewSpecimenUseCase,
@@ -97,6 +102,8 @@ var (
 		unitUC.NewUnitUseCase,
 		deviceuc.NewDeviceUseCase,
 		role_uc.NewRoleUsecase,
+		analyzer.NewUsecase,
+		wire.Bind(new(usecase.Analyzer), new(*analyzer.Usecase)),
 
 		rest.NewHlSevenHandler,
 		rest.NewHealthCheckHandler,
@@ -113,16 +120,17 @@ var (
 		rest.NewUnitHandler,
 		rest.NewRoleHandler,
 		rest.NewDeviceHandler,
+		rest.NewTestTemplateHandler,
+		rest.NewServerControllerHandler,
 
 		middleware.NewJWTMiddleware,
 
-		rest.NewTestTemplateHandler,
-		provideTCP,
-
 		tcp.NewHlSevenHandler,
-		provideTCPServer,
-		wire.Bind(new(rest.TCPServerController), new(*server.TCP)),
-		wire.Struct(new(rest.ServerControllerHandler), "*"),
+		analyxtrias.NewHandler,
+		analyxpanca.NewHandler,
+		swelabalfa.NewHandler,
+		tcp.NewDeviceStrategy,
+		wire.Bind(new(repository.DeviceTCPHandlerStrategy), new(*tcp.DeviceStrategy)),
 
 		provideRestHandler,
 		provideRestServer,

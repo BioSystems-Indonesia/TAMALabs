@@ -2,15 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { LOCAL_STORAGE_ACCESS_TOKEN } from '../../types/constant';
 
-interface DeviceConnectionManagerProps {
+export interface DeviceConnectionManagerProps {
     deviceIds: number[];
     onStatusUpdate?: (deviceId: number, status: ConnectionResponse) => void;
 }
 
-interface ConnectionResponse {
+export interface ConnectionResponse {
     device_id: number;
-    message: string;
-    status: 'connected' | 'not_supported' | 'disconnected';
+    sender_message: string;
+    sender_status: 'connected' | 'not_supported' | 'disconnected';
+    receiver_message: string;
+    receiver_status: 'connected' | 'not_supported' | 'disconnected';
 }
 
 export const DeviceConnectionManager: React.FC<DeviceConnectionManagerProps> = ({ deviceIds, onStatusUpdate }) => {
@@ -46,13 +48,17 @@ export const DeviceConnectionManager: React.FC<DeviceConnectionManagerProps> = (
                             console.log("received data", data)
                             const params = new URLSearchParams(data);
                             const deviceId = parseInt(params.get('device_id') || '0');
-                            const message = params.get('message') || '';
-                            const status = params.get('status') as ConnectionResponse['status'];
+                            const senderMessage = params.get('sender_message') || '';
+                            const senderStatus = params.get('sender_status') as ConnectionResponse['sender_status'];
+                            const receiverMessage = params.get('receiver_message') || '';
+                            const receiverStatus = params.get('receiver_status') as ConnectionResponse['receiver_status'];
 
                             onStatusUpdate?.(deviceId, {
                                 device_id: deviceId,
-                                message,
-                                status
+                                sender_message: senderMessage,
+                                sender_status: senderStatus,
+                                receiver_message: receiverMessage,
+                                receiver_status: receiverStatus
                             });
                         }
                     }

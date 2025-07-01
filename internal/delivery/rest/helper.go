@@ -51,6 +51,11 @@ func getErrorPayload(extraInfo []map[string]interface{}, err error, c echo.Conte
 		code = echoErr.Code
 	}
 
+	var userErr *entity.UserError
+	if errors.As(err, &userErr) {
+		code = http.StatusBadRequest
+	}
+
 	payload := entity.ErrorPayload{
 		Path:       fmt.Sprintf("%s %s", c.Request().Method, c.Path()),
 		StatusCode: code,

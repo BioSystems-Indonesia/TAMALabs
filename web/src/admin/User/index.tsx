@@ -46,7 +46,7 @@ export type UserFormProps = {
 
 export function UserFormField(props: UserFormProps) {
     const axios = useAxios();
-    const { data: roleData, isLoading: roleLoading } = useQuery<Role[]>({
+    const { data: roleData} = useQuery<Role[]>({
         queryKey: ['roles'],
         queryFn: async () => {
             const response = await axios.get('/role');
@@ -218,6 +218,7 @@ const RolePresentationList: React.FC<RolePresentationListProps> = ({ roles }) =>
                                 }}
                                 secondaryTypographyProps={{
                                     color: 'inherit',
+                                    // @ts-ignore
                                     opacity: isPrivilegedRole ? 0.85 : 0.75,
                                     variant: 'body2',
                                     lineHeight: 1.4

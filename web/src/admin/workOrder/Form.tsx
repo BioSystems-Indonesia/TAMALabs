@@ -1,14 +1,15 @@
 import AddIcon from '@mui/icons-material/Add';
-import { Box, Button, Checkbox, Dialog, DialogContent, DialogTitle, MenuItem, Select, type ButtonProps, GridLegacy as Grid, ListItem, ListItemText, Paper, Tooltip } from "@mui/material";
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import TouchAppIcon from '@mui/icons-material/TouchApp';
+import { Box, Button, Checkbox, Dialog, DialogContent, DialogTitle, GridLegacy as Grid, ListItem, ListItemText, MenuItem, Paper, Select, Tooltip, type ButtonProps } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
+import MUIList from "@mui/material/List";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import MUIList from "@mui/material/List";
 import { GridRowId, DataGrid as MuiDatagrid, useGridApiRef, type GridRenderCellParams } from "@mui/x-data-grid";
-import TouchAppIcon from '@mui/icons-material/TouchApp';
 import React, { useEffect, useState } from "react";
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import {
     AutocompleteArrayInput,
     AutocompleteInput,
@@ -20,7 +21,6 @@ import {
     SimpleForm,
     TextInput,
     Toolbar,
-    useAuthProvider,
     useCreate,
     useListContext,
     useNotify,
@@ -28,19 +28,17 @@ import {
     useSaveContext
 } from "react-admin";
 import { useFormContext } from "react-hook-form";
+import { useCurrentUser } from '../../hooks/currentUser.ts';
 import useAxios from "../../hooks/useAxios.ts";
 import type { ObservationRequest, ObservationRequestCreateRequest } from "../../types/observation_requests.ts";
 import { ActionKeys } from "../../types/props.ts";
+import { RoleNameValue } from '../../types/role.ts';
 import type { Specimen } from '../../types/specimen.ts';
 import type { TestType, TestTypeSpecimenType } from "../../types/test_type.ts";
 import { WorkOrder } from '../../types/work_order.ts';
 import { PatientFormField } from "../patient/index.tsx";
 import FormStepper from "./Stepper.tsx";
 import { TestFilterSidebar } from "./TestTypeFilter.tsx";
-import ListAltIcon from '@mui/icons-material/ListAlt';
-import { Search } from '@mui/icons-material';
-import { RoleNameValue } from '../../types/role.ts';
-import { useCurrentUser } from '../../hooks/currentUser.ts';
 
 
 type WorkOrderActionKeys = ActionKeys | "ADD_TEST";
@@ -622,8 +620,6 @@ function PatientInput(props: InputProps) {
             });
         })
     }, [watch("patient_id")])
-
-    const currentUser = useCurrentUser();
 
     return (
         <>

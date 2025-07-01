@@ -6,7 +6,6 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 )
 
 // Usecase is a struct handle HLSeven
@@ -16,7 +15,6 @@ type Usecase struct {
 	SpecimenRepository           *specimen.Repository
 	WorkOrderRepository          *workOrderrepo.WorkOrderRepository
 	DeviceRepository             *devicerepo.DeviceRepository
-	BA400                        *ba400.Repository
 }
 
 // NewUsecase returns a new HLSeven
@@ -26,7 +24,6 @@ func NewUsecase(
 	specimenRepository *specimen.Repository,
 	workOrderRepository *workOrderrepo.WorkOrderRepository,
 	deviceRepository *devicerepo.DeviceRepository,
-	ba400 *ba400.Repository,
 ) *Usecase {
 	return &Usecase{
 		ObservationResultRepository:  observationResultRepository,
@@ -34,6 +31,5 @@ func NewUsecase(
 		SpecimenRepository:           specimenRepository,
 		WorkOrderRepository:          workOrderRepository,
 		DeviceRepository:             deviceRepository,
-		BA400:                        ba400,
 	}
 }

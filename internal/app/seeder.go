@@ -169,10 +169,11 @@ var seedDataTestType = []entity.TestType{
 
 var seedDevice = []entity.Device{
 	{
-		ID:        1,
-		Name:      "Test Device",
-		IPAddress: "192.168.1.100",
-		Port:      5000,
+		ID:          1,
+		Name:        "Test Device",
+		IPAddress:   "192.168.1.100",
+		SendPort:    5000,
+		ReceivePort: 10512,
 	},
 }
 

@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -55,7 +54,7 @@ func (h *DeviceHandler) CreateDevice(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	if err := h.usecase.Create(&req); err != nil {
+	if err := h.usecase.Create(c.Request().Context(), &req); err != nil {
 		return handleError(c, err)
 	}
 
@@ -89,7 +88,7 @@ func (h *DeviceHandler) UpdateDevice(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	if err := h.usecase.Update(&req); err != nil {
+	if err := h.usecase.Update(c.Request().Context(), &req); err != nil {
 		return handleError(c, err)
 	}
 
@@ -102,7 +101,7 @@ func (h *DeviceHandler) DeleteDevice(c echo.Context) error {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
-	if err := h.usecase.Delete(int(id)); err != nil {
+	if err := h.usecase.Delete(c.Request().Context(), int(id)); err != nil {
 		return handleError(c, err)
 	}
 
@@ -140,7 +139,7 @@ func (h *DeviceHandler) GetDeviceConnection(c echo.Context) error {
 	for i := 0; i < len(req.DeviceIDs); i++ {
 		select {
 		case res := <-deviceConnection:
-			message := entity.NewDeviceConnectionMessage(res.DeviceID, res.Message, res.Status)
+			message := entity.NewDeviceConnectionMessage(res)
 			if _, err := w.Write([]byte(message)); err != nil {
 				return err
 			}
@@ -161,40 +160,5 @@ func (h *DeviceHandler) handleConnection(
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	errChan := make(chan error)
-	go panics.CapturePanic(ctx, func() {
-		errCon := h.usecase.GetDeviceConnection(ctx, idInput)
-		errChan <- errCon
-	})
-
-	select {
-	case <-ctx.Done():
-		return entity.DeviceConnectionResponse{
-			DeviceID: idInput,
-			Message:  "Connection timeout",
-			Status:   entity.DeviceConnectionStatusDisconnected,
-		}
-	case errCon := <-errChan:
-		if errCon != nil {
-			if errors.Is(errCon, entity.ErrDeviceTypeNotSupport) {
-				return entity.DeviceConnectionResponse{
-					DeviceID: idInput,
-					Message:  "Device type not supported yet",
-					Status:   entity.DeviceConnectionStatusNotSupported,
-				}
-			}
-
-			return entity.DeviceConnectionResponse{
-				DeviceID: idInput,
-				Message:  errCon.Error(),
-				Status:   entity.DeviceConnectionStatusDisconnected,
-			}
-		}
-
-		return entity.DeviceConnectionResponse{
-			DeviceID: idInput,
-			Message:  "Connection successful",
-			Status:   entity.DeviceConnectionStatusConnected,
-		}
-	}
+	return h.usecase.GetDeviceConnection(ctx, idInput)
 }

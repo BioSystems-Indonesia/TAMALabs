@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	a15 "github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
@@ -55,20 +54,6 @@ func (s *Strategy) ChoosePreRunner(ctx context.Context, action constant.WorkOrde
 		return s.cancelActionPreRunner, nil
 	default:
 		return nil, fmt.Errorf("unknown action %s", action)
-	}
-}
-
-func (s *Strategy) ChooseSendRunner(
-	ctx context.Context,
-	device entity.Device,
-) (usecase.WorkOrderDeviceSender, error) {
-	switch device.Type {
-	case string(entity.DeviceTypeBA400), string(entity.DeviceTypeBA200), string(entity.DeviceTypeOther):
-		return s.ba400, nil
-	case string(entity.DeviceTypeA15):
-		return s.a15, nil
-	default:
-		return nil, entity.ErrDeviceTypeNotSupport
 	}
 }
 

@@ -1,3 +1,4 @@
+// TODO: Move the handler to strategy pattern
 package tcp
 
 import (
@@ -26,7 +27,7 @@ func (h *HlSevenHandler) OULR22(ctx context.Context, m h251.OUL_R22, message []b
 		return "", fmt.Errorf("mapping failed: %w", err)
 	}
 
-	err = h.AnalyzerUsecase.ProcessOULR22(ctx, data)
+	err = h.analyzerUsecase.ProcessOULR22(ctx, data)
 	if err != nil {
 		return "", fmt.Errorf("process failed: %w", err)
 	}
@@ -97,7 +98,7 @@ func (h *HlSevenHandler) QBPQ11(ctx context.Context, m h251.QBP_Q11, message []b
 		return "", fmt.Errorf("mapping failed: %w", err)
 	}
 
-	err = h.AnalyzerUsecase.ProcessQBPQ11(ctx, msg)
+	err = h.analyzerUsecase.ProcessQBPQ11(ctx, msg)
 	if err != nil {
 		return "", fmt.Errorf("process failed: %w", err)
 	}

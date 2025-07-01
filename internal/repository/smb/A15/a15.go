@@ -20,9 +20,9 @@ func NewA15() *A15 {
 }
 
 func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
-	conn, err := net.Dial("tcp", net.JoinHostPort(req.Device.IPAddress, strconv.Itoa(req.Device.Port)))
+	conn, err := net.Dial("tcp", net.JoinHostPort(req.Device.IPAddress, strconv.Itoa(req.Device.SendPort)))
 	if err != nil {
-		return fmt.Errorf("cannot connect to %s:%d", req.Device.IPAddress, req.Device.Port)
+		return fmt.Errorf("cannot connect to %s:%d", req.Device.IPAddress, req.Device.SendPort)
 	}
 	defer conn.Close()
 
@@ -35,7 +35,7 @@ func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 
 	s, err := d.Dial(conn)
 	if err != nil {
-		return fmt.Errorf("cannot dial smb2 to %s:%d", req.Device.IPAddress, req.Device.Port)
+		return fmt.Errorf("cannot dial smb2 to %s:%d", req.Device.IPAddress, req.Device.SendPort)
 	}
 	defer func() {
 		if err := s.Logoff(); err != nil {
@@ -63,9 +63,9 @@ func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 }
 
 func (a A15) CheckConnection(ctx context.Context, device entity.Device) error {
-	conn, err := net.Dial("tcp", net.JoinHostPort(device.IPAddress, strconv.Itoa(device.Port)))
+	conn, err := net.Dial("tcp", net.JoinHostPort(device.IPAddress, strconv.Itoa(device.SendPort)))
 	if err != nil {
-		return fmt.Errorf("cannot connect to %s:%d", device.IPAddress, device.Port)
+		return fmt.Errorf("cannot connect to %s:%d", device.IPAddress, device.SendPort)
 	}
 	defer conn.Close()
 
@@ -78,7 +78,7 @@ func (a A15) CheckConnection(ctx context.Context, device entity.Device) error {
 
 	s, err := d.Dial(conn)
 	if err != nil {
-		return fmt.Errorf("cannot dial smb2 to %s:%d", device.IPAddress, device.Port)
+		return fmt.Errorf("cannot dial smb2 to %s:%d", device.IPAddress, device.SendPort)
 	}
 	defer func() {
 		if err := s.Logoff(); err != nil {

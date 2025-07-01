@@ -120,3 +120,66 @@ func (u *Usecase) withoutBarcode(ctx context.Context) error {
 
 	return nil
 }
+
+func (u *Usecase) ProcessORMO01(ctx context.Context, data entity.ORM_O01) ([]entity.Specimen, error) {
+	var specimens []entity.Specimen
+	var errs []error
+	for _, o := range data.Orders {
+		s, err := u.SpecimenRepository.FindByBarcode(ctx, o.Barcode)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		specimens = append(specimens, s)
+	}
+
+	return specimens, errors.Join(errs...)
+}
+
+func (u *Usecase) ProcessORUR01(ctx context.Context, data entity.ORU_R01) error {
+	var errs []error
+	var specimens []entity.Specimen
+	for _, p := range data.Patient {
+		specimens = append(specimens, p.Specimen...)
+	}
+
+	uniqueWorkOrder := map[int64]struct{}{}
+	for i, s := range specimens {
+		spEntity, err := u.SpecimenRepository.FindByBarcode(ctx, s.Barcode)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		for j := range specimens[i].ObservationResult {
+			specimens[i].ObservationResult[j].SpecimenID = int64(spEntity.ID)
+		}
+		err = u.ObservationResultRepository.CreateMany(ctx, specimens[i].ObservationResult)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		_, ok := uniqueWorkOrder[spEntity.WorkOrder.ID]
+		if !ok {
+			workOrder := spEntity.WorkOrder
+			workOrder.Status = entity.WorkOrderStatusCompleted
+			err := u.WorkOrderRepository.Update(&workOrder)
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+
+			uniqueWorkOrder[spEntity.WorkOrder.ID] = struct{}{}
+		}
+	}
+
+	err := errors.Join(errs...)
+	if err != nil {
+		specimenIDs := util.Map(specimens, func(s entity.Specimen) int {
+			return s.ID
+		})
+		slog.Error("error processing ORU_R01", "error", err, "specimen", specimenIDs)
+	}
+
+	return nil
+}

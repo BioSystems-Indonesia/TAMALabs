@@ -29,11 +29,11 @@ import {
 } from "react-admin";
 import { useParams, useSearchParams } from "react-router-dom";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
+import SideFilter from "../../component/SideFilter.tsx";
 import useAxios from "../../hooks/useAxios.ts";
 import { workOrderStatusDontShowRun, workOrderStatusShowCancel, type WorkOrder } from "../../types/work_order.ts";
 import { WorkOrderChipColorMap } from "./ChipFieldStatus.tsx";
 import WorkOrderForm from "./Form.tsx";
-import SideFilter from "../../component/SideFilter.tsx";
 import RunWorkOrderForm from "./RunWorkOrderForm.tsx";
 
 const WorkOrderAction = () => {
@@ -312,8 +312,8 @@ export const WorkOrderList = () => {
                         {getRequestLength(record)}
                     </Typography>
                 )} />
-                <ReferenceArrayField source="doctor_ids" reference="user"/>
-                <ReferenceArrayField source="analyzer_ids" reference="user"/>
+                <ReferenceArrayField source="doctor_ids" reference="user" />
+                <ReferenceArrayField source="analyzer_ids" reference="user" />
                 <DateField source="created_at" />
                 <WrapperField label="Actions" sortable={false} >
                     <Stack direction={"row"} spacing={2}>

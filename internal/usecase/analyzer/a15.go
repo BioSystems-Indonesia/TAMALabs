@@ -35,7 +35,7 @@ func (u *Usecase) ProcessA15(ctx context.Context) error {
 
 	for _, wo := range wol {
 		for _, device := range wo.Devices {
-			if device.Type == string(entity.DeviceTypeA15) {
+			if device.Type == entity.DeviceTypeA15 {
 				a15Device = append(a15Device, device)
 			}
 		}
@@ -78,7 +78,7 @@ func (u *Usecase) ProcessA15(ctx context.Context) error {
 }
 
 func connectToSamba(device entity.Device) ([]A15Result, error) {
-	conn, err := net.Dial("tcp", net.JoinHostPort(device.IPAddress, strconv.Itoa(device.Port)))
+	conn, err := net.Dial("tcp", net.JoinHostPort(device.IPAddress, strconv.Itoa(device.SendPort)))
 	if err != nil {
 		return nil, err
 	}

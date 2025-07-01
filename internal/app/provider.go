@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -18,10 +19,9 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
+	devicerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
 	"github.com/oibacidem/lims-hl-seven/migrations"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 	gormSqlite "gorm.io/driver/sqlite"
@@ -34,21 +34,13 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func provideTCP(config *config.Schema) *ba400.TCP {
-	tcpEr := ba400.NewTCP(config)
-
-	return tcpEr
-}
-
-func provideTCPServer(config *config.Schema, handler *tcp.HlSevenHandler) *server.TCP {
-	s := server.NewTCP("1024")
-	s.SetHandler(handler)
-	err := s.Start()
+func provideAllDevices(deviceRepo *devicerepo.DeviceRepository) []entity.Device {
+	allDevices, err := deviceRepo.FindAll(context.Background(), &entity.GetManyRequestDevice{})
 	if err != nil {
-		log.Println(err)
+		log.Fatalf("failed to get all devices: %v", err)
 	}
-	go s.Serve()
-	return s
+
+	return allDevices.Data
 }
 
 func provideRestServer(

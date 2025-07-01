@@ -112,13 +112,6 @@ const (
 	ObservationTestTypeStandard ObservationTestType = "STANDARD_TEST"
 )
 
-var TableDeviceType = Tables{
-	{ID: string(DeviceTypeBA400), Name: string(DeviceTypeBA400)},
-	{ID: string(DeviceTypeBA200), Name: string(DeviceTypeBA200)},
-	{ID: string(DeviceTypeA15), Name: string(DeviceTypeA15)},
-	{ID: string(DeviceTypeOther), Name: string(DeviceTypeOther)},
-}
-
 var TableList = map[string]Tables{
 	"sex":               TableSex,
 	"specimen-type":     TableSpecimenType,

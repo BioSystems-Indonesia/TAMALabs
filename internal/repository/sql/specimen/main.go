@@ -93,6 +93,8 @@ func (r Repository) FindByBarcode(ctx context.Context, barcode string) (entity.S
 	var specimen entity.Specimen
 	err := r.db.WithContext(ctx).
 		Where("barcode = ?", barcode).
+		Preload("ObservationRequest").
+		Preload("ObservationRequest.TestType").
 		Preload("ObservationResult").
 		Preload("ObservationResult.TestType").
 		Preload("WorkOrder").

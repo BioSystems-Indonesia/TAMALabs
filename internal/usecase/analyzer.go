@@ -10,4 +10,6 @@ import (
 type Analyzer interface {
 	ProcessOULR22(ctx context.Context, data entity.OUL_R22) error
 	ProcessQBPQ11(ctx context.Context, data entity.QBP_Q11) error
+	ProcessORMO01(ctx context.Context, data entity.ORM_O01) ([]entity.Specimen, error)
+	ProcessORUR01(ctx context.Context, data entity.ORU_R01) error
 }

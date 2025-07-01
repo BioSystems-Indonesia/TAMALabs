@@ -1,4 +1,4 @@
-h1:6CElUvY3dW41DWc+6auEaVKy1hpIWP1SKdvdYZOE6ws=
+h1:SJxq8pU1NgpHQc+0TJRmxKh0ShfZyWwSe9PEEa+H+Cc=
 20250411034650_init_db.down.sql h1:5hm+2mteOlvdGCQOJyM/UN4C0rMsUAY6/SNSAWruiuY=
 20250411034650_init_db.up.sql h1:xKynUJoA4Nlr0wgcJgs7wxOyt/UNLZCUwvh8qsUkmpw=
 20250513065507_adding_device_config_samba.down.sql h1:0P2wpw/9EzMNmMXTh1QafC+XGuBHICThZ6J/xphzNIc=
@@ -19,3 +19,5 @@ h1:6CElUvY3dW41DWc+6auEaVKy1hpIWP1SKdvdYZOE6ws=
 20250524033859_fixing_default_on_doctors.up.sql h1:67fQyl3+sRuvZVdYmXbQQjlcH3Lx+pvnmQggkM9GSDI=
 20250602151851_adding_test_template_column_work_order.down.sql h1:yG+QkVVkwUg9W0A9WReR4SzwM6CxfrNH/sjjksOaOAk=
 20250602151851_adding_test_template_column_work_order.up.sql h1:aOUAeyt6jyCRQkK4bFSogHydFktN5iHmyA055VOBoFY=
+20250619143329_adding_receive_port_device.down.sql h1:epoy8nrgnzppbCTDzoyGsDs2lihwNkhNKAN3SWEsFMA=
+20250619143329_adding_receive_port_device.up.sql h1:8pkZyL2CdlOM5078Ee4uq2o0B4KC0MS+b67QM/KwMyo=
