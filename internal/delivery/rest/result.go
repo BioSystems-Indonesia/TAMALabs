@@ -155,7 +155,7 @@ func (h ResultHandler) UploadFileA15(c echo.Context) error {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
-	h.analyzerUsecase.FileResult(c.Request().Context(), string(data))
+	h.analyzerUsecase.SaveFileResult(c.Request().Context(), string(data))
 
 	return c.NoContent(http.StatusOK)
 }

@@ -206,59 +206,28 @@ func removeDuplicates(slice []entity.Device) []entity.Device {
 	return result
 }
 
-func (u *Usecase) FileResult(context context.Context, data string) error {
-	stringReader := strings.NewReader(strings.TrimSpace(data))
-	csvReader := csv.NewReader(stringReader)
-
-	csvReader.Comma = '\t'
-	csvReader.FieldsPerRecord = 6
-	csvReader.LazyQuotes = true
-
-	records, err := csvReader.ReadAll()
+// save file result to db
+func (u *Usecase) SaveFileResult(context context.Context, data string) error {
+	results, err := ParseLabResults(data)
 	if err != nil {
 		return err
 	}
 
-	for i, record := range records {
-		patientID := strings.TrimSpace(record[0])
-		testName := strings.TrimSpace(record[1])
-		sampleType := strings.TrimSpace(record[2])
-
-		valueStr := strings.ReplaceAll(strings.TrimSpace(record[3]), ",", ".")
-
-		value, err := strconv.ParseFloat(valueStr, 64)
+	for _, result := range results {
+		speciment, err := u.SpecimenRepository.FindByBarcode(context, result.PatientID)
 		if err != nil {
-			return fmt.Errorf("line %d: could not parse value '%s': %w", i+1, record[3], err)
-		}
-
-		unit := strings.TrimSpace(record[4])
-		timestampStr := strings.TrimSpace(record[5])
-		timestamp, err := time.Parse("02/01/2006 15:04:05", timestampStr)
-		if err != nil {
-			return fmt.Errorf("line %d: could not parse timestamp '%s': %w", i+1, timestampStr, err)
-		}
-
-		speciment, err := u.SpecimenRepository.FindByBarcode(context, patientID)
-		if err != nil {
-			slog.Error("specimen not found", "barcode", patientID, "error", err)
+			slog.Error("specimen not found", "barcode", result.PatientID, "error", err)
 			continue
 		}
 
-		observation := entity.ObservationResult{
+		u.ObservationResultRepository.Create(context, &entity.ObservationResult{
 			SpecimenID:  int64(speciment.ID),
-			TestCode:    testName,
-			Type:        sampleType,
-			Description: testName,
-			Values:      []string{fmt.Sprintf("%.2f", value)},
-			Unit:        unit,
-			Date:        timestamp,
-		}
-
-		err = u.ObservationResultRepository.Create(context, &observation)
-		if err != nil {
-			slog.Error("failed to create observation result", "specimen_id", speciment.ID, "test_code", testName, "error", err)
-			continue
-		}
+			TestCode:    result.TestName,
+			Description: result.TestName,
+			Values:      []string{fmt.Sprintf("%.2f", result.Value)},
+			Unit:        result.Unit,
+			Date:        result.Timestamp,
+		})
 	}
 
 	return nil
