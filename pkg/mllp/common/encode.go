@@ -11,3 +11,13 @@ func Encode(msg any) (string, error) {
 
 	return string(encoded), nil
 }
+
+func EncodeWithOptions(msg any, option *hl7.EncodeOption) (string, error) {
+	e := hl7.NewEncoder(option)
+	encoded, err := e.Encode(msg)
+	if err != nil {
+		return "", err
+	}
+
+	return string(encoded), nil
+}

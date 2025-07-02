@@ -86,7 +86,6 @@ func TestHlSevenHandler(t *testing.T) {
 						assert.Len(t, o.Patient[0].Specimen[0].ObservationResult, 42)
 						for _, r := range o.Patient[0].Specimen[0].ObservationResult {
 							assert.NotEmpty(t, r.TestCode, "TestCode is empty for specimen %s", o.Patient[0].Specimen[0].Barcode)
-							t.Logf("TestCode: %s, Value: %v, Unit: %s", r.TestCode, r.Values, r.Unit)
 						}
 
 						return nil
@@ -108,8 +107,10 @@ func TestHlSevenHandler(t *testing.T) {
 			h := &Handler{
 				analyzerUsecase: tt.fields.AnalyzerUsecase(ctrl, t),
 			}
-			_, err := h.handleMessage(context.TODO(), tt.args.message)
+			got, err := h.handleMessage(context.TODO(), tt.args.message)
 			require.NoError(t, err)
+
+			t.Logf("got: %v", replaceR(got))
 			// assert.Equal(t, tt.want, got)
 		})
 	}
@@ -117,6 +118,10 @@ func TestHlSevenHandler(t *testing.T) {
 
 func replaceNewline(ormO01Query string) string {
 	return strings.ReplaceAll(ormO01Query, "\n", "\r")
+}
+
+func replaceR(message string) string {
+	return strings.ReplaceAll(message, "\r", "\n")
 }
 
 func initSQLiteDB() (*gorm.DB, error) {

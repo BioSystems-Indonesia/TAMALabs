@@ -28,19 +28,7 @@ func (p *Pinger) IsPing() bool {
 		return false
 	}
 
-	if b[0] == constant.Enquiry {
-		return true
-	}
-
-	if b[0] == constant.EndOfText {
-		return true
-	}
-
-	if b[0] == constant.StartOfText {
-		return true
-	}
-
-	if string(b) == "\x02" {
+	if b[0] == constant.StartOfText && b[1] == constant.StartOfText {
 		return true
 	}
 

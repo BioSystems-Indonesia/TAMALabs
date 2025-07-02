@@ -28,8 +28,7 @@ func (h *Handler) ORUR01(ctx context.Context, m h231.ORU_R01, msgByte []byte) (s
 	msh := h.createMSHAck(oruR01.MSH, msgControlID)
 	msa := &h231.MSA{
 		AcknowledgementCode: "AA",
-		MessageControlID:    msh.MessageControlID,
-		TextMessage:         "Message accepted",
+		MessageControlID:    msgControlID,
 	}
 
 	ackMsg := h231.ACK{
@@ -38,7 +37,9 @@ func (h *Handler) ORUR01(ctx context.Context, m h231.ORU_R01, msgByte []byte) (s
 		MSA: msa,
 	}
 
-	return common.Encode(ackMsg)
+	return common.EncodeWithOptions(ackMsg, &hl7.EncodeOption{
+		TrimTrailingSeparator: true,
+	})
 }
 
 func (h *Handler) decodeORUR01(msgByte []byte) (entity.ORU_R01, error) {
@@ -170,10 +171,10 @@ func (h *Handler) createMSHAck(m entity.MSH, msgControlID h231.ST) *h231.MSH {
 		HL7:                  h231.HL7Name{},
 		FieldSeparator:       "|",
 		EncodingCharacters:   "^~\\&",
-		SendingApplication:   common.SimpleHD231(m.SendingApplication),
-		SendingFacility:      common.SimpleHD231(m.SendingFacility),
-		ReceivingApplication: common.SimpleHD231(constant.ThisApplication),
-		ReceivingFacility:    common.SimpleHD231(constant.ThisFacility),
+		SendingApplication:   common.SimpleHD231(constant.ThisApplication),
+		SendingFacility:      common.SimpleHD231(constant.ThisFacility),
+		ReceivingApplication: common.SimpleHD231(m.SendingApplication),
+		ReceivingFacility:    common.SimpleHD231(m.SendingFacility),
 		DateTimeOfMessage:    time.Now(),
 		Security:             "",
 		MessageType: h231.MSG{
@@ -181,15 +182,15 @@ func (h *Handler) createMSHAck(m entity.MSH, msgControlID h231.ST) *h231.MSH {
 			MessageType:  "ACK",
 			TriggerEvent: "R01",
 		},
-		MessageControlID:                    msgControlID,
-		ProcessingID:                        h231.PT{ProcessingID: "P"},
-		VersionID:                           h231.VID{VersionID: "2.3.1"},
-		SequenceNumber:                      "",
-		ContinuationPointer:                 "",
-		AcceptAcknowledgmentType:            "ER",
-		ApplicationAcknowledgmentType:       "AL",
-		CountryCode:                         "ID",
-		CharacterSet:                        []string{"UTF-8"},
+		MessageControlID:    "1",
+		ProcessingID:        h231.PT{ProcessingID: "P"},
+		VersionID:           h231.VID{VersionID: "2.3.1"},
+		SequenceNumber:      "",
+		ContinuationPointer: "",
+		// AcceptAcknowledgmentType:            "ER",
+		// ApplicationAcknowledgmentType:       "AL",
+		// CountryCode:                         "ID",
+		CharacterSet:                        []string{"UNICODE"},
 		PrincipalLanguageOfMessage:          &h231.CE{},
 		AlternateCharacterSetHandlingScheme: "",
 		// MessageProfileIdentifier: []h231.EI{

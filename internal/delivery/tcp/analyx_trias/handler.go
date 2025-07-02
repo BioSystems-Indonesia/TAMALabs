@@ -35,10 +35,11 @@ func (h *Handler) Handle(conn *net.TCPConn) {
 	pinger := NewPinger(conn)
 	if pinger.IsPing() {
 		slog.Info("received ping, returning ACK")
-		_, err := pinger.ReturnACK()
+		n, err := pinger.ReturnACK()
 		if err != nil {
 			slog.Error("error on return ping", "err", err)
 		}
+		slog.Info("returned ACK", "n", n)
 		return
 	}
 
