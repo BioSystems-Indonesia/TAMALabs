@@ -176,6 +176,7 @@ func RegisterRoutes(
 		result.PUT("/:work_order_id/test", handler.AddTestResult)
 		result.PUT("/:work_order_id/test/:test_result_id/pick", handler.TooglePickTestResult)
 		result.DELETE("/:work_order_id/test/:test_result_id", handler.DeleteTestResult)
+		result.POST("/a15/upload", handler.UploadFileA15)
 	}
 
 	config := authenticatedV1.Group("/config")

@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"io"
 	"net/http"
 	"strconv"
 
@@ -132,6 +133,29 @@ func (h ResultHandler) RejectResult(c echo.Context) error {
 	if err != nil {
 		return handleError(c, err)
 	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func (h ResultHandler) UploadFileA15(c echo.Context) error {
+	src, err := c.FormFile("file")
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	file, err := src.Open()
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	defer file.Close()
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	h.analyzerUsecase.FileResult(c.Request().Context(), string(data))
 
 	return c.NoContent(http.StatusOK)
 }
