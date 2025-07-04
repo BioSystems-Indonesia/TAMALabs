@@ -205,3 +205,30 @@ func removeDuplicates(slice []entity.Device) []entity.Device {
 
 	return result
 }
+
+// save file result to db
+func (u *Usecase) SaveFileResult(context context.Context, data string) error {
+	results, err := ParseLabResults(data)
+	if err != nil {
+		return err
+	}
+
+	for _, result := range results {
+		speciment, err := u.SpecimenRepository.FindByBarcode(context, result.PatientID)
+		if err != nil {
+			slog.Error("specimen not found", "barcode", result.PatientID, "error", err)
+			continue
+		}
+
+		u.ObservationResultRepository.Create(context, &entity.ObservationResult{
+			SpecimenID:  int64(speciment.ID),
+			TestCode:    result.TestName,
+			Description: result.TestName,
+			Values:      []string{fmt.Sprintf("%.2f", result.Value)},
+			Unit:        result.Unit,
+			Date:        result.Timestamp,
+		})
+	}
+
+	return nil
+}
