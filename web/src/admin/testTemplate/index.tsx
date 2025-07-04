@@ -4,7 +4,7 @@ import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentT
 import Stack from "@mui/material/Stack";
 import { AxiosError } from "axios";
 import { useEffect, useMemo, useState } from "react";
-import { AutocompleteArrayInput, Create, Datagrid, DateField, DeleteButton, Edit, FilterLiveSearch, List, NumberField, ReferenceField, ReferenceInput, SaveButton, SimpleForm, TextField, TextInput, Toolbar, required, useEditContext, useNotify, useSaveContext } from "react-admin";
+import { AutocompleteArrayInput, Create, Datagrid, DateField, DeleteButton, Edit, FilterLiveSearch, List, NumberField, ReferenceField, ReferenceInput, SaveButton, SimpleForm, TextField, TextInput, Toolbar, required, useEditContext, useNotify, useRedirect, useSaveContext } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import SideFilter from "../../component/SideFilter";
 import { useCurrentUser } from "../../hooks/currentUser";
@@ -131,7 +131,7 @@ const TestTemplateSaveButton = ({ disabled }: { disabled?: boolean }) => {
         e.preventDefault(); // necessary to prevent default SaveButton submit logic
         await handleSave();
     };
-
+    const redirect = useRedirect()
     const buildPayload = () => {
         const data = getValues() as TestTemplate;
         if (data == undefined) {
@@ -165,32 +165,42 @@ const TestTemplateSaveButton = ({ disabled }: { disabled?: boolean }) => {
         if (!payload) {
             return;
         }
-
+        
         try {
-            const response = await axios.put(`/test-template/${payload.id}/update-diff`, payload, {
+            const isEditMode = !!payload.id;
+            const url = isEditMode
+                ? `/test-template/${payload.id}/update-diff`
+                : `/test-template`;
+            const method = isEditMode ? 'put' : 'post';
+
+            const response = await axios({
+                method,
+                url,
+                data: payload,
                 headers: {
                     "Content-Type": "application/json",
                 },
-            })
-            const respDiff = response.data as TestTemplateDiff
+            });
+
+            const respDiff = response.data as TestTemplateDiff;
+
             if (respDiff.ToCreate?.length > 0 || respDiff.ToDelete?.length > 0) {
-                setOpen(true)
-                setDiffData(respDiff)
-                return
+                setOpen(true);
+                setDiffData(respDiff);
+                return;
             }
 
-            submitTestTemplate()
-        } catch (error) {
-            if (error instanceof AxiosError) {
-                const message = error.response?.data?.error || "Something went wrong";
-                notify(message, {
-                    type: "error",
-                });
+            if (isEditMode) {
+                submitTestTemplate();
             } else {
-                notify("An unexpected error occurred", {
-                    type: "error",
-                });
+                redirect("/test-template");
             }
+        } catch (error) {
+            const message = error instanceof AxiosError
+                ? error.response?.data?.error || "Something went wrong"
+                : "An unexpected error occurred";
+
+            notify(message, { type: "error" });
             return;
         }
     }
