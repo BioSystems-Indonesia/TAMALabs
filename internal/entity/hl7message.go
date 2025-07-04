@@ -9,5 +9,6 @@ type MSH struct {
 	ReceivingFacility    string `json:"receiving_facility"`    // MSH-6
 	MessageType          string `json:"message_type"`          // MSH-9
 	MessageVersion       string `json:"message_version"`       // MSH-12
+	SequenceNumber       string `json:"sequence_number"`       // MSH-13
 	MessageDate          string `json:"message_date"`          // MSH-7
 }

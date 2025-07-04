@@ -48,5 +48,6 @@ func mapMSHToEntity(msh *h231.MSH) entity.MSH {
 		MessageType:          messageType,
 		MessageVersion:       version,
 		MessageDate:          messageDate,
+		SequenceNumber:       msh.SequenceNumber,
 	}
 }

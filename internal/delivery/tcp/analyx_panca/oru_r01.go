@@ -3,12 +3,17 @@ package analyxpanca
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
+	"strings"
+
+	"github.com/google/uuid"
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h231"
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/oibacidem/lims-hl-seven/internal/util"
 	"github.com/oibacidem/lims-hl-seven/pkg/mllp/common"
 )
 
@@ -37,9 +42,7 @@ func (h *Handler) ORUR01(ctx context.Context, m h231.ORU_R01, msgByte []byte) (s
 		MSA: msa,
 	}
 
-	return common.EncodeWithOptions(ackMsg, &hl7.EncodeOption{
-		TrimTrailingSeparator: true,
-	})
+	return common.EncodeWithOptions(ackMsg, &hl7.EncodeOption{})
 }
 
 func (h *Handler) decodeORUR01(msgByte []byte) (entity.ORU_R01, error) {
@@ -167,6 +170,11 @@ func (h *Handler) mapORUR01PatientToPatientEntity(p h231.ORU_R01_PatientResult) 
 }
 
 func (h *Handler) createMSHAck(m entity.MSH, msgControlID h231.ST) *h231.MSH {
+	mci, err := util.GenerateRandomDigits(4)
+	if err != nil {
+		slog.Error("generate random digits failed", "error", err)
+	}
+
 	msh := &h231.MSH{
 		HL7:                  h231.HL7Name{},
 		FieldSeparator:       "|",
@@ -182,26 +190,17 @@ func (h *Handler) createMSHAck(m entity.MSH, msgControlID h231.ST) *h231.MSH {
 			MessageType:  "ACK",
 			TriggerEvent: "R01",
 		},
-		MessageControlID:    "1",
-		ProcessingID:        h231.PT{ProcessingID: "P"},
-		VersionID:           h231.VID{VersionID: "2.3.1"},
-		SequenceNumber:      "",
-		ContinuationPointer: "",
-		// AcceptAcknowledgmentType:            "ER",
-		// ApplicationAcknowledgmentType:       "AL",
-		// CountryCode:                         "ID",
+		MessageControlID:                    mci,
+		ProcessingID:                        h231.PT{ProcessingID: "P"},
+		VersionID:                           h231.VID{VersionID: "2.3.1"},
+		SequenceNumber:                      m.SequenceNumber,
+		ContinuationPointer:                 strings.ReplaceAll(uuid.New().String(), "-", ""),
+		AcceptAcknowledgmentType:            "AL",
+		ApplicationAcknowledgmentType:       "AL",
+		CountryCode:                         "ID",
 		CharacterSet:                        []string{"UNICODE"},
 		PrincipalLanguageOfMessage:          &h231.CE{},
 		AlternateCharacterSetHandlingScheme: "",
-		// MessageProfileIdentifier: []h231.EI{
-		// 	{
-		// 		HL7:              h231.HL7Name{},
-		// 		EntityIdentifier: "LAB-28",
-		// 		NamespaceID:      "IHE",
-		// 		UniversalID:      "",
-		// 		UniversalIDType:  "",
-		// 	},
-		// },
 	}
 	return msh
 }

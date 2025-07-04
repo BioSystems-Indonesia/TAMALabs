@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"net"
 	"strings"
@@ -73,7 +72,7 @@ func (h *Handler) handleMessage(ctx context.Context, message string) (string, er
 	}
 
 	logMsg := strings.ReplaceAll(message, "\r", "\n")
-	log.Println("received message: ", logMsg)
+	slog.Info("received message", "message", logMsg)
 
 	msgByte := []byte(message)
 	headerDecoder := hl7.NewDecoder(h231.Registry, &hl7.DecodeOption{HeaderOnly: true})
