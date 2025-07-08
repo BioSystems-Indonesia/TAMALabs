@@ -22,9 +22,9 @@ export type Settings = z.infer<typeof settingSchema>;
 
 export const defaultSettings: Settings = {
     id: "1", // ID is default to "1" because it is used as the default record ID
-    barcode_page_width: 50,
-    barcode_page_height: 20,
-    barcode_width: 1.5,
+    barcode_page_width: 78,
+    barcode_page_height: 60,
+    barcode_width: 1.3,
     barcode_height: 50,
     barcode_orientation: "landscape",
     company_name: "PT Elgatama",

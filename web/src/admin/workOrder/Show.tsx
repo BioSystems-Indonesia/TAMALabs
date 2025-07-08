@@ -36,6 +36,17 @@ import { PatientForm } from '../patient';
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
 import RunWorkOrderForm from './RunWorkOrderForm';
 
+const detectBrowser = () => {
+  const userAgent = navigator.userAgent;
+
+  if (userAgent.includes("Edg/")) {
+    return "Edge";
+  } else {
+    return "Other";
+  }
+};
+
+
 const barcodePageStyle = (style: BarcodeStyle) => `
 @media all {
   .page-break {
@@ -52,6 +63,7 @@ const barcodePageStyle = (style: BarcodeStyle) => `
 @media print {
     body {
         margin: 0;
+        padding: 0;
     }
 
     @page {
@@ -70,8 +82,9 @@ const barcodePageStyle = (style: BarcodeStyle) => `
     }
     
     .barcode-text {
-        font-size: 8px;
         margin: 0;
+        margin-top: ${detectBrowser() === 'Edge' ? 7.8 : 0}rem;
+        font-size: 8px;
     }
 }`
 
