@@ -1,6 +1,6 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { Stack } from '@mui/material';
+import { Stack, Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import { useEffect, useState, type ReactNode } from 'react';
 import { AppBar, Button, CheckForApplicationUpdate, Layout, Link, LoadingIndicator, TitlePortal, ToggleThemeButton } from 'react-admin';
@@ -8,6 +8,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AppIndicator from '../component/AppIndicator';
 import Breadcrumbs, { type BreadcrumbsLink } from '../component/Breadcrumbs';
 import { toTitleCase } from '../helper/format';
+import FileOpenIcon from '@mui/icons-material/FileOpen';
 
 
 const SettingsButton = () => (
@@ -16,6 +17,16 @@ const SettingsButton = () => (
             <SettingsIcon />
         </IconButton>
     </Link>
+);
+
+const LogButton = () => (
+    <Tooltip title="Logs">
+    <Link to="/logs" color={"inherit"}>
+        <IconButton color="inherit">
+            <FileOpenIcon />
+        </IconButton>
+    </Link>
+    </Tooltip>
 );
 
 
@@ -40,6 +51,7 @@ const MyAppBar = () => {
             toolbar={
                 <>
                     <SettingsButton />
+                    <LogButton />
                     <AppIndicator />
                     <ToggleThemeButton />
                     <LoadingIndicator />

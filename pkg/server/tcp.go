@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"log/slog"
 	"net"
 	"time"
@@ -86,7 +85,7 @@ func (t *TCP) Serve() {
 		if t.state == constant.ServerStateConnect {
 			if time.Since(t.timeLastConnect) > disconnectTimeout {
 				t.state = constant.ServerStateServing
-				log.Println("disconnect timeout, change to serving")
+				slog.Info("disconnect timeout, change to serving")
 			}
 		}
 

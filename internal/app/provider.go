@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
 	"sync"
@@ -37,7 +36,8 @@ import (
 func provideAllDevices(deviceRepo *devicerepo.DeviceRepository) []entity.Device {
 	allDevices, err := deviceRepo.FindAll(context.Background(), &entity.GetManyRequestDevice{})
 	if err != nil {
-		log.Fatalf("failed to get all devices: %v", err)
+		slog.Error("failed to get all devices", "error", err)
+		os.Exit(1)
 	}
 
 	return allDevices.Data
@@ -81,6 +81,7 @@ func provideRestHandler(
 	resultHandler *rest.ResultHandler,
 	configHandler *rest.ConfigHandler,
 	unitHandler *rest.UnitHandler,
+	logHandler *rest.LogHandler,
 ) *rest.Handler {
 	return &rest.Handler{
 		HlSevenHandler:            hlSevenHandler,
@@ -94,6 +95,7 @@ func provideRestHandler(
 		ResultHandler:             resultHandler,
 		ConfigHandler:             configHandler,
 		UnitHandler:               unitHandler,
+		LogHandler:                logHandler,
 	}
 }
 

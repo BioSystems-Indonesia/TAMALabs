@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"strconv"
 
@@ -39,7 +39,7 @@ func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 	}
 	defer func() {
 		if err := s.Logoff(); err != nil {
-			log.Printf("error logging off SMB session: %v", err)
+			slog.Error("error logging off SMB session", "error", err)
 		}
 	}()
 
@@ -49,7 +49,7 @@ func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 	}
 	defer func() {
 		if err := fs.Umount(); err != nil {
-			log.Printf("error unmounting SMB session: %v", err)
+			slog.Error("error unmounting SMB session", "error", err)
 		}
 	}()
 
@@ -58,7 +58,7 @@ func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 		return fmt.Errorf("cannot write file to SMB session: %v", err)
 	}
 
-	log.Println("Send to A15")
+	slog.Info("Send to A15")
 	return nil
 }
 
@@ -82,7 +82,7 @@ func (a A15) CheckConnection(ctx context.Context, device entity.Device) error {
 	}
 	defer func() {
 		if err := s.Logoff(); err != nil {
-			log.Printf("error logging off SMB session: %v", err)
+			slog.Info("error logging off SMB session", "error", err)
 		}
 	}()
 

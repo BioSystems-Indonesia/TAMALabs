@@ -25,6 +25,7 @@ type Handler struct {
 	*ResultHandler
 	*ConfigHandler
 	*UnitHandler
+	*LogHandler
 }
 
 var blackListLoggingOnEndpoint = []string{
@@ -63,7 +64,7 @@ func RegisterMiddleware(e *echo.Echo) {
 					"latency", values.Latency,
 				)
 			} else {
-				slog.Info("request",
+				slog.Debug("request",
 					"method", values.Method,
 					"uri", values.URI,
 					"status", values.Status,
@@ -207,6 +208,7 @@ func RegisterRoutes(
 	}
 
 	handler.RegisterFeatureList(authenticatedV1)
+	unauthenticatedV1.GET("/log/stream", handler.LogHandler.StreamLog)
 }
 
 func registerFrontendPath(e *echo.Echo) {

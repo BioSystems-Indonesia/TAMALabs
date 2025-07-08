@@ -2,32 +2,48 @@ package main
 
 import (
 	_ "embed"
+	"flag"
 	"fmt"
-	"log"
 	"log/slog"
+	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"time"
 
 	"github.com/energye/systray"
 	"github.com/oibacidem/lims-hl-seven/internal/app"
+	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/internal/util"
+	"github.com/oibacidem/lims-hl-seven/pkg/logger"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
 
-var Version = ""
+var (
+	flagDev      = flag.Bool("development", false, "development mode")
+	flagLogLevel = flag.String("log-level", string(constant.LogLevelInfo), "log level: debug, info, warn, error")
+)
+
+// version is set at build time
+
+var version = ""
 
 //go:embed trayicon.ico
 var trayicon []byte
 
 func main() {
-	//l := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{ AddSource: true, }))
-	//l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
-	l := slog.Default()
+	flag.Parse()
 
-	slog.SetDefault(l)
+	if *flagDev {
+		os.Setenv(constant.ENVKey, string(constant.EnvDevelopment))
+	} else {
+		os.Setenv(constant.ENVKey, string(constant.EnvProduction))
+	}
 
-	log.Println("version: ", Version)
+	os.Setenv(constant.ENVLogLevel, string(validateLogLevel(*flagLogLevel)))
+	os.Setenv(constant.ENVVersion, version)
+
+	provideGlobalLog()
 
 	server := app.InitRestApp()
 
@@ -37,7 +53,7 @@ func main() {
 }
 
 func openb() {
-	if Version == "" || util.IsDevelopment() {
+	if version == "" || util.IsDevelopment() {
 		return
 	}
 
@@ -59,7 +75,7 @@ func openbrowser(url string) {
 		err = fmt.Errorf("unsupported platform")
 	}
 	if err != nil {
-		log.Println(err)
+		slog.Error("error opening browser", "error", err)
 	}
 }
 
@@ -73,13 +89,28 @@ func opensystray(server server.RestServer) {
 			openbrowser("http://127.0.0.1:8322")
 		})
 
-		systray.AddMenuItem("Quuit", "Stop Server").Click(func() {
+		systray.AddMenuItem("Quit", "Stop Server").Click(func() {
 			if err := server.Stop(); err != nil {
-				log.Println("Error stopping server:", err)
+				slog.Error("Error stopping server:", "err", err)
 			} else {
-				log.Println("Server stopped successfully")
+				slog.Info("Server stopped successfully")
 			}
 			systray.Quit()
 		})
 	}, func() {})
+}
+
+func validateLogLevel(logLevel string) constant.LogLevel {
+	if !slices.Contains(constant.ValidLogLevels, constant.LogLevel(logLevel)) {
+		panic(fmt.Sprintf("invalid log level: %s", logLevel))
+	}
+
+	return constant.LogLevel(logLevel)
+}
+
+func provideGlobalLog() {
+	l := logger.NewFileLogger(logger.Options{})
+
+	slog.SetDefault(l)
+	slog.Info("version", "version", version)
 }

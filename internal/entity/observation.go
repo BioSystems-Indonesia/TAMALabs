@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"log"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -65,13 +65,13 @@ type ObservationResult struct {
 // TODO do we really need more than one values?
 func (o ObservationResult) GetFirstValue() float64 {
 	if len(o.Values) < 1 {
-		log.Printf("values from observation %d is empty or negative", o.ID)
+		slog.Info("values from observation is empty or negative", "id", o.ID)
 		return 0
 	}
 
 	v, err := strconv.ParseFloat(o.Values[0], 64)
 	if err != nil {
-		log.Printf("parse observation.Values from observation %d failed: %v", o.ID, err)
+		slog.Info("parse observation.Values from observation failed", "id", o.ID, "error", err)
 		return v
 	}
 

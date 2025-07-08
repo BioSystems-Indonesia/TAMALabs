@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"net"
 	"runtime/debug"
@@ -33,7 +32,7 @@ func (h *HlSevenHandler) Handle(conn *net.TCPConn) {
 	defer func() {
 		if r := recover(); r != nil {
 			debug.PrintStack()
-			log.Println("panic: recovered in processing connection", r)
+			slog.Info("panic: recovered in processing connection", "error", r)
 		}
 	}()
 
@@ -41,7 +40,7 @@ func (h *HlSevenHandler) Handle(conn *net.TCPConn) {
 	b, err := mc.ReadAll()
 	if err != nil {
 		if err != io.EOF {
-			log.Println(err)
+			slog.Error("error reading message", "error", err)
 		}
 	}
 
@@ -66,7 +65,7 @@ func (h *HlSevenHandler) HL7Handler(ctx context.Context, message string) (string
 	}
 
 	logMsg := strings.ReplaceAll(message, "\r", "\n")
-	log.Println("received message: ", logMsg)
+	slog.Info("received message", "message", logMsg)
 
 	msgByte := []byte(message)
 	headerDecoder := hl7.NewDecoder(h251.Registry, &hl7.DecodeOption{HeaderOnly: true})

@@ -138,7 +138,7 @@ func createACKMessage(msg h251.ACK) (string, error) {
 	}
 
 	//bbLog := bytes.ReplaceAll(bb, []byte{'\r'}, []byte{'\n'})
-	//log.Println("Sending message: ", string(bbLog))
+	//slog.Println("Sending message: ", string(bbLog))
 
 	return string(ack), nil
 }

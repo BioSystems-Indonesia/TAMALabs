@@ -1,29 +1,33 @@
 .ONESHELL:
 .PHONY: build
 
+# Inno Setup Compiler command line tool.
+# This assumes Inno Setup is installed in the default location.
+# You may need to adjust this path if it's installed elsewhere or if you add it to your system's PATH.
+ISCC="ISCC.exe"
+
+# The Inno Setup script file
+ISS_FILE=setup.iss
+
 build: build-fe build-be
 
-build-fe: npm-install web/dist
-
-build-be: bin/app
-
-npm-install: web/node_modules
-
-web/dist: web/src web/package.json web/tsconfig.json web/tsconfig.app.json web/vite.config.ts web/index.html
+build-fe:
 	cd web && npm run build
 
-web/node_modules: web/package.json web/package-lock.json
-	cd web && npm install
-
-bin/app:
-	go build -ldflags "-X main.Version=$(git rev-parse --short HEAD)" -v -o bin/app ./cmd/rest
+build-be: 
+	go build -ldflags "-X 'main.version=$(shell git rev-parse --short HEAD)' -H windowsgui" -v -o bin/winapp.exe ./cmd/rest
 
 build-be-win:
-	GOOS=windows GOARCH=amd64 go build -o bin/winapp.exe ./cmd/rest
+	GOOS=windows GOARCH=amd64 make build-be
 
 build-win:
 	make build-fe
 	make build-be-win
+
+installer: build
+	@echo "Creating installer..."
+	@ISCC $(ISS_FILE)
+	@echo "Installer created successfully!"
 
 dev-fe:
 	cd web && npm run dev
@@ -54,3 +58,7 @@ icon:
 install:
 	go install github.com/air-verse/air@latest
 	go install github.com/akavel/rsrc@latest
+	go install github.com/google/wire/cmd/wire@latest
+
+wire:
+	wire ./...

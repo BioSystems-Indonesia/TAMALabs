@@ -2,7 +2,7 @@ package entity
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -94,14 +94,14 @@ func (r TestResult) FromObservationResult(observation ObservationResult) TestRes
 
 	// prevents panic
 	if len(observation.Values) < 1 {
-		log.Printf("values from observation %d is empty or negative", observation.ID)
+		slog.Info("values from observation is empty or negative", "id", observation.ID)
 		return resultTest
 	}
 
 	// only process the first value, if the observation have multiple values we need to handle it later
 	result, err := strconv.ParseFloat(observation.Values[0], 64)
 	if err != nil {
-		log.Printf("parse observation.Values from observation %d failed: %v", observation.ID, err)
+		slog.Info("parse observation.Values from observation failed", "id", observation.ID, "error", err)
 		return resultTest
 	}
 
@@ -111,13 +111,13 @@ func (r TestResult) FromObservationResult(observation ObservationResult) TestRes
 		// TODO make the ConvertCompount return resultOrig if err
 		result, err = util.ConvertCompoundUnit(resultOrig, observation.Unit, observation.TestType.Unit)
 		if err != nil {
-			log.Printf(
-				"convert compound unit from observation %d failed: convert %f from %s to %s: %v",
-				observation.ID,
-				resultOrig,
-				observation.Unit,
-				observation.TestType.Unit,
-				err,
+			slog.Info(
+				"convert compound unit from observation failed",
+				"id", observation.ID,
+				"result", resultOrig,
+				"unit", observation.Unit,
+				"test_type_unit", observation.TestType.Unit,
+				"error", err,
 			)
 			result = resultOrig
 		}

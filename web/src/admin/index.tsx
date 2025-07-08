@@ -28,6 +28,7 @@ import { LOCAL_STORAGE_ACCESS_TOKEN } from '../types/constant.ts';
 import { UserCreate, UserEdit, UserList, UserShow } from './User/index.tsx';
 import { ErrorPayload } from '../types/errors.ts';
 import { ApprovalList } from './approval/index.tsx';
+import LogStream from './logs/index.tsx';
 
 const httpClient = async (url: string, options?: fetchUtils.Options) => {
     if (!options) {
@@ -90,6 +91,9 @@ const App = () => {
     >
         <CustomRoutes>
             <Route path="/settings/*" element={<Settings />} />
+        </CustomRoutes>
+        <CustomRoutes>
+            <Route path="/logs" element={<LogStream />} />
         </CustomRoutes>
         <Resource
             name="work-order"

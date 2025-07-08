@@ -3,7 +3,6 @@ package result
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"slices"
 	"sort"
@@ -109,7 +108,7 @@ func (u *Usecase) PutTestResult(ctx context.Context, result entity.TestResult) (
 
 	obs.TestType, err = u.testTypeRepository.FindOneByCode(ctx, obs.TestCode)
 	if err != nil {
-		log.Printf("cannot fill test type for result %d: %v", obs.ID, err)
+		slog.Info("cannot fill test type for result", "id", obs.ID, "error", err)
 	}
 
 	result = result.FromObservationResult(obs)
@@ -121,7 +120,7 @@ func (u *Usecase) PutTestResult(ctx context.Context, result entity.TestResult) (
 
 	history, err := u.resultRepository.FindHistory(ctx, obs)
 	if err != nil {
-		log.Printf("cannot get history: %v", err)
+		slog.Info("cannot get history", "error", err)
 	}
 
 	result = result.FillHistory(history)

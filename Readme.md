@@ -26,6 +26,12 @@ Run Backend
 ```bash
 make dev-be
 ```
+
+# Create Windows Installer
+1. Download Inno Setup from [here](https://jrsoftware.org/isdl.php)
+2. Insert the installed path to your PATH env (C:\Program Files (x86)\Inno Setup 6)
+3. Run the script `make installer`
+
 ### Build
 Build one golang binary file with go `statik`
 ```

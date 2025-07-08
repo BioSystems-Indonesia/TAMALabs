@@ -3,11 +3,12 @@ package server
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"log/slog"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -35,10 +36,11 @@ func (r *Rest) Serve() {
 	// Start server in a goroutine so that it doesn't block.
 	go func() {
 		if err := r.Client.Start("0.0.0.0:" + r.Port); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("Error starting server: %v", err)
+			slog.Error("Error starting server", slog.String("error", err.Error()))
+			os.Exit(1)
 		}
 	}()
-	log.Printf("Server started at %s", r.Port)
+	slog.Info("Server started at", slog.String("port", r.Port))
 
 	// Wait for interrupt signal or context cancellation to gracefully shut down the server.
 	quit := make(chan os.Signal, 1)
@@ -46,18 +48,19 @@ func (r *Rest) Serve() {
 
 	select {
 	case <-quit:
-		log.Println("Interrupt signal received, shutting down server...")
+		slog.Info("Interrupt signal received, shutting down server...")
 	case <-r.ctx.Done():
-		log.Println("Context cancelled, shutting down server...")
+		slog.Info("Context cancelled, shutting down server...")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := r.Client.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		slog.Error("Server forced to shutdown", slog.String("error", err.Error()))
+		os.Exit(1)
 	}
 
-	log.Println("Server exited gracefully")
+	slog.Info("Server exited gracefully")
 }
 
 func (r *Rest) GetClient() *echo.Echo {
