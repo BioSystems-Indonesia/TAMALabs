@@ -23,6 +23,7 @@ require (
 require (
 	ariga.io/atlas-go-sdk v0.7.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/creack/goselect v0.1.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/geoffgarside/ber v1.1.0 // indirect
 	github.com/glebarez/go-sqlite v1.21.2 // indirect
@@ -87,6 +88,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
+	go.bug.st/serial v1.6.4
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/crypto v0.37.0
