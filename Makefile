@@ -43,7 +43,7 @@ migrate-down:
 
 migrate-diff:
 	$(eval ARGS := $(filter-out $@,$(MAKECMDGOALS)))
-	./scripts/migrate-diff.sh $(ARGS)
+	./scripts/migrate-diff.bat $(ARGS)
 
 # Catch-all target to allow passing arguments
 %:

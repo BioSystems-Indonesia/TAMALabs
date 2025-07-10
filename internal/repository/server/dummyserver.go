@@ -2,7 +2,7 @@ package server
 
 import (
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	"github.com/oibacidem/lims-hl-seven/internal/repository"
+	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
 
 type DummyServer struct {
@@ -14,7 +14,7 @@ func NewDummyServer() *DummyServer {
 	return &DummyServer{}
 }
 
-var _ repository.TCPServerController = &DummyServer{}
+var _ server.Controller = &DummyServer{}
 
 func (d *DummyServer) SetPort(_ string) {
 }

@@ -8,10 +8,10 @@ import (
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	serverrepo "github.com/oibacidem/lims-hl-seven/internal/repository/server"
 	a15 "github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
 	devicerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
-	tcpserver "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/server"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner"
 	"github.com/oibacidem/lims-hl-seven/internal/util"
@@ -23,7 +23,7 @@ type DeviceUseCase struct {
 	runnerStrategy *runner.Strategy
 	ba400          *ba400.Ba400
 	a15            *a15.A15
-	tcpserver      *tcpserver.TCPServer
+	serverRepo     *serverrepo.ControllerRepository
 }
 
 func NewDeviceUseCase(
@@ -32,9 +32,9 @@ func NewDeviceUseCase(
 	runnerStrategy *runner.Strategy,
 	ba400 *ba400.Ba400,
 	a15 *a15.A15,
-	tcpserver *tcpserver.TCPServer,
+	serverRepo *serverrepo.ControllerRepository,
 ) *DeviceUseCase {
-	return &DeviceUseCase{cfg: cfg, deviceRepo: deviceRepo, runnerStrategy: runnerStrategy, ba400: ba400, a15: a15, tcpserver: tcpserver}
+	return &DeviceUseCase{cfg: cfg, deviceRepo: deviceRepo, runnerStrategy: runnerStrategy, ba400: ba400, a15: a15, serverRepo: serverRepo}
 }
 
 func (p DeviceUseCase) FindAll(
@@ -67,7 +67,7 @@ func (p DeviceUseCase) Create(ctx context.Context, req *entity.Device) error {
 		return fmt.Errorf("failed to create device: %w", err)
 	}
 
-	_, err = p.tcpserver.StartNewServer(ctx, *req)
+	_, err = p.serverRepo.StartNewServer(ctx, *req)
 	if err != nil {
 		return fmt.Errorf("failed to start new server: %w", err)
 	}
@@ -95,7 +95,7 @@ func (p DeviceUseCase) Update(ctx context.Context, req *entity.Device) error {
 		return fmt.Errorf("failed to update device: %w", err)
 	}
 
-	_, err = p.tcpserver.StartNewServer(ctx, *req)
+	_, err = p.serverRepo.StartNewServer(ctx, *req)
 	if err != nil {
 		return fmt.Errorf("failed to start new server: %w", err)
 	}
@@ -109,7 +109,7 @@ func (p DeviceUseCase) Delete(ctx context.Context, id int) error {
 		return fmt.Errorf("failed to delete device: %w", err)
 	}
 
-	return p.tcpserver.StopServerByDeviceID(ctx, id)
+	return p.serverRepo.StopServerByDeviceID(ctx, id)
 }
 
 func (p *DeviceUseCase) GetDeviceConnection(ctx context.Context, id int) entity.DeviceConnectionResponse {
@@ -162,7 +162,7 @@ func (p *DeviceUseCase) checkReceiverConnection(
 ) {
 	defer close(errChan)
 
-	state := p.tcpserver.GetServerStateByDeviceID(device.ID)
+	state := p.serverRepo.GetServerStateByDeviceID(device.ID)
 	switch state {
 	case constant.ServerStateConnect:
 		errChan <- nil
