@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
-	"strconv"
 
 	"github.com/hirochachacha/go-smb2"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -20,7 +19,7 @@ func NewA15() *A15 {
 }
 
 func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
-	conn, err := net.Dial("tcp", net.JoinHostPort(req.Device.IPAddress, strconv.Itoa(req.Device.SendPort)))
+	conn, err := net.Dial("tcp", net.JoinHostPort(req.Device.IPAddress, req.Device.SendPort))
 	if err != nil {
 		return fmt.Errorf("cannot connect to %s:%d", req.Device.IPAddress, req.Device.SendPort)
 	}
@@ -63,7 +62,7 @@ func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 }
 
 func (a A15) CheckConnection(ctx context.Context, device entity.Device) error {
-	conn, err := net.Dial("tcp", net.JoinHostPort(device.IPAddress, strconv.Itoa(device.SendPort)))
+	conn, err := net.Dial("tcp", net.JoinHostPort(device.IPAddress, device.SendPort))
 	if err != nil {
 		return fmt.Errorf("cannot connect to %s:%d", device.IPAddress, device.SendPort)
 	}

@@ -36,14 +36,13 @@ dev-be:
 	air
 
 migrate-hash:
-	atlas migrate hash
+	atlas migrate hash --env gorm
 
 migrate-down:
 	migrate -path ./migrations -database 'sqlite3://tmp/biosystem-lims.db' down 1
 
 migrate-diff:
-	$(eval ARGS := $(filter-out $@,$(MAKECMDGOALS)))
-	./scripts/migrate-diff.bat $(ARGS)
+	atlas migrate diff --env gorm 
 
 # Catch-all target to allow passing arguments
 %:

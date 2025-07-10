@@ -10,6 +10,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
+	"go.bug.st/serial"
 )
 
 type DeviceServer struct {
@@ -54,7 +55,7 @@ func (r *ControllerRepository) StartNewServer(
 
 		err := sd.server.Stop()
 		if err != nil {
-			return nil, fmt.Errorf("failed to stop server for device %d: %w", device.ID, err)
+			slog.Error("failed to stop server for device", "device_id", device.ID, "error", err)
 		}
 	}
 
@@ -136,9 +137,17 @@ func (r *ControllerRepository) DeleteServerByDeviceID(ctx context.Context, devic
 
 	err := r.StopServerByDeviceID(ctx, deviceID)
 	if err != nil {
-		return fmt.Errorf("failed to stop server for device %d: %w", deviceID, err)
+		slog.Error("failed to stop server for device", "device_id", deviceID, "error", err)
 	}
 
 	delete(r.serverDeviceMap, deviceID)
 	return nil
+}
+
+func (r *ControllerRepository) GetAllSerialPorts() ([]string, error) {
+	ports, err := serial.GetPortsList()
+	if err != nil {
+		return nil, err
+	}
+	return ports, nil
 }

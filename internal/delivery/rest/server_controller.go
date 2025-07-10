@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
+	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	serverrepo "github.com/oibacidem/lims-hl-seven/internal/repository/server"
 	configrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
 	deviceuc "github.com/oibacidem/lims-hl-seven/internal/usecase/device"
@@ -32,6 +33,7 @@ func NewServerControllerHandler(
 
 func (s *ServerControllerHandler) RegisterRoute(p *echo.Group) {
 	p.GET("/status", s.AllStatus)
+	p.GET("/serial-port-list", s.GetSerialPortList)
 
 	t := p.Group("/hl7tcp")
 	t.GET("/status", s.TCPStatus)
@@ -81,4 +83,27 @@ func (s *ServerControllerHandler) StopTCP(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, "stopped")
+}
+
+func (s *ServerControllerHandler) GetSerialPortList(c echo.Context) error {
+	portList, err := s.serverRepo.GetAllSerialPorts()
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return successPaginationResponse(c, entity.PaginationResponse[entity.Table]{
+		Data:  mapToTable(portList),
+		Total: int64(len(portList)),
+	})
+}
+
+func mapToTable(portList []string) []entity.Table {
+	table := make([]entity.Table, len(portList))
+	for i, port := range portList {
+		table[i] = entity.Table{
+			ID:   port,
+			Name: port,
+		}
+	}
+	return table
 }

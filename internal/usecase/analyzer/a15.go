@@ -79,7 +79,7 @@ func (u *Usecase) ProcessA15(ctx context.Context) error {
 }
 
 func connectToSamba(device entity.Device) ([]A15Result, error) {
-	conn, err := net.Dial("tcp", net.JoinHostPort(device.IPAddress, strconv.Itoa(device.SendPort)))
+	conn, err := net.Dial("tcp", net.JoinHostPort(device.IPAddress, device.SendPort))
 	if err != nil {
 		return nil, err
 	}

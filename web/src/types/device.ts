@@ -17,6 +17,7 @@ export interface AdditionalInfo {
     can_receive:         boolean;
     have_authentication: boolean;
     have_path:           boolean;
+    use_serial:          boolean;
 }
 
 

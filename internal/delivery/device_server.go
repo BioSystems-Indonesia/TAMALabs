@@ -3,7 +3,6 @@ package delivery
 import (
 	"fmt"
 	"slices"
-	"strconv"
 
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
@@ -79,7 +78,7 @@ func (d *DeviceServerStrategy) ChooseDeviceServer(device entity.Device) (server.
 	case slices.Contains(deviceTypeNotSupport, device.Type):
 		return nil, entity.ErrDeviceTypeNotSupport
 	case slices.Contains(serialDeviceType, device.Type):
-		s := server.NewSerial(strconv.Itoa(device.ReceivePort), device.BaudRate)
+		s := server.NewSerial(device.ReceivePort, device.BaudRate)
 		h, err := d.ChooseDeviceSerialHandler(device)
 		if err != nil {
 			return nil, err
@@ -87,7 +86,7 @@ func (d *DeviceServerStrategy) ChooseDeviceServer(device entity.Device) (server.
 		s.SetHandler(h)
 		return s, nil
 	case slices.Contains(tcpDeviceType, device.Type):
-		s := server.NewTCP(strconv.Itoa(device.ReceivePort))
+		s := server.NewTCP(device.ReceivePort)
 		h, err := d.ChooseDeviceTCPHandler(device)
 		if err != nil {
 			return nil, err

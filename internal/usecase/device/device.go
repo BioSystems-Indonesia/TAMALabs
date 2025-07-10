@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
@@ -48,8 +49,8 @@ func (p DeviceUseCase) FindOneByID(ctx context.Context, id int64) (entity.Device
 }
 
 func (p DeviceUseCase) Create(ctx context.Context, req *entity.Device) error {
-	if req.ReceivePort == 0 {
-		req.ReceivePort = p.RandomPort()
+	if req.ReceivePort == "" {
+		req.ReceivePort = strconv.Itoa(p.RandomPort())
 	}
 
 	device, err := p.deviceRepo.FindOneByReceivePort(req.ReceivePort)
@@ -76,8 +77,8 @@ func (p DeviceUseCase) Create(ctx context.Context, req *entity.Device) error {
 }
 
 func (p DeviceUseCase) Update(ctx context.Context, req *entity.Device) error {
-	if req.ReceivePort == 0 {
-		req.ReceivePort = p.RandomPort()
+	if req.ReceivePort == "" {
+		req.ReceivePort = strconv.Itoa(p.RandomPort())
 	}
 
 	device, err := p.deviceRepo.FindOneByReceivePort(req.ReceivePort)

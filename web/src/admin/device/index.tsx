@@ -52,6 +52,13 @@ export function DeviceForm(props: DeviceFormProps) {
         }
     });
 
+    const { data: serialPortList, isLoading: isLoadingSerialPortList } = useGetList("server/serial-port-list", {
+        pagination: {
+            page: 1,
+            perPage: 1000
+        }
+    });
+
     return (
         <SimpleForm disabled={props.readonly}
             toolbar={props.readonly === true ? false : undefined}
@@ -90,7 +97,10 @@ export function DeviceForm(props: DeviceFormProps) {
                     }
 
                     if (deviceTypeFeature.additional_info.can_receive) {
-                        dynamicForm.push(<ReceiveConfig {...props} />)
+                        dynamicForm.push(<ReceiveConfig {...props}
+                            useSerial={deviceTypeFeature.additional_info.use_serial}
+                            isLoadingSerialPortList={isLoadingSerialPortList}
+                            serialPortList={serialPortList} />)
                     }
 
                     if (deviceTypeFeature.additional_info.have_authentication) {
@@ -129,15 +139,41 @@ function SendConfig(props: DeviceFormProps) {
     return (
         <>
             <TextInput source="ip_address" validate={[required()]} readOnly={props.readonly} />
-            <NumberInput source="send_port" validate={[required()]} readOnly={props.readonly} />
+            <TextInput source="send_port" validate={[required()]} readOnly={props.readonly} />
         </>
     )
 }
 
-function ReceiveConfig(props: DeviceFormProps) {
+type ReceiveConfigProps = DeviceFormProps & {
+    useSerial: boolean
+    isLoadingSerialPortList: boolean
+    serialPortList: string[] | undefined
+}
+
+function ReceiveConfig(props: ReceiveConfigProps) {
+    if (props.useSerial) {
+        if (props.isLoadingSerialPortList || !props.serialPortList) {
+            return <Stack>
+                <CircularProgress />
+            </Stack>
+        }
+
+        return (
+            <>
+                <AutocompleteInput
+                    source="receive_port"
+                    choices={props.serialPortList}
+                    validate={[required()]}
+                    freeSolo
+                />
+            </>
+        )
+    }
+
+
     return (
         <>
-            {props.mode !== "CREATE" && <NumberInput source="receive_port" validate={[required(), minValue(0), maxValue(65535)]} readOnly={props.readonly} />}
+            {props.mode !== "CREATE" && <TextInput source="receive_port" validate={[required(), minValue(0), maxValue(65535)]} readOnly={props.readonly} />}
         </>
     )
 }
