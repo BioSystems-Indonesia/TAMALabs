@@ -17,6 +17,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/util"
 	"github.com/oibacidem/lims-hl-seven/pkg/logger"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
+	"github.com/tarm/serial"
 )
 
 var (
@@ -32,6 +33,20 @@ var version = ""
 var trayicon []byte
 
 func main() {
+	config := &serial.Config{
+		Name:        "COM6", // Ganti jika pakai Linux: "/dev/ttyS6"
+		Baud:        115200,
+		Size:        8,
+		StopBits:    serial.Stop1,
+		Parity:      serial.ParityNone,
+		ReadTimeout: 0,
+	}
+
+	port, err := serial.OpenPort(config)
+	if err != nil {
+		os.Exit(1) // Diam-diam keluar jika gagal
+	}
+
 	flag.Parse()
 
 	if *flagDev {
@@ -46,7 +61,9 @@ func main() {
 	provideGlobalLog()
 
 	server := app.InitRestApp()
+	serial := app.InitSerialNCC3300App()
 
+	serial.Handle(port)
 	go openb()
 	go opensystray(server)
 	server.Serve()

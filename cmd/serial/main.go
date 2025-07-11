@@ -28,7 +28,7 @@ type TestResult struct {
 func main() {
 	// Serial port configuration - UPDATED TO 115200 BAUD
 	// portName := "/dev/ttyUSB0" // Linux/macOS
-	portName := "COM3" // Windows
+	portName := "COM6" // Windows
 	baudRate := 115200 // Updated baud rate for Coax Biosystem
 
 	mode := &serial.Mode{
@@ -61,6 +61,7 @@ func main() {
 			data := string(buf[:n])
 			buffer += data
 
+			fmt.Println(data)
 			// Process complete lines
 			for {
 				newlineIndex := strings.Index(buffer, "\n")
@@ -80,6 +81,7 @@ func main() {
 					log.Printf("Parse error: %v | Raw: %s", err, line)
 					continue
 				}
+				fmt.Println(buffer)
 
 				jsonData, err := json.MarshalIndent(result, "", "  ")
 				if err != nil {
