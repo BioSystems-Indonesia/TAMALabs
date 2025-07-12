@@ -11,7 +11,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/ncc_3300"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"

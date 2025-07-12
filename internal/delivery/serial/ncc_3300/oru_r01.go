@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h251"
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
@@ -20,10 +19,6 @@ func (h *Handler) ORUR01(ctx context.Context, m h251.ORU_R01, msgByte []byte) (s
 	if err != nil {
 		return "", fmt.Errorf("decode failed: %w", err)
 	}
-
-	fmt.Print(string(msgByte))
-
-	spew.Dump(oruR01)
 
 	err = h.AnalyzerUsecase.ProcessORUR01(ctx, oruR01)
 	if err != nil {

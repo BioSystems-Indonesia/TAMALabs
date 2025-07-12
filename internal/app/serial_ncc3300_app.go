@@ -2,7 +2,7 @@ package app
 
 import (
 	"github.com/google/wire"
-	ncc3300 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/ncc_3300"
+	ncc3300 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	devicerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
 	observation_request "github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
 	observation_result "github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
