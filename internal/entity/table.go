@@ -102,6 +102,17 @@ var TableWorkOrderStatus = Tables{
 	},
 }
 
+var TableBaudRate = Tables{
+	{ID: "9600", Name: "9600"},
+	{ID: "19200", Name: "19200"},
+	{ID: "38400", Name: "38400"},
+	{ID: "57600", Name: "57600"},
+	{ID: "115200", Name: "115200"},
+	{ID: "230400", Name: "230400"},
+	{ID: "460800", Name: "460800"},
+	{ID: "921600", Name: "921600"},
+}
+
 type ObservationInfo struct {
 	Type ObservationTestType `json:"type"`
 }
@@ -118,4 +129,5 @@ var TableList = map[string]Tables{
 	"specimen-test":     TableSpecimenTest,
 	"work-order-status": TableWorkOrderStatus,
 	"device-type":       TableDeviceType,
+	"baud-rate":         TableBaudRate,
 }

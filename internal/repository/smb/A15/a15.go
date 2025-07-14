@@ -21,7 +21,7 @@ func NewA15() *A15 {
 func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 	conn, err := net.Dial("tcp", net.JoinHostPort(req.Device.IPAddress, req.Device.SendPort))
 	if err != nil {
-		return fmt.Errorf("cannot connect to %s:%d", req.Device.IPAddress, req.Device.SendPort)
+		return fmt.Errorf("cannot connect to %s:%s", req.Device.IPAddress, req.Device.SendPort)
 	}
 	defer conn.Close()
 
@@ -34,7 +34,7 @@ func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 
 	s, err := d.Dial(conn)
 	if err != nil {
-		return fmt.Errorf("cannot dial smb2 to %s:%d", req.Device.IPAddress, req.Device.SendPort)
+		return fmt.Errorf("cannot dial smb2 to %s:%s", req.Device.IPAddress, req.Device.SendPort)
 	}
 	defer func() {
 		if err := s.Logoff(); err != nil {
@@ -64,7 +64,7 @@ func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 func (a A15) CheckConnection(ctx context.Context, device entity.Device) error {
 	conn, err := net.Dial("tcp", net.JoinHostPort(device.IPAddress, device.SendPort))
 	if err != nil {
-		return fmt.Errorf("cannot connect to %s:%d", device.IPAddress, device.SendPort)
+		return fmt.Errorf("cannot connect to %s:%s", device.IPAddress, device.SendPort)
 	}
 	defer conn.Close()
 
@@ -77,7 +77,7 @@ func (a A15) CheckConnection(ctx context.Context, device entity.Device) error {
 
 	s, err := d.Dial(conn)
 	if err != nil {
-		return fmt.Errorf("cannot dial smb2 to %s:%d", device.IPAddress, device.SendPort)
+		return fmt.Errorf("cannot dial smb2 to %s:%s", device.IPAddress, device.SendPort)
 	}
 	defer func() {
 		if err := s.Logoff(); err != nil {
