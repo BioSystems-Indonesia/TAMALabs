@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
-	"strconv"
 	"time"
 
 	"github.com/kardianos/hl7"
@@ -100,7 +99,7 @@ func (b Ba400) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 
 func (b Ba400) CheckConnection(ctx context.Context, device entity.Device) error {
 	var d net.Dialer
-	conn, err := d.DialContext(ctx, "tcp", net.JoinHostPort(device.IPAddress, strconv.Itoa(device.SendPort)))
+	conn, err := d.DialContext(ctx, "tcp", net.JoinHostPort(device.IPAddress, device.SendPort))
 	if err != nil {
 		return fmt.Errorf("cannot connect to %s:%d", device.IPAddress, device.SendPort)
 	}

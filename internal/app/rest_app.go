@@ -2,13 +2,16 @@ package app
 
 import (
 	"github.com/google/wire"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	analyxtrias "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
 	swelabalfa "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
 	"github.com/oibacidem/lims-hl-seven/internal/repository"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/server"
 	a15 "github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
 	adminrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
 	configrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
@@ -24,7 +27,6 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/unit"
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	hlsRepo "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/server"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	admin_uc "github.com/oibacidem/lims-hl-seven/internal/usecase/admin"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
@@ -88,17 +90,18 @@ var restRepositorySet = wire.NewSet(
 	rolerepo.NewRoleRepository,
 	hlsRepo.NewBa400,
 	a15.NewA15,
-	server.NewTCPServerRepository,
+	server.NewControllerRepository,
 	provideAllDevices,
 )
 
 var tcpHandlerSet = wire.NewSet(
+	coax.NewHandler,
 	tcp.NewHlSevenHandler,
 	analyxtrias.NewHandler,
 	analyxpanca.NewHandler,
 	swelabalfa.NewHandler,
-	tcp.NewDeviceStrategy,
-	wire.Bind(new(repository.DeviceTCPHandlerStrategy), new(*tcp.DeviceStrategy)),
+	delivery.NewDeviceServerStrategy,
+	wire.Bind(new(repository.DeviceServerStrategy), new(*delivery.DeviceServerStrategy)),
 )
 
 var restMiddlewareSet = wire.NewSet(

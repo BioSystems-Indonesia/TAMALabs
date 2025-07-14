@@ -3,6 +3,9 @@ package analyzer
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
+	"time"
 
 	"log/slog"
 
@@ -182,4 +185,51 @@ func (u *Usecase) ProcessORUR01(ctx context.Context, data entity.ORU_R01) error 
 	}
 
 	return nil
+}
+
+func (u *Usecase) ProcessCoax(ctx context.Context, data entity.CoaxTestResult) error {
+	specimen, err := u.SpecimenRepository.FindByBarcode(ctx, data.DeviceID)
+	if err != nil {
+		return fmt.Errorf("specimen not found: %w", err)
+	}
+
+	observationResult := entity.ObservationResult{
+		ID:             0,
+		SpecimenID:     int64(specimen.ID),
+		TestCode:       data.TestName,
+		Description:    data.TestName,
+		Values:         entity.JSONStringArray{data.Value},
+		Type:           data.TestName,
+		Unit:           data.Unit,
+		ReferenceRange: data.Reference,
+		Date:           u.parseCoaxDate(data.Date),
+		AbnormalFlag:   entity.JSONStringArray{},
+		Comments:       data.Flags,
+		Picked:         false,
+	}
+
+	err = u.ObservationResultRepository.Create(ctx, &observationResult)
+	if err != nil {
+		return fmt.Errorf("error creating observation result: %w", err)
+	}
+
+	workOrder := specimen.WorkOrder
+	workOrder.Status = entity.WorkOrderStatusCompleted
+	err = u.WorkOrderRepository.Update(&workOrder)
+	if err != nil {
+		return fmt.Errorf("error updating work order: %w", err)
+	}
+
+	return nil
+}
+
+// paraseCoaxDate parse 2025/05/28 to 2025-05-28
+func (u *Usecase) parseCoaxDate(date string) time.Time {
+	date = strings.ReplaceAll(date, "/", "-")
+	parsed, err := time.Parse(time.DateOnly, date)
+	if err != nil {
+		slog.Error("error parsing date", "error", err, "date", date)
+		return time.Time{}
+	}
+	return parsed
 }

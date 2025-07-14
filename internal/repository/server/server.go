@@ -5,31 +5,31 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strconv"
 
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
+	"go.bug.st/serial"
 )
 
-type tcpDeviceServer struct {
+type DeviceServer struct {
 	device entity.Device
-	server repository.TCPServerController
+	server server.Controller
 }
 
-type TCPServer struct {
-	handlerStrategy repository.DeviceTCPHandlerStrategy
+type ControllerRepository struct {
+	handlerStrategy repository.DeviceServerStrategy
 
-	serverDeviceMap map[int]tcpDeviceServer
+	serverDeviceMap map[int]DeviceServer
 }
 
-func NewTCPServerRepository(
-	handlerStrategy repository.DeviceTCPHandlerStrategy,
+func NewControllerRepository(
+	handlerStrategy repository.DeviceServerStrategy,
 	allDevices []entity.Device,
-) *TCPServer {
-	t := &TCPServer{
-		serverDeviceMap: map[int]tcpDeviceServer{},
+) *ControllerRepository {
+	t := &ControllerRepository{
+		serverDeviceMap: map[int]DeviceServer{},
 		handlerStrategy: handlerStrategy,
 	}
 
@@ -43,10 +43,10 @@ func NewTCPServerRepository(
 	return t
 }
 
-func (r *TCPServer) StartNewServer(
+func (r *ControllerRepository) StartNewServer(
 	ctx context.Context,
 	device entity.Device,
-) (repository.TCPServerController, error) {
+) (server.Controller, error) {
 	sd, ok := r.serverDeviceMap[device.ID]
 	if ok {
 		if !r.needRestartServer(sd, device) {
@@ -55,7 +55,7 @@ func (r *TCPServer) StartNewServer(
 
 		err := sd.server.Stop()
 		if err != nil {
-			return nil, fmt.Errorf("failed to stop server for device %d: %w", device.ID, err)
+			slog.Error("failed to stop server for device", "device_id", device.ID, "error", err)
 		}
 	}
 
@@ -68,7 +68,7 @@ func (r *TCPServer) StartNewServer(
 	return deviceServer.server, nil
 }
 
-func (r *TCPServer) needRestartServer(serverDevice tcpDeviceServer, newDevice entity.Device) bool {
+func (r *ControllerRepository) needRestartServer(serverDevice DeviceServer, newDevice entity.Device) bool {
 	if serverDevice.server.State() == constant.ServerStateStopped {
 		return true
 	}
@@ -80,40 +80,32 @@ func (r *TCPServer) needRestartServer(serverDevice tcpDeviceServer, newDevice en
 	return false
 }
 
-func (r *TCPServer) startServer(device entity.Device) (tcpDeviceServer, error) {
-	h, err := r.handlerStrategy.ChooseDeviceHandler(device)
+func (r *ControllerRepository) startServer(device entity.Device) (DeviceServer, error) {
+	s, err := r.handlerStrategy.ChooseDeviceServer(device)
 	if err != nil {
 		if errors.Is(err, entity.ErrDeviceTypeNotSupport) {
-			return tcpDeviceServer{
+			return DeviceServer{
 				server: NewDummyServer(),
 				device: device,
 			}, nil
 		}
 
-		return tcpDeviceServer{}, fmt.Errorf("failed to choose device handler for device %d: %w", device.ID, err)
+		return DeviceServer{}, fmt.Errorf("failed to choose device handler for device %d: %w", device.ID, err)
 	}
 
-	port := strconv.Itoa(device.ReceivePort)
-	if port == "" {
-		return tcpDeviceServer{}, fmt.Errorf("device %d has no receive port", device.ID)
-	}
-
-	server := server.NewTCP(port)
-	server.SetHandler(h)
-
-	errStart := server.Start()
+	errStart := s.Start()
 	if errStart != nil {
-		return tcpDeviceServer{}, fmt.Errorf("failed to start server for device %d: %w", device.ID, errStart)
+		return DeviceServer{}, fmt.Errorf("failed to start server for device %d: %w", device.ID, errStart)
 	}
-	go server.Serve()
+	go s.Serve()
 
-	return tcpDeviceServer{
-		server: server,
+	return DeviceServer{
+		server: s,
 		device: device,
 	}, nil
 }
 
-func (r *TCPServer) GetAllServerState() map[int]constant.ServerState {
+func (r *ControllerRepository) GetAllServerState() map[int]constant.ServerState {
 	mapState := make(map[int]constant.ServerState)
 	for deviceID, sd := range r.serverDeviceMap {
 		mapState[deviceID] = sd.server.State()
@@ -121,7 +113,7 @@ func (r *TCPServer) GetAllServerState() map[int]constant.ServerState {
 	return mapState
 }
 
-func (r *TCPServer) GetServerStateByDeviceID(deviceID int) constant.ServerState {
+func (r *ControllerRepository) GetServerStateByDeviceID(deviceID int) constant.ServerState {
 	sd, ok := r.serverDeviceMap[deviceID]
 	if !ok {
 		return constant.ServerStateStopped
@@ -129,7 +121,7 @@ func (r *TCPServer) GetServerStateByDeviceID(deviceID int) constant.ServerState 
 	return sd.server.State()
 }
 
-func (r *TCPServer) StopServerByDeviceID(ctx context.Context, deviceID int) error {
+func (r *ControllerRepository) StopServerByDeviceID(ctx context.Context, deviceID int) error {
 	sd, ok := r.serverDeviceMap[deviceID]
 	if !ok {
 		return fmt.Errorf("server for device %d not found", deviceID)
@@ -137,7 +129,7 @@ func (r *TCPServer) StopServerByDeviceID(ctx context.Context, deviceID int) erro
 	return sd.server.Stop()
 }
 
-func (r *TCPServer) DeleteServerByDeviceID(ctx context.Context, deviceID int) error {
+func (r *ControllerRepository) DeleteServerByDeviceID(ctx context.Context, deviceID int) error {
 	_, ok := r.serverDeviceMap[deviceID]
 	if !ok {
 		return fmt.Errorf("server for device %d not found", deviceID)
@@ -145,9 +137,17 @@ func (r *TCPServer) DeleteServerByDeviceID(ctx context.Context, deviceID int) er
 
 	err := r.StopServerByDeviceID(ctx, deviceID)
 	if err != nil {
-		return fmt.Errorf("failed to stop server for device %d: %w", deviceID, err)
+		slog.Error("failed to stop server for device", "device_id", deviceID, "error", err)
 	}
 
 	delete(r.serverDeviceMap, deviceID)
 	return nil
+}
+
+func (r *ControllerRepository) GetAllSerialPorts() ([]string, error) {
+	ports, err := serial.GetPortsList()
+	if err != nil {
+		return nil, err
+	}
+	return ports, nil
 }

@@ -75,7 +75,7 @@ func (r DeviceRepository) Delete(id int) error {
 	return nil
 }
 
-func (r DeviceRepository) FindOneByReceivePort(port int) (entity.Device, error) {
+func (r DeviceRepository) FindOneByReceivePort(port string) (entity.Device, error) {
 	var device entity.Device
 	err := r.db.Where("receive_port = ?", port).First(&device).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {

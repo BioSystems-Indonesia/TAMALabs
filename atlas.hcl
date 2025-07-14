@@ -5,7 +5,7 @@ data "external_schema" "gorm" {
     "go",
     "run",
     "-mod=mod",
-    "./migrations/loader",
+    ".\\migrations\\loader",
   ]
 }
 

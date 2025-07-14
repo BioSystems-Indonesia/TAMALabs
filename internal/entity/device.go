@@ -12,6 +12,7 @@ const (
 	DeviceTypeAnalyxTria  DeviceType = "ANALYX_TRIA"
 	DeviceTypeAnalyxPanca DeviceType = "ANALYX_PANCA"
 	DeviceTypeSwelabAlfa  DeviceType = "SWELLAB_ALFA"
+	DeviceTypeCoax        DeviceType = "COAX"
 )
 
 var TableDeviceType = Tables{
@@ -41,6 +42,10 @@ var TableDeviceType = Tables{
 		CanSend:    true,
 		CanReceive: true,
 	}},
+	{ID: string(DeviceTypeCoax), Name: string(DeviceTypeCoax), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+		UseSerial:  true,
+	}},
 }
 
 type DeviceCapability struct {
@@ -48,6 +53,7 @@ type DeviceCapability struct {
 	CanReceive bool `json:"can_receive"`
 	HaveAuth   bool `json:"have_authentication"`
 	HavePath   bool `json:"have_path"`
+	UseSerial  bool `json:"use_serial"`
 }
 
 type Device struct {
@@ -55,12 +61,14 @@ type Device struct {
 	Name        string     `json:"name"`
 	Type        DeviceType `json:"type"`
 	IPAddress   string     `json:"ip_address"`
-	SendPort    int        `json:"send_port"`
-	ReceivePort int        `json:"receive_port" gorm:"unique"`
+	SendPort    string     `json:"send_port"`
+	ReceivePort string     `json:"receive_port" gorm:"unique"`
 
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Path     string `json:"path"`
+
+	BaudRate int `json:"baud_rate" gorm:"default:0"`
 }
 
 type GetManyRequestDevice struct {

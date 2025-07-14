@@ -3,6 +3,7 @@ package analyzer
 import (
 	"context"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -78,7 +79,7 @@ func (u *Usecase) ProcessA15(ctx context.Context) error {
 }
 
 func connectToSamba(device entity.Device) ([]A15Result, error) {
-	conn, err := net.Dial("tcp", net.JoinHostPort(device.IPAddress, strconv.Itoa(device.SendPort)))
+	conn, err := net.Dial("tcp", net.JoinHostPort(device.IPAddress, device.SendPort))
 	if err != nil {
 		return nil, err
 	}
@@ -213,6 +214,7 @@ func (u *Usecase) SaveFileResult(context context.Context, data string) error {
 		return err
 	}
 
+	var errs []error
 	for _, result := range results {
 		speciment, err := u.SpecimenRepository.FindByBarcode(context, result.PatientID)
 		if err != nil {
@@ -220,7 +222,7 @@ func (u *Usecase) SaveFileResult(context context.Context, data string) error {
 			continue
 		}
 
-		u.ObservationResultRepository.Create(context, &entity.ObservationResult{
+		err = u.ObservationResultRepository.Create(context, &entity.ObservationResult{
 			SpecimenID:  int64(speciment.ID),
 			TestCode:    result.TestName,
 			Description: result.TestName,
@@ -228,6 +230,27 @@ func (u *Usecase) SaveFileResult(context context.Context, data string) error {
 			Unit:        result.Unit,
 			Date:        result.Timestamp,
 		})
+		if err != nil {
+			errs = append(errs, err)
+		}
+
+		slog.Info(
+			"observation result created",
+			"specimen_id",
+			speciment.ID,
+			"test_code",
+			result.TestName,
+			"value",
+			result.Value,
+			"unit",
+			result.Unit,
+			"date",
+			result.Timestamp,
+		)
+	}
+
+	if len(errs) > 0 {
+		slog.Error("failed to create observation result", "errors", errors.Join(errs...))
 	}
 
 	return nil
