@@ -11,7 +11,6 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
@@ -129,19 +128,4 @@ func InitRestApp() server.RestServer {
 	jwtMiddleware := middleware.NewJWTMiddleware(schema)
 	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, jwtMiddleware)
 	return restServer
-}
-
-// InitSerialNCC3300App is a Wire provider function that returns a serial NCC3300 Handler.
-func InitSerialNCC3300App() *ncc3300.Handler {
-	gormDB := provideDB()
-	schema := provideConfig(gormDB)
-	repository := observation_result.NewRepository(gormDB, schema)
-	observation_requestRepository := observation_request.NewRepository(gormDB, schema)
-	specimenRepository := specimen.NewRepository(gormDB, schema)
-	cache := provideCache()
-	workOrderRepository := workOrderrepo.NewWorkOrderRepository(gormDB, schema, specimenRepository, cache)
-	deviceRepository := devicerepo.NewDeviceRepository(gormDB, schema)
-	usecase := analyzer.NewUsecase(repository, observation_requestRepository, specimenRepository, workOrderRepository, deviceRepository)
-	handler := ncc3300.NewHandler(usecase)
-	return handler
 }
