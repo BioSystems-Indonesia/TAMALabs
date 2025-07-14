@@ -4,6 +4,12 @@ export type Device = {
     type: string;
     ip_address: string;
     port: number;
+    send_port?: string;
+    receive_port?: string;
+    baud_rate?: number;
+    username?: string;
+    password?: string;
+    path?: string;
 }
 
 export interface DeviceTypeFeatureList {
