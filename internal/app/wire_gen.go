@@ -7,12 +7,15 @@
 package app
 
 import (
+	"github.com/oibacidem/lims-hl-seven/internal/delivery"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
+	server2 "github.com/oibacidem/lims-hl-seven/internal/repository/server"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
@@ -28,7 +31,6 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/unit"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
-	server2 "github.com/oibacidem/lims-hl-seven/internal/repository/tcp/server"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/admin"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/auth"
@@ -86,14 +88,15 @@ func InitRestApp() server.RestServer {
 	ba400Ba400 := ba400.NewBa400()
 	a15A15 := a15.NewA15()
 	strategy := runner.NewStrategy(runAction, cancelAction, postrunRunAction, postrunCancelAction, incompleteSendAction, ba400Ba400, a15A15)
+	handler := coax.NewHandler(usecase)
 	tcpHlSevenHandler := tcp.NewHlSevenHandler(usecase)
-	handler := analyxtrias.NewHandler(usecase)
+	analyxtriasHandler := analyxtrias.NewHandler(usecase)
 	analyxpancaHandler := analyxpanca.NewHandler(usecase)
 	swelabalfaHandler := swelabalfa.NewHandler(usecase)
-	deviceStrategy := tcp.NewDeviceStrategy(tcpHlSevenHandler, handler, analyxpancaHandler, swelabalfaHandler)
+	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, tcpHlSevenHandler, analyxtriasHandler, analyxpancaHandler, swelabalfaHandler)
 	v := provideAllDevices(deviceRepository)
-	tcpServer := server2.NewTCPServerRepository(deviceStrategy, v)
-	deviceUseCase := deviceuc.NewDeviceUseCase(schema, deviceRepository, strategy, ba400Ba400, a15A15, tcpServer)
+	controllerRepository := server2.NewControllerRepository(deviceServerStrategy, v)
+	deviceUseCase := deviceuc.NewDeviceUseCase(schema, deviceRepository, strategy, ba400Ba400, a15A15, controllerRepository)
 	workOrderUseCase := workOrderuc.NewWorkOrderUseCase(schema, workOrderRepository, validate, barcode_generatorUsecase, patientUseCase, deviceUseCase, strategy)
 	observationRequestUseCase := observation_requestuc.NewObservationRequestUseCase(schema, observation_requestRepository, validate)
 	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, gormDB, patientUseCase, deviceUseCase, specimenUseCase, observationRequestUseCase)
@@ -113,7 +116,7 @@ func InitRestApp() server.RestServer {
 	logHandler := rest.NewLogHandler(schema)
 	restHandler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler, unitHandler, logHandler)
 	deviceHandler := rest.NewDeviceHandler(deviceUseCase)
-	serverControllerHandler := rest.NewServerControllerHandler(configrepoRepository, tcpServer)
+	serverControllerHandler := rest.NewServerControllerHandler(configrepoRepository, controllerRepository)
 	test_templateRepository := test_template.NewRepository(gormDB, schema)
 	test_template_ucUsecase := test_template_uc.NewUsecase(test_templateRepository)
 	testTemplateHandler := rest.NewTestTemplateHandler(schema, test_template_ucUsecase)

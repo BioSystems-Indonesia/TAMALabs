@@ -29,6 +29,9 @@ type TCP struct {
 	timeLastConnect time.Time
 }
 
+// Ensure TCP implements ServerController interface
+var _ Controller = (*TCP)(nil)
+
 // NewTCP returns a new TCP server
 func NewTCP(port string) *TCP {
 	return &TCP{
@@ -69,8 +72,6 @@ func (t *TCP) Start() error {
 
 	return nil
 }
-
-const disconnectTimeout = 10 * time.Second
 
 // Serve
 func (t *TCP) Serve() {

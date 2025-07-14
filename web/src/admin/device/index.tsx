@@ -12,7 +12,6 @@ import {
     List,
     maxValue,
     minValue,
-    NumberInput,
     PasswordInput,
     required,
 
@@ -46,6 +45,13 @@ function ReferenceSection() {
 
 export function DeviceForm(props: DeviceFormProps) {
     const { data: deviceTypeFeatureList, isLoading: isLoadingDeviceTypeFeatureList } = useGetList<DeviceTypeFeatureList>("feature-list-device-type", {
+        pagination: {
+            page: 1,
+            perPage: 1000
+        }
+    });
+
+    const { data: serialPortList, isLoading: isLoadingSerialPortList } = useGetList("server/serial-port-list", {
         pagination: {
             page: 1,
             perPage: 1000
@@ -90,7 +96,10 @@ export function DeviceForm(props: DeviceFormProps) {
                     }
 
                     if (deviceTypeFeature.additional_info.can_receive) {
-                        dynamicForm.push(<ReceiveConfig {...props} />)
+                        dynamicForm.push(<ReceiveConfig {...props}
+                            useSerial={deviceTypeFeature.additional_info.use_serial}
+                            isLoadingSerialPortList={isLoadingSerialPortList}
+                            serialPortList={serialPortList} />)
                     }
 
                     if (deviceTypeFeature.additional_info.have_authentication) {
@@ -129,15 +138,60 @@ function SendConfig(props: DeviceFormProps) {
     return (
         <>
             <TextInput source="ip_address" validate={[required()]} readOnly={props.readonly} />
-            <NumberInput source="send_port" validate={[required()]} readOnly={props.readonly} />
+            <TextInput source="send_port" validate={[required()]} readOnly={props.readonly} />
         </>
     )
 }
 
-function ReceiveConfig(props: DeviceFormProps) {
+type ReceiveConfigProps = DeviceFormProps & {
+    useSerial: boolean
+    isLoadingSerialPortList: boolean
+    serialPortList: string[] | undefined
+}
+
+function ReceiveConfig(props: ReceiveConfigProps) {
+    if (props.useSerial) {
+        if (props.isLoadingSerialPortList || !props.serialPortList) {
+            return <Stack>
+                <CircularProgress />
+            </Stack>
+        }
+
+        // Common baud rates for serial communication
+        const baudRates = [
+            { id: 9600, name: "9600" },
+            { id: 19200, name: "19200" },
+            { id: 38400, name: "38400" },
+            { id: 57600, name: "57600" },
+            { id: 115200, name: "115200" },
+            { id: 230400, name: "230400" },
+            { id: 460800, name: "460800" },
+            { id: 921600, name: "921600" }
+        ];
+
+        return (
+            <>
+                <AutocompleteInput
+                    source="receive_port"
+                    choices={props.serialPortList}
+                    validate={[required()]}
+                    freeSolo
+                />
+                <AutocompleteInput
+                    source="baud_rate"
+                    choices={baudRates}
+                    validate={[required()]}
+                    defaultValue={9600}
+                    readOnly={props.readonly}
+                />
+            </>
+        )
+    }
+
+
     return (
         <>
-            {props.mode !== "CREATE" && <NumberInput source="receive_port" validate={[required(), minValue(0), maxValue(65535)]} readOnly={props.readonly} />}
+            {props.mode !== "CREATE" && <TextInput source="receive_port" validate={[required(), minValue(0), maxValue(65535)]} readOnly={props.readonly} />}
         </>
     )
 }
@@ -212,6 +266,7 @@ export const DeviceList = () => {
                     <TextField source="ip_address" />
                     <TextField source="send_port" />
                     <TextField source="receive_port" />
+                    <TextField source="baud_rate" label="Baud Rate" />
                     <WithRecord label="Connection Status Sender" render={(record: Device) => {
                         useEffect(() => {
                             setDeviceIds(prev => {

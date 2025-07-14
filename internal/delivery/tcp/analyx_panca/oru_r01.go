@@ -18,7 +18,7 @@ import (
 )
 
 func (h *Handler) ORUR01(ctx context.Context, m h231.ORU_R01, msgByte []byte) (string, error) {
-	msgControlID := m.MSH.MessageControlID
+	// msgControlID := m.MSH.MessageControlID
 
 	oruR01, err := h.decodeORUR01(msgByte)
 	if err != nil {
@@ -30,19 +30,23 @@ func (h *Handler) ORUR01(ctx context.Context, m h231.ORU_R01, msgByte []byte) (s
 		return "", fmt.Errorf("process failed: %w", err)
 	}
 
-	msh := h.createMSHAck(oruR01.MSH, msgControlID)
-	msa := &h231.MSA{
-		AcknowledgementCode: "AA",
-		MessageControlID:    msgControlID,
-	}
+	// msh := h.createMSHAck(oruR01.MSH, msgControlID)
+	// msa := &h231.MSA{
+	// 	AcknowledgementCode: "AA",
+	// 	MessageControlID:    msgControlID,
+	// 	ErrorCondition: &h231.CE{
+	// 		Identifier: "0",
+	// 	},
+	// }
 
-	ackMsg := h231.ACK{
-		HL7: h231.HL7Name{},
-		MSH: msh,
-		MSA: msa,
-	}
+	// ackMsg := h231.ACK{
+	// 	HL7: h231.HL7Name{},
+	// 	MSH: msh,
+	// 	MSA: msa,
+	// }
 
-	return common.EncodeWithOptions(ackMsg, &hl7.EncodeOption{})
+	// return common.EncodeWithOptions(ackMsg, &hl7.EncodeOption{})
+	return "", nil
 }
 
 func (h *Handler) decodeORUR01(msgByte []byte) (entity.ORU_R01, error) {
@@ -198,7 +202,7 @@ func (h *Handler) createMSHAck(m entity.MSH, msgControlID h231.ST) *h231.MSH {
 		AcceptAcknowledgmentType:            "AL",
 		ApplicationAcknowledgmentType:       "AL",
 		CountryCode:                         "ID",
-		CharacterSet:                        []string{"UNICODE"},
+		CharacterSet:                        []string{"UTF-8"},
 		PrincipalLanguageOfMessage:          &h231.CE{},
 		AlternateCharacterSetHandlingScheme: "",
 	}
