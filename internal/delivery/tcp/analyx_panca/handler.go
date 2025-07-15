@@ -32,25 +32,28 @@ func (h *Handler) Handle(conn *net.TCPConn) {
 	defer panics.RecoverPanic(ctx)
 
 	mc := mllp.NewClient(conn)
-	b, err := mc.ReadAll()
+	b, err := mc.ReadMultiMessage()
 	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			slog.Error(err.Error())
 		}
 	}
 
-	res, err := h.handleMessage(ctx, string(b))
-	if err != nil {
-		slog.Error(err.Error())
-	}
+	slog.Info("all_message", "msg", b, "len", len(b))
+	for _, message := range b {
+		res, err := h.handleMessage(ctx, string(message))
+		if err != nil {
+			slog.Error(err.Error())
+		}
 
-	if res != "" {
-		resLog := strings.ReplaceAll(res, "\r", "\n")
-		slog.Info(fmt.Sprintf("ack message: %s", resLog))
-	}
+		if res != "" {
+			resLog := strings.ReplaceAll(res, "\r", "\n")
+			slog.Info(fmt.Sprintf("ack message: %s", resLog))
+		}
 
-	if err := mc.Write([]byte(res)); err != nil {
-		slog.Error(err.Error())
+		if err := mc.Write([]byte(res)); err != nil {
+			slog.Error(err.Error())
+		}
 	}
 }
 

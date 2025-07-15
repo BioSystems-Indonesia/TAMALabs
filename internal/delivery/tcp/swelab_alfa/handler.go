@@ -29,6 +29,7 @@ func NewHandler(analyzerUsecase usecase.Analyzer) *Handler {
 func (h *Handler) Handle(conn *net.TCPConn) {
 	ctx := context.Background()
 
+	defer conn.Close()
 	defer panics.RecoverPanic(ctx)
 
 	mc := mllp.NewClient(conn)

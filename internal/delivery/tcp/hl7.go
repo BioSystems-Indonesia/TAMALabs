@@ -29,6 +29,8 @@ func NewHlSevenHandler(analyzerUsecase usecase.Analyzer) *HlSevenHandler {
 }
 
 func (h *HlSevenHandler) Handle(conn *net.TCPConn) {
+	defer conn.Close()
+
 	defer func() {
 		if r := recover(); r != nil {
 			debug.PrintStack()

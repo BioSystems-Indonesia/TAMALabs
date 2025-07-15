@@ -101,7 +101,6 @@ func (t *TCP) Serve() {
 		t.state = constant.ServerStateConnect
 
 		t.handler.Handle(conn)
-		conn.Close()
 	}
 }
 
