@@ -88,7 +88,7 @@ func (p DeviceUseCase) Update(ctx context.Context, req *entity.Device) error {
 
 	if device.ID != 0 && device.ID != req.ID {
 		return entity.NewUserError(entity.UserErrorDeviceAlreadyExistsReceivePort,
-			fmt.Sprintf("device already exists with receive port %d must be unique", req.ReceivePort))
+			fmt.Sprintf("device already exists with receive port %s must be unique", req.ReceivePort))
 	}
 
 	err = p.deviceRepo.Update(req)

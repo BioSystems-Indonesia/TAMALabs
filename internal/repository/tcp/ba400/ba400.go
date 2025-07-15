@@ -55,7 +55,7 @@ func (b Ba400) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 
 		if ((i+1)%batchSend == 0) || i == len(splitObservationRequest)-1 {
 			sender := Sender{
-				host:     fmt.Sprintf("%s:%d", req.Device.IPAddress, req.Device.SendPort),
+				host:     fmt.Sprintf("%s:%s", req.Device.IPAddress, req.Device.SendPort),
 				deadline: timeout,
 			}
 			messageToSend := buf.Bytes()
@@ -101,7 +101,7 @@ func (b Ba400) CheckConnection(ctx context.Context, device entity.Device) error 
 	var d net.Dialer
 	conn, err := d.DialContext(ctx, "tcp", net.JoinHostPort(device.IPAddress, device.SendPort))
 	if err != nil {
-		return fmt.Errorf("cannot connect to %s:%d", device.IPAddress, device.SendPort)
+		return fmt.Errorf("cannot connect to %s:%s", device.IPAddress, device.SendPort)
 	}
 
 	defer func() {

@@ -168,7 +168,7 @@ function ReceiveConfig(props: ReceiveConfigProps) {
             { id: 460800, name: "460800" },
             { id: 921600, name: "921600" }
         ];
-
+      
         return (
             <>
                 <AutocompleteInput
@@ -184,6 +184,18 @@ function ReceiveConfig(props: ReceiveConfigProps) {
                     defaultValue={9600}
                     readOnly={props.readonly}
                 />
+                    readOnly={props.readonly}
+                    disabled={props.readonly}
+                />
+                <FeatureList source={"baud_rate"} types={"baud-rate"}>
+                    <AutocompleteInput
+                        source="baud_rate"
+                        validate={[required()]}
+                        defaultValue={9600}
+                        readOnly={props.readonly}
+                        parse={value => value === '' ? undefined : Number(value)}
+                    />
+                </FeatureList>
             </>
         )
     }
