@@ -13,6 +13,7 @@ const (
 	DeviceTypeAnalyxPanca DeviceType = "ANALYX_PANCA"
 	DeviceTypeSwelabAlfa  DeviceType = "SWELLAB_ALFA"
 	DeviceTypeCoax        DeviceType = "COAX"
+	DeviceTypeNCC3300     DeviceType = "NCC_3300"
 )
 
 var TableDeviceType = Tables{
@@ -43,6 +44,10 @@ var TableDeviceType = Tables{
 		CanReceive: true,
 	}},
 	{ID: string(DeviceTypeCoax), Name: string(DeviceTypeCoax), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+		UseSerial:  true,
+	}},
+	{ID: string(DeviceTypeNCC3300), Name: string(DeviceTypeNCC3300), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
 		UseSerial:  true,
 	}},

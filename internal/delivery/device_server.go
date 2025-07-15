@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
+	ncc3300 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	analyxtrias "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
@@ -16,6 +17,7 @@ import (
 
 type DeviceServerStrategy struct {
 	coaxHandler        *coax.Handler
+	ncc3300            *ncc3300.Handler
 	defaultHandler     *tcp.HlSevenHandler
 	analyxTriaHandler  *analyxtrias.Handler
 	analyxPancaHandler *analyxpanca.Handler
@@ -24,6 +26,7 @@ type DeviceServerStrategy struct {
 
 func NewDeviceServerStrategy(
 	coaxHandler *coax.Handler,
+	ncc3300 *ncc3300.Handler,
 	defaultHandler *tcp.HlSevenHandler,
 	analyxTriaHandler *analyxtrias.Handler,
 	analyxPancaHandler *analyxpanca.Handler,
@@ -31,6 +34,7 @@ func NewDeviceServerStrategy(
 ) *DeviceServerStrategy {
 	return &DeviceServerStrategy{
 		coaxHandler:        coaxHandler,
+		ncc3300:            ncc3300,
 		defaultHandler:     defaultHandler,
 		analyxTriaHandler:  analyxTriaHandler,
 		analyxPancaHandler: analyxPancaHandler,
@@ -58,6 +62,7 @@ func init() {
 
 var serialDeviceType = []entity.DeviceType{
 	entity.DeviceTypeCoax,
+	entity.DeviceTypeNCC3300,
 }
 
 var tcpDeviceType = []entity.DeviceType{
@@ -103,6 +108,8 @@ func (d *DeviceServerStrategy) ChooseDeviceSerialHandler(device entity.Device) (
 	switch device.Type {
 	case entity.DeviceTypeCoax:
 		return d.coaxHandler, nil
+	case entity.DeviceTypeNCC3300:
+		return d.ncc3300, nil
 	default:
 		return nil, entity.ErrDeviceTypeNotSupport
 	}

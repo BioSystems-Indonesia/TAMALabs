@@ -157,6 +157,18 @@ function ReceiveConfig(props: ReceiveConfigProps) {
             </Stack>
         }
 
+        // Common baud rates for serial communication
+        const baudRates = [
+            { id: 9600, name: "9600" },
+            { id: 19200, name: "19200" },
+            { id: 38400, name: "38400" },
+            { id: 57600, name: "57600" },
+            { id: 115200, name: "115200" },
+            { id: 230400, name: "230400" },
+            { id: 460800, name: "460800" },
+            { id: 921600, name: "921600" }
+        ];
+      
         return (
             <>
                 <AutocompleteInput
@@ -164,6 +176,14 @@ function ReceiveConfig(props: ReceiveConfigProps) {
                     choices={props.serialPortList}
                     validate={[required()]}
                     freeSolo
+                />
+                <AutocompleteInput
+                    source="baud_rate"
+                    choices={baudRates}
+                    validate={[required()]}
+                    defaultValue={9600}
+                    readOnly={props.readonly}
+                />
                     readOnly={props.readonly}
                     disabled={props.readonly}
                 />

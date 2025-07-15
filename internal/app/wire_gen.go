@@ -10,6 +10,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
@@ -89,11 +90,12 @@ func InitRestApp() server.RestServer {
 	a15A15 := a15.NewA15()
 	strategy := runner.NewStrategy(runAction, cancelAction, postrunRunAction, postrunCancelAction, incompleteSendAction, ba400Ba400, a15A15)
 	handler := coax.NewHandler(usecase)
+	ncc3300Handler := ncc3300.NewHandler(usecase)
 	tcpHlSevenHandler := tcp.NewHlSevenHandler(usecase)
 	analyxtriasHandler := analyxtrias.NewHandler(usecase)
 	analyxpancaHandler := analyxpanca.NewHandler(usecase)
 	swelabalfaHandler := swelabalfa.NewHandler(usecase)
-	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, tcpHlSevenHandler, analyxtriasHandler, analyxpancaHandler, swelabalfaHandler)
+	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, ncc3300Handler, tcpHlSevenHandler, analyxtriasHandler, analyxpancaHandler, swelabalfaHandler)
 	v := provideAllDevices(deviceRepository)
 	controllerRepository := server2.NewControllerRepository(deviceServerStrategy, v)
 	deviceUseCase := deviceuc.NewDeviceUseCase(schema, deviceRepository, strategy, ba400Ba400, a15A15, controllerRepository)
