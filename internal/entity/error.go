@@ -123,6 +123,7 @@ var (
 	ErrInvalidListenerNetwork = errors.New("invalid listener network")
 
 	// Custom errors
-	ErrDeviceTypeNotSupport = errors.New("device type not supported")
-	ErrDeviceNotConnected   = errors.New("device not connected to LIS, standby mode")
+	ErrDeviceTypeNotSupport           = errors.New("device type not supported")
+	ErrDeviceNotConnected             = errors.New("device not connected to LIS, standby mode")
+	ErrCannotDeleteAdminWithRelations = NewHTTPError(http.StatusConflict, "Tidak dapat menghapus admin: masih memiliki relasi dengan work order")
 )

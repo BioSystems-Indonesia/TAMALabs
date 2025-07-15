@@ -107,5 +107,11 @@ func (u *AdminUsecase) UpdateAdmin(ctx context.Context, admin *entity.Admin) err
 }
 
 func (u *AdminUsecase) DeleteAdmin(ctx context.Context, id int64) error {
+	// Check if admin is still related to any work orders
+	err := u.adminRepo.CheckRelatedWorkOrders(ctx, id)
+	if err != nil {
+		return err
+	}
+
 	return u.adminRepo.Delete(id)
 }

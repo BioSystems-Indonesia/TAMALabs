@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrayInput, AutocompleteInput, Create, Datagrid, Edit, List, NumberInput, SimpleForm, SimpleFormIterator, TextField, TextInput, required } from "react-admin";
+import { ArrayInput, AutocompleteInput, Create, Datagrid, Edit, FunctionField, List, NumberInput, SimpleForm, SimpleFormIterator, TextField, TextInput, required } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
 import FeatureList from "../../component/FeatureList";
@@ -9,6 +9,7 @@ import type { ActionKeys } from "../../types/props";
 import type { Unit } from "../../types/unit";
 import { TestFilterSidebar } from "../workOrder/TestTypeFilter";
 import useAxios from "../../hooks/useAxios";
+import { TestType } from "../../types/test_type";
 
 export const TestTypeDatagrid = (props: any) => {
     return (
@@ -21,7 +22,14 @@ export const TestTypeDatagrid = (props: any) => {
             <TextField source="low_ref_range" label="low" />
             <TextField source="high_ref_range" label="high" />
             <TextField source="unit" />
-            <TextField source="type" />
+            <FunctionField 
+                label="Types" 
+                render={(record: TestType) => 
+                    record.types && record.types.length > 0 
+                        ? record.types.map(t => t.type).join(", ")
+                        : "-"
+                } 
+            />
             <TextField source="decimal" />
         </Datagrid>
     )
@@ -91,7 +99,8 @@ function TestTypeInput(props: TestTypeFormProps) {
     useEffect(() => {
         if (units && Array.isArray(units)) {
             const unitValues = units.map(unit => unit.value);
-            setUnit(unitValues);
+            const uniqueUnits = [...new Set(unitValues)]; 
+            setUnit(uniqueUnits);
         }
     }, [units, isUnitLoading]);
 
@@ -183,10 +192,10 @@ function TestTypeInput(props: TestTypeFormProps) {
                     source="unit"
                     readOnly={props.readonly}
                     loading={isUnitLoading}
-                    choices={unit.map(val => ({ id: val, name: val }))}
+                    choices={[...new Set(unit)].map(val => ({ id: val, name: val }))}
                     onCreate={val => {
                         if (!val || unit.includes(val)) return;
-                        const newUnit = [...unit, val];
+                        const newUnit = [...new Set([...unit, val])]; // Ensure no duplicates
                         setUnit(newUnit);
                         return { id: val, name: val }
                     }}

@@ -71,7 +71,7 @@ func (u *AuthUseCase) createAccessToken(ctx context.Context, admin entity.Admin)
 	claims := entity.AdminClaims{
 		ID:        admin.ID,
 		Fullname:  admin.Fullname,
-		Email:     admin.Email,
+		Email:     *admin.Email,
 		IsActive:  admin.IsActive,
 		CreatedAt: admin.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: admin.UpdatedAt.Format(time.RFC3339),
