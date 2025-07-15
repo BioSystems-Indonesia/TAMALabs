@@ -458,6 +458,7 @@ const TestResultTable = (props: TestResultTableProps) => {
                     flex: 1,
                     renderCell: (params: GridRenderCellParams) => {
                         switch (params.value) {
+                            case 0: return <Chip color="default" label="Kosong" />
                             case 1: return <Chip color="error" label="High" />
                             case 2: return <Chip color="primary" label="Low" />
                             default: return <Chip color="success" label="Normal" />

@@ -20,7 +20,7 @@ type Admin struct {
 	ID           int64     `json:"id" gorm:"primaryKey"`
 	Fullname     string    `json:"fullname" validate:"required" gorm:"index:idx_admin_fullname"`
 	Username     string    `json:"username" validate:"required" gorm:"uniqueIndex:idx_admin_username"`
-	Email        string    `json:"email" validate:"-" gorm:"uniqueIndex"`
+	Email        *string   `json:"email,omitempty" validate:"omitempty,email" gorm:"uniqueIndex"`
 	PasswordHash string    `json:"-"`
 	IsActive     bool      `json:"is_active" gorm:"default:true"`
 	CreatedAt    time.Time `json:"created_at"`

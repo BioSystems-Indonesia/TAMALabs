@@ -91,6 +91,94 @@ func (r AdminRepository) Delete(id int64) error {
 	return nil
 }
 
+func (r AdminRepository) CheckRelatedWorkOrders(ctx context.Context, adminID int64) error {
+	// Check if admin is still related to any work orders as doctor
+	var doctorCount int64
+	err := r.db.WithContext(ctx).Table("work_order_doctors").Where("admin_id = ?", adminID).Count(&doctorCount).Error
+	if err != nil {
+		return fmt.Errorf("error checking work order doctors relation: %w", err)
+	}
+
+	if doctorCount > 0 {
+		return entity.NewHTTPError(
+			entity.ErrCannotDeleteAdminWithRelations.Code,
+			fmt.Sprintf("Tidak dapat menghapus admin: masih ditugaskan sebagai dokter di %d work order", doctorCount),
+		)
+	}
+
+	// Check if admin is still related to any work orders as analyzer
+	var analyzerCount int64
+	err = r.db.WithContext(ctx).Table("work_order_analyzers").Where("admin_id = ?", adminID).Count(&analyzerCount).Error
+	if err != nil {
+		return fmt.Errorf("error checking work order analyzers relation: %w", err)
+	}
+
+	if analyzerCount > 0 {
+		return entity.NewHTTPError(
+			entity.ErrCannotDeleteAdminWithRelations.Code,
+			fmt.Sprintf("Tidak dapat menghapus admin: masih ditugaskan sebagai analyzer di %d work order", analyzerCount),
+		)
+	}
+
+	// Check if admin created any work orders
+	var createdOrdersCount int64
+	err = r.db.WithContext(ctx).Table("work_orders").Where("created_by = ?", adminID).Count(&createdOrdersCount).Error
+	if err != nil {
+		return fmt.Errorf("error checking created work orders: %w", err)
+	}
+
+	if createdOrdersCount > 0 {
+		return entity.NewHTTPError(
+			entity.ErrCannotDeleteAdminWithRelations.Code,
+			fmt.Sprintf("Tidak dapat menghapus admin: masih tercatat sebagai pembuat di %d work order", createdOrdersCount),
+		)
+	}
+
+	// Check if admin last updated any work orders
+	var updatedOrdersCount int64
+	err = r.db.WithContext(ctx).Table("work_orders").Where("last_updated_by = ?", adminID).Count(&updatedOrdersCount).Error
+	if err != nil {
+		return fmt.Errorf("error checking updated work orders: %w", err)
+	}
+
+	if updatedOrdersCount > 0 {
+		return entity.NewHTTPError(
+			entity.ErrCannotDeleteAdminWithRelations.Code,
+			fmt.Sprintf("Tidak dapat menghapus admin: masih tercatat sebagai yang terakhir mengupdate di %d work order", updatedOrdersCount),
+		)
+	}
+
+	// Check if admin created any test templates
+	var testTemplateCreatedCount int64
+	err = r.db.WithContext(ctx).Table("test_templates").Where("created_by = ?", adminID).Count(&testTemplateCreatedCount).Error
+	if err != nil {
+		return fmt.Errorf("error checking test template created by admin: %w", err)
+	}
+
+	if testTemplateCreatedCount > 0 {
+		return entity.NewHTTPError(
+			entity.ErrCannotDeleteAdminWithRelations.Code,
+			fmt.Sprintf("Tidak dapat menghapus admin: masih tercatat sebagai pembuat di %d test template", testTemplateCreatedCount),
+		)
+	}
+
+	// Check if admin last updated any test templates
+	var testTemplateUpdatedCount int64
+	err = r.db.WithContext(ctx).Table("test_templates").Where("last_updated_by = ?", adminID).Count(&testTemplateUpdatedCount).Error
+	if err != nil {
+		return fmt.Errorf("error checking test template updated by admin: %w", err)
+	}
+
+	if testTemplateUpdatedCount > 0 {
+		return entity.NewHTTPError(
+			entity.ErrCannotDeleteAdminWithRelations.Code,
+			fmt.Sprintf("Tidak dapat menghapus admin: masih tercatat sebagai yang terakhir mengupdate di %d test template", testTemplateUpdatedCount),
+		)
+	}
+
+	return nil
+}
+
 func (r AdminRepository) FindOneByEmail(ctx context.Context, email string) (entity.Admin, error) {
 	var admin entity.Admin
 	err := r.db.Where("email = ?", email).First(&admin).Error

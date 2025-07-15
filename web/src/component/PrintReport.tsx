@@ -74,32 +74,44 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                 return (
                     <Stack gap={1} direction={"row"}>
                         {/* Download PDF Button */}
-                        <Tooltip title={loading ? "Loading..." : "Download PDF"}>
-                            <IconButton
-                                onClick={e => e.stopPropagation()}
-                                color='primary'
-                                download={`MCU_Result_${dayjs(prop.workOrder.created_at).format("YYYYMMDD")}_${prop.patient.id}_${prop.patient.first_name}_${prop.patient.last_name}.pdf`}
-                                href={url || ''}
-                                disabled={loading}
-                            >
-                                <FileDownloadIcon />
-                            </IconButton>
+                        <Tooltip title={
+                            loading ? "Loading..." : 
+                            !prop.workOrder.have_complete_data ? `Hasil belum lengkap. Unduh akan tersedia ketika semua tes selesai.` :
+                            "Download PDF"
+                        }>
+                            <span>
+                                <IconButton
+                                    onClick={e => e.stopPropagation()}
+                                    color='primary'
+                                    download={`MCU_Result_${dayjs(prop.workOrder.created_at).format("YYYYMMDD")}_${prop.patient.id}_${prop.patient.first_name}_${prop.patient.last_name}.pdf`}
+                                    href={url || ''}
+                                    disabled={loading || !prop.workOrder.have_complete_data}
+                                >
+                                    <FileDownloadIcon />
+                                </IconButton>
+                            </span>
                         </Tooltip>
 
                         {/* Print PDF Button */}
-                        <Tooltip title={loading ? "Loading..." : "Print PDF"}>
-                            <IconButton
-                                color='secondary'
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    if (url) {
-                                        window.open(url, '_blank')?.focus();
-                                    }
-                                }}
-                                disabled={loading}
-                            >
-                                <PrintIcon />
-                            </IconButton>
+                        <Tooltip title={
+                            loading ? "Loading..." : 
+                            !prop.workOrder.have_complete_data ? `Hasil belum lengkap. Unduh akan tersedia ketika semua tes selesai.` :
+                            "Print PDF"
+                        }>
+                            <span>
+                                <IconButton
+                                    color='secondary'
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (url && prop.workOrder.have_complete_data) {
+                                            window.open(url, '_blank')?.focus();
+                                        }
+                                    }}
+                                    disabled={loading || !prop.workOrder.have_complete_data}
+                                >
+                                    <PrintIcon />
+                                </IconButton>
+                            </span>
                         </Tooltip>
                     </Stack>
                 );

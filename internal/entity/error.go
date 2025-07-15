@@ -87,10 +87,10 @@ var (
 	ErrGone                          = NewHTTPError(http.StatusGone)                          // HTTP 410 Gone
 	ErrLengthRequired                = NewHTTPError(http.StatusLengthRequired)                // HTTP 411 Length Required
 	ErrPreconditionFailed            = NewHTTPError(http.StatusPreconditionFailed)            // HTTP 412 Precondition Failed
-	ErrStatusRequestEntityTooLarge   = NewHTTPError(http.StatusRequestEntityTooLarge)         // HTTP 413 Payload Too Large
-	ErrRequestURITooLong             = NewHTTPError(http.StatusRequestURITooLong)             // HTTP 414 URI Too Long
+	ErrStatusRequestEntityTooLarge   = NewHTTPError(http.StatusRequestEntityTooLarge)         // HTTP 413 Request Entity Too Large
+	ErrRequestURITooLong             = NewHTTPError(http.StatusRequestURITooLong)             // HTTP 414 Request URI Too Long
 	ErrUnsupportedMediaType          = NewHTTPError(http.StatusUnsupportedMediaType)          // HTTP 415 Unsupported Media Type
-	ErrRequestedRangeNotSatisfiable  = NewHTTPError(http.StatusRequestedRangeNotSatisfiable)  // HTTP 416 Range Not Satisfiable
+	ErrRequestedRangeNotSatisfiable  = NewHTTPError(http.StatusRequestedRangeNotSatisfiable)  // HTTP 416 Requested Range Not Satisfiable
 	ErrExpectationFailed             = NewHTTPError(http.StatusExpectationFailed)             // HTTP 417 Expectation Failed
 	ErrTeapot                        = NewHTTPError(http.StatusTeapot)                        // HTTP 418 I'm a teapot
 	ErrMisdirectedRequest            = NewHTTPError(http.StatusMisdirectedRequest)            // HTTP 421 Misdirected Request
@@ -123,6 +123,7 @@ var (
 	ErrInvalidListenerNetwork = errors.New("invalid listener network")
 
 	// Custom errors
-	ErrDeviceTypeNotSupport = errors.New("device type not supported")
-	ErrDeviceNotConnected   = errors.New("device not connected to LIS, standby mode")
+	ErrDeviceTypeNotSupport           = errors.New("device type not supported")
+	ErrDeviceNotConnected             = errors.New("device not connected to LIS, standby mode")
+	ErrCannotDeleteAdminWithRelations = NewHTTPError(http.StatusConflict, "Tidak dapat menghapus admin: masih memiliki relasi dengan work order")
 )

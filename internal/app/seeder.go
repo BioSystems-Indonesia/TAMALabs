@@ -220,7 +220,7 @@ var seedAdmin = []entity.Admin{
 }
 
 func initAdmin() entity.Admin {
-	const defaultEmail = "admin@admin.com"
+	defaultEmail := "admin@admin.com"
 	const defaultUsername = "admin"
 	const defaultPassword = "123456"
 
@@ -233,7 +233,7 @@ func initAdmin() entity.Admin {
 		ID:           1,
 		Username:     defaultUsername,
 		Fullname:     "First Admin",
-		Email:        defaultEmail,
+		Email:        &defaultEmail,
 		PasswordHash: string(hash),
 		IsActive:     true,
 		CreatedAt:    time.Now(),
