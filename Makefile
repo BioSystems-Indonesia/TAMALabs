@@ -42,7 +42,11 @@ migrate-down:
 	migrate -path ./migrations -database 'sqlite3://tmp/biosystem-lims.db' down 1
 
 migrate-diff:
-	atlas migrate diff --env gorm 
+	@if not defined desc ( \
+		echo Error: desc is required. Usage: make migrate-diff desc="add_some_table" & \
+		exit /b 1 \
+	)
+	atlas migrate diff --env gorm $(desc)
 
 # Catch-all target to allow passing arguments
 %:
