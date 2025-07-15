@@ -82,6 +82,11 @@ func convertSimpleUnit(value float64, fromUnit, toUnit string) (float64, error) 
 	fromUnit = normalizeUnit(fromUnit)
 	toUnit = normalizeUnit(toUnit)
 
+	// If units are the same, no conversion needed
+	if fromUnit == toUnit {
+		return value, nil
+	}
+
 	// Determine the conversion map based on the unit type
 	var conversionMap map[string]float64
 	switch {
@@ -111,6 +116,11 @@ func convertSimpleUnit(value float64, fromUnit, toUnit string) (float64, error) 
 
 // ConvertCompoundUnit converts a compound unit (e.g., mg/dL, U/L)
 func ConvertCompoundUnit(value float64, fromUnit, toUnit string) (float64, error) {
+	// If units are the same, no conversion needed
+	if fromUnit == toUnit {
+		return value, nil
+	}
+
 	// Parse the compound units
 	fromNum, fromDen := parseCompoundUnit(fromUnit)
 	toNum, toDen := parseCompoundUnit(toUnit)
