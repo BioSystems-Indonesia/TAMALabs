@@ -186,7 +186,6 @@ function ReceiveConfig(props: ReceiveConfigProps) {
                 />
                     readOnly={props.readonly}
                     disabled={props.readonly}
-                />
                 <FeatureList source={"baud_rate"} types={"baud-rate"}>
                     <AutocompleteInput
                         source="baud_rate"
