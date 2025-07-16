@@ -47,6 +47,7 @@ const MyAppBar = () => {
     return (
         <AppBar color="primary" sx={{
             position: 'fixed',
+            color: 'white',
         }} alwaysOn={appBarAlwaysOn()}
             toolbar={
                 <>
@@ -125,7 +126,6 @@ export const DefaultLayout = ({ children }: { children: ReactNode }) => {
     return (
         <Layout sx={{}} appBar={MyAppBar}>
             <Stack direction={"row"} gap={2}>
-
                 <DynamicBreadcrumbs />
             </Stack>
             {children}
