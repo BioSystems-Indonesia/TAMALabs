@@ -145,7 +145,7 @@ const CustomLoginPage: React.FC = () => {
                             variant="body2" 
                             textAlign="center" 
                             color="text.secondary"
-                            sx={{ mb: 3, fontSize: 20 }}
+                            sx={{ mb: 3, fontSize: 13 }}
                         >
                             Silakan masukkan username dan password Anda
                         </Typography>
