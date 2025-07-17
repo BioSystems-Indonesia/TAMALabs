@@ -40,7 +40,7 @@ func NewDeviceServerStrategy(
 		analyxTriaHandler:  analyxTriaHandler,
 		analyxPancaHandler: analyxPancaHandler,
 		swelabAlfaHandler:  swelabAlfaHandler,
-		swelabAlfaBasic:    swelabAlfaHandler, // Use the same handler for both
+		swelabAlfaBasic:    swelabAlfaHandler,
 	}
 }
 
