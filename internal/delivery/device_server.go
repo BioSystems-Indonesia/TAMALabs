@@ -22,6 +22,7 @@ type DeviceServerStrategy struct {
 	analyxTriaHandler  *analyxtrias.Handler
 	analyxPancaHandler *analyxpanca.Handler
 	swelabAlfaHandler  *swelabalfa.Handler
+	swelabAlfaBasic    *swelabalfa.Handler
 }
 
 func NewDeviceServerStrategy(
@@ -39,6 +40,7 @@ func NewDeviceServerStrategy(
 		analyxTriaHandler:  analyxTriaHandler,
 		analyxPancaHandler: analyxPancaHandler,
 		swelabAlfaHandler:  swelabAlfaHandler,
+		swelabAlfaBasic:    swelabAlfaHandler, // Use the same handler for both
 	}
 }
 
@@ -71,6 +73,7 @@ var tcpDeviceType = []entity.DeviceType{
 	entity.DeviceTypeAnalyxTria,
 	entity.DeviceTypeAnalyxPanca,
 	entity.DeviceTypeSwelabAlfa,
+	entity.DeviceTypeSwelabBasic,
 	entity.DeviceTypeOther,
 }
 
@@ -127,6 +130,8 @@ func (d *DeviceServerStrategy) ChooseDeviceTCPHandler(device entity.Device) (ser
 	case entity.DeviceTypeAnalyxPanca:
 		return d.analyxPancaHandler, nil
 	case entity.DeviceTypeSwelabAlfa:
+		return d.swelabAlfaHandler, nil
+	case entity.DeviceTypeSwelabBasic:
 		return d.swelabAlfaHandler, nil
 	default:
 		return d.defaultHandler, nil
