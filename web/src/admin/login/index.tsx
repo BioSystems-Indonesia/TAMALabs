@@ -73,15 +73,18 @@ const CustomLoginPage: React.FC = () => {
                 minHeight: '100vh',
                 background: 'white',
                 display: 'flex',
+                width:'100%',
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: 2
             }}
         >
-            <Container maxWidth="sm">
+            <Container maxWidth="lg">
                 <Paper
                     elevation={5}
                     sx={{
+                        display: 'flex',
+                        height: '50vh',
                         borderRadius: 4,
                         overflow: 'hidden',
                         background: 'rgba(255, 255, 255, 0.95)',
@@ -93,8 +96,13 @@ const CustomLoginPage: React.FC = () => {
                         sx={{
                             background: 'linear-gradient(135deg, #4abaab 0%, #2fa091ff 100%)',
                             padding: 4,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            alignItems: 'center',
                             textAlign: 'center',
                             color: 'white',
+                            width: '50%'
                         }}
                     >
                         <Avatar
@@ -108,17 +116,23 @@ const CustomLoginPage: React.FC = () => {
                         >
                             <img src={logo} width={75} />
                         </Avatar>
-                        <Typography variant="h4" fontWeight="bold" gutterBottom>
+                        <Typography variant="h5" fontWeight="bold" gutterBottom>
                            Laboratory Information System
                         </Typography>
-                        <Typography variant="body1" sx={{ opacity: 0.9, padding: '0 4rem' }}>
+                        <Typography variant="body1" sx={{ opacity: 0.9 }}>
                             Laboratory Information Management System Elga Tama
                         </Typography>
                     </Box>
 
-                    <CardContent sx={{ padding: 4 }}>
+                    <CardContent 
+                        sx={{ 
+                            paddingX: 6, 
+                            width: '50%', 
+                            margin: 'auto',
+                            flexDirection:'column'
+                        }}>
                         <Typography 
-                            variant="h5" 
+                            variant="h4" 
                             gutterBottom 
                             textAlign="center"
                             color="text.primary"
@@ -131,7 +145,7 @@ const CustomLoginPage: React.FC = () => {
                             variant="body2" 
                             textAlign="center" 
                             color="text.secondary"
-                            sx={{ mb: 3 }}
+                            sx={{ mb: 3, fontSize: 20 }}
                         >
                             Silakan masukkan username dan password Anda
                         </Typography>
@@ -168,9 +182,22 @@ const CustomLoginPage: React.FC = () => {
                                                     </InputAdornment>
                                                 ),
                                             }}
+                                            InputLabelProps={{
+                                                sx: {
+                                                    fontSize: '1.2rem',        
+                                                    color: 'text.primary',       
+                                                    '&.Mui-focused': {
+                                                        fontSize: '1.2rem',      
+                                                        color: 'primary.main',  
+                                                    }
+                                                }
+                                            }}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
                                                     borderRadius: 2,
+                                                    minWidth: '100%',
+                                                    height: 60,
+                                                    fontSize: '1.2rem'
                                                 }
                                             }}
                                         />
@@ -212,9 +239,21 @@ const CustomLoginPage: React.FC = () => {
                                                     </InputAdornment>
                                                 ),
                                             }}
+                                            InputLabelProps={{
+                                                sx: {
+                                                    fontSize: '1.2rem',          
+                                                    color: 'text.primary',     
+                                                    '&.Mui-focused': {
+                                                        fontSize: '1.2rem',      
+                                                        color: 'primary.main',   
+                                                    }
+                                                }
+                                            }}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
                                                     borderRadius: 2,
+                                                    height:60,
+                                                    fontSize: '1.2rem'
                                                 }
                                             }}
                                         />
@@ -246,7 +285,7 @@ const CustomLoginPage: React.FC = () => {
                         </form>
                     </CardContent>
 
-                    <Box
+                    {/* <Box
                         sx={{
                             textAlign: 'center',
                             padding: 2,
@@ -258,7 +297,7 @@ const CustomLoginPage: React.FC = () => {
                         <Typography variant="body2" color="text.secondary">
                             © 2025 PT Elga Tama. All rights reserved.
                         </Typography>
-                    </Box>
+                    </Box> */}
                 </Paper>
             </Container>
         </Box>

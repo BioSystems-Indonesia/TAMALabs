@@ -1,6 +1,6 @@
 import CloseIcon from '@mui/icons-material/Close';
 import WarningIcon from '@mui/icons-material/WarningAmber';
-import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useTheme } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import { AxiosError } from "axios";
 import { useEffect, useMemo, useState } from "react";
@@ -89,7 +89,7 @@ function TestTemplateForm(props: TestTemplateFormProps) {
         <SimpleForm disabled={props.readonly} toolbar={false}>
             <TestTypeToolbar />
             <Divider sx={{
-                marginBottom: "36px",
+                marginBottom: "0px",
             }} />
             <TextInput source="name" readOnly={props.readonly} validate={[required()]} />
             <TextInput source="description" readOnly={props.readonly} multiline />
@@ -228,14 +228,23 @@ const TestTemplateSaveButton = ({ disabled }: { disabled?: boolean }) => {
 }
 
 const TestTypeToolbar = () => {
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
+    
     return (
-        <Stack width={"100%"}
+        <Stack width={'100%'} 
             sx={{
                 position: "sticky",
                 top: 48,
-                borderBottom: "1px solid #ccc",
+                display:'flex',
                 zIndex: 2147483647,
                 marginBottom: 1,
+                '& .MuiToolbar-root': {
+                    backgroundColor: isDarkMode ? '#211e2c' : 'white',
+                    color: isDarkMode ? theme.palette.text.primary : theme.palette.text.primary,
+                    boxShadow: isDarkMode ? theme.shadows[2] : '0 2px 4px rgba(0,0,0,0.1)',
+                },
+                overflow: 'hidden'
             }}
         >
             <Toolbar sx={{
@@ -349,8 +358,8 @@ const ConfirmTemplateModificationModal: React.FC<ConfirmTemplateModificationModa
             });
         };
 
-        processObservationList(testTemplateDiff.ToDelete, 'Removed');
-        processObservationList(testTemplateDiff.ToCreate, 'Added');
+        processObservationList(testTemplateDiff.ToDelete || [], 'Removed');
+        processObservationList(testTemplateDiff.ToCreate || [], 'Added');
 
         const result: ProcessedWorkOrderView[] = [];
         affectedWorkOrdersMap?.forEach((value) => {
@@ -370,7 +379,7 @@ const ConfirmTemplateModificationModal: React.FC<ConfirmTemplateModificationModa
     }
 
     const hasAffectedWorkOrders = processedData.length > 0;
-    const hasAnyChanges = testTemplateDiff.ToCreate.length > 0 || testTemplateDiff.ToDelete.length > 0;
+    const hasAnyChanges = (testTemplateDiff?.ToCreate?.length || 0) > 0 || (testTemplateDiff?.ToDelete?.length || 0) > 0;
 
     return (
         <Dialog open={isOpen} onClose={onClose} maxWidth="md" fullWidth>
@@ -418,7 +427,7 @@ const ConfirmTemplateModificationModal: React.FC<ConfirmTemplateModificationModa
                                 ID: {wo.id} | Barcode: {wo.barcode}
                             </Typography>
 
-                            {wo.changes.length > 0 ? (
+                            {(wo.changes?.length || 0) > 0 ? (
                                 <TableContainer component={Paper} variant="outlined">
                                     <Table size="small" aria-label={`Changes for work order ${wo.id}`}>
                                         <TableHead sx={{ bgcolor: 'grey.200' }}>
