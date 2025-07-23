@@ -68,7 +68,7 @@ func (r *WorkOrderRepository) FindAllForResult(ctx context.Context, req *entity.
 	}
 
 	if !req.CreatedAtEnd.IsZero() {
-		db = db.Where("work_orders.created_at <= ?", req.CreatedAtEnd.Add(24*time.Hour))
+		db = db.Where("work_orders.created_at <= ?", req.CreatedAtEnd.Add(3*24*time.Hour))
 	}
 
 	if req.HasResult {

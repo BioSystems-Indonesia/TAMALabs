@@ -79,10 +79,9 @@ func (c *Client) ReadAll() ([]byte, error) {
 	return payload, nil
 }
 
-func (c *Client) ReadMultiMessage() ([][]byte, error) {
+func (c *Client) ReadMultiMessage(messageChan chan []byte) error {
 	slog.Info("read multi message")
 
-	var messages [][]byte
 	for {
 		message, err := c.ReadAll()
 		if err != nil {
@@ -91,17 +90,17 @@ func (c *Client) ReadMultiMessage() ([][]byte, error) {
 				break
 			}
 
-			return nil, err
+			return err
 		}
 		if len(message) == 0 {
 			break
 		}
 
 		slog.Info("read mllp message", "message", string(message))
-		messages = append(messages, message)
+		messageChan <- message
 	}
 
-	return messages, nil
+	return nil
 }
 
 func (c *Client) ReadAllRaw() ([]byte, error) {
