@@ -31,37 +31,45 @@ func (h *Handler) Handle(conn *net.TCPConn) {
 
 	defer panics.RecoverPanic(ctx)
 
-	pinger := NewPinger(conn)
-	if pinger.IsPing() {
-		slog.Info("received ping, returning ACK")
-		n, err := pinger.ReturnACK()
-		if err != nil {
-			slog.Error("error on return ping", "err", err)
-		}
-		slog.Info("returned ACK", "n", n)
-		return
-	}
+	// pinger := NewPinger(conn)
+	// if pinger.IsPing() {
+	// 	slog.Info("received ping, returning ACK")
+	// 	n, err := pinger.ReturnACK()
+	// 	if err != nil {
+	// 		slog.Error("error on return ping", "err", err)
+	// 	}
+	// 	slog.Info("returned ACK", "n", n)
+	// 	return
+	// }
 
 	mc := mllp.NewClient(conn)
-	b, err := mc.ReadAll()
-	if err != nil {
-		if !errors.Is(err, io.EOF) {
+	for {
+		message, err := mc.ReadAll()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			slog.Error("error reading mllp message", "error", err)
+
+			return
+		}
+		if len(message) == 0 {
+			break
+		}
+
+		res, err := h.handleMessage(ctx, string(message))
+		if err != nil {
 			slog.Error(err.Error())
 		}
-	}
 
-	res, err := h.handleMessage(ctx, string(b))
-	if err != nil {
-		slog.Error(err.Error())
-	}
+		if res != "" {
+			resLog := strings.ReplaceAll(res, "\r", "\n")
+			slog.Info(fmt.Sprintf("ack message: %s", resLog))
+		}
 
-	if res != "" {
-		resLog := strings.ReplaceAll(res, "\r", "\n")
-		slog.Info(fmt.Sprintf("ack message: %s", resLog))
-	}
-
-	if err := mc.Write([]byte(res)); err != nil {
-		slog.Error(err.Error())
+		if err := mc.Write([]byte(res)); err != nil {
+			slog.Error(err.Error())
+		}
 	}
 }
 
