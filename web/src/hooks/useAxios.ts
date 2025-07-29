@@ -1,6 +1,8 @@
 import axios, { type CreateAxiosDefaults } from "axios";
 import { useMemo } from "react";
 import { LOCAL_STORAGE_ACCESS_TOKEN } from "../types/constant";
+import { useNotify } from "react-admin";
+import { ErrorPayload } from "../types/errors";
 
 /**
  * React hook to create and memoize an Axios instance.
@@ -9,9 +11,44 @@ import { LOCAL_STORAGE_ACCESS_TOKEN } from "../types/constant";
  * @returns {axios.AxiosInstance} - Memoized Axios instance.
  */
 const useAxios = (config?: CreateAxiosDefaults) => {
+  const notify = useNotify();
   const instance = useMemo(() => {
     return createAxiosInstance(config);
   }, [config]); // Re-create instance only if config changes
+
+  instance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (axios.isAxiosError(error)) {
+        const errorResponse = error.response?.data as ErrorPayload;
+        if (!errorResponse) {
+          notify("Something went wrong", {
+            type: "error",
+          });
+          return;
+        }
+        switch (errorResponse.status_code) {
+          case 401:
+            notify("Session expired", {
+              type: "error",
+            });
+            break;
+          case 403:
+            notify("Forbidden", {
+              type: "error",
+            });
+            break;
+          default:
+            notify(`Error ${errorResponse.status_code}: ${errorResponse.error}`, {
+              type: "error",
+            });
+            break;
+        }
+      } else {
+        throw error;
+      }
+    }
+  );
 
   return instance;
 };
@@ -32,7 +69,8 @@ export const createAxiosInstance = (config?: CreateAxiosDefaults) => {
     ...config,
   };
 
-  return axios.create(conf);
+  const instance = axios.create(conf);
+  return instance;
 };
 
 export default useAxios;

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -106,4 +107,19 @@ func (h *LogHandler) StreamLog(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+func (h *LogHandler) ExportLog(c echo.Context) error {
+	// Prefix and timestamp for zip file
+	prefix := "lis_exported_data__"
+	timestamp := time.Now().Format("20060102_150405")
+	zipFileName := fmt.Sprintf("%s%s.zip", prefix, timestamp)
+	zipFilePath := filepath.Join(os.TempDir(), zipFileName)
+
+	srcDir := filepath.Join(".", "tmp")
+	if err := ZipDir(srcDir, zipFilePath); err != nil {
+		return handleError(c, fmt.Errorf("failed to zip tmp dir: %w", err))
+	}
+
+	return c.File(zipFilePath)
 }

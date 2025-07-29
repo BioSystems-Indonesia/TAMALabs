@@ -28,8 +28,11 @@ import {
   ExpandLess as ExpandLessIcon,
   Add as AddIcon,
   Settings as SettingsIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
 } from '@mui/icons-material';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import useAxios from '../../hooks/useAxios';
+import { useNotify } from 'react-admin';
 
 // Define the structure of a log entry from the backend
 interface LogEntry {
@@ -56,6 +59,27 @@ const LogViewer = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [searchTerm, setSearchTerm] = useState('');
+  const axios = useAxios()
+  const notify = useNotify()
+
+  const exportLogs = () => {
+    axios({
+      url: "/log/export",
+      method: "GET",
+      responseType: "blob",
+    }).then((res) => {
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "logs.zip");
+      document.body.appendChild(link);
+      link.click();
+    }).catch((err) => {
+      notify("Error export logs: " + err, {
+        type: 'error',
+      });
+    })
+  }
 
   useEffect(() => {
     // Set up global function for JSON field clicks
@@ -137,11 +161,11 @@ const LogViewer = () => {
         .split('_')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
-      
-      setCustomColumns(prev => [...prev, { 
-        field: newColumn.field!, 
+
+      setCustomColumns(prev => [...prev, {
+        field: newColumn.field!,
         headerName: headerName,
-        width: newColumn.width 
+        width: newColumn.width
       }]);
       setNewColumn({});
       setShowColumnDialog(false);
@@ -171,15 +195,15 @@ const LogViewer = () => {
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-    
-    setCustomColumns(prev => [...prev, { 
-      field: fieldName, 
+
+    setCustomColumns(prev => [...prev, {
+      field: fieldName,
       headerName: headerName
     }]);
   };
 
   // Filter logs based on search term
-  const filteredLogs = logs.filter(log => 
+  const filteredLogs = logs.filter(log =>
     log.msg.toLowerCase().includes(searchTerm.toLowerCase()) ||
     log.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
     log.time.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -221,6 +245,13 @@ const LogViewer = () => {
             }}
             sx={{ width: 250 }}
           />
+          <Button
+            variant="outlined"
+            startIcon={<FileDownloadIcon />}
+            onClick={() => exportLogs()}
+          >
+            Export Logs
+          </Button>
           <Button
             variant="outlined"
             startIcon={<AddIcon />}
@@ -282,11 +313,11 @@ const LogViewer = () => {
               {paginatedLogs.map((log, index) => {
                 const rowId = `${page * rowsPerPage + index}`;
                 const isExpanded = expandedRows.has(rowId);
-                
+
                 return (
                   <React.Fragment key={rowId}>
-                    <TableRow 
-                      hover 
+                    <TableRow
+                      hover
                       onClick={() => handleRowClick(rowId)}
                       sx={{ cursor: 'pointer' }}
                     >
@@ -294,12 +325,12 @@ const LogViewer = () => {
                         {new Date(log.time).toLocaleTimeString()}
                       </TableCell>
                       <TableCell>
-                                                 <Chip
-                           label={log.level}
-                           color={getLevelColor(log.level) as 'error' | 'warning' | 'info' | 'default'}
-                           size="small"
-                           variant="outlined"
-                         />
+                        <Chip
+                          label={log.level}
+                          color={getLevelColor(log.level) as 'error' | 'warning' | 'info' | 'default'}
+                          size="small"
+                          variant="outlined"
+                        />
                       </TableCell>
                       <TableCell>
                         <Typography
@@ -329,21 +360,21 @@ const LogViewer = () => {
                       </TableCell>
 
 
-                                             {customColumns.map((col) => {
-                         const value = log[col.field];
-                         return (
-                           <TableCell key={col.field}>
-                             {value ? String(value) : '-'}
-                           </TableCell>
-                         );
-                       })}
+                      {customColumns.map((col) => {
+                        const value = log[col.field];
+                        return (
+                          <TableCell key={col.field}>
+                            {value ? String(value) : '-'}
+                          </TableCell>
+                        );
+                      })}
                       <TableCell>
                         <IconButton size="small">
                           {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                         </IconButton>
                       </TableCell>
                     </TableRow>
-                    
+
                     {/* Expanded row content */}
                     <TableRow>
                       <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={3 + customColumns.length + 1}>
@@ -352,29 +383,29 @@ const LogViewer = () => {
                             <Typography variant="h6" gutterBottom>
                               Full Log Entry
                             </Typography>
-                                                         <Box
-                               component="pre"
-                               sx={{
-                                 backgroundColor: 'grey.100',
-                                 p: 2,
-                                 borderRadius: 1,
-                                 overflow: 'auto',
-                                 fontSize: '0.875rem',
-                                 fontFamily: 'monospace',
-                                 maxHeight: 300,
-                                 '& .json-field': {
-                                   cursor: 'pointer',
-                                   color: '#1976d2',
-                                   textDecoration: 'underline',
-                                   '&:hover': {
-                                     backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                                   }
-                                 }
-                               }}
-                               dangerouslySetInnerHTML={{
-                                 __html: formatJsonWithClickableFields(log, addColumnFromJson)
-                               }}
-                             />
+                            <Box
+                              component="pre"
+                              sx={{
+                                backgroundColor: 'grey.100',
+                                p: 2,
+                                borderRadius: 1,
+                                overflow: 'auto',
+                                fontSize: '0.875rem',
+                                fontFamily: 'monospace',
+                                maxHeight: 300,
+                                '& .json-field': {
+                                  cursor: 'pointer',
+                                  color: '#1976d2',
+                                  textDecoration: 'underline',
+                                  '&:hover': {
+                                    backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                                  }
+                                }
+                              }}
+                              dangerouslySetInnerHTML={{
+                                __html: formatJsonWithClickableFields(log, addColumnFromJson)
+                              }}
+                            />
                           </Box>
                         </Collapse>
                       </TableCell>
@@ -385,7 +416,7 @@ const LogViewer = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        
+
         <TablePagination
           rowsPerPageOptions={[25, 50, 100]}
           component="div"

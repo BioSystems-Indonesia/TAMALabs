@@ -24,9 +24,9 @@ build-win:
 	make build-fe
 	make build-be-win
 
-installer: build
+installer: build	
 	@echo "Creating installer..."
-	@ISCC $(ISS_FILE)
+	@docker run --rm -v "$(CURDIR):/work" amake/innosetup $(ISS_FILE)
 	@echo "Installer created successfully!"
 
 dev-fe:

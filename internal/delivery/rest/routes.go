@@ -210,8 +210,17 @@ func RegisterRoutes(
 		role.GET("/:id", roleHandler.GetOneRole)
 	}
 
+	unauthenticatedLog := unauthenticatedV1.Group("/log")
+	{
+		unauthenticatedLog.GET("/stream", handler.LogHandler.StreamLog)
+	}
+
+	log := authenticatedV1.Group("/log")
+	{
+		log.GET("/export", handler.LogHandler.ExportLog)
+	}
+
 	handler.RegisterFeatureList(authenticatedV1)
-	unauthenticatedV1.GET("/log/stream", handler.LogHandler.StreamLog)
 }
 
 func registerFrontendPath(e *echo.Echo) {
