@@ -279,7 +279,7 @@ const Footer = () => (
 // Helper function to group data by category (if needed)
 const groupData = (data: ReportData[]) => {
     const grouped: Record<string, ReportData[]> = {};
-    data.forEach((item) => {
+    data?.forEach((item) => {
         if (!grouped[item.category]) {
             grouped[item.category] = [];
         }

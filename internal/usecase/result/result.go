@@ -45,7 +45,7 @@ func (u *Usecase) Results(
 	}
 
 	for i := range resp.Data {
-		u.fillResultDetail(&resp.Data[i])
+		u.fillResultDetail(&resp.Data[i], true)
 	}
 
 	return resp, nil
@@ -56,7 +56,7 @@ func (u *Usecase) ResultDetail(ctx context.Context, workOrderID int64) (entity.R
 	if err != nil {
 		return entity.ResultDetail{}, err
 	}
-	u.fillResultDetail(&workOrder)
+	u.fillResultDetail(&workOrder, false)
 
 	// Why inverted? preve is get from next and next from get
 	// because the default of ordering in front end are from the latest
@@ -148,7 +148,7 @@ func (u *Usecase) groupResultInCategory(tests []entity.TestResult) map[string][]
 	return resultTestsCategory
 }
 
-func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder) {
+func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder, hideEmpty bool) {
 	var allObservationRequests []entity.ObservationRequest
 	var allObservationResults []entity.ObservationResult
 	for _, specimen := range workOrder.Specimen {
@@ -215,6 +215,18 @@ func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder) {
 	if len(allObservationRequests) != 0 {
 		workOrder.PercentComplete = float64(totalResultFilled) / float64(len(allObservationRequests))
 	}
+
+	if hideEmpty {
+		var filteredTests []entity.TestResult
+		for _, test := range allTests {
+			if test.Result == nil || *test.Result == 0 {
+				continue
+			}
+			filteredTests = append(filteredTests, test)
+		}
+		allTests = filteredTests
+	}
+
 	workOrder.TestResult = allTests
 }
 

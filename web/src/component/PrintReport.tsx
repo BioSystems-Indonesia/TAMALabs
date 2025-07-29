@@ -27,7 +27,7 @@ type PrintReportButtonProps = {
 const PrintReportButton = (prop: PrintReportButtonProps) => {
     const [data, setData] = useState<ReportData[]>([])
     useEffect(() => {
-        setData(prop.results.map(v => {
+        setData(prop.results?.map(v => {
             let abnormality = "Normal" as ReportDataAbnormality
             switch (v.abnormal) {
                 case 0:
@@ -76,7 +76,7 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                         {/* Download PDF Button */}
                         <Tooltip title={
                             loading ? "Loading..." : 
-                            !prop.workOrder.have_complete_data ? `Hasil belum lengkap. Unduh akan tersedia ketika semua tes selesai.` :
+                            // !prop.workOrder.have_complete_data ? `Hasil belum lengkap. Unduh akan tersedia ketika semua tes selesai.` :
                             "Download PDF"
                         }>
                             <span>
@@ -85,7 +85,9 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                                     color='primary'
                                     download={`MCU_Result_${dayjs(prop.workOrder.created_at).format("YYYYMMDD")}_${prop.patient.id}_${prop.patient.first_name}_${prop.patient.last_name}.pdf`}
                                     href={url || ''}
-                                    disabled={loading || !prop.workOrder.have_complete_data}
+                                    disabled={loading 
+                                        // || !prop.workOrder.have_complete_data
+                                    }
                                 >
                                     <FileDownloadIcon />
                                 </IconButton>
@@ -95,7 +97,7 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                         {/* Print PDF Button */}
                         <Tooltip title={
                             loading ? "Loading..." : 
-                            !prop.workOrder.have_complete_data ? `Hasil belum lengkap. Unduh akan tersedia ketika semua tes selesai.` :
+                            // !prop.workOrder.have_complete_data ? `Hasil belum lengkap. Unduh akan tersedia ketika semua tes selesai.` :
                             "Print PDF"
                         }>
                             <span>
@@ -103,11 +105,15 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                                     color='secondary'
                                     onClick={(e) => {
                                         e.stopPropagation()
-                                        if (url && prop.workOrder.have_complete_data) {
+                                        if (url 
+                                            // && prop.workOrder.have_complete_data
+                                        ) {
                                             window.open(url, '_blank')?.focus();
                                         }
                                     }}
-                                    disabled={loading || !prop.workOrder.have_complete_data}
+                                    disabled={loading 
+                                        // || !prop.workOrder.have_complete_data
+                                    }
                                 >
                                     <PrintIcon />
                                 </IconButton>
