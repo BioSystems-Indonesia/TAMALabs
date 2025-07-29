@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -34,33 +35,34 @@ func (r *Rest) Serve() {
 	r.ctx, r.cancel = context.WithCancel(context.Background())
 
 	// Start server in a goroutine so that it doesn't block.
+	errChan := make(chan error, 1)
 	go func() {
 		if err := r.Client.Start("0.0.0.0:" + r.Port); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("Error starting server", slog.String("error", err.Error()))
-			os.Exit(1)
+			errChan <- fmt.Errorf("error starting server: %w", err)
 		}
 	}()
 	slog.Info("Server started at", slog.String("port", r.Port))
 
-	// Wait for interrupt signal or context cancellation to gracefully shut down the server.
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 
+	// Wait for error, interrupt signal or context cancellation
 	select {
-	case <-quit:
-		slog.Info("Interrupt signal received, shutting down server...")
 	case <-r.ctx.Done():
 		slog.Info("Context cancelled, shutting down server...")
+		panic("context cancelled")
+	case err := <-errChan:
+		slog.Error("Error starting server", slog.String("error", err.Error()))
+		panic(fmt.Sprintf("error starting server: %v", err))
+	case <-quit:
+		slog.Info("Interrupt signal received, shutting down server...")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := r.Client.Shutdown(ctx); err != nil {
 		slog.Error("Server forced to shutdown", slog.String("error", err.Error()))
-		os.Exit(1)
 	}
-
-	slog.Info("Server exited gracefully")
 }
 
 func (r *Rest) GetClient() *echo.Echo {

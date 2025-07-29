@@ -40,7 +40,7 @@ func main() {
 
 	port, err := serial.Open(portName, mode)
 	if err != nil {
-		log.Fatalf("Failed to open serial port: %v", err)
+		panic(fmt.Sprintf("Failed to open serial port: %v", err))
 	}
 	defer port.Close()
 

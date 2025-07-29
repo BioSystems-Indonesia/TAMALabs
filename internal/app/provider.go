@@ -37,7 +37,7 @@ func provideAllDevices(deviceRepo *devicerepo.DeviceRepository) []entity.Device 
 	allDevices, err := deviceRepo.FindAll(context.Background(), &entity.GetManyRequestDevice{})
 	if err != nil {
 		slog.Error("failed to get all devices", "error", err)
-		os.Exit(1)
+		panic(fmt.Sprintf("failed to get all devices: %v", err))
 	}
 
 	return allDevices.Data

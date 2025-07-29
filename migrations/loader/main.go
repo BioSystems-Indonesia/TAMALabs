@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 
+	"log/slog"
+
 	"ariga.io/atlas-provider-gorm/gormschema"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
@@ -30,13 +32,13 @@ func main() {
 
 	stmts, err := gormschema.New("sqlite").Load(models...)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to load gorm schema: %v\n", err)
-		os.Exit(1)
+		slog.Error("failed to load gorm schema", "error", err)
+		panic(fmt.Sprintf("failed to load gorm schema: %v", err))
 	}
 
 	_, err = io.WriteString(os.Stdout, stmts)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to write gorm schema: %v\n", err)
-		os.Exit(1)
+		slog.Error("failed to write gorm schema", "error", err)
+		panic(fmt.Sprintf("failed to write gorm schema: %v", err))
 	}
 }
