@@ -9,6 +9,7 @@ package app
 import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/alifax"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
@@ -97,7 +98,8 @@ func InitRestApp() server.RestServer {
 	analyxpancaHandler := analyxpanca.NewHandler(usecase)
 	swelabalfaHandler := swelabalfa.NewHandler(usecase)
 	swelablumiHandler := swelablumi.NewHandler(usecase)
-	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, ncc3300Handler, tcpHlSevenHandler, analyxtriasHandler, analyxpancaHandler, swelabalfaHandler, swelablumiHandler)
+	alifaxHandler := alifax.NewHandler(usecase)
+	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, ncc3300Handler, tcpHlSevenHandler, analyxtriasHandler, analyxpancaHandler, swelabalfaHandler, swelablumiHandler, alifaxHandler)
 	v := provideAllDevices(deviceRepository)
 	controllerRepository := server2.NewControllerRepository(deviceServerStrategy, v)
 	deviceUseCase := deviceuc.NewDeviceUseCase(schema, deviceRepository, strategy, ba400Ba400, a15A15, controllerRepository)

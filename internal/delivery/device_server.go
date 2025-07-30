@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/alifax"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
 	ncc3300 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
@@ -25,6 +26,7 @@ type DeviceServerStrategy struct {
 	swelabAlfaHandler  *swelabalfa.Handler
 	swelabAlfaBasic    *swelabalfa.Handler
 	swelabLumiHandler  *swelablumi.Handler
+	alifaxHandler      *alifax.Handler
 }
 
 func NewDeviceServerStrategy(
@@ -35,6 +37,7 @@ func NewDeviceServerStrategy(
 	analyxPancaHandler *analyxpanca.Handler,
 	swelabAlfaHandler *swelabalfa.Handler,
 	swelabLumiHandler *swelablumi.Handler,
+	alifaxHandler *alifax.Handler,
 ) *DeviceServerStrategy {
 	return &DeviceServerStrategy{
 		coaxHandler:        coaxHandler,
@@ -45,6 +48,7 @@ func NewDeviceServerStrategy(
 		swelabAlfaHandler:  swelabAlfaHandler,
 		swelabAlfaBasic:    swelabAlfaHandler,
 		swelabLumiHandler:  swelabLumiHandler,
+		alifaxHandler:      alifaxHandler,
 	}
 }
 
@@ -69,6 +73,7 @@ func init() {
 var serialDeviceType = []entity.DeviceType{
 	entity.DeviceTypeCoax,
 	entity.DeviceTypeNCC3300,
+	entity.DeviceTypeAlifax,
 }
 
 var tcpDeviceType = []entity.DeviceType{
@@ -118,6 +123,9 @@ func (d *DeviceServerStrategy) ChooseDeviceSerialHandler(device entity.Device) (
 		return d.coaxHandler, nil
 	case entity.DeviceTypeNCC3300:
 		return d.ncc3300, nil
+	case entity.DeviceTypeAlifax:
+		return d.alifaxHandler, nil
+
 	default:
 		return nil, entity.ErrDeviceTypeNotSupport
 	}

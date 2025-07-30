@@ -16,7 +16,12 @@ const (
 	DeviceTypeSwelabLumi  DeviceType = "SWELAB_LUMI"
 	DeviceTypeCoax        DeviceType = "COAX"
 	DeviceTypeNCC3300     DeviceType = "NCC_3300"
+	DeviceTypeAlifax      DeviceType = "ALIFAX"
 )
+
+func (d DeviceType) String() string {
+	return string(d)
+}
 
 var TableDeviceType = Tables{
 	{ID: string(DeviceTypeBA400), Name: string(DeviceTypeBA400), AdditionalInfo: DeviceCapability{
@@ -59,6 +64,11 @@ var TableDeviceType = Tables{
 	{ID: string(DeviceTypeSwelabLumi), Name: string(DeviceTypeSwelabLumi), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
 	}},
+	{ID: string(DeviceTypeAlifax), Name: string(DeviceTypeAlifax), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+		UseSerial:  true,
+	}},
+
 }
 
 type DeviceCapability struct {
