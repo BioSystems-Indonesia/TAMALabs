@@ -1,4 +1,4 @@
-import { GridLegacy as Grid, LinearProgress, SxProps } from '@mui/material';
+import { GridLegacy as Grid, LinearProgress, SxProps, Alert } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 
@@ -11,7 +11,6 @@ import { SubmitHandler, useFormContext } from 'react-hook-form';
 import { getRefererParam } from '../../hooks/useReferer';
 import { LOCAL_STORAGE_ACCESS_TOKEN } from '../../types/constant';
 import { DeviceForm } from '../device';
-
 
 type WorkOrderStatus = 'IDLE' | 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'INCOMPLETE' | 'ERROR';
 type StreamStatus = 'DONE' | 'IN_PROGRESS' | 'INCOMPLETE';
@@ -185,7 +184,7 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
     const [percentage, setPercentage] = useState<number>(0);
     const [status, setStatus] = useState<WorkOrderStatus>('IDLE');
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [_, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
     const refresh = useRefresh();
 
@@ -248,11 +247,7 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
             setStatus(finalResult.status);
             setPercentage(finalResult.percentage);
             if (finalResult.status === 'INCOMPLETE') {
-                notify(`Error on sent work order: ${finalResult.errorCause}`, {
-                    type: 'error',
-                    multiLine: true,
-                    autoHideDuration: 3000,
-                })
+                setError(`Gagal melakukan request, pesan: '${finalResult.errorCause?.split("data: ")[1]}'`);
                 refresh();
             } else {
                 notify("Work order sent successfully", {
@@ -327,6 +322,10 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
         device_id: props.defaultDeviceID ?? undefined,
     }}>
         <Form disabled={props.isProcessing} onSubmit={onSubmit}>
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                   {error}
+                </Alert>)}
             <Grid direction={"row"} sx={{
                 width: "100%",
             }} container>

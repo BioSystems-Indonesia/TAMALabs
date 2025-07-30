@@ -116,29 +116,72 @@ const componentsOverrides = (theme: Theme) => {
                 },
             },
         },
+        RaAppBar: {
+            styleOverrides: {
+                root: {
+                    '& .RaAppBar-title': {
+                        fontSize: '1.5rem',
+                        fontWeight: 'bold',
+                        color: theme.palette.primary.main,
+                    },
+                },
+            },
+        },
         RaLayout: {
             styleOverrides: {
                 root: {
-                    '& .RaLayout-appFrame': { marginTop: theme.spacing(5) },
+                    '& .RaLayout-appFrame': { 
+                        marginTop: theme.spacing(5),
+                    },
+                    '& .RaLayout-sidebar': {
+                        '& .MuiToolbar-root': {
+                            minHeight: '64px',
+                            backgroundColor: theme.palette.primary.main,
+                            color: theme.palette.primary.contrastText,
+                            boxShadow: theme.shadows[1],
+                        },
+                    },
                 },
             },
         },
         RaMenuItemLink: {
             styleOverrides: {
                 root: {
-                    borderLeft: `3px solid ${theme.palette.primary.contrastText}`,
+                    borderLeft: `3px solid transparent`,        // Border default
+                    margin: theme.spacing(0.5, 2, 0.5, -0.6),            // Margin hanya atas-bawah
+                    borderRadius: theme.spacing(1),           // Border radius
+                    padding: theme.spacing(1, 2, 1, 2),       // Padding: top, right, bottom, left (0 untuk left)
+                    transition: 'all 0.3s ease',             // Transisi smooth
                     '&:hover': {
-                        borderRadius: '0px 100px 100px 0px',
+                        borderRadius: '0px 100px 100px 0px',  // Rounded saat hover
+                        backgroundColor: theme.palette.action.hover,
+                        transform: 'translateX(5px)',          // Efek slide
                     },
                     '&.RaMenuItemLink-active': {
                         borderLeft: `3px solid ${theme.palette.primary.main}`,
-                        borderRadius: '0px 100px 100px 0px',
+                        borderRadius: '0px 50px 50px 0px',
                         backgroundImage: `linear-gradient(98deg, ${theme.palette.primary.light}, ${theme.palette.primary.dark} 94%)`,
-                        boxShadow: theme.shadows[1],
+                        boxShadow: theme.shadows[3],           // Shadow lebih tebal
                         color: theme.palette.primary.contrastText,
-
+                        transform: 'translateX(8px)',          // Efek slide lebih jauh
                         '& .MuiSvgIcon-root': {
                             fill: theme.palette.primary.contrastText,
+                        },
+                        '& .MuiListItemText-primary': {
+                            fontWeight: 'bold',                // Teks bold saat aktif
+                        },
+                    },
+                    // Style khusus untuk sidebar yang di-collapse
+                    '.RaSidebar-closed &': {
+                        margin: theme.spacing(0.5, 0, 0.5, -0.6),  // Hapus margin kanan
+                        padding: theme.spacing(1, 0, 1, 2),        // Hapus padding kanan
+                        '&.RaMenuItemLink-active': {
+                            borderRadius: '0px',              // Tidak ada rounded saat sidebar collapse
+                            transform: 'translateX(0px)',      // Tidak ada efek slide
+                        },
+                        '&:hover': {
+                            borderRadius: '0px',               // Tidak ada rounded saat hover di sidebar collapse
+                            transform: 'translateX(0px)',      // Tidak ada efek slide
                         },
                     },
                 },
@@ -152,6 +195,46 @@ const componentsOverrides = (theme: Theme) => {
         RaTranslatableInputs: {
             defaultProps: {
                 fullWidth: true,
+            },
+        },
+        RaSidebar: {
+            styleOverrides: {
+                root: {
+                    '& .RaSidebar-fixed': {
+                        height: '110%',
+                        backgroundColor: theme.palette.background.paper,
+                        borderRight: `1px solid ${theme.palette.divider}`,
+                        boxShadow: theme.shadows[2],
+                        // Responsive sidebar
+                        [theme.breakpoints.down('md')]: {
+                            width: '240px',
+                        },
+                        [theme.breakpoints.down('sm')]: {
+                            width: '200px',
+                        },
+                    },
+                    '& .MuiDrawer-paper': {
+                        backgroundColor: theme.palette.background.paper,
+                        backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
+                        // Responsive drawer
+                        [theme.breakpoints.down('md')]: {
+                            width: '240px',
+                        },
+                        [theme.breakpoints.down('sm')]: {
+                            width: '200px',
+                        },
+                    },
+                },
+            },
+        },
+        RaMenu: {
+            styleOverrides: {
+                root: {
+                    '& .MuiList-root': {
+                        paddingTop: theme.spacing(1),
+                        paddingBottom: theme.spacing(1),
+                    },
+                },
             },
         },
     };
@@ -173,9 +256,9 @@ const darkPalette: PaletteOptions = {
 };
 
 const lightPalette: PaletteOptions = {
-    primary: { main: '#4ABAAB' },
+    primary: { main: '#4abaab', dark: '#43b1a3ff' },
     secondary: { main: '#2661BF' },
-    background: { default: '#f0f1f6' },
+    background: { default: '#f9f9f9ff' },
     text: {
         primary: '#544f5a',
         secondary: '#89868D',
@@ -188,7 +271,11 @@ const createRadiantTheme = (palette: RaThemeOptions['palette']) => {
     const themeOptions = {
         palette,
         shape: { borderRadius: 6 },
-        sidebar: { width: 250 },
+        sidebar: { 
+            width: 250,             
+            closedWidth: 55,  
+      
+        },
         spacing: 10,
         typography: {
             fontFamily: 'Gabarito, tahoma, sans-serif',

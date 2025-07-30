@@ -39,6 +39,9 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                 case 2:
                     abnormality = "Low"
                     break
+                case 3:
+                    abnormality = "No Data"
+                    break
                 default:
                     abnormality = "Normal"
                     break

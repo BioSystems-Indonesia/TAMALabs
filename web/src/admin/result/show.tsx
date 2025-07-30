@@ -453,14 +453,16 @@ const TestResultTable = (props: TestResultTableProps) => {
                     flex: 2,
                 },
                 {
+                    // Error
                     field: 'abnormal',
                     headerName: 'Status',
                     flex: 1,
                     renderCell: (params: GridRenderCellParams) => {
                         switch (params.value) {
-                            case 0: return <Chip color="default" label="Kosong" />
+                            case 0: return <Chip color="success" label="Normal"/>
                             case 1: return <Chip color="error" label="High" />
-                            case 2: return <Chip color="primary" label="Low" />
+                            case 2: return <Chip color="secondary" label="Low" />
+                            case 3: return <Chip color="default" label="No Data" />
                             default: return <Chip color="success" label="Normal" />
                         }
                     },

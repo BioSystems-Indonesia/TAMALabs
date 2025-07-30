@@ -68,7 +68,7 @@ func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
 		Category:       request.TestType.Category,
 		ReferenceRange: fmt.Sprintf("%.2f - %.2f", request.TestType.LowRefRange, request.TestType.HighRefRange),
 		CreatedAt:      request.UpdatedAt.Format(time.RFC3339),
-		Abnormal:       NormalResult,
+		Abnormal:       NoDataResult,
 		Picked:         false,
 		History:        []TestResult{},
 	}
@@ -88,7 +88,7 @@ func (r TestResult) FromObservationResult(observation ObservationResult) TestRes
 
 		// Result, Abnormal will be filled below
 		Result:   nil,
-		Abnormal: NormalResult,
+		Abnormal: NoDataResult,
 		// History will be filled by FillHistory,
 	}
 
@@ -174,6 +174,7 @@ const (
 	NormalResult AbnormalResult = 0
 	HighResult   AbnormalResult = 1
 	LowResult    AbnormalResult = 2
+	NoDataResult AbnormalResult = 3
 )
 
 type ResultGetManyRequest struct {
