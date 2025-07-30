@@ -82,7 +82,7 @@ export const ResultShow = (props: any) => {
                 <WithRecord label="Test Result" render={(record: Result) => (
                     <>
                         {
-                            Object.entries(record?.test_result).map(([category, rows]) => (
+                            record?.test_result ? Object.entries(record.test_result).map(([category, rows]) => (
                                 <TestResultTableGroup
                                     key={category}
                                     category={category}
@@ -90,7 +90,7 @@ export const ResultShow = (props: any) => {
                                     setHistory={setHistory}
                                     setOpenHistory={setOpenHistory}
                                 />
-                            ))
+                            )) : null
                         }
 
                         <HistoryDialog
