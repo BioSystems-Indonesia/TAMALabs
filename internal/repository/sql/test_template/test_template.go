@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"time"
 
@@ -95,6 +96,14 @@ func (r *Repository) GetObservationRequestDifference(ctx context.Context, req *e
 			return entity.TestTemplateObservationRequestDifference{}, fmt.Errorf("error finding specimens: %w", err)
 		}
 
+		groupedWorkOrderObservationRequest := make(map[int][]entity.ObservationRequest)
+		for _, specimen := range specimens {
+			groupedWorkOrderObservationRequest[int(wo.WorkOrderID)] = append(
+				groupedWorkOrderObservationRequest[int(wo.WorkOrderID)],
+				specimen.ObservationRequest...,
+			)
+		}
+
 		for _, specimen := range specimens {
 			for _, tt := range toCreate {
 				if specimen.Type != tt.SpecimenType {
@@ -107,6 +116,14 @@ func (r *Repository) GetObservationRequestDifference(ctx context.Context, req *e
 						Key:   "test_type_code",
 						Value: slog.StringValue(tt.TestTypeCode),
 					})
+					continue
+				}
+
+				orGroup := groupedWorkOrderObservationRequest[int(wo.WorkOrderID)]
+				if slices.ContainsFunc(orGroup, func(v entity.ObservationRequest) bool {
+					return v.TestCode == testType.Code
+				}) {
+					continue
 				}
 
 				newObservationRequest := entity.ObservationRequest{
@@ -133,6 +150,7 @@ func (r *Repository) GetObservationRequestDifference(ctx context.Context, req *e
 	for _, testType := range toDelete {
 		for _, observationRequest := range allObservationRequests {
 			if observationRequest.TestCode == testType.TestTypeCode {
+
 				toDeleteObservationRequests = append(toDeleteObservationRequests, observationRequest)
 			}
 		}

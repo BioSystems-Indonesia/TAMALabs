@@ -88,8 +88,12 @@ func bindAndValidate(c echo.Context, v interface{}) error {
 }
 
 func successPaginationResponse[T any](c echo.Context, result entity.PaginationResponse[T]) error {
-	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(int(result.Total)))
-	return c.JSON(http.StatusOK, result.Data)
+	return successMany(c, result.Data)
+}
+
+func successMany[T any](c echo.Context, result []T) error {
+	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(len(result)))
+	return c.JSON(http.StatusOK, result)
 }
 
 // createSSEWriter creates a new server send event writer.

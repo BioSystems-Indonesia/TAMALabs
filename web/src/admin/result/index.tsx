@@ -33,10 +33,6 @@ export const ResultList = () => (
         sort={{ field: "id", order: "DESC" }}
         aside={<ResultSideFilter />}
         filters={ResultMoreFilter}
-        filterDefaultValues={{
-            created_at_start: dayjs().subtract(7, "day").toISOString(),
-            created_at_end: dayjs().toISOString(),
-        }}
         actions={<ResultActions />}
         exporter={false}
         storeKey={false}
@@ -147,6 +143,10 @@ function ResultSideFilter() {
             <FilterLiveForm debounce={1500}>
                 <Stack>
                     <ReferenceInput source={"patient_ids"} reference="patient" label={"Patient"} alwaysOn>
+                        <AutocompleteArrayInput size="small" />
+                    </ReferenceInput>
+                    <ReferenceInput
+                        source={"barcode_ids"} reference={`work-order/barcode`} alwaysOn>
                         <AutocompleteArrayInput size="small" />
                     </ReferenceInput>
                     <Divider sx={{

@@ -164,7 +164,7 @@ func (w *WorkOrderRunRequest) SetProgressWriter(progress chan WorkOrderRunStream
 
 type WorkOrderGetManyRequest struct {
 	GetManyRequest
-	Barcode     string  `query:"barcode"`
+	BarcodeIds  []int64 `query:"barcode_ids"`
 	PatientID   int64   `query:"patient_id"`
 	PatientIDs  []int64 `query:"patient_ids"`
 	SpecimenIDs []int64 `query:"specimen_ids"`
