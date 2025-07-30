@@ -114,8 +114,8 @@ const styles = StyleSheet.create({
         width: '100%', 
         borderWidth: 1,
         borderColor: '#cad5e2',
-        padding: 10,
         borderRadius: 2, 
+        padding:10,
     },
     gridContainer: {
         flexDirection: 'column',
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: 'row',
         justifyContent: 'space-between',  
-        marginBottom: 4, 
+        padding: 2,
     },
     leftColumn: {
         flex: 1,  
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
         display: 'flex',
     },
     value: {
-        flex: 1,  
+        flex: 1,
     },
 });
 
