@@ -247,7 +247,7 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
             setStatus(finalResult.status);
             setPercentage(finalResult.percentage);
             if (finalResult.status === 'INCOMPLETE') {
-                setError(`Gagal melakukan reqeust, pesan: '${finalResult.errorCause?.split("data: ")[1]}'`);
+                setError(`Gagal melakukan request, pesan: '${finalResult.errorCause?.split("data: ")[1]}'`);
                 refresh();
             } else {
                 notify("Work order sent successfully", {
