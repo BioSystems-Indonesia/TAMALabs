@@ -9,6 +9,9 @@ import {
 } from '@react-pdf/renderer';
 import useSettings from '../hooks/useSettings';
 import logo from '../assets/elgatama-logo.png'
+import yt from '../assets/youtube.png'
+import fb from '../assets/facebook.png'
+import ig from '../assets/instagram.png'
 import type { ReportData } from '../types/observation_result';
 import { Patient } from "../types/patient.ts";
 import { WorkOrder } from '../types/work_order.ts';
@@ -24,33 +27,34 @@ Font.register({
 
 const styles = StyleSheet.create({
     page: {
-        padding: 40,
         fontSize: 10,
         fontFamily: 'Helvetica',
+        padding: 40,
     },
     header: {
-        display: "flex",
-        flexDirection: "row",
-        gap: "12px",
-        justifyContent: "space-around",
-        alignItems: "center",
-        marginBottom: 20,
-        paddingBottom: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#112131',
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
     companyInfo: {
-        maxWidth: '80%',
+        width: '100%',
         display: 'flex',
-        gap: "2px",
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+        justifyContent: 'center', 
+        fontSize: 7.5,
+        textAlign: 'right',  
     },
     logo: {
         width: 64,
         height: 64,
+        marginBottom: 10,
     },
     footer: {
         position: 'absolute',
         bottom: 30,
+        padding: '0 40px',
         left: 0,
         right: 0,
         textAlign: 'center',
@@ -72,12 +76,14 @@ const styles = StyleSheet.create({
         color: '#4a5568',
     },
     tableHeader: {
+        color: 'white',
         flexDirection: 'row',
-        backgroundColor: '#f7fafc',
+        backgroundColor: '#4abaab',
         fontWeight: 'bold',
         paddingVertical: 8,
         borderBottomWidth: 1,
         borderBottomColor: '#e2e8f0',
+        borderRadius: 2,
     },
     tableRow: {
         flexDirection: 'row',
@@ -86,7 +92,7 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
     },
     columnHeader: {
-        width: '40%',
+        width: '30%',
         paddingHorizontal: 6,
     },
     columnResult: {
@@ -105,34 +111,38 @@ const styles = StyleSheet.create({
         paddingHorizontal: 6,
     },
     rectangleContainer: {
-        width: '100%', // Set width to 100%
+        width: '100%', 
         borderWidth: 1,
-        borderColor: '#000',
+        borderColor: '#cad5e2',
         padding: 10,
-        borderRadius: 2, // Optional: Adds rounded corners
+        borderRadius: 2, 
     },
     gridContainer: {
-        flexDirection: 'column', // Stack rows vertically
+        flexDirection: 'column',
     },
     row: {
-        flexDirection: 'row', // Arrange columns horizontally
-        justifyContent: 'space-between', // Space columns evenly
+        flexDirection: 'row',
+        justifyContent: 'space-between',  
+        marginBottom: 4, 
     },
     leftColumn: {
-        flex: 1, // Takes up 50% of the row
+        flex: 1,  
+        paddingRight: 10,  
     },
     rightColumn: {
-        flex: 1, // Takes up 50% of the row
+        flex: 1, 
     },
     labelValue: {
-        flexDirection: 'row', // Ensure label and value are on the same line
-        alignItems: 'center', // Align text vertically
+        flexDirection: 'row',  
+        alignItems: 'center', 
     },
     label: {
-        fontWeight: 'bold', // Makes labels bold
+        fontWeight: 'bold',  
+        width: 80, 
+        display: 'flex',
     },
     value: {
-        // No additional styling needed
+        flex: 1,  
     },
 });
 
@@ -181,20 +191,33 @@ const Header = () => {
 
     return (
         <View style={styles.header} fixed>
-            <Image
+                <Image
                 style={styles.logo}
                 src={logo}
-            />
-            <View >
-                <Text wrap style={{
-                    fontSize: "16px",
-                    fontWeight: 'black',
-                    marginBottom: '4px',
+                />
+            <View style={{width: '85%'}}>
+                <Text style={{
+                    fontSize:24
                 }}>{settings.company_name}</Text>
+                <View style={{
+                    width: '100%',
+                    height: '0.2rem',
+                    backgroundColor: 'rgb(74, 186, 171)'
+                }}>
+                </View>
                 <View style={styles.companyInfo}>
-                    <Text wrap>{settings.company_address}</Text>
-                    {settings.company_contact_phone ? <Text wrap>Phone: {settings.company_contact_phone}</Text> : undefined}
-                    {settings.company_contact_email ? <Text wrap>Email: {settings.company_contact_email}</Text> : undefined}
+                    <Text 
+                    wrap={true}
+                    style={{width: '45%'}}
+                    >{settings.company_address}</Text>
+                    <Text 
+                    wrap={true}
+                    style={{width: '45%'}}
+                    >{settings.company_contact_phone}</Text>
+                    <Text 
+                    wrap={true}
+                    style={{width: '45%'}}
+                    >{settings.company_contact_email}</Text>
                 </View>
             </View>
         </View>
@@ -208,13 +231,13 @@ const PatientInfo = ({ patient, workOrder }: { patient: Patient, workOrder: Work
             <View style={styles.row}>
                 <View style={styles.leftColumn}>
                     <Text style={styles.labelValue}>
-                        <Text style={styles.label}>Barcode No    </Text>
-                        <Text style={styles.value}>: {workOrder.barcode} </Text>
+                        <Text style={styles.label}>Barcode No</Text>
+                        <Text style={styles.value}>: {workOrder.barcode}</Text>
                     </Text>
                 </View>
                 <View style={styles.rightColumn}>
                     <Text style={styles.labelValue}>
-                        <Text style={styles.label}>Date of Birth </Text>
+                        <Text style={styles.label}>Date of Birth</Text>
                         <Text style={styles.value}>: {formatBirthdate(patient.birthdate)}</Text>
                     </Text>
                 </View>
@@ -224,13 +247,13 @@ const PatientInfo = ({ patient, workOrder }: { patient: Patient, workOrder: Work
             <View style={styles.row}>
                 <View style={styles.leftColumn}>
                     <Text style={styles.labelValue}>
-                        <Text style={styles.label}>Patient Name  </Text>
+                        <Text style={styles.label}>Patient Name</Text>
                         <Text style={styles.value}>: {patient.first_name} {patient.last_name}</Text>
                     </Text>
                 </View>
                 <View style={styles.rightColumn}>
                     <Text style={styles.labelValue}>
-                        <Text style={styles.label}>Age               </Text>
+                        <Text style={styles.label}>Age</Text>
                         <Text style={styles.value}>: {calculateAge(patient.birthdate)}</Text>
                     </Text>
                 </View>
@@ -240,28 +263,29 @@ const PatientInfo = ({ patient, workOrder }: { patient: Patient, workOrder: Work
             <View style={styles.row}>
                 <View style={styles.leftColumn}>
                     <Text style={styles.labelValue}>
-                        <Text style={styles.label}>Address          </Text>
+                        <Text style={styles.label}>Address</Text>
                         <Text style={styles.value}>: {patient.address}</Text>
                     </Text>
                 </View>
                 <View style={styles.rightColumn}>
                     <Text style={styles.labelValue}>
-                        <Text style={styles.label}>Gender         </Text>
+                        <Text style={styles.label}>Gender</Text>
                         <Text style={styles.value}>: {formatGender(patient.sex)}</Text>
                     </Text>
                 </View>
             </View>
 
+            {/* Row 4 */}
             <View style={styles.row}>
                 <View style={styles.leftColumn}>
                     <Text style={styles.labelValue}>
-                        <Text style={styles.label}>Doctor             </Text>
+                        <Text style={styles.label}>Doctor</Text>
                         <Text style={styles.value}>: {workOrder.doctors?.length > 0 ? workOrder.doctors[0].fullname : ""}</Text>
                     </Text>
                 </View>
                 <View style={styles.rightColumn}>
                     <Text style={styles.labelValue}>
-                        <Text style={styles.label}>Analyst         </Text>
+                        <Text style={styles.label}>Analyst</Text>
                         <Text style={styles.value}>: {workOrder.analyzers?.length > 0 ? workOrder.analyzers[0].fullname : ""}</Text>
                     </Text>
                 </View>
@@ -271,9 +295,32 @@ const PatientInfo = ({ patient, workOrder }: { patient: Patient, workOrder: Work
 );
 
 const Footer = () => (
-    <Text style={styles.footer} fixed render={({ pageNumber, totalPages }) => (
-        <Text>Page {pageNumber} of {totalPages}</Text>
-    )} />
+    <View style={styles.footer}>
+        <View style={{
+            height: '0.2rem',
+            backgroundColor: 'rgb(74, 186, 171)'
+        }}>
+        </View>
+        <View style={{ 
+            marginTop: 4,
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',}}>
+            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 6}}>
+                <Image src={yt} style={{width: 15, height: 15}}/>
+                <Text>BioSystems Indonesia</Text>    
+            </View>    
+            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 6}}>
+                <Image src={ig} style={{width: 15, height: 15}}/>
+                <Text>@biosystems.ind</Text>    
+            </View>    
+            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 6}}>
+                <Image src={fb} style={{width: 15, height: 15}}/>
+                <Text>BioSystems Indonesia</Text>    
+            </View>    
+        </View>        
+    </View>
 );
 
 // Helper function to group data by category (if needed)
@@ -295,6 +342,16 @@ export const ReportDocument = ({ data, patientData, workOrderData }: { data: Rep
         <Document>
             <Page size={"A4"} style={styles.page} wrap>
                 <Header />
+                <View style={{
+                    marginTop: 20,
+                    marginBottom: 15,
+                }}>
+                    <Text style={{
+                        textAlign: 'center',
+                        fontSize: 12,
+                        fontWeight: 'bold',
+                    }}>DATA HASIL MEDICAL CHECK UP</Text>
+                </View>
                 <PatientInfo patient={patientData} workOrder={workOrderData}/>
                 {Object.entries(groupedData).map(([category, items]) => (
                     <View key={category} wrap>
