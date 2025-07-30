@@ -136,12 +136,16 @@ func (r WorkOrderRepository) FindAll(
 		db = db.Where("work_orders.id like ? or work_orders.created_at like ?", "%"+req.Query+"%", "%"+req.Query+"%")
 	}
 
+	if req.Barcode != "" {
+		db = db.Where("work_orders.barcode = ?", req.Barcode)
+	}
+
 	if len(req.SpecimenIDs) > 0 {
 		db = db.Joins("join work_order_specimens on work_order_Specimens.work_order_id = work_orders.id and work_order_Specimens.Specimen_id in (?)", req.SpecimenIDs)
 	}
 
 	if len(req.PatientIDs) > 0 {
-		db = db.Joins("join work_order_patients on work_order_patients.work_order_id = work_orders.id and work_order_patients.patient_id in (?)", req.PatientIDs)
+		db = db.Joins("work_orders.patient_id in (?)", req.PatientIDs)
 	}
 
 	db = db.

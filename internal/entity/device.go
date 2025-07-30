@@ -13,6 +13,7 @@ const (
 	DeviceTypeAnalyxPanca DeviceType = "ANALYX_PANCA"
 	DeviceTypeSwelabAlfa  DeviceType = "SWELAB_ALFA"
 	DeviceTypeSwelabBasic DeviceType = "SWELAB_BASIC"
+	DeviceTypeSwelabLumi  DeviceType = "SWELAB_LUMI"
 	DeviceTypeCoax        DeviceType = "COAX"
 	DeviceTypeNCC3300     DeviceType = "NCC_3300"
 )
@@ -53,6 +54,9 @@ var TableDeviceType = Tables{
 		UseSerial:  true,
 	}},
 	{ID: string(DeviceTypeSwelabBasic), Name: string(DeviceTypeSwelabBasic), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+	}},
+	{ID: string(DeviceTypeSwelabLumi), Name: string(DeviceTypeSwelabLumi), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
 	}},
 }

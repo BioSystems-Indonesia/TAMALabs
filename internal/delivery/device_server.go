@@ -10,6 +10,7 @@ import (
 	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	analyxtrias "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
 	swelabalfa "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
+	swelablumi "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
@@ -23,6 +24,7 @@ type DeviceServerStrategy struct {
 	analyxPancaHandler *analyxpanca.Handler
 	swelabAlfaHandler  *swelabalfa.Handler
 	swelabAlfaBasic    *swelabalfa.Handler
+	swelabLumiHandler  *swelablumi.Handler
 }
 
 func NewDeviceServerStrategy(
@@ -32,6 +34,7 @@ func NewDeviceServerStrategy(
 	analyxTriaHandler *analyxtrias.Handler,
 	analyxPancaHandler *analyxpanca.Handler,
 	swelabAlfaHandler *swelabalfa.Handler,
+	swelabLumiHandler *swelablumi.Handler,
 ) *DeviceServerStrategy {
 	return &DeviceServerStrategy{
 		coaxHandler:        coaxHandler,
@@ -41,6 +44,7 @@ func NewDeviceServerStrategy(
 		analyxPancaHandler: analyxPancaHandler,
 		swelabAlfaHandler:  swelabAlfaHandler,
 		swelabAlfaBasic:    swelabAlfaHandler,
+		swelabLumiHandler:  swelabLumiHandler,
 	}
 }
 
@@ -74,6 +78,7 @@ var tcpDeviceType = []entity.DeviceType{
 	entity.DeviceTypeAnalyxPanca,
 	entity.DeviceTypeSwelabAlfa,
 	entity.DeviceTypeSwelabBasic,
+	entity.DeviceTypeSwelabLumi,
 	entity.DeviceTypeOther,
 }
 
@@ -132,7 +137,9 @@ func (d *DeviceServerStrategy) ChooseDeviceTCPHandler(device entity.Device) (ser
 	case entity.DeviceTypeSwelabAlfa:
 		return d.swelabAlfaHandler, nil
 	case entity.DeviceTypeSwelabBasic:
-		return d.swelabAlfaHandler, nil
+		return d.swelabAlfaBasic, nil
+	case entity.DeviceTypeSwelabLumi:
+		return d.swelabLumiHandler, nil
 	default:
 		return d.defaultHandler, nil
 	}

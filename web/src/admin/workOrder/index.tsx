@@ -7,6 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import {
+    AutocompleteArrayInput,
     Button,
     Create,
     Datagrid,
@@ -17,6 +18,7 @@ import {
     List,
     ReferenceArrayField,
     ReferenceField,
+    ReferenceInput,
     SearchInput,
     ShowButton,
     TextField,
@@ -111,6 +113,9 @@ function WorkOrderSideFilters() {
             <FilterLiveForm debounce={1500}>
                 <Stack>
                     <SearchInput source="q" alwaysOn sx={{}} />
+                    <ReferenceInput source={"patient_ids"} reference="patient" label={"Patient"} alwaysOn>
+                        <AutocompleteArrayInput size="small" />
+                    </ReferenceInput>
                     <CustomDateInput label={"Created At Start"} source="created_at_start" disableFuture alwaysOn size="small" sx={{
                         marginBottom: '4px'
                     }} />
@@ -282,7 +287,8 @@ export const WorkOrderList = () => {
         }} aside={<WorkOrderSideFilters />} title="Lab Request" filterDefaultValues={{
             created_at_start: dayjs().subtract(7, "day").toISOString(),
             created_at_end: dayjs().toISOString(),
-        }} exporter={false} 
+        }} exporter={false}
+            storeKey={false}
             sx={{
                 '& .RaList-content': {
                     backgroundColor: 'background.paper',
@@ -291,15 +297,15 @@ export const WorkOrderList = () => {
                 },
             }}
         >
-            <Datagrid 
-            rowClick={(id, resource, record) => {
-                return false
-            }}
-            bulkActionButtons={<WorkOrderListBulkActionButtons
-                open={open}
-                setOpen={setOpen}
-                onClose={() => setOpen(false)}
-            />}>
+            <Datagrid
+                rowClick={(id, resource, record) => {
+                    return false
+                }}
+                bulkActionButtons={<WorkOrderListBulkActionButtons
+                    open={open}
+                    setOpen={setOpen}
+                    onClose={() => setOpen(false)}
+                />}>
                 <TextField source="id" />
                 <WithRecord label="Status" render={(record: any) => (
                     <Chip label={`${record.status}`} color={WorkOrderChipColorMap(record.status)} />

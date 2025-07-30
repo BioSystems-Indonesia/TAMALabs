@@ -10,6 +10,7 @@ import (
 	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	analyxtrias "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
 	swelabalfa "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
+	swelablumi "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
 	"github.com/oibacidem/lims-hl-seven/internal/repository"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/server"
@@ -102,6 +103,7 @@ var tcpHandlerSet = wire.NewSet(
 	analyxtrias.NewHandler,
 	analyxpanca.NewHandler,
 	swelabalfa.NewHandler,
+	swelablumi.NewHandler,
 	delivery.NewDeviceServerStrategy,
 	wire.Bind(new(repository.DeviceServerStrategy), new(*delivery.DeviceServerStrategy)),
 )

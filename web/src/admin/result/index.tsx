@@ -39,6 +39,7 @@ export const ResultList = () => (
         }}
         actions={<ResultActions />}
         exporter={false}
+        storeKey={false}
         sx={{
             '& .RaList-main': {
                 marginTop: '-14px'
