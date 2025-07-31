@@ -62,7 +62,7 @@ const CustomToggleThemeButton = () => {
 const UserProfile = () => {
     const currentUser = useCurrentUser();
     const logout = useLogout();
-    const [theme] = useTheme(); // Deteksi tema saat ini
+    const [theme] = useTheme(); 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
     
@@ -70,7 +70,6 @@ const UserProfile = () => {
         return null;
     }
 
-    // Contoh penggunaan deteksi tema
     const isDarkMode = theme === 'dark';
 
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -115,7 +114,7 @@ const UserProfile = () => {
                 </Avatar>
                 <Typography 
                     sx={{ 
-                        color: isDarkMode ? '#ffffff' : '#1d293d', // Warna berubah berdasarkan tema
+                        color: isDarkMode ? '#ffffff' : '#1d293d', 
                         fontWeight: 500,
                         display: { xs: 'none', md: 'block' }
                     }}
@@ -183,7 +182,7 @@ const CompanyLogo = () => (
 
 const MyAppBar = () => {
     const location = useLocation();
-    const [theme] = useTheme(); // Deteksi tema di AppBar
+    const [theme] = useTheme(); 
     
     const appBarAlwaysOn = () => {
         if (location.pathname.includes('/work-order/')) return true;
@@ -191,7 +190,6 @@ const MyAppBar = () => {
         return false;
     };
 
-    // Variabel untuk deteksi mode
     const isDarkMode = theme === 'dark';
 
     return (
@@ -300,7 +298,7 @@ const DynamicBreadcrumbs = () => {
 }
 
 const Footer = () => {
-    const [theme] = useTheme(); // Deteksi tema di Footer
+    const [theme] = useTheme(); 
     const isDarkMode = theme === 'dark';
     
     return (
@@ -321,7 +319,7 @@ const Footer = () => {
             <Typography 
                 variant="body2" 
                 sx={{
-                    color: isDarkMode ? '#ffffff' : 'text.secondary' // Warna text berubah berdasarkan tema
+                    color: isDarkMode ? '#ffffff' : 'text.secondary' 
                 }}
             >
                 © 2025 PT ELGA TAMA. All rights reserved.
