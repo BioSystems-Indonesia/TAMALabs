@@ -51,13 +51,13 @@ const CustomLoginPage: React.FC = () => {
         
         try {
             await login(data);
-            notify('Login berhasil', { type: 'success' });
+            notify('Login success', { type: 'success' });
         } catch (error) {
             if (error instanceof Error) {
-                setError('Username atau password salah');
+                setError('Usernamae or password wrong');
                 setValue('password', ''); 
             }
-            notify('Login gagal', { type: 'error' });
+            notify('Login failed', { type: 'error' });
         } finally {
             setLoading(false);
         }
@@ -138,7 +138,7 @@ const CustomLoginPage: React.FC = () => {
                             color="text.primary"
                             fontWeight="600"
                         >
-                            Masuk ke Sistem
+                            Sign In
                         </Typography>
                         
                         <Typography 
@@ -147,7 +147,7 @@ const CustomLoginPage: React.FC = () => {
                             color="text.secondary"
                             sx={{ mb: 3, fontSize: 13 }}
                         >
-                            Silakan masukkan username dan password Anda
+                           Please enter your username and password
                         </Typography>
 
                         {error && (
@@ -162,10 +162,10 @@ const CustomLoginPage: React.FC = () => {
                                     name="username"
                                     control={control}
                                     rules={{ 
-                                        required: 'Username wajib diisi',
+                                        required: 'Username required',
                                         minLength: {
                                             value: 3,
-                                            message: 'Username minimal 3 karakter'
+                                            message: 'Username must be at least 3 characters long'
                                         }
                                     }}
                                     render={({ field }) => (
@@ -208,10 +208,10 @@ const CustomLoginPage: React.FC = () => {
                                     name="password"
                                     control={control}
                                     rules={{ 
-                                        required: 'Password wajib diisi',
+                                        required: 'Password required',
                                         minLength: {
                                             value: 6,
-                                            message: 'Password minimal 6 karakter'
+                                            message: 'Password must be at least 6 characters long'
                                         }
                                     }}
                                     render={({ field }) => (
@@ -279,7 +279,7 @@ const CustomLoginPage: React.FC = () => {
                                         }
                                     }}
                                 >
-                                    {loading ? 'Sedang masuk...' : 'Masuk'}
+                                    {loading ? 'Logging in...' : 'Login'}
                                 </Button>
                             </Stack>
                         </form>
