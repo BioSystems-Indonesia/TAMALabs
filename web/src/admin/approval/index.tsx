@@ -43,7 +43,7 @@ export const ApprovalList = () => {
         exporter={false}
         sx={{
             '& .RaList-main': {
-                marginTop: '-14px'
+                // marginTop: '-14px'
             },
             '& .RaList-content': {
                 backgroundColor: 'background.paper',
@@ -126,6 +126,7 @@ export const ApprovalDataGrid = (props: any) => {
                         variant="contained"
                         loading={verifyIsPending}
                         color="success"
+                        sx={{color: 'white !important'}}
                         startIcon={<CheckCircleOutlineIcon />}
                         onClick={(e) => {
                             e.stopPropagation();

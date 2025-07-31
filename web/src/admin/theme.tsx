@@ -28,6 +28,10 @@ const componentsOverrides = (theme: Theme) => {
         alpha(theme.palette.primary.main, 0.1),
         alpha(theme.palette.primary.main, 0.05),
     ];
+    
+    const isDarkMode = theme.palette.mode === 'dark';
+    const primaryColor = isDarkMode ? '#2661BF' : '#4abaab';
+    
     return {
         MuiAppBar: {
             styleOverrides: {
@@ -49,6 +53,37 @@ const componentsOverrides = (theme: Theme) => {
             styleOverrides: {
                 sizeSmall: {
                     padding: `${theme.spacing(0.5)} ${theme.spacing(1.5)}`,
+                },
+                contained: {
+                    '&.MuiButton-containedPrimary': {
+                        backgroundColor: primaryColor, 
+                        color: '#ffffff',
+                        '&:hover': {
+                            backgroundColor: isDarkMode ? '#1a4d9f' : '#43b1a3', 
+                            color: '#ffffff',
+                        },
+                        '&:disabled': {
+                            backgroundColor: theme.palette.action.disabledBackground,
+                            color: theme.palette.action.disabled,
+                        },
+                    },
+                },
+                root: {
+                    
+                    '&.MuiButton-containedPrimary': {
+                        backgroundColor: primaryColor, 
+                        color: '#ffffff',
+                        '&:hover': {
+                            backgroundColor: isDarkMode ? '#1a4d9f' : '#43b1a3',
+                            color: '#ffffff',
+                        },
+                    },
+                    '&[style*="background-color: rgb(74, 186, 171)"], &[style*="background-color: #4abaab"]': {
+                        color: '#ffffff !important',
+                    },
+                    '&[style*="background-color: rgb(38, 97, 191)"], &[style*="background-color: #2661BF"]': {
+                        color: '#ffffff !important',
+                    },
                 },
             },
         },
@@ -102,7 +137,7 @@ const componentsOverrides = (theme: Theme) => {
             styleOverrides: {
                 root: {
                     '& .RaDatagrid-headerCell': {
-                        color: theme.palette.primary.main,
+                        color: primaryColor,
                     },
                 },
             },
@@ -122,7 +157,7 @@ const componentsOverrides = (theme: Theme) => {
                     '& .RaAppBar-title': {
                         fontSize: '1.5rem',
                         fontWeight: 'bold',
-                        color: theme.palette.primary.main,
+                        color: primaryColor,
                     },
                 },
             },
@@ -135,8 +170,7 @@ const componentsOverrides = (theme: Theme) => {
                     },
                     '& .RaLayout-sidebar': {
                         '& .MuiToolbar-root': {
-                            minHeight: '64px',
-                            backgroundColor: theme.palette.primary.main,
+                            backgroundColor: primaryColor,
                             color: theme.palette.primary.contrastText,
                             boxShadow: theme.shadows[1],
                         },
@@ -147,41 +181,41 @@ const componentsOverrides = (theme: Theme) => {
         RaMenuItemLink: {
             styleOverrides: {
                 root: {
-                    borderLeft: `3px solid transparent`,        // Border default
-                    margin: theme.spacing(0.5, 2, 0.5, -0.6),            // Margin hanya atas-bawah
-                    borderRadius: theme.spacing(1),           // Border radius
-                    padding: theme.spacing(1, 2, 1, 2),       // Padding: top, right, bottom, left (0 untuk left)
-                    transition: 'all 0.3s ease',             // Transisi smooth
+                    borderLeft: `3px solid transparent`,       
+                    margin: theme.spacing(0.5, 1.5, 0.5, -0),
+                    borderRadius: theme.spacing(1),          
+                    padding: theme.spacing(1, 2, 1, 2),      
+                    transition: 'all 0.3s ease',           
                     '&:hover': {
-                        borderRadius: '0px 100px 100px 0px',  // Rounded saat hover
+                        // borderRadius: '0px 100px 100px 0px', 
                         backgroundColor: theme.palette.action.hover,
-                        transform: 'translateX(5px)',          // Efek slide
+                        transform: 'translateX(5px)',          
                     },
                     '&.RaMenuItemLink-active': {
-                        borderLeft: `3px solid ${theme.palette.primary.main}`,
-                        borderRadius: '0px 50px 50px 0px',
-                        backgroundImage: `linear-gradient(98deg, ${theme.palette.primary.light}, ${theme.palette.primary.dark} 94%)`,
-                        boxShadow: theme.shadows[3],           // Shadow lebih tebal
-                        color: theme.palette.primary.contrastText,
-                        transform: 'translateX(8px)',          // Efek slide lebih jauh
+                        borderLeft: `3px solid ${primaryColor}`, 
+                        // borderRadius: '0px 50px 50px 0px',
+                        backgroundColor: primaryColor,
+      
+                        color: '#ffffff',
+                        transform: 'translateX(8px)',        
                         '& .MuiSvgIcon-root': {
-                            fill: theme.palette.primary.contrastText,
+                            fill: '#ffffff',
                         },
                         '& .MuiListItemText-primary': {
-                            fontWeight: 'bold',                // Teks bold saat aktif
+                            fontWeight: 'bold',         
+                            color: '#ffffff',
                         },
                     },
-                    // Style khusus untuk sidebar yang di-collapse
                     '.RaSidebar-closed &': {
-                        margin: theme.spacing(0.5, 0, 0.5, -0.6),  // Hapus margin kanan
-                        padding: theme.spacing(1, 0, 1, 2),        // Hapus padding kanan
+                        margin: theme.spacing(0.5, 0, 0.5, -0.6), 
+                        padding: theme.spacing(1, 0, 1, 2),     
                         '&.RaMenuItemLink-active': {
-                            borderRadius: '0px',              // Tidak ada rounded saat sidebar collapse
-                            transform: 'translateX(0px)',      // Tidak ada efek slide
+                            borderRadius: '0px',             
+                            transform: 'translateX(0px)', 
                         },
                         '&:hover': {
-                            borderRadius: '0px',               // Tidak ada rounded saat hover di sidebar collapse
-                            transform: 'translateX(0px)',      // Tidak ada efek slide
+                            borderRadius: '0px',              
+                            transform: 'translateX(0px)',   
                         },
                     },
                 },
@@ -214,9 +248,11 @@ const componentsOverrides = (theme: Theme) => {
                         },
                     },
                     '& .MuiDrawer-paper': {
+                        marginTop: '30px', 
+                        height: 'calc(100vh - 80px)',
                         backgroundColor: theme.palette.background.paper,
                         backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
-                        // Responsive drawer
+                        position: 'relative',
                         [theme.breakpoints.down('md')]: {
                             width: '240px',
                         },
@@ -224,7 +260,7 @@ const componentsOverrides = (theme: Theme) => {
                             width: '200px',
                         },
                     },
-                },
+                }
             },
         },
         RaMenu: {
@@ -233,6 +269,27 @@ const componentsOverrides = (theme: Theme) => {
                     '& .MuiList-root': {
                         paddingTop: theme.spacing(1),
                         paddingBottom: theme.spacing(1),
+                    },
+                },
+            },
+        },
+        RaList: {
+            styleOverrides: {
+                root: {
+                    marginTop: theme.spacing(-5),
+                },
+            },
+        },
+        RaButton: {
+            styleOverrides: {
+                root: {
+                    '&.MuiButton-containedPrimary': {
+                        backgroundColor: primaryColor,
+                        color: '#ffffff',
+                        '&:hover': {
+                            backgroundColor: isDarkMode ? '#1a4d9f' : '#43b1a3',
+                            color: '#ffffff',
+                        },
                     },
                 },
             },
@@ -248,7 +305,7 @@ const alert = {
 };
 
 const darkPalette: PaletteOptions = {
-    primary: { main: '#2661BF' },
+    primary: { main: '#2661BF', dark: '#1a4d9f' },
     secondary: { main: '#4ABAAB' },
     background: { default: '#110e1c', paper: '#151221' },
     ...alert,
@@ -256,7 +313,7 @@ const darkPalette: PaletteOptions = {
 };
 
 const lightPalette: PaletteOptions = {
-    primary: { main: '#4abaab', dark: '#43b1a3ff' },
+    primary: { main: '#4abaab', dark: '#43b1a3ff' }, 
     secondary: { main: '#2661BF' },
     background: { default: '#f9f9f9ff' },
     text: {

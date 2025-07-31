@@ -126,7 +126,7 @@ const ActionButton = () => {
                 zIndex: 100,
                 borderRadius: '12px', // Rounded corners for the card
                 p: 1, // Padding inside the card
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)', // A subtle shadow
+                boxShadow: 'rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px', // A subtle shadow
                 width: '100%', // Make card take full width of its container
             }}
         >
@@ -171,6 +171,7 @@ const ActionButton = () => {
                             <Button
                                 variant="contained"
                                 color="success"
+                                
                                 startIcon={<CheckIcon />}
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -185,6 +186,7 @@ const ActionButton = () => {
                                 }}
                                 disabled={record?.verified_status === "VERIFIED"}
                                 sx={{
+                                    color: 'white !important',
                                     borderRadius: '8px',
                                     textTransform: 'none',
                                 }}
@@ -228,7 +230,9 @@ const HeaderInfo = (props: any) => (
     <Grid sx={{
         display: "flex",
         border: "1px solid #ccc",
-        padding: "12px",
+        padding: "26px",
+        borderRadius: '0.5rem',
+        margin: '2rem 0'
     }} container rowGap={1}>
         <Grid item xs={12} md={12} >
             <Labeled>
