@@ -176,6 +176,13 @@ var seedDevice = []entity.Device{
 		SendPort:    "5000",
 		ReceivePort: "10512",
 	},
+	{
+		ID:          2,
+		Name:        "COAX",
+		Type:        entity.DeviceTypeCoax,
+		ReceivePort: "COM4",
+		BaudRate:    9600,
+	},
 }
 
 const (
