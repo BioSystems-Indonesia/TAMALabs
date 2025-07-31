@@ -53,8 +53,9 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     footer: {
+        marginTop: 20,
         position: 'absolute',
-        bottom: 30,
+        bottom: 10,
         padding: '0 40px',
         left: 0,
         right: 0,
@@ -308,16 +309,16 @@ const Footer = () => (
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',}}>
-            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 6}}>
-                <Image src={yt} style={{width: 15, height: 15}}/>
+            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
+                <Image src={yt} style={{width: 10, height: 10}}/>
                 <Text>BioSystems Indonesia</Text>    
             </View>    
-            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 6}}>
-                <Image src={ig} style={{width: 15, height: 15}}/>
+            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
+                <Image src={ig} style={{width: 10, height: 10}}/>
                 <Text>@biosystems.ind</Text>    
             </View>    
-            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 6}}>
-                <Image src={fb} style={{width: 15, height: 15}}/>
+            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
+                <Image src={fb} style={{width: 10, height: 10}}/>
                 <Text>BioSystems Indonesia</Text>    
             </View>    
         </View>        
