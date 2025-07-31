@@ -61,12 +61,10 @@ function TestSelectorPrompt() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: 1,
-                margin: 1,
                 border: '2px',
                 borderRadius: 2,
                 textAlign: 'center',
-                maxWidth: '200px',
+                maxWidth: '250px',
                 backgroundColor: 'background.paper',
                 boxShadow: 1,
             }}
@@ -115,7 +113,7 @@ const PickedTest = ({ selectedData }: { selectedData: Record<number, Observation
     }
 
     return (
-        <Paper elevation={2} sx={{ p: 2, backgroundColor: 'background.paper', maxWidth: "200px" }}>
+        <Paper elevation={2} sx={{ p: 2, backgroundColor: 'background.paper', maxWidth: "250px"}}>
             <Stack spacing={2}>
                 {/* Enhanced Title Section */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -375,7 +373,7 @@ function TestTable({
                                 <Box
                                     tabIndex={0} // Make it focusable
                                     onKeyDown={handleKeyDown}
-                                    sx={{
+                                    sx={{   
                                         width: '100%',
                                         height: '100%',
                                         display: 'flex',
@@ -476,6 +474,7 @@ export function TestInput(props: TestInputProps) {
             maxHeight: "calc(70vh - 48px)",
             overflow: "scroll",
             width: "100%",
+            paddingTop: 10
         }}>
             <List resource={"test-type"} exporter={false}
                 aside={

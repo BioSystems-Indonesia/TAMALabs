@@ -4,9 +4,19 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import BiotechIcon from '@mui/icons-material/Biotech';
+import ApprovalIcon from '@mui/icons-material/Approval';
+import BuildIcon from '@mui/icons-material/Build';
+import LanIcon from '@mui/icons-material/Lan';
+import PersonIcon from '@mui/icons-material/Person';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import TableViewIcon from '@mui/icons-material/TableView';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import { Box, Stack, Tooltip, Typography, Avatar, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import { useEffect, useState, type ReactNode } from 'react';
+import React from 'react';
 import { AppBar, Button, CheckForApplicationUpdate, Layout, Link, LoadingIndicator, useTheme, useLogout } from 'react-admin';
 import { useLocation, useNavigate } from "react-router-dom";
 import AppIndicator from '../component/AppIndicator';
@@ -238,7 +248,68 @@ const MyAppBar = () => {
     );
 };
 
+const PageTitle = () => {
+    const location = useLocation();
 
+    const getPageData = (pathname: string) => {
+        const pathParts = pathname.substring(1).split('/');
+        const mainPath = pathParts[0];
+        
+        const resourceData: { [key: string]: { title: string; icon: React.ReactElement } } = {
+            'work-order': { title: 'Lab Request', icon: <BiotechIcon /> },
+            'result': { title: 'Result', icon: <AssessmentIcon /> },
+            'approval': { title: 'Approval', icon: <ApprovalIcon /> },
+            'patient': { title: 'Patient', icon: <PersonIcon /> },
+            'test-type': { title: 'Test Type', icon: <BiotechIcon /> },
+            'test-template': { title: 'Test Template', icon: <TableViewIcon /> },
+            'device': { title: 'Device', icon: <LanIcon /> },
+            'user': { title: 'User', icon: <AdminPanelSettingsIcon /> },
+            'config': { title: 'Configuration', icon: <BuildIcon /> },
+            'settings': { title: 'Settings', icon: <SettingsIcon /> },
+            'logs': { title: 'Logs', icon: <FileOpenIcon /> }
+        };
+        
+        const defaultData = { title: 'Dashboard', icon: <DashboardIcon /> };
+        const resourceInfo = resourceData[mainPath] || { title: toTitleCase(mainPath), icon: <DashboardIcon /> };
+        
+        if (pathParts.length > 1) {
+            const action = pathParts[1];
+            
+            if (action === 'create') return { title: `Create ${resourceInfo.title}`, icon: resourceInfo.icon };
+            if (action === 'edit') return { title: `Edit ${resourceInfo.title}`, icon: resourceInfo.icon };
+            if (action === 'show') return { title: `View ${resourceInfo.title}`, icon: resourceInfo.icon };
+            if (pathParts[2] === 'show') return { title: `View ${resourceInfo.title} #${pathParts[1]}`, icon: resourceInfo.icon };
+            if (pathParts[2] === 'edit') return { title: `Edit ${resourceInfo.title} #${pathParts[1]}`, icon: resourceInfo.icon };
+        }
+        
+        return mainPath ? resourceInfo : defaultData;
+    };
+
+    const pageData = getPageData(location.pathname);
+
+    return (
+        <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 2,
+            mb: 1 
+        }}>
+            <Box sx={{ 
+                color: 'primary.main',
+                display: 'flex',
+                alignItems: 'center'
+            }}>
+                {React.cloneElement(pageData.icon, { sx: { fontSize: 32 } })}
+            </Box>
+            <Typography variant='h5' sx={{ 
+                fontWeight: 600,
+                color: 'text.primary'
+            }}>
+                {pageData.title.toUpperCase()}
+            </Typography>
+        </Box>
+    );
+};
 
 type PathConfiguration = {
     path: string
@@ -284,7 +355,7 @@ const DynamicBreadcrumbs = () => {
     const navigate = useNavigate();
 
     return (
-        <Stack direction={"row"} sx={{marginTop: 5}}>
+        <Stack direction={"row"} sx={{marginLeft: 3}}>
             <Button label='Back' variant='contained' onClick={() => navigate(-1)} sx={{
                 display: location.pathname.split("/").length > 2 ? 'flex' : 'none',
                 my: 1.25,
@@ -331,14 +402,21 @@ const Footer = () => {
 export const DefaultLayout = ({ children }: { children: ReactNode }) => {
     return (
         <Layout sx={{}} appBar={MyAppBar}>
+            <Box sx={{
+                marginTop: 7, 
+                marginLeft: 3,
+                marginBottom: 1,
+            }}>
+                <PageTitle />
+            </Box>
             <Stack direction={"row"} gap={2}>
                 <DynamicBreadcrumbs />
             </Stack>
-            <Box sx={{ paddingBottom: '60px' }}>
+            <Box sx={{ paddingLeft: 3, paddingRight: 3, paddingBottom: 8}}>
                 {children}
             </Box>
-            <Footer />
             <CheckForApplicationUpdate />
+            <Footer />
         </Layout>
     )
 };
