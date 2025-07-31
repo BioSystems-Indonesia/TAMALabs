@@ -32,6 +32,7 @@ const styles = StyleSheet.create({
         padding: 40,
     },
     header: {
+        marginBottom: 20,
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
@@ -201,7 +202,7 @@ const Header = () => {
                 }}>{settings.company_name}</Text>
                 <View style={{
                     width: '100%',
-                    height: '0.2rem',
+                    height: 2,
                     backgroundColor: 'rgb(74, 186, 171)'
                 }}>
                 </View>
@@ -295,9 +296,9 @@ const PatientInfo = ({ patient, workOrder }: { patient: Patient, workOrder: Work
 );
 
 const Footer = () => (
-    <View style={styles.footer}>
+    <View style={styles.footer} fixed>
         <View style={{
-            height: '0.2rem',
+            height: 2,
             backgroundColor: 'rgb(74, 186, 171)'
         }}>
         </View>
@@ -342,15 +343,15 @@ export const ReportDocument = ({ data, patientData, workOrderData }: { data: Rep
         <Document>
             <Page size={"A4"} style={styles.page} wrap>
                 <Header />
+                <Footer />
                 <View style={{
-                    marginTop: 20,
                     marginBottom: 15,
                 }}>
                     <Text style={{
                         textAlign: 'center',
                         fontSize: 12,
                         fontWeight: 'bold',
-                    }}>DATA HASIL MEDICAL CHECK UP</Text>
+                    }}>MEDICAL CHECK-UP RESULTS</Text>
                 </View>
                 <PatientInfo patient={patientData} workOrder={workOrderData}/>
                 {Object.entries(groupedData).map(([category, items]) => (
@@ -390,7 +391,6 @@ export const ReportDocument = ({ data, patientData, workOrderData }: { data: Rep
                         })}
                     </View>
                 ))}
-                <Footer />
             </Page>
         </Document>
     );
