@@ -35,9 +35,9 @@ const AppIndicator = () => {
 
     const icon = () => {
         switch(state) {
-            case "online": return <WifiIcon />
-            case "offline": return <WifiOffIcon />
-            case "loading": return <WifiOffIcon />
+            case "online": return <WifiIcon style={{color: "#4CAF50", width: 30, height:'auto'}}/>
+            case "offline": return <WifiOffIcon style={{color: "#af4c4cff", width: 30, height:'auto'}}/>
+            case "loading": return <WifiOffIcon style={{width: 30, height:'auto'}}/>
             default: <WifiOffIcon />
         };
     }

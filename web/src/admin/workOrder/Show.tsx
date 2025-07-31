@@ -134,9 +134,8 @@ export function WorkOrderShow() {
         <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef} workOrderID={Number(workOrderID)} />}>
             <TabbedShowLayout>
                 <TabbedShowLayout.Tab label="Test">
-                    <Card>
+                    <Card elevation={0} sx={{borderBottom:'2px solid rgba(0, 0, 0, 0.1)'}}>
                         <WithRecord render={(data: WorkOrder) => {
-                            console.log(data);
                             return (
                                 <CardContent sx={{
                                     display: "flex",
@@ -154,7 +153,7 @@ export function WorkOrderShow() {
                             )
                         }} />
                     </Card>
-                    <Card>
+                    <Card elevation={0} sx={{borderBottom:'2px solid rgba(0, 0, 0, 0.1)'}}>
                         <CardContent sx={{
                             display: "flex",
                             justifyContent: "center",
@@ -193,7 +192,7 @@ export function WorkOrderShow() {
                             }} />
                         </CardContent>
                     </Card>
-                    <Card>
+                    <Card elevation={0} sx={{borderBottom:'2px solid rgba(0, 0, 0, 0.1)'}}>
                         <CardContent sx={{
                             display: "flex",
                             justifyContent: "center",
@@ -210,7 +209,7 @@ export function WorkOrderShow() {
                             }} />
                         </CardContent>
                     </Card>
-                    <Card>
+                    <Card elevation={0} >
                         <CardContent sx={{
                             display: "flex",
                             justifyContent: "center",

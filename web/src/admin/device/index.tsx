@@ -1,11 +1,10 @@
-import { CircularProgress, Stack } from "@mui/material";
+import { CircularProgress, Stack, Card, CardContent, Typography, Chip, Box as MuiBox } from "@mui/material";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import { useEffect, useState } from 'react';
 import {
     AutocompleteInput,
     Create,
-    Datagrid,
     Edit,
     FilterLiveSearch,
     FormDataConsumer,
@@ -14,13 +13,12 @@ import {
     minValue,
     PasswordInput,
     required,
-
     Show,
     SimpleForm,
-    TextField,
     TextInput,
     useGetList,
-    WithRecord
+    useListContext,
+    Link
 } from "react-admin";
 import FeatureList from "../../component/FeatureList.tsx";
 import SideFilter from "../../component/SideFilter.tsx";
@@ -240,6 +238,155 @@ export function DeviceEdit() {
     )
 }
 
+const DeviceCard = ({ record, connectionStatuses }: { record: Device, connectionStatuses: Record<number, ConnectionResponse> }) => {
+    return (
+        <Link to={`/device/${record.id}`} style={{ textDecoration: 'none' }}>
+            <Card 
+                elevation={0}
+                sx={{ 
+                    boxShadow: 'rgba(0, 0, 0, 0.16) 0px 1px 4px',
+                    cursor: 'pointer',
+                    '&:hover': { 
+                        boxShadow: 4,
+                        transform: 'translateY(-2px)',
+                        transition: 'all 0.2s ease-in-out'
+                    } 
+                }}
+            >
+                <CardContent sx={{position: "relative", height: 220}}>
+                    <MuiBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="h5" component="div">
+                            {record.name}
+                        </Typography>
+                        <Chip 
+                            label={`ID: ${record.id}`} 
+                            size="small" 
+                            color="primary" 
+                            variant="outlined"
+                        />
+                    </MuiBox>
+
+                <MuiBox sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 2 }}>
+                    <MuiBox sx={{ flex: 1 }}>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                            <strong>Type:</strong> {record.type}
+                        </Typography>
+                        {record.ip_address && (
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                <strong>IP Address:</strong> {record.ip_address}
+                            </Typography>
+                        )}
+                        
+                    </MuiBox>
+                    <MuiBox sx={{ flex: 1, textAlign: 'end' }}>
+                        {record.send_port !== undefined && Number(record.send_port) > 0 && (
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                <strong>Send Port:</strong> {record.send_port}
+                            </Typography>
+                        )}
+                        {record.receive_port && (
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                <strong>Receive Port:</strong> {record.receive_port}
+                            </Typography>
+                        )}
+                        {record.baud_rate !== undefined && Number(record.baud_rate) > 0 && (
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                <strong>Baud Rate:</strong> {record.baud_rate}
+                            </Typography>
+                        )}
+                    </MuiBox>
+                </MuiBox>
+
+                <MuiBox sx={{ display: 'flex', gap: 2, mt: 2 , justifyContent: "space-between", position:"absolute", bottom: 15, width: "92%"}}>
+                    <MuiBox>
+                        <Typography variant="caption" display="block" gutterBottom>
+                            Sender Status:
+                        </Typography>
+                        <ConnectionStatus
+                            deviceId={record.id}
+                            status={{
+                                device_id: record.id,
+                                message: connectionStatuses[record.id]?.sender_message,
+                                status: connectionStatuses[record.id]?.sender_status
+                            }}
+                        />
+                    </MuiBox>
+                    <MuiBox>
+                        <Typography variant="caption" display="block" gutterBottom>
+                            Receiver Status:
+                        </Typography>
+                        <ConnectionStatus
+                            deviceId={record.id}
+                            status={{
+                                device_id: record.id,
+                                message: connectionStatuses[record.id]?.receiver_message,
+                                status: connectionStatuses[record.id]?.receiver_status
+                            }}
+                        />
+                    </MuiBox>
+                </MuiBox>
+            </CardContent>
+        </Card>
+        </Link>
+    );
+};
+
+const DeviceCardList = ({ connectionStatuses, setDeviceIds }: { 
+    connectionStatuses: Record<number, ConnectionResponse>,
+    setDeviceIds: React.Dispatch<React.SetStateAction<number[]>>
+}) => {
+    const { data, isLoading } = useListContext<Device>();
+
+    useEffect(() => {
+        if (data) {
+            const ids = data.map(device => device.id);
+            setDeviceIds(ids);
+        }
+    }, [data, setDeviceIds]);
+
+    if (isLoading) {
+        return (
+            <MuiBox sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                <CircularProgress />
+            </MuiBox>
+        );
+    }
+
+    if (!data || data.length === 0) {
+        return (
+            <MuiBox sx={{ textAlign: 'center', p: 3 }}>
+                <Typography variant="body1" color="text.secondary">
+                    No devices found
+                </Typography>
+            </MuiBox>
+        );
+    }
+
+    return (
+        <MuiBox sx={{ p: 2 }}>
+            <MuiBox 
+                sx={{ 
+                    display: 'grid',
+                    gridTemplateColumns: {
+                        xs: '1fr',
+                        md: 'repeat(2, 1fr)',
+                        lg: 'repeat(3, 1fr)'
+                    },
+                    gap: 2
+                }}
+            >
+                {data.map((device) => (
+                    <DeviceCard 
+                        key={device.id}
+                        record={device} 
+                        connectionStatuses={connectionStatuses}
+                    />
+                ))}
+            </MuiBox>
+        </MuiBox>
+    );
+};
+
 const DeviceFilterSidebar = () => (
     <SideFilter>
         <FilterLiveSearch />
@@ -263,64 +410,20 @@ export const DeviceList = () => {
                 deviceIds={deviceIds}
                 onStatusUpdate={handleStatusUpdate}
             />
-            <List aside={<DeviceFilterSidebar />} resource="device"
-                storeKey={false} exporter={false}
+            <List 
+                // aside={<DeviceFilterSidebar />} 
+                resource="device"
+                storeKey={false} 
+                exporter={false}
                 sort={{
                     field: "id",
                     order: "DESC"
                 }}
             >
-                <Datagrid>
-                    <TextField source="id" />
-                    <TextField source="name" />
-                    <TextField source="type" />
-                    <TextField source="ip_address" />
-                    <TextField source="send_port" />
-                    <TextField source="receive_port" />
-                    <TextField source="baud_rate" label="Baud Rate" />
-                    <WithRecord label="Connection Status Sender" render={(record: Device) => {
-                        useEffect(() => {
-                            setDeviceIds(prev => {
-                                if (!prev.includes(record.id)) {
-                                    return [...prev, record.id];
-                                }
-                                return prev;
-                            });
-                        }, [record.id]);
-
-                        return (
-                            <ConnectionStatus
-                                deviceId={record.id}
-                                status={{
-                                    device_id: record.id,
-                                    message: connectionStatuses[record.id]?.sender_message,
-                                    status: connectionStatuses[record.id]?.sender_status
-                                }}
-                            />
-                        );
-                    }} />
-                    <WithRecord label="Connection Status Receiver" render={(record: Device) => {
-                        useEffect(() => {
-                            setDeviceIds(prev => {
-                                if (!prev.includes(record.id)) {
-                                    return [...prev, record.id];
-                                }
-                                return prev;
-                            });
-                        }, [record.id]);
-
-                        return (
-                            <ConnectionStatus
-                                deviceId={record.id}
-                                status={{
-                                    device_id: record.id,
-                                    message: connectionStatuses[record.id]?.receiver_message,
-                                    status: connectionStatuses[record.id]?.receiver_status
-                                }}
-                            />
-                        );
-                    }} />
-                </Datagrid>
+                <DeviceCardList 
+                    connectionStatuses={connectionStatuses}
+                    setDeviceIds={setDeviceIds}
+                />
             </List>
         </>
     );
