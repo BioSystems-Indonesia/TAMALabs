@@ -6,7 +6,7 @@ import {
     AutocompleteInput,
     Create,
     Edit,
-    FilterLiveSearch,
+    // FilterLiveSearch,
     FormDataConsumer,
     List,
     maxValue,
@@ -21,7 +21,7 @@ import {
     Link
 } from "react-admin";
 import FeatureList from "../../component/FeatureList.tsx";
-import SideFilter from "../../component/SideFilter.tsx";
+// import SideFilter from "../../component/SideFilter.tsx";
 import { useRefererRedirect } from "../../hooks/useReferer.ts";
 import { Device, DeviceTypeFeatureList, DeviceTypeValue } from "../../types/device.ts";
 import { Action, ActionKeys } from "../../types/props.ts";
@@ -387,11 +387,11 @@ const DeviceCardList = ({ connectionStatuses, setDeviceIds }: {
     );
 };
 
-const DeviceFilterSidebar = () => (
-    <SideFilter>
-        <FilterLiveSearch />
-    </SideFilter>
-);
+// const DeviceFilterSidebar = () => (
+//     <SideFilter>
+//         <FilterLiveSearch />
+//     </SideFilter>
+// );
 
 export const DeviceList = () => {
     const [deviceIds, setDeviceIds] = useState<number[]>([]);
