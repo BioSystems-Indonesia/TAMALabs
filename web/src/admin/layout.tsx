@@ -170,7 +170,6 @@ const CompanyLogo = () => (
         display: 'flex', 
         alignItems: 'center', 
         gap: 1,
-        marginLeft: 21,
         mr: 2,
         '&:hover': {
             opacity: 0.8,
@@ -223,7 +222,6 @@ const MyAppBar = () => {
             alwaysOn={appBarAlwaysOn()}
             toolbar={
                 <>
-                    <CompanyLogo />
                     <Box sx={{ flexGrow: 1 }} /> 
                     <Box sx={{ 
                         display: 'flex', 
@@ -244,7 +242,7 @@ const MyAppBar = () => {
                     </Box>
                 </>
             }
-        />
+        ><CompanyLogo /></AppBar>
     );
 };
 

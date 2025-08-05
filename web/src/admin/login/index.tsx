@@ -12,7 +12,8 @@ import {
     InputAdornment,
     IconButton,
     Paper,
-    Stack
+    Stack,
+    ThemeProvider,
 } from '@mui/material';
 import {
     Lock as LockIcon,
@@ -24,6 +25,7 @@ import {
 import { useLogin, useNotify } from 'react-admin';
 import { useForm, Controller } from 'react-hook-form';
 import  logo  from '../../assets/elgatama-logo.png'
+import { radiantLightTheme } from '../theme.tsx';
 
 interface LoginFormData {
     username: string;
@@ -68,6 +70,7 @@ const CustomLoginPage: React.FC = () => {
     };
 
     return (
+	<ThemeProvider theme={radiantLightTheme}>
         <Box
             sx={{
                 minHeight: '100vh',
@@ -87,7 +90,6 @@ const CustomLoginPage: React.FC = () => {
                         height: '50vh',
                         borderRadius: 4,
                         overflow: 'hidden',
-                        background: 'rgba(255, 255, 255, 0.95)',
                         backdropFilter: 'blur(10px)',
 
                     }}
@@ -301,6 +303,7 @@ const CustomLoginPage: React.FC = () => {
                 </Paper>
             </Container>
         </Box>
+	</ThemeProvider>
     );
 };
 
