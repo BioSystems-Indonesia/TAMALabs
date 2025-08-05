@@ -1,5 +1,5 @@
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
-import { CircularProgress, Dialog, DialogContent, DialogTitle } from "@mui/material";
+import { CircularProgress, Dialog, DialogContent, DialogTitle, Divider } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -37,6 +37,7 @@ import { workOrderStatusDontShowRun, workOrderStatusShowCancel, type WorkOrder }
 import { WorkOrderChipColorMap } from "./ChipFieldStatus.tsx";
 import WorkOrderForm from "./Form.tsx";
 import RunWorkOrderForm from "./RunWorkOrderForm.tsx";
+import FeatureList from "../../component/FeatureList.tsx";
 
 const WorkOrderAction = () => {
     return (
@@ -112,16 +113,22 @@ function WorkOrderSideFilters() {
         <SideFilter>
             <FilterLiveForm debounce={1500}>
                 <Stack>
-                    <SearchInput source="q" alwaysOn sx={{}} />
                     <ReferenceInput source={"patient_ids"} reference="patient" label={"Patient"} alwaysOn>
                         <AutocompleteArrayInput size="small" />
                     </ReferenceInput>
+                    <ReferenceInput
+                        source={"barcode_ids"} reference={`work-order/barcode`} alwaysOn>
+                        <AutocompleteArrayInput size="small" />
+                    </ReferenceInput>
+                    <Divider sx={{
+                        marginBottom: 2,
+                    }} />
                     <CustomDateInput label={"Created At Start"} source="created_at_start" disableFuture alwaysOn size="small" sx={{
                         marginBottom: '4px'
-                    }} />
+                    }} clearable />
                     <CustomDateInput label={"Created At End"} source="created_at_end" disableFuture alwaysOn size="small" sx={{
                         marginBottom: '4px'
-                    }} />
+                    }} clearable />
                 </Stack>
             </FilterLiveForm>
         </SideFilter>
@@ -284,10 +291,7 @@ export const WorkOrderList = () => {
         <List sort={{
             field: "id",
             order: "DESC"
-        }} aside={<WorkOrderSideFilters />} title="Lab Request" filterDefaultValues={{
-            created_at_start: dayjs().subtract(7, "day").toISOString(),
-            created_at_end: dayjs().toISOString(),
-        }} exporter={false}
+        }} aside={<WorkOrderSideFilters />} title="Lab Request" exporter={false}
             storeKey={false}
             sx={{
                 '& .RaList-content': {

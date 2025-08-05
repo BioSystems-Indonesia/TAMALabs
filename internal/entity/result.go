@@ -111,7 +111,7 @@ func (r TestResult) FromObservationResult(observation ObservationResult) TestRes
 		// TODO make the ConvertCompount return resultOrig if err
 		result, err = util.ConvertCompoundUnit(resultOrig, observation.Unit, observation.TestType.Unit)
 		if err != nil {
-			slog.Info(
+			slog.Warn(
 				"convert compound unit from observation failed",
 				"id", observation.ID,
 				"result", resultOrig,
@@ -179,6 +179,7 @@ const (
 
 type ResultGetManyRequest struct {
 	GetManyRequest
+	BarcodeIDs      []int64  `query:"barcode_ids"`
 	PatientIDs      []int64  `query:"patient_ids"`
 	DoctorIDs       []int64  `query:"doctor_ids"`
 	HasResult       bool     `query:"has_result"`
