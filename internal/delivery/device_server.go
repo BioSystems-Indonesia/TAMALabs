@@ -10,6 +10,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	analyxtrias "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
+	ncc61 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/neomedika_ncc61"
 	swelabalfa "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	swelablumi "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -27,6 +28,7 @@ type DeviceServerStrategy struct {
 	swelabAlfaBasic    *swelabalfa.Handler
 	swelabLumiHandler  *swelablumi.Handler
 	alifaxHandler      *alifax.Handler
+	ncc61Handler       *ncc61.Handler
 }
 
 func NewDeviceServerStrategy(
@@ -38,6 +40,7 @@ func NewDeviceServerStrategy(
 	swelabAlfaHandler *swelabalfa.Handler,
 	swelabLumiHandler *swelablumi.Handler,
 	alifaxHandler *alifax.Handler,
+	ncc61handler *ncc61.Handler,
 ) *DeviceServerStrategy {
 	return &DeviceServerStrategy{
 		coaxHandler:        coaxHandler,
@@ -49,6 +52,7 @@ func NewDeviceServerStrategy(
 		swelabAlfaBasic:    swelabAlfaHandler,
 		swelabLumiHandler:  swelabLumiHandler,
 		alifaxHandler:      alifaxHandler,
+		ncc61Handler:       ncc61handler,
 	}
 }
 
@@ -72,7 +76,7 @@ func init() {
 
 var serialDeviceType = []entity.DeviceType{
 	entity.DeviceTypeCoax,
-	entity.DeviceTypeNCC3300,
+	entity.DeviceTypeBiomedicaNCC3300,
 	entity.DeviceTypeAlifax,
 }
 
@@ -84,6 +88,7 @@ var tcpDeviceType = []entity.DeviceType{
 	entity.DeviceTypeSwelabAlfa,
 	entity.DeviceTypeSwelabBasic,
 	entity.DeviceTypeSwelabLumi,
+	entity.DeviceTypeBiomedicaNCC61,
 	entity.DeviceTypeOther,
 }
 
@@ -121,7 +126,7 @@ func (d *DeviceServerStrategy) ChooseDeviceSerialHandler(device entity.Device) (
 	switch device.Type {
 	case entity.DeviceTypeCoax:
 		return d.coaxHandler, nil
-	case entity.DeviceTypeNCC3300:
+	case entity.DeviceTypeBiomedicaNCC3300:
 		return d.ncc3300, nil
 	case entity.DeviceTypeAlifax:
 		return d.alifaxHandler, nil
@@ -148,6 +153,8 @@ func (d *DeviceServerStrategy) ChooseDeviceTCPHandler(device entity.Device) (ser
 		return d.swelabAlfaBasic, nil
 	case entity.DeviceTypeSwelabLumi:
 		return d.swelabLumiHandler, nil
+	case entity.DeviceTypeBiomedicaNCC61:
+		return d.ncc61Handler, nil
 	default:
 		return d.defaultHandler, nil
 	}

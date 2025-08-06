@@ -5,18 +5,19 @@ import "fmt"
 type DeviceType string
 
 const (
-	DeviceTypeBA400       DeviceType = "BA400"
-	DeviceTypeBA200       DeviceType = "BA200"
-	DeviceTypeA15         DeviceType = "A15"
-	DeviceTypeOther       DeviceType = "OTHER"
-	DeviceTypeAnalyxTria  DeviceType = "ANALYX_TRIA"
-	DeviceTypeAnalyxPanca DeviceType = "ANALYX_PANCA"
-	DeviceTypeSwelabAlfa  DeviceType = "SWELAB_ALFA"
-	DeviceTypeSwelabBasic DeviceType = "SWELAB_BASIC"
-	DeviceTypeSwelabLumi  DeviceType = "SWELAB_LUMI"
-	DeviceTypeCoax        DeviceType = "COAX"
-	DeviceTypeNCC3300     DeviceType = "NCC_3300"
-	DeviceTypeAlifax      DeviceType = "ALIFAX"
+	DeviceTypeBA400            DeviceType = "BA400"
+	DeviceTypeBA200            DeviceType = "BA200"
+	DeviceTypeA15              DeviceType = "A15"
+	DeviceTypeOther            DeviceType = "OTHER"
+	DeviceTypeAnalyxTria       DeviceType = "ANALYX_TRIA"
+	DeviceTypeAnalyxPanca      DeviceType = "ANALYX_PANCA"
+	DeviceTypeSwelabAlfa       DeviceType = "SWELAB_ALFA"
+	DeviceTypeSwelabBasic      DeviceType = "SWELAB_BASIC"
+	DeviceTypeSwelabLumi       DeviceType = "SWELAB_LUMI"
+	DeviceTypeCoax             DeviceType = "COAX"
+	DeviceTypeBiomedicaNCC3300 DeviceType = "BIOMEDICA_NCC_3300"
+	DeviceTypeBiomedicaNCC61   DeviceType = "BIOMEDICA_NCC_61"
+	DeviceTypeAlifax           DeviceType = "ALIFAX"
 )
 
 func (d DeviceType) String() string {
@@ -54,7 +55,7 @@ var TableDeviceType = Tables{
 		CanReceive: true,
 		UseSerial:  true,
 	}},
-	{ID: string(DeviceTypeNCC3300), Name: string(DeviceTypeNCC3300), AdditionalInfo: DeviceCapability{
+	{ID: string(DeviceTypeBiomedicaNCC3300), Name: string(DeviceTypeBiomedicaNCC3300), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
 		UseSerial:  true,
 	}},
@@ -68,7 +69,9 @@ var TableDeviceType = Tables{
 		CanReceive: true,
 		UseSerial:  true,
 	}},
-
+	{ID: string(DeviceTypeBiomedicaNCC61), Name: string(DeviceTypeBiomedicaNCC61), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+	}},
 }
 
 type DeviceCapability struct {

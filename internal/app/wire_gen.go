@@ -15,6 +15,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/neomedika_ncc61"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
@@ -99,7 +100,8 @@ func InitRestApp() server.RestServer {
 	swelabalfaHandler := swelabalfa.NewHandler(usecase)
 	swelablumiHandler := swelablumi.NewHandler(usecase)
 	alifaxHandler := alifax.NewHandler(usecase)
-	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, ncc3300Handler, tcpHlSevenHandler, analyxtriasHandler, analyxpancaHandler, swelabalfaHandler, swelablumiHandler, alifaxHandler)
+	ncc61Handler := ncc61.NewHandler(usecase)
+	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, ncc3300Handler, tcpHlSevenHandler, analyxtriasHandler, analyxpancaHandler, swelabalfaHandler, swelablumiHandler, alifaxHandler, ncc61Handler)
 	v := provideAllDevices(deviceRepository)
 	controllerRepository := server2.NewControllerRepository(deviceServerStrategy, v)
 	deviceUseCase := deviceuc.NewDeviceUseCase(schema, deviceRepository, strategy, ba400Ba400, a15A15, controllerRepository)

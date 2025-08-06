@@ -4,12 +4,13 @@ import (
 	"github.com/google/wire"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/alifax"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
 	ncc3300 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	analyxtrias "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
+	ncc61 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/neomedika_ncc61"
 	swelabalfa "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	swelablumi "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
@@ -106,6 +107,7 @@ var tcpHandlerSet = wire.NewSet(
 	analyxpanca.NewHandler,
 	swelabalfa.NewHandler,
 	swelablumi.NewHandler,
+	ncc61.NewHandler,
 	delivery.NewDeviceServerStrategy,
 	wire.Bind(new(repository.DeviceServerStrategy), new(*delivery.DeviceServerStrategy)),
 )

@@ -1,12 +1,12 @@
 package alifax
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"log/slog"
 	"strings"
 	"time"
-	"context"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
@@ -96,8 +96,20 @@ func (h *Handler) processBuffer(buffer []byte) []byte {
 		if err != nil {
 			slog.Error("error parsing", "err", err, "raw", string(message))
 		} else {
-			//displayParsedData(parsed)
-			h.analyzerUsecase.ProcessORUR01(ctx, toORU(parsed))
+			slog.Info("parsed data",
+				"command", parsed.Command,
+				"workstationNumber", parsed.WorkstationNumber,
+				"patientID", parsed.PatientID,
+				"rackNo", parsed.RackNo,
+				"position", parsed.Position,
+				"cycle", parsed.Cycle,
+				"result", parsed.Result,
+				"checksum", parsed.Checksum,
+			)
+			err := h.analyzerUsecase.ProcessORUR01(ctx, toORU(parsed))
+			if err != nil {
+				slog.Error("Error processing ORUR01", "err", err)
+			}
 		}
 
 		// Remove processed message from buffer
@@ -230,7 +242,7 @@ func toORU(d Data) entity.ORU_R01 {
 }
 
 func setDescription(s string) string {
-	switch(s) {
+	switch s {
 	case "-001":
 		return "NF"
 	case "-002":
@@ -253,4 +265,3 @@ func positiveNumber(s string) bool {
 	}
 	return false
 }
-
