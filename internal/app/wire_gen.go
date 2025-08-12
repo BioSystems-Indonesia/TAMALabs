@@ -9,7 +9,6 @@ package app
 import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	a15_2 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/a15"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
@@ -88,10 +87,9 @@ func InitRestApp() server.RestServer {
 	a15A15 := a15.NewA15()
 	strategy := runner.NewStrategy(runAction, cancelAction, postrunRunAction, postrunCancelAction, incompleteSendAction, ba400Ba400, a15A15)
 	handler := a15_2.NewHandler()
-	tcpHlSevenHandler := tcp.NewHlSevenHandler(usecase)
 	swelabalfaHandler := swelabalfa.NewHandler(usecase)
 	swelablumiHandler := swelablumi.NewHandler(usecase)
-	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, tcpHlSevenHandler, swelabalfaHandler, swelablumiHandler)
+	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, swelabalfaHandler, swelablumiHandler)
 	v := provideAllDevices(deviceRepository)
 	controllerRepository := server2.NewControllerRepository(deviceServerStrategy, v)
 	deviceUseCase := deviceuc.NewDeviceUseCase(schema, deviceRepository, strategy, ba400Ba400, a15A15, controllerRepository)
