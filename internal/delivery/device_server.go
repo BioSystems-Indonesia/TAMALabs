@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/alifax"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
 	ncc3300 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/a15"
 	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	analyxtrias "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
+	ncc61 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/neomedika_ncc61"
 	swelabalfa "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	swelablumi "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -17,6 +20,7 @@ import (
 )
 
 type DeviceServerStrategy struct {
+	a15Handler         *a15.Handler
 	coaxHandler        *coax.Handler
 	ncc3300            *ncc3300.Handler
 	defaultHandler     *tcp.HlSevenHandler
@@ -25,9 +29,12 @@ type DeviceServerStrategy struct {
 	swelabAlfaHandler  *swelabalfa.Handler
 	swelabAlfaBasic    *swelabalfa.Handler
 	swelabLumiHandler  *swelablumi.Handler
+	alifaxHandler      *alifax.Handler
+	ncc61Handler       *ncc61.Handler
 }
 
 func NewDeviceServerStrategy(
+	a15Handler *a15.Handler,
 	coaxHandler *coax.Handler,
 	ncc3300 *ncc3300.Handler,
 	defaultHandler *tcp.HlSevenHandler,
@@ -35,8 +42,11 @@ func NewDeviceServerStrategy(
 	analyxPancaHandler *analyxpanca.Handler,
 	swelabAlfaHandler *swelabalfa.Handler,
 	swelabLumiHandler *swelablumi.Handler,
+	alifaxHandler *alifax.Handler,
+	ncc61handler *ncc61.Handler,
 ) *DeviceServerStrategy {
 	return &DeviceServerStrategy{
+		a15Handler:         a15Handler,
 		coaxHandler:        coaxHandler,
 		ncc3300:            ncc3300,
 		defaultHandler:     defaultHandler,
@@ -45,6 +55,8 @@ func NewDeviceServerStrategy(
 		swelabAlfaHandler:  swelabAlfaHandler,
 		swelabAlfaBasic:    swelabAlfaHandler,
 		swelabLumiHandler:  swelabLumiHandler,
+		alifaxHandler:      alifaxHandler,
+		ncc61Handler:       ncc61handler,
 	}
 }
 
@@ -68,10 +80,12 @@ func init() {
 
 var serialDeviceType = []entity.DeviceType{
 	entity.DeviceTypeCoax,
-	entity.DeviceTypeNCC3300,
+	entity.DeviceTypeBiomedicaNCC3300,
+	entity.DeviceTypeAlifax,
 }
 
 var tcpDeviceType = []entity.DeviceType{
+	entity.DeviceTypeA15,
 	entity.DeviceTypeBA200,
 	entity.DeviceTypeBA400,
 	entity.DeviceTypeAnalyxTria,
@@ -79,11 +93,12 @@ var tcpDeviceType = []entity.DeviceType{
 	entity.DeviceTypeSwelabAlfa,
 	entity.DeviceTypeSwelabBasic,
 	entity.DeviceTypeSwelabLumi,
+	entity.DeviceTypeBiomedicaNCC61,
 	entity.DeviceTypeOther,
 }
 
 var deviceTypeNotSupport = []entity.DeviceType{
-	entity.DeviceTypeA15,
+	// entity.DeviceTypeA15,
 }
 
 func (d *DeviceServerStrategy) ChooseDeviceServer(device entity.Device) (server.Controller, error) {
@@ -116,8 +131,11 @@ func (d *DeviceServerStrategy) ChooseDeviceSerialHandler(device entity.Device) (
 	switch device.Type {
 	case entity.DeviceTypeCoax:
 		return d.coaxHandler, nil
-	case entity.DeviceTypeNCC3300:
+	case entity.DeviceTypeBiomedicaNCC3300:
 		return d.ncc3300, nil
+	case entity.DeviceTypeAlifax:
+		return d.alifaxHandler, nil
+
 	default:
 		return nil, entity.ErrDeviceTypeNotSupport
 	}
@@ -140,6 +158,10 @@ func (d *DeviceServerStrategy) ChooseDeviceTCPHandler(device entity.Device) (ser
 		return d.swelabAlfaBasic, nil
 	case entity.DeviceTypeSwelabLumi:
 		return d.swelabLumiHandler, nil
+	case entity.DeviceTypeA15:
+		return d.a15Handler, nil
+	case entity.DeviceTypeBiomedicaNCC61:
+		return d.ncc61Handler, nil
 	default:
 		return d.defaultHandler, nil
 	}

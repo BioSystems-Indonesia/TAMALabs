@@ -53,8 +53,12 @@ func (r *WorkOrderRepository) FindAllForResult(ctx context.Context, req *entity.
 		db = db.Where("work_orders.patient_id in (?)", req.PatientIDs)
 	}
 
+	if len(req.BarcodeIDs) > 0 {
+		db = db.Where("work_orders.barcode in (?)", req.BarcodeIDs)
+	}
+
 	if len(req.WorkOrderStatus) > 0 {
-		db = db.Joins("work_orders.status in (?)", req.WorkOrderStatus)
+		db = db.Where("work_orders.status in (?)", req.WorkOrderStatus)
 	}
 
 	if len(req.DoctorIDs) > 0 {
@@ -132,12 +136,8 @@ func (r WorkOrderRepository) FindAll(
 		db = db.Where("work_orders.created_at <= ?", req.CreatedAtEnd.Add(24*time.Hour))
 	}
 
-	if req.Query != "" {
-		db = db.Where("work_orders.id like ? or work_orders.created_at like ?", "%"+req.Query+"%", "%"+req.Query+"%")
-	}
-
-	if req.Barcode != "" {
-		db = db.Where("work_orders.barcode = ?", req.Barcode)
+	if len(req.BarcodeIds) > 0 {
+		db = db.Where("work_orders.barcode in (?)", req.BarcodeIds)
 	}
 
 	if len(req.SpecimenIDs) > 0 {
@@ -145,7 +145,7 @@ func (r WorkOrderRepository) FindAll(
 	}
 
 	if len(req.PatientIDs) > 0 {
-		db = db.Joins("work_orders.patient_id in (?)", req.PatientIDs)
+		db = db.Where("work_orders.patient_id in (?)", req.PatientIDs)
 	}
 
 	db = db.
@@ -166,6 +166,16 @@ func (r WorkOrderRepository) FindAll(
 	}
 
 	return resp, nil
+}
+
+func (r WorkOrderRepository) FindAllBarcodes(ctx context.Context) ([]string, error) {
+	var barcodes []string
+	err := r.db.WithContext(ctx).Table("work_orders").Select("barcode").
+		Order("barcode desc").Find(&barcodes).Error
+	if err != nil {
+		return nil, fmt.Errorf("error finding workOrders: %w", err)
+	}
+	return barcodes, nil
 }
 
 func (r WorkOrderRepository) FindOne(id int64) (entity.WorkOrder, error) {

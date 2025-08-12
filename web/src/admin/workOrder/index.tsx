@@ -4,7 +4,6 @@ import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMutation } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import {
     AutocompleteArrayInput,
@@ -19,7 +18,6 @@ import {
     ReferenceArrayField,
     ReferenceField,
     ReferenceInput,
-    SearchInput,
     ShowButton,
     TextField,
     TopToolbar,
@@ -117,6 +115,7 @@ function WorkOrderSideFilters() {
         }}>
             <FilterLiveForm debounce={1500}>
                 <Stack spacing={0}>
+                    {/* Judul filter */}
                     <Box>
                         <Typography variant="h6" sx={{ 
                             color: theme.palette.text.primary, 
@@ -128,6 +127,8 @@ function WorkOrderSideFilters() {
                             🔍 Filter Lab Requests
                         </Typography>
                     </Box>
+
+                    {/* Search input */}
                     <SearchInput 
                         source="q" 
                         alwaysOn 
@@ -150,6 +151,8 @@ function WorkOrderSideFilters() {
                             }
                         }} 
                     />
+
+                    {/* Filter Patient */}
                     <ReferenceInput 
                         source={"patient_ids"} 
                         reference="patient" 
@@ -172,13 +175,21 @@ function WorkOrderSideFilters() {
                                     transition: 'all 0.3s ease',
                                     '&:hover': {
                                         backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
-                                       
                                     },
-                                  
                                 }
                             }}
                         />
                     </ReferenceInput>
+
+                    {/* Filter Barcode */}
+                    <ReferenceInput
+                        source={"barcode_ids"} reference={`work-order/barcode`} alwaysOn>
+                        <AutocompleteArrayInput size="small" />
+                    </ReferenceInput>
+
+                    <Divider sx={{ marginBottom: 2 }} />
+
+                    {/* Filter Date Range */}
                     <Box>
                         <Typography variant="body2" sx={{ 
                             color: theme.palette.text.secondary, 
@@ -188,14 +199,16 @@ function WorkOrderSideFilters() {
                         }}>
                             📅 Date Range
                         </Typography>
-                        <Stack >
+                        <Stack>
                             <CustomDateInput 
                                 label={"Start Date"} 
                                 source="created_at_start" 
                                 disableFuture 
                                 alwaysOn 
                                 size="small" 
+                                clearable
                                 sx={{
+                                    marginBottom: '4px',
                                     '& .MuiOutlinedInput-root': {
                                         backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
                                         borderRadius: '12px',
@@ -227,7 +240,9 @@ function WorkOrderSideFilters() {
                                 disableFuture 
                                 alwaysOn 
                                 size="small" 
+                                clearable
                                 sx={{
+                                    marginBottom: '4px',
                                     '& .MuiOutlinedInput-root': {
                                         backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
                                         borderRadius: '12px',
@@ -260,6 +275,7 @@ function WorkOrderSideFilters() {
         </SideFilter>
     )
 }
+
 
 function getRequestLength(data: WorkOrder): number {
     return data.specimen_list?.reduce((acc, specimen) => acc + specimen.observation_requests.length, 0) || 0
@@ -417,10 +433,7 @@ export const WorkOrderList = () => {
         <List sort={{
             field: "id",
             order: "DESC"
-        }} aside={<WorkOrderSideFilters />} title="Lab Request" filterDefaultValues={{
-            created_at_start: dayjs().subtract(7, "day").toISOString(),
-            created_at_end: dayjs().toISOString(),
-        }} exporter={false}
+        }} aside={<WorkOrderSideFilters />} title="Lab Request" exporter={false}
             storeKey={false}
             sx={{
                 '& .RaList-content': {

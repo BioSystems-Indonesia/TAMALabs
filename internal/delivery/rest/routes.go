@@ -135,6 +135,7 @@ func RegisterRoutes(
 	workOrder := authenticatedV1.Group("/work-order")
 	{
 		workOrder.GET("", handler.FindWorkOrders)
+		workOrder.GET("/barcode", handler.GetWorkOrderBarcode)
 		workOrder.POST("", handler.CreateWorkOrder)
 		workOrder.POST("/run", handler.RunWorkOrder)
 		workOrder.POST("/cancel", handler.CancelOrder)

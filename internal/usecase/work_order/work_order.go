@@ -53,6 +53,12 @@ func (p WorkOrderUseCase) FindAll(
 	return p.workOrderRepo.FindAll(ctx, req)
 }
 
+func (p WorkOrderUseCase) FindAllBarcodes(
+	ctx context.Context,
+) ([]string, error) {
+	return p.workOrderRepo.FindAllBarcodes(ctx)
+}
+
 func (p WorkOrderUseCase) FindOneByID(id int64) (entity.WorkOrder, error) {
 	return p.workOrderRepo.FindOne(id)
 }

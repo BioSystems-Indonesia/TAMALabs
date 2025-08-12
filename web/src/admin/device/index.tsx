@@ -8,6 +8,7 @@ import {
     Edit,
     FilterLiveForm,
     FilterLiveSearch,
+    // FilterLiveSearch,
     FormDataConsumer,
     List,
     maxValue,
@@ -23,7 +24,7 @@ import {
     Link
 } from "react-admin";
 import FeatureList from "../../component/FeatureList.tsx";
-import SideFilter from "../../component/SideFilter.tsx";
+// import SideFilter from "../../component/SideFilter.tsx";
 import { useRefererRedirect } from "../../hooks/useReferer.ts";
 import { Device, DeviceTypeFeatureList, DeviceTypeValue } from "../../types/device.ts";
 import { Action, ActionKeys } from "../../types/props.ts";
@@ -437,6 +438,13 @@ const DeviceFilterSidebar = () => {
         </SideFilter>
     )
 };
+
+// const DeviceFilterSidebar = () => (
+//     <SideFilter>
+//         <FilterLiveSearch />
+//     </SideFilter>
+// );
+
 
 export const DeviceList = () => {
     const [deviceIds, setDeviceIds] = useState<number[]>([]);

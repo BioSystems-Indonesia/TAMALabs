@@ -195,3 +195,20 @@ func (h *WorkOrderHandler) runWorkOrder(c echo.Context, action constant.WorkOrde
 		}
 	}
 }
+
+func (h *WorkOrderHandler) GetWorkOrderBarcode(c echo.Context) error {
+	barcodes, err := h.workOrderUsecase.FindAllBarcodes(c.Request().Context())
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	resp := make([]entity.Table, len(barcodes))
+	for i, barcode := range barcodes {
+		resp[i] = entity.Table{
+			ID:   barcode,
+			Name: barcode,
+		}
+	}
+
+	return successMany(c, resp)
+}

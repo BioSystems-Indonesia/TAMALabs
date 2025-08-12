@@ -1,211 +1,134 @@
-# LIMS Client
-
-
+# LIMS HL Seven Client
 
 ## Overview
-This project is a simplified implementation for sending HL7 ORM messages. It supports serialization and transmission of ORM^O01 messages via a REST API endpoint.
-
-Currently, the application only supports the `SendORM` operation.
+This project is a Laboratory Information Management System (LIMS) designed to handle messages from laboratories machine. It features a web-based frontend for user interaction and a Go backend to process and manage data.
 
 ---
 
-## Development
-### Frontend
-Code is located at `web` folder. Tech stack include:
-1. React + Vite
-2. React Admin
+## Tech Stack
+
 ### Backend
-Tech stack include:
-1. Golang Echo
-### Run development
-Run Frontend
-```bash
-make dev-fe
-```
-Run Backend
-```bash
-make dev-be
-```
+- **Language:** [Go](https://golang.org/)
+- **Web Framework:** [Echo](https://echo.labstack.com/)
+- **Database ORM:** [GORM](https://gorm.io/)
+- **Database Migrations:** [Atlas](https://atlasgo.io/)
+- **Linting:** [golangci-lint](https://golangci-lint.run/)
+- **Live Reload:** [Air](https://github.com/cosmtrek/air)
 
-# Create Windows Installer
-1. Download Inno Setup from [here](https://jrsoftware.org/isdl.php)
-2. Insert the installed path to your PATH env (C:\Program Files (x86)\Inno Setup 6)
-3. Run the script `make installer`
-
-### Build
-Build one golang binary file with go `statik`
-```
-make build
-```
-1. Build frontend to `web/dist` folder
-2. Gather all static files from `web/dist` and put it on binary
-3. Build golang binary on `bin/app`
-```bash
-# Run binary
-./bin/app
-```
-
-
-## Supported Endpoint
-
-### Send ORM
-
-**Endpoint:**
-```
-POST http://localhost:8080/v1/hl-seven/orm
-```
-
-**Description:**
-This endpoint accepts a JSON request representing an HL7 ORM message and processes it into an HL7-compatible string for further handling.
+### Frontend
+- **Framework:** [React](https://reactjs.org/) with [Vite](https://vitejs.dev/)
+- **UI Toolkit:** [React Admin](https://marmelab.com/react-admin/)
 
 ---
 
-## Example Request
+## Prerequisites
 
-```json
-{
-  "orm": {
-    "msh": {
-      "field_separator": "|",
-      "sending_application": "EHRSystem",
-      "sending_facility": "EHRFac",
-      "receiving_application": "LabSystem",
-      "receiving_facility": "LabFac",
-      "message_date_time": "202312050830",
-      "message_type": "ORM^O01",
-      "message_control_id": "12345",
-      "processing_id": "P",
-      "version_id": "2.3"
-    },
-    "pid": {
-      "patient_id": "123456",
-      "patient_name": "Doe^John",
-      "date_of_birth": "19700101",
-      "gender": "M",
-      "address": "123 Main St^^Anytown^CA^12345",
-      "phone_number": "(555)555-5555"
-    },
-    "orc": {
-      "order_control": "NW",
-      "order_id": "1234",
-      "placer_order_number": "5678",
-      "order_status": "1^Routine",
-      "order_priority": "",
-      "order_date_time": "202312050830"
-    },
-    "obr": {
-      "set_id": "1",
-      "placer_order_number": "1234",
-      "universal_service_id": "BMP^Basic Metabolic Panel",
-      "request_date_time": "202312050830"
-    }
-  }
-}
-```
+Before you begin, ensure you have the following installed:
+- [Go](https://golang.org/doc/install) (version 1.21 or higher)
+- [Node.js](https://nodejs.org/en/download/) (version 18 or higher)
+- [Make](https://www.gnu.org/software/make/)
+- [Atlas](https://atlasgo.io/cli/getting-started/)
+- [Docker](https://www.docker.com/products/docker-desktop)
+ 
+---
+
+## Getting Started
+
+Follow these steps to get your development environment running:
+
+1.  **Clone the repository:**
+    ```sh
+    git clone https://github.com/oibacidem/lims-hl-seven
+    cd lims-hl-seven
+    ```
+
+2.  **Install backend dependencies:**
+    ```sh
+    go mod tidy
+    ```
+
+3.  **Install frontend dependencies:**
+    ```sh
+    cd web
+    npm install
+    cd ..
+    ```
+
+4.  **Run the development servers:**
+    - **Backend:**
+      ```sh
+      make dev-be
+      ```
+    - **Frontend:**
+      ```sh
+      make dev-fe
+      ```
+
+The backend will be running on `http://localhost:8322` and the frontend on `http://localhost:5132`.
 
 ---
 
-## Example Response
+## Database Migrations
+The application uses SQLite as the database. The database file is located at `./tmp/biosystem-lims.db`.
 
-**Response (200 OK):**
-```json
-{
-  "ack": {
-    "msh": {
-      "field_separator": "",
-      "sending_application": "",
-      "sending_facility": "",
-      "receiving_application": "",
-      "receiving_facility": "",
-      "message_date_time": "",
-      "message_type": "",
-      "message_control_id": "",
-      "processing_id": "",
-      "version_id": ""
-    },
-    "msa": {
-      "acknowledgment_code": "MSA",
-      "message_control_id": "AA",
-      "text_message": "Initial Connection Established"
-    }
-  }
-}
-```
+
+This project uses [Atlas](https://atlasgo.io/) to manage database schemas, with migration files located in the `migrations` directory. The desired schema state is derived from the GORM entity files in `internal/entity`.
+
+- **Create a new migration file:**
+  **DO NOT MANUALLY CREATE MIGRATION FILE. YOU MUST MODIFY the internal/entity and then run the migrate-diff command**
+
+  1.  Modify the GORM structs in the `internal/entity` directory to reflect your desired schema changes.
+  2.  Run the following command to generate a new migration file. This command compares your GORM entities with the current state of the database and generates the necessary SQL.
+      ```sh
+      make migrate-diff desc="your_migration_name"
+      ```
+      *Replace `your_migration_name` with a descriptive name for your migration (e.g., `add_user_email_field`).*
+  3.  If you get a checksum error, run the following command to rehash the migration files.
+      ```sh
+      make migrate-hash
+      ```
+
+- **Apply all pending migrations:**
+  Simply run the app to apply all pending migrations. It will run all migration on startup.
+
 
 ---
 
-## How It Works
+## Linting
 
-1. **JSON Parsing:**
-    - The JSON request is deserialized into Go structs (`SendORMRequest` and nested `ORM`, `MSH`, `PID`, `ORC`, `OBR`).
-
-2. **HL7 Serialization:**
-    - The `Serialize` function processes the structs and converts them into an HL7-compatible string.
-
-3. **Response:**
-    - The serialized HL7 string is returned in the response for integration with downstream systems.
-
----
-
-## Running the Service
-
-1. **Start the Server:**
-    - Run the application to start the HTTP server on `localhost:8080`.
-
-2. **Test the Endpoint:**
-    - Use tools like `Postman` or `curl` to send a `POST` request to `http://localhost:8080/v1/hl-seven/orm` with the example JSON payload.
-
----
-
-## Notes
-
-- Only ORM^O01 messages are currently supported.
-- Ensure the request payload strictly follows the expected JSON schema.
-- The mock server currently returns a static response and needs to be updated for dynamic processing.
-
----
-
-## Example with cURL
+To ensure code quality, run the linter for the backend:
 
 ```sh
-curl -X POST http://localhost:8080/v1/hl-seven/orm \\
--H "Content-Type: application/json" \\
--d '{
-  "orm": {
-    "msh": {
-      "field_separator": "|",
-      "sending_application": "EHRSystem",
-      "sending_facility": "EHRFac",
-      "receiving_application": "LabSystem",
-      "receiving_facility": "LabFac",
-      "message_date_time": "202312050830",
-      "message_type": "ORM^O01",
-      "message_control_id": "12345",
-      "processing_id": "P",
-      "version_id": "2.3"
-    },
-    "pid": {
-      "patient_id": "123456",
-      "patient_name": "Doe^John",
-      "date_of_birth": "19700101",
-      "gender": "M",
-      "address": "123 Main St^^Anytown^CA^12345",
-      "phone_number": "(555)555-5555"
-    },
-    "orc": {
-      "order_control": "NW",
-      "order_id": "1234",
-      "placer_order_number": "5678",
-      "order_status": "1^Routine",
-      "order_priority": "",
-      "order_date_time": "202312050830"
-    },
-    "obr": {
-      "set_id": "1",
-      "placer_order_number": "1234",
-      "universal_service_id": "BMP^Basic Metabolic Panel",
-      "request_date_time": "202312050830"
-    }
-  }
-}'
+make lint
 ```
+
+---
+
+## Building for Production
+
+To create a production-ready build that embeds the frontend into the Go binary:
+
+```sh
+make build
+```
+
+This command will:
+1.  Build the frontend application into the `web/dist` directory.
+2.  Embed the static assets into the Go binary.
+3.  Compile the final executable to `bin/winapp.exe`.
+
+---
+
+## Create Windows Installer
+
+To create a Windows installer for the application:
+
+1.  Run the following command:
+    ```sh
+    make installer
+    ```
+    This will use Docker to build the installer, so ensure you have Docker
+    installed and running on your system.
+
+2.  The installer will be created in the `installer` directory.
+
