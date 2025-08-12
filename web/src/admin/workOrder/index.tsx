@@ -1,5 +1,5 @@
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
-import { Box, CircularProgress, Dialog, DialogContent, DialogTitle, useTheme } from "@mui/material";
+import { Box, CircularProgress, Dialog, DialogContent, DialogTitle, Divider, useTheme } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -18,6 +18,7 @@ import {
     ReferenceArrayField,
     ReferenceField,
     ReferenceInput,
+    SearchInput,
     ShowButton,
     TextField,
     TopToolbar,
@@ -183,8 +184,25 @@ function WorkOrderSideFilters() {
 
                     {/* Filter Barcode */}
                     <ReferenceInput
-                        source={"barcode_ids"} reference={`work-order/barcode`} alwaysOn>
-                        <AutocompleteArrayInput size="small" />
+                        source={"barcode_ids"} reference={`work-order/barcode`} alwaysOn
+                        sx={{
+                            '& .MuiInputLabel-root': {
+                                color: theme.palette.text.primary,
+                                fontWeight: 500,
+                                fontSize: '0.9rem',
+                            }
+                        }}>
+                        <AutocompleteArrayInput size="small" 
+                        sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
+                                    borderRadius: '12px',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
+                                    },
+                                }
+                            }}/>
                     </ReferenceInput>
 
                     <Divider sx={{ marginBottom: 2 }} />

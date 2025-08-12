@@ -30,6 +30,7 @@ import { Device, DeviceTypeFeatureList, DeviceTypeValue } from "../../types/devi
 import { Action, ActionKeys } from "../../types/props.ts";
 import { ConnectionStatus } from './ConnectionStatus';
 import { ConnectionResponse, DeviceConnectionManager } from './DeviceConnectionManager';
+import SideFilter from "../../component/SideFilter.tsx";
 
 type DeviceFormProps = {
     readonly?: boolean
