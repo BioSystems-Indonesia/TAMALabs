@@ -3,7 +3,7 @@ import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import CloseIcon from '@mui/icons-material/Close';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import ScienceIcon from '@mui/icons-material/Science';
-import { Button, Grid, IconButton, ListItem, ListItemIcon, ListItemText, Modal, List as MuiList, Paper, Stack, Typography } from '@mui/material';
+import { Button, Grid, IconButton, ListItem, ListItemIcon, ListItemText, Modal, List as MuiList, Paper, Stack, Typography, useTheme } from '@mui/material';
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import { useQuery } from '@tanstack/react-query';
@@ -19,11 +19,13 @@ import {
     DateField,
     DateTimeInput,
     Edit,
+    FilterLiveForm,
     FilterLiveSearch,
     List,
     PasswordInput,
     ReferenceArrayInput,
     required,
+    SearchInput,
     SelectArrayInput,
     Show,
     SimpleForm,
@@ -269,11 +271,54 @@ export function UserEdit() {
     )
 }
 
-const UserFilterSidebar = () => (
-    <SideFilter>
-        <FilterLiveSearch />
-    </SideFilter>
-);
+const UserFilterSidebar = () => {
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
+    
+    return (
+        <SideFilter sx={{
+            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
+        }}>
+            <FilterLiveForm debounce={1500}>
+                <Stack spacing={0}>
+                    <Box>
+                        <Typography variant="h6" sx={{ 
+                            color: theme.palette.text.primary, 
+                            marginBottom: 2, 
+                            fontWeight: 600,
+                            fontSize: '1.1rem',
+                            textAlign: 'center'
+                        }}>
+                            👥 Filter Users
+                        </Typography>
+                    </Box>
+                    <SearchInput 
+                        source="q" 
+                        alwaysOn 
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
+                                borderRadius: '12px',
+                                transition: 'all 0.3s ease',
+                                border: isDarkMode ? `1px solid ${theme.palette.divider}` : '1px solid #e5e7eb',
+                                '&:hover': {
+                                    backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
+                                },
+                                '&.Mui-focused': {
+                                    backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
+                                }
+                            },
+                            '& .MuiInputLabel-root': {
+                                color: theme.palette.text.secondary,
+                                fontWeight: 500,
+                            }
+                        }} 
+                    />
+                </Stack>
+            </FilterLiveForm>
+        </SideFilter>
+    )
+};
 
 
 export const UserList = () => (

@@ -1,4 +1,4 @@
-import { Stack } from '@mui/material';
+import { Stack, useTheme } from '@mui/material';
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
@@ -8,10 +8,11 @@ import {
     DateField,
     DateTimeInput,
     Edit,
-    FilterLiveForm, FilterLiveSearch,
+    FilterLiveForm,
     List,
     ReferenceManyField,
     required,
+    SearchInput,
     SelectInput,
     Show,
     SimpleForm,
@@ -122,18 +123,97 @@ export function PatientEdit() {
     )
 }
 
-const PatientFilterSidebar = () => (
-    <SideFilter>
-        <FilterLiveSearch />
-        <FilterLiveForm debounce={1500}>
-            <Stack sx={{
-                marginTop: "1rem"
-            }}>
-                <CustomDateInput source={"birthdate"} label={"Birth Date"} clearable size="small" />
-            </Stack>
-        </FilterLiveForm>
-    </SideFilter>
-);
+const PatientFilterSidebar = () => {
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
+    
+    return (
+        <SideFilter sx={{
+            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
+        }}>
+            <FilterLiveForm debounce={1500}>
+                <Stack spacing={0}>
+                    <Box>
+                        <Typography variant="h6" sx={{ 
+                            color: theme.palette.text.primary, 
+                            marginBottom: 2, 
+                            fontWeight: 600,
+                            fontSize: '1.1rem',
+                            textAlign: 'center'
+                        }}>
+                            👤 Filter Patients
+                        </Typography>
+                    </Box>
+                    <SearchInput 
+                        source="q" 
+                        alwaysOn 
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
+                                borderRadius: '12px',
+                                transition: 'all 0.3s ease',
+                                border: isDarkMode ? `1px solid ${theme.palette.divider}` : '1px solid #e5e7eb',
+                                '&:hover': {
+                                    backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
+                                },
+                                '&.Mui-focused': {
+                                    backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
+                                }
+                            },
+                            '& .MuiInputLabel-root': {
+                                color: theme.palette.text.secondary,
+                                fontWeight: 500,
+                            }
+                        }} 
+                    />
+                    <Box>
+                        <Typography variant="body2" sx={{ 
+                            color: theme.palette.text.secondary, 
+                            marginBottom: 1.5,
+                            fontSize: '0.85rem',
+                            fontWeight: 500
+                        }}>
+                            📅 Birth Date Filter
+                        </Typography>
+                        <Stack>
+                            <CustomDateInput 
+                                source={"birthdate"} 
+                                label={"Birth Date"} 
+                                clearable 
+                                size="small" 
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
+                                        borderRadius: '12px',
+                                        border: isDarkMode ? `1px solid ${theme.palette.divider}` : '1px solid #e5e7eb',
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
+                                            borderColor: isDarkMode ? theme.palette.primary.main : '#9ca3af',
+                                            boxShadow: isDarkMode 
+                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)' 
+                                                : '0 4px 12px rgba(0, 0, 0, 0.1)',
+                                        },
+                                        '&.Mui-focused': {
+                                            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
+                                            borderColor: theme.palette.primary.main,
+                                            boxShadow: `0 0 0 3px ${theme.palette.primary.main}30`,
+                                        }
+                                    },
+                                    '& .MuiInputLabel-root': {
+                                        color: theme.palette.text.primary,
+                                        fontWeight: 500,
+                                        fontSize: '0.85rem',
+                                    }
+                                }} 
+                            />
+                        </Stack>
+                    </Box>
+                </Stack>
+            </FilterLiveForm>
+        </SideFilter>
+    )
+};
 
 
 export const PatientList = () => (

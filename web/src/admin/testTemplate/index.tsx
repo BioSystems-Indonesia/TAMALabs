@@ -4,7 +4,7 @@ import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentT
 import Stack from "@mui/material/Stack";
 import { AxiosError } from "axios";
 import { useEffect, useMemo, useState } from "react";
-import { AutocompleteArrayInput, Create, Datagrid, DateField, DeleteButton, Edit, FilterLiveSearch, List, NumberField, ReferenceField, ReferenceInput, SaveButton, SimpleForm, TextField, TextInput, Toolbar, required, useEditContext, useNotify, useRedirect, useSaveContext } from "react-admin";
+import { AutocompleteArrayInput, Create, Datagrid, DateField, DeleteButton, Edit, FilterLiveForm, FilterLiveSearch, List, NumberField, ReferenceField, ReferenceInput, SaveButton, SearchInput, SimpleForm, TextField, TextInput, Toolbar, required, useEditContext, useNotify, useRedirect, useSaveContext } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import SideFilter from "../../component/SideFilter";
 import { useCurrentUser } from "../../hooks/currentUser";
@@ -37,9 +37,50 @@ export const TestTemplateList = () => (
 );
 
 const TestTemplateFilterSidebar = () => {
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
+    
     return (
-        <SideFilter>
-            <FilterLiveSearch />
+        <SideFilter sx={{
+            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
+        }}>
+            <FilterLiveForm debounce={1500}>
+                <Stack spacing={0}>
+                    <Box>
+                        <Typography variant="h6" sx={{ 
+                            color: theme.palette.text.primary, 
+                            marginBottom: 2, 
+                            fontWeight: 600,
+                            fontSize: '1.1rem',
+                            textAlign: 'center'
+                        }}>
+                            🧪 Filter Test Templates
+                        </Typography>
+                    </Box>
+                    <SearchInput 
+                        source="q" 
+                        alwaysOn 
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
+                                borderRadius: '12px',
+                                transition: 'all 0.3s ease',
+                                border: isDarkMode ? `1px solid ${theme.palette.divider}` : '1px solid #e5e7eb',
+                                '&:hover': {
+                                    backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
+                                },
+                                '&.Mui-focused': {
+                                    backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
+                                }
+                            },
+                            '& .MuiInputLabel-root': {
+                                color: theme.palette.text.secondary,
+                                fontWeight: 500,
+                            }
+                        }} 
+                    />
+                </Stack>
+            </FilterLiveForm>
         </SideFilter>
     )
 };
