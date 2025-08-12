@@ -8,6 +8,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
 	ncc3300 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/a15"
 	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	analyxtrias "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
 	ncc61 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/neomedika_ncc61"
@@ -16,7 +17,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
 	"github.com/oibacidem/lims-hl-seven/internal/repository"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/server"
-	a15 "github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
+	smbA15 "github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
 	adminrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
 	configrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/daily_sequence"
@@ -93,12 +94,13 @@ var restRepositorySet = wire.NewSet(
 	unit.NewRepository,
 	rolerepo.NewRoleRepository,
 	hlsRepo.NewBa400,
-	a15.NewA15,
+	smbA15.NewA15,
 	server.NewControllerRepository,
 	provideAllDevices,
 )
 
 var tcpHandlerSet = wire.NewSet(
+	a15.NewHandler,
 	coax.NewHandler,
 	ncc3300.NewHandler,
 	alifax.NewHandler,

@@ -60,7 +60,7 @@ func (p DeviceUseCase) Create(ctx context.Context, req *entity.Device) error {
 
 	if device.ID != 0 && device.ID != req.ID {
 		return entity.NewUserError(entity.UserErrorDeviceAlreadyExistsReceivePort,
-			fmt.Sprintf("device already exists with receive port %d must be unique", req.ReceivePort))
+			fmt.Sprintf("device already exists with receive port %s must be unique", req.ReceivePort))
 	}
 
 	err = p.deviceRepo.Create(req)
@@ -251,6 +251,17 @@ func (p *DeviceUseCase) buildStatusResponse(err error) entity.DeviceConnectionSt
 }
 
 func (p *DeviceUseCase) ChooseDeviceSender(ctx context.Context, device entity.Device) (usecase.DeviceSender, error) {
+	// Check if device can send based on capability
+	for _, deviceType := range entity.TableDeviceType {
+		if deviceType.ID == string(device.Type) {
+			capability, ok := deviceType.AdditionalInfo.(entity.DeviceCapability)
+			if !ok || !capability.CanSend {
+				return nil, entity.ErrDeviceTypeNotSupport
+			}
+			break
+		}
+	}
+
 	switch device.Type {
 	case entity.DeviceTypeBA400, entity.DeviceTypeBA200, entity.DeviceTypeOther:
 		return p.ba400, nil

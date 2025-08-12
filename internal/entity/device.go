@@ -34,9 +34,8 @@ var TableDeviceType = Tables{
 		CanReceive: true,
 	}},
 	{ID: string(DeviceTypeA15), Name: string(DeviceTypeA15), AdditionalInfo: DeviceCapability{
-		CanSend:  true,
-		HaveAuth: true,
-		HavePath: true,
+		CanReceive: true,
+		CanSend:    false,
 	}},
 	{ID: string(DeviceTypeAnalyxTria), Name: string(DeviceTypeAnalyxTria), AdditionalInfo: DeviceCapability{
 		CanReceive: true,

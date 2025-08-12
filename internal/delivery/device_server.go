@@ -8,6 +8,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
 	ncc3300 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/a15"
 	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
 	analyxtrias "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
 	ncc61 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/neomedika_ncc61"
@@ -19,6 +20,7 @@ import (
 )
 
 type DeviceServerStrategy struct {
+	a15Handler         *a15.Handler
 	coaxHandler        *coax.Handler
 	ncc3300            *ncc3300.Handler
 	defaultHandler     *tcp.HlSevenHandler
@@ -32,6 +34,7 @@ type DeviceServerStrategy struct {
 }
 
 func NewDeviceServerStrategy(
+	a15Handler *a15.Handler,
 	coaxHandler *coax.Handler,
 	ncc3300 *ncc3300.Handler,
 	defaultHandler *tcp.HlSevenHandler,
@@ -43,6 +46,7 @@ func NewDeviceServerStrategy(
 	ncc61handler *ncc61.Handler,
 ) *DeviceServerStrategy {
 	return &DeviceServerStrategy{
+		a15Handler:         a15Handler,
 		coaxHandler:        coaxHandler,
 		ncc3300:            ncc3300,
 		defaultHandler:     defaultHandler,
@@ -81,6 +85,7 @@ var serialDeviceType = []entity.DeviceType{
 }
 
 var tcpDeviceType = []entity.DeviceType{
+	entity.DeviceTypeA15,
 	entity.DeviceTypeBA200,
 	entity.DeviceTypeBA400,
 	entity.DeviceTypeAnalyxTria,
@@ -93,7 +98,7 @@ var tcpDeviceType = []entity.DeviceType{
 }
 
 var deviceTypeNotSupport = []entity.DeviceType{
-	entity.DeviceTypeA15,
+	// entity.DeviceTypeA15,
 }
 
 func (d *DeviceServerStrategy) ChooseDeviceServer(device entity.Device) (server.Controller, error) {
@@ -153,6 +158,8 @@ func (d *DeviceServerStrategy) ChooseDeviceTCPHandler(device entity.Device) (ser
 		return d.swelabAlfaBasic, nil
 	case entity.DeviceTypeSwelabLumi:
 		return d.swelabLumiHandler, nil
+	case entity.DeviceTypeA15:
+		return d.a15Handler, nil
 	case entity.DeviceTypeBiomedicaNCC61:
 		return d.ncc61Handler, nil
 	default:
