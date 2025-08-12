@@ -7,6 +7,7 @@ import LanIcon from '@mui/icons-material/Lan';
 import UserIcon from '@mui/icons-material/Person';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import TableViewIcon from '@mui/icons-material/TableView';
+import InfoIcon from '@mui/icons-material/Info';
 import jsonServerProvider from "ra-data-json-server";
 import { Admin, CustomRoutes, fetchUtils, HttpError, Resource } from "react-admin";
 import { Route } from "react-router-dom";
@@ -30,6 +31,7 @@ import { ErrorPayload } from '../types/errors.ts';
 import { ApprovalList } from './approval/index.tsx';
 import CustomLoginPage from './login/index.tsx';
 import LogViewer from './logView/index.tsx';
+import { AboutPage } from './about/index.tsx';
 
 const httpClient = async (url: string, options?: fetchUtils.Options) => {
     if (!options) {
@@ -179,6 +181,17 @@ const App = () => {
             hasEdit={true}
             icon={BuildIcon}
             recordRepresentation={record => `#${record.id} - ${record.type}`}
+        />
+        <Resource 
+            name="about" 
+            list={() => <AboutPage />}
+            hasCreate={false}
+            hasEdit={false}
+            hasShow={false}
+            icon={InfoIcon}
+            options={{
+                label: "About Us"
+            }}
         />
     </Admin>)
 }

@@ -10,6 +10,7 @@ import { FieldValues, UseFormGetValues, UseFormSetValue } from 'react-hook-form'
 import type { ObservationRequestCreateRequest } from '../../types/observation_requests';
 import SideFilter from '../../component/SideFilter';
 import useAxios from '../../hooks/useAxios';
+import { Typography, useTheme } from '@mui/material';
 
 type TestFilterSidebarProps = {
     setSelectedData: React.Dispatch<React.SetStateAction<Record<number, ObservationRequestCreateRequest>>>
@@ -24,6 +25,7 @@ export const TestFilterSidebar = ({
     setValue,
     getValues,
 }: TestFilterSidebarProps) => {
+    const theme = useTheme();
     const list = useListContext();
     const [_dataUniqueCategory, setDataUniqueCategory] = useState<Array<any>>([])
     const [_dataUniqueSubCategory, setDataUniqueSubCategory] = useState<Array<any>>([])
@@ -198,6 +200,14 @@ export const TestFilterSidebar = ({
                 },
             }}
         >
+            <Typography variant="h6" sx={{ 
+                            color: theme.palette.text.primary, 
+                            fontWeight: 600,
+                            fontSize: '1.1rem',
+                            textAlign: 'center'
+                        }}>
+                🧪 Filter Type Test 
+            </Typography>
             <FilterLiveSearch
                 placeholder="Search..."
                 source="q"
@@ -272,3 +282,5 @@ export const TestFilterSidebar = ({
         </SideFilter>
     )
 };
+// Removed custom useTheme function, using MUI's useTheme instead.
+

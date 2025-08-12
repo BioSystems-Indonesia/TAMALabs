@@ -1,6 +1,7 @@
 import RefreshIcon from '@mui/icons-material/Refresh';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { Chip, Divider, Button as MUIButton, Stack, Typography } from "@mui/material";
+import { Box, Chip, Button as MUIButton, Stack, Typography, useTheme } from "@mui/material";
+import dayjs from "dayjs";
 import {
     AutocompleteArrayInput,
     BooleanInput,
@@ -32,6 +33,10 @@ export const ResultList = () => (
         sort={{ field: "id", order: "DESC" }}
         aside={<ResultSideFilter />}
         filters={ResultMoreFilter}
+        filterDefaultValues={{
+            created_at_start: dayjs().subtract(7, "day").toISOString(),
+            created_at_end: dayjs().toISOString(),
+        }}
         actions={<ResultActions />}
         exporter={false}
         storeKey={false}
@@ -137,29 +142,135 @@ export const ResultDataGrid = (props: any) => {
 }
 
 function ResultSideFilter() {
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
+    
     return (
-        <SideFilter>
+        <SideFilter sx={{
+            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
+        }}>
             <FilterLiveForm debounce={1500}>
-                <Stack>
-                    <ReferenceInput source={"patient_ids"} reference="patient" label={"Patient"} alwaysOn>
-                        <AutocompleteArrayInput size="small" />
+                <Stack spacing={0}>
+                    <Box>
+                        <Typography variant="h6" sx={{ 
+                            color: theme.palette.text.primary, 
+                            marginBottom: 2, 
+                            fontWeight: 600,
+                            fontSize: '1.1rem',
+                            textAlign: 'center'
+                        }}>
+                            🔬 Filter Lab Results
+                        </Typography>
+                    </Box>
+                    <ReferenceInput 
+                        source={"patient_ids"} 
+                        reference="patient" 
+                        label={"Patient"} 
+                        alwaysOn
+                        sx={{
+                            '& .MuiInputLabel-root': {
+                                color: theme.palette.text.primary,
+                                fontWeight: 500,
+                                fontSize: '0.9rem',
+                            }
+                        }}
+                    >
+                        <AutocompleteArrayInput 
+                            size="small" 
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
+                                    borderRadius: '12px',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
+                                       
+                                    },
+                                  
+                                }
+                            }}
+                        />
                     </ReferenceInput>
-                    <ReferenceInput
-                        source={"barcode_ids"} reference={`work-order/barcode`} alwaysOn>
-                        <AutocompleteArrayInput size="small" />
-                    </ReferenceInput>
-                    <Divider sx={{
-                        marginBottom: 2,
-                    }} />
-                    <CustomDateInput label={"Created At Start"} source="created_at_start" alwaysOn size="small"
-                        disableFuture />
-                    <CustomDateInput label={"Created At End"} source="created_at_end" alwaysOn size="small"
-                        disableFuture />
+                    <Box>
+                        <Typography variant="body2" sx={{ 
+                            color: theme.palette.text.secondary, 
+                            marginBottom: 1.5,
+                            fontSize: '0.85rem',
+                            fontWeight: 500
+                        }}>
+                            📅 Date Range
+                        </Typography>
+                        <Stack>
+                            <CustomDateInput 
+                                label={"Start Date"} 
+                                source="created_at_start" 
+                                disableFuture 
+                                alwaysOn 
+                                size="small" 
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
+                                        borderRadius: '12px',
+                                        border: isDarkMode ? `1px solid ${theme.palette.divider}` : '1px solid #e5e7eb',
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
+                                            borderColor: isDarkMode ? theme.palette.primary.main : '#9ca3af',
+                                            boxShadow: isDarkMode 
+                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)' 
+                                                : '0 4px 12px rgba(0, 0, 0, 0.1)',
+                                        },
+                                        '&.Mui-focused': {
+                                            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
+                                            borderColor: theme.palette.primary.main,
+                                            boxShadow: `0 0 0 3px ${theme.palette.primary.main}30`,
+                                        }
+                                    },
+                                    '& .MuiInputLabel-root': {
+                                        color: theme.palette.text.primary,
+                                        fontWeight: 500,
+                                        fontSize: '0.85rem',
+                                    }
+                                }} 
+                            />
+                            <CustomDateInput 
+                                label={"End Date"} 
+                                source="created_at_end" 
+                                disableFuture 
+                                alwaysOn 
+                                size="small" 
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
+                                        borderRadius: '12px',
+                                        border: isDarkMode ? `1px solid ${theme.palette.divider}` : '1px solid #e5e7eb',
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
+                                            borderColor: isDarkMode ? theme.palette.primary.main : '#9ca3af',
+                                            boxShadow: isDarkMode 
+                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)' 
+                                                : '0 4px 12px rgba(0, 0, 0, 0.1)',
+                                        },
+                                        '&.Mui-focused': {
+                                            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
+                                            borderColor: theme.palette.primary.main,
+                                            boxShadow: `0 0 0 3px ${theme.palette.primary.main}30`,
+                                        }
+                                    },
+                                    '& .MuiInputLabel-root': {
+                                        color: theme.palette.text.primary,
+                                        fontWeight: 500,
+                                        fontSize: '0.85rem',
+                                    }
+                                }} 
+                            />
+                        </Stack>
+                    </Box>
                 </Stack>
             </FilterLiveForm>
         </SideFilter>
     )
-
 }
 
 

@@ -13,6 +13,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import TableViewIcon from '@mui/icons-material/TableView';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import InfoIcon from '@mui/icons-material/Info';
 import { Box, Stack, Tooltip, Typography, Avatar, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -264,7 +265,8 @@ const PageTitle = () => {
             'user': { title: 'Users', icon: <AdminPanelSettingsIcon /> },
             'config': { title: 'Configuration', icon: <BuildIcon /> },
             'settings': { title: 'Settings', icon: <SettingsIcon /> },
-            'logs': { title: 'Logs', icon: <FileOpenIcon /> }
+            'logs': { title: 'Logs', icon: <FileOpenIcon /> },
+            'about': { title: 'About Us', icon: <InfoIcon /> }
         };
         
         const defaultData = { title: 'Dashboard', icon: <DashboardIcon /> };
@@ -391,7 +393,7 @@ const Footer = () => {
                     color: isDarkMode ? '#ffffff' : 'text.secondary' 
                 }}
             >
-                © 2025 PT ELGA TAMA. All rights reserved.
+                © {new Date().getFullYear()} PT ELGA TAMA. All rights reserved.
             </Typography>
         </Box>
     );
