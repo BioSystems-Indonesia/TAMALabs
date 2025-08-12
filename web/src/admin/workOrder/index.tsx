@@ -18,7 +18,6 @@ import {
     ReferenceArrayField,
     ReferenceField,
     ReferenceInput,
-    SearchInput,
     ShowButton,
     TextField,
     TopToolbar,

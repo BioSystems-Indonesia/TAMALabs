@@ -1,4 +1,4 @@
-import { CircularProgress, Stack, Card, CardContent, Typography, Chip, Box as MuiBox, useTheme } from "@mui/material";
+import { CircularProgress, Stack, Card, CardContent, Typography, Chip, Box as MuiBox } from "@mui/material";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import LanIcon from '@mui/icons-material/Lan';
@@ -7,8 +7,6 @@ import {
     AutocompleteInput,
     Create,
     Edit,
-    FilterLiveForm,
-    FilterLiveSearch,
     // FilterLiveSearch,
     FormDataConsumer,
     List,
@@ -16,7 +14,6 @@ import {
     minValue,
     PasswordInput,
     required,
-    SearchInput,
     Show,
     SimpleForm,
     TextInput,
@@ -31,7 +28,6 @@ import { Device, DeviceTypeFeatureList, DeviceTypeValue } from "../../types/devi
 import { Action, ActionKeys } from "../../types/props.ts";
 import { ConnectionStatus } from './ConnectionStatus';
 import { ConnectionResponse, DeviceConnectionManager } from './DeviceConnectionManager';
-import SideFilter from "../../component/SideFilter.tsx";
 
 type DeviceFormProps = {
     readonly?: boolean
@@ -395,54 +391,54 @@ const DeviceCardList = ({ connectionStatuses, setDeviceIds }: {
     );
 };
 
-const DeviceFilterSidebar = () => {
-    const theme = useTheme();
-    const isDarkMode = theme.palette.mode === 'dark';
+// const DeviceFilterSidebar = () => {
+//     const theme = useTheme();
+//     const isDarkMode = theme.palette.mode === 'dark';
     
-    return (
-        <SideFilter sx={{
-            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
-        }}>
-            <FilterLiveForm debounce={1500}>
-                <Stack spacing={0}>
-                    <Box>
-                        <Typography variant="h6" sx={{ 
-                            color: theme.palette.text.primary, 
-                            marginBottom: 2, 
-                            fontWeight: 600,
-                            fontSize: '1.1rem',
-                            textAlign: 'center'
-                        }}>
-                            🖥️ Filter Devices
-                        </Typography>
-                    </Box>
-                    <SearchInput 
-                        source="q" 
-                        alwaysOn 
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
-                                borderRadius: '12px',
-                                transition: 'all 0.3s ease',
-                                border: isDarkMode ? `1px solid ${theme.palette.divider}` : '1px solid #e5e7eb',
-                                '&:hover': {
-                                    backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
-                                },
-                                '&.Mui-focused': {
-                                    backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
-                                }
-                            },
-                            '& .MuiInputLabel-root': {
-                                color: theme.palette.text.secondary,
-                                fontWeight: 500,
-                            }
-                        }} 
-                    />
-                </Stack>
-            </FilterLiveForm>
-        </SideFilter>
-    )
-};
+//     return (
+//         <SideFilter sx={{
+//             backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
+//         }}>
+//             <FilterLiveForm debounce={1500}>
+//                 <Stack spacing={0}>
+//                     <Box>
+//                         <Typography variant="h6" sx={{ 
+//                             color: theme.palette.text.primary, 
+//                             marginBottom: 2, 
+//                             fontWeight: 600,
+//                             fontSize: '1.1rem',
+//                             textAlign: 'center'
+//                         }}>
+//                             🖥️ Filter Devices
+//                         </Typography>
+//                     </Box>
+//                     <SearchInput 
+//                         source="q" 
+//                         alwaysOn 
+//                         sx={{
+//                             '& .MuiOutlinedInput-root': {
+//                                 backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
+//                                 borderRadius: '12px',
+//                                 transition: 'all 0.3s ease',
+//                                 border: isDarkMode ? `1px solid ${theme.palette.divider}` : '1px solid #e5e7eb',
+//                                 '&:hover': {
+//                                     backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
+//                                 },
+//                                 '&.Mui-focused': {
+//                                     backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
+//                                 }
+//                             },
+//                             '& .MuiInputLabel-root': {
+//                                 color: theme.palette.text.secondary,
+//                                 fontWeight: 500,
+//                             }
+//                         }} 
+//                     />
+//                 </Stack>
+//             </FilterLiveForm>
+//         </SideFilter>
+//     )
+// };
 
 // const DeviceFilterSidebar = () => (
 //     <SideFilter>

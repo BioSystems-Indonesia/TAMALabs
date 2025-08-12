@@ -9,9 +9,9 @@ import {
 } from '@react-pdf/renderer';
 import useSettings from '../hooks/useSettings';
 import logo from '../assets/alinda-husada-logo.png'
-import yt from '../assets/youtube.png'
-import fb from '../assets/facebook.png'
-import ig from '../assets/instagram.png'
+// import yt from '../assets/youtube.png'
+// import fb from '../assets/facebook.png'
+// import ig from '../assets/instagram.png'
 import type { ReportData } from '../types/observation_result';
 import { Patient } from "../types/patient.ts";
 import { WorkOrder } from '../types/work_order.ts';

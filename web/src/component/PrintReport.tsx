@@ -86,7 +86,7 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                                 <IconButton
                                     onClick={e => e.stopPropagation()}
                                     color='primary'
-                                    download={`MCU_Result_${dayjs(prop.workOrder.created_at).format("YYYYMMDD")}_${prop.patient.id}_${prop.patient.first_name}_${prop.patient.last_name}.pdf`}
+                                    download={`LAB_Test_Result_${dayjs(prop.workOrder.created_at).format("YYYYMMDD")}_${prop.patient.id}_${prop.patient.first_name}_${prop.patient.last_name}.pdf`}
                                     href={url || ''}
                                     disabled={loading 
                                         // || !prop.workOrder.have_complete_data
