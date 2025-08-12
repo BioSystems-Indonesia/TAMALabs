@@ -263,8 +263,8 @@ func (p *DeviceUseCase) ChooseDeviceSender(ctx context.Context, device entity.De
 	}
 
 	switch device.Type {
-	case entity.DeviceTypeBA400, entity.DeviceTypeBA200, entity.DeviceTypeOther:
-		return p.ba400, nil
+	// case entity.DeviceTypeBA400, entity.DeviceTypeBA200, entity.DeviceTypeOther:
+	// 	return p.ba400, nil
 	case entity.DeviceTypeA15:
 		return p.a15, nil
 	default:

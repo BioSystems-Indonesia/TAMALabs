@@ -4,14 +4,8 @@ import (
 	"github.com/google/wire"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/alifax"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
-	ncc3300 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/a15"
-	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
-	analyxtrias "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
-	ncc61 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/neomedika_ncc61"
 	swelabalfa "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	swelablumi "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
@@ -101,15 +95,15 @@ var restRepositorySet = wire.NewSet(
 
 var tcpHandlerSet = wire.NewSet(
 	a15.NewHandler,
-	coax.NewHandler,
-	ncc3300.NewHandler,
-	alifax.NewHandler,
+	// coax.NewHandler,
+	// ncc3300.NewHandler,
+	// alifax.NewHandler,
 	tcp.NewHlSevenHandler,
-	analyxtrias.NewHandler,
-	analyxpanca.NewHandler,
+	// analyxtrias.NewHandler,
+	// analyxpanca.NewHandler,
 	swelabalfa.NewHandler,
 	swelablumi.NewHandler,
-	ncc61.NewHandler,
+	// ncc61.NewHandler,
 	delivery.NewDeviceServerStrategy,
 	wire.Bind(new(repository.DeviceServerStrategy), new(*delivery.DeviceServerStrategy)),
 )

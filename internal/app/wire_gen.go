@@ -9,14 +9,8 @@ package app
 import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/alifax"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	a15_2 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/a15"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/neomedika_ncc61"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
@@ -94,16 +88,10 @@ func InitRestApp() server.RestServer {
 	a15A15 := a15.NewA15()
 	strategy := runner.NewStrategy(runAction, cancelAction, postrunRunAction, postrunCancelAction, incompleteSendAction, ba400Ba400, a15A15)
 	handler := a15_2.NewHandler()
-	coaxHandler := coax.NewHandler(usecase)
-	ncc3300Handler := ncc3300.NewHandler(usecase)
 	tcpHlSevenHandler := tcp.NewHlSevenHandler(usecase)
-	analyxtriasHandler := analyxtrias.NewHandler(usecase)
-	analyxpancaHandler := analyxpanca.NewHandler(usecase)
 	swelabalfaHandler := swelabalfa.NewHandler(usecase)
 	swelablumiHandler := swelablumi.NewHandler(usecase)
-	alifaxHandler := alifax.NewHandler(usecase)
-	ncc61Handler := ncc61.NewHandler(usecase)
-	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, coaxHandler, ncc3300Handler, tcpHlSevenHandler, analyxtriasHandler, analyxpancaHandler, swelabalfaHandler, swelablumiHandler, alifaxHandler, ncc61Handler)
+	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, tcpHlSevenHandler, swelabalfaHandler, swelablumiHandler)
 	v := provideAllDevices(deviceRepository)
 	controllerRepository := server2.NewControllerRepository(deviceServerStrategy, v)
 	deviceUseCase := deviceuc.NewDeviceUseCase(schema, deviceRepository, strategy, ba400Ba400, a15A15, controllerRepository)

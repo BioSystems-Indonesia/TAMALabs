@@ -8,7 +8,7 @@ import {
     View,
 } from '@react-pdf/renderer';
 import useSettings from '../hooks/useSettings';
-import logo from '../assets/elgatama-logo.png'
+import logo from '../assets/alinda-husada-logo.png'
 import yt from '../assets/youtube.png'
 import fb from '../assets/facebook.png'
 import ig from '../assets/instagram.png'
@@ -17,10 +17,10 @@ import { Patient } from "../types/patient.ts";
 import { WorkOrder } from '../types/work_order.ts';
 
 Font.register({
-    family: 'Helvetica',
+    family: 'Times-Roman',
     fonts: [
-        { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxP.ttf', fontWeight: 400 },
-        { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmEU9fBBc9.ttf', fontWeight: 700 },
+        { src: 'https://fonts.gstatic.com/s/crimsontext/v19/wlpigwHKFkZgtmSR3NB0oRJvaAJSA_JN3Q.ttf', fontWeight: 400 },
+        { src: 'https://fonts.gstatic.com/s/crimsontext/v19/wlp7gwHKFkZgtmSR3NB0oRJX6QJbBfJH3QkG.ttf', fontWeight: 700 },
     ],
 });
 
@@ -33,10 +33,7 @@ const styles = StyleSheet.create({
     },
     header: {
         marginBottom: 20,
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        fontFamily: 'Times-Roman',
     },
     companyInfo: {
         width: '100%',
@@ -48,9 +45,8 @@ const styles = StyleSheet.create({
         textAlign: 'right',  
     },
     logo: {
-        width: 64,
-        height: 64,
-        marginBottom: 10,
+        width: 60,
+        height: 60,
     },
     footer: {
         marginTop: 20,
@@ -193,35 +189,19 @@ const Header = () => {
 
     return (
         <View style={styles.header} fixed>
-                <Image
-                style={styles.logo}
-                src={logo}
-                />
-            <View style={{width: '85%'}}>
-                <Text style={{
-                    fontSize:24
-                }}>{settings.company_name}</Text>
-                <View style={{
-                    width: '100%',
-                    height: 2,
-                    backgroundColor: 'rgb(74, 186, 171)'
-                }}>
-                </View>
-                <View style={styles.companyInfo}>
-                    <Text 
-                    wrap={true}
-                    style={{width: '45%'}}
-                    >{settings.company_address}</Text>
-                    <Text 
-                    wrap={true}
-                    style={{width: '45%'}}
-                    >{settings.company_contact_phone}</Text>
-                    <Text 
-                    wrap={true}
-                    style={{width: '45%'}}
-                    >{settings.company_contact_email}</Text>
+            <View style={{display: 'flex', flexDirection:'row', justifyContent: 'center', alignItems: 'center',}}>
+                <Image style={styles.logo} src={logo}/>
+                <View style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: 5}}>
+                    <Text style={{textAlign: 'center', fontSize: '1.8rem', fontWeight: 'bold'}}>{settings.company_name}</Text>
+                    <Text style={{textAlign: 'center', fontSize: '1.1rem'}}>{settings.company_address}</Text>
+                    <Text style={{textAlign: 'center', fontSize: '1.1rem'}}>Telpon. {settings.company_contact_phone}, HP. {settings.company_contact_hp}</Text>
+                    <Text style={{textAlign: 'center', fontSize: '1.1rem'}}>
+                        <Text>Email: </Text>
+                        <Text style={{textDecoration:'underline'}}>{settings.company_contact_email}</Text>
+                    </Text>
                 </View>
             </View>
+            <View style={{height: 3, width: "100%", backgroundColor: "black", marginTop: 5}}></View>
         </View>
     )
 };
@@ -296,34 +276,34 @@ const PatientInfo = ({ patient, workOrder }: { patient: Patient, workOrder: Work
     </View>
 );
 
-const Footer = () => (
-    <View style={styles.footer} fixed>
-        <View style={{
-            height: 2,
-            backgroundColor: 'rgb(74, 186, 171)'
-        }}>
-        </View>
-        <View style={{ 
-            marginTop: 4,
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',}}>
-            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
-                <Image src={yt} style={{width: 10, height: 10}}/>
-                <Text>BioSystems Indonesia</Text>    
-            </View>    
-            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
-                <Image src={ig} style={{width: 10, height: 10}}/>
-                <Text>@biosystems.ind</Text>    
-            </View>    
-            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
-                <Image src={fb} style={{width: 10, height: 10}}/>
-                <Text>BioSystems Indonesia</Text>    
-            </View>    
-        </View>        
-    </View>
-);
+// const Footer = () => (
+//     <View style={styles.footer} fixed>
+//         <View style={{
+//             height: 2,
+//             backgroundColor: 'rgb(74, 186, 171)'
+//         }}>
+//         </View>
+//         <View style={{ 
+//             marginTop: 4,
+//             display: 'flex',
+//             flexDirection: 'row',
+//             alignItems: 'center',
+//             justifyContent: 'space-between',}}>
+//             <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
+//                 <Image src={yt} style={{width: 10, height: 10}}/>
+//                 <Text>BioSystems Indonesia</Text>    
+//             </View>    
+//             <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
+//                 <Image src={ig} style={{width: 10, height: 10}}/>
+//                 <Text>@biosystems.ind</Text>    
+//             </View>    
+//             <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
+//                 <Image src={fb} style={{width: 10, height: 10}}/>
+//                 <Text>BioSystems Indonesia</Text>    
+//             </View>    
+//         </View>        
+//     </View>
+// );
 
 // Helper function to group data by category (if needed)
 const groupData = (data: ReportData[]) => {
@@ -344,7 +324,7 @@ export const ReportDocument = ({ data, patientData, workOrderData }: { data: Rep
         <Document>
             <Page size={"A4"} style={styles.page} wrap>
                 <Header />
-                <Footer />
+                {/* <Footer /> */}
                 <View style={{
                     marginBottom: 15,
                 }}>
@@ -352,7 +332,7 @@ export const ReportDocument = ({ data, patientData, workOrderData }: { data: Rep
                         textAlign: 'center',
                         fontSize: 12,
                         fontWeight: 'bold',
-                    }}>MEDICAL CHECK-UP RESULTS</Text>
+                    }}>LABORATORY TEST RESULT</Text>
                 </View>
                 <PatientInfo patient={patientData} workOrder={workOrderData}/>
                 {Object.entries(groupedData).map(([category, items]) => (

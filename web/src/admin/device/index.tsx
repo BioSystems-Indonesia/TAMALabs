@@ -1,6 +1,7 @@
 import { CircularProgress, Stack, Card, CardContent, Typography, Chip, Box as MuiBox, useTheme } from "@mui/material";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
+import LanIcon from '@mui/icons-material/Lan';
 import { useEffect, useState } from 'react';
 import {
     AutocompleteInput,
@@ -259,9 +260,12 @@ const DeviceCard = ({ record, connectionStatuses }: { record: Device, connection
             >
                 <CardContent sx={{position: "relative", height: 220}}>
                     <MuiBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                        <Typography variant="h5" component="div">
-                            {record.name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <LanIcon color="primary" />
+                            <Typography variant="h6" component="div">
+                                {record.name}
+                            </Typography>
+                        </Box>
                         <Chip 
                             label={`ID: ${record.id}`} 
                             size="small" 
