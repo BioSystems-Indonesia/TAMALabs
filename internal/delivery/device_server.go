@@ -97,9 +97,7 @@ var tcpDeviceType = []entity.DeviceType{
 	entity.DeviceTypeOther,
 }
 
-var deviceTypeNotSupport = []entity.DeviceType{
-	// entity.DeviceTypeA15,
-}
+var deviceTypeNotSupport = []entity.DeviceType{}
 
 func (d *DeviceServerStrategy) ChooseDeviceServer(device entity.Device) (server.Controller, error) {
 	switch {
@@ -127,7 +125,6 @@ func (d *DeviceServerStrategy) ChooseDeviceServer(device entity.Device) (server.
 }
 
 func (d *DeviceServerStrategy) ChooseDeviceSerialHandler(device entity.Device) (server.SerialHandler, error) {
-	// TODO: Add more device types here and change the default handler to the correct one
 	switch device.Type {
 	case entity.DeviceTypeCoax:
 		return d.coaxHandler, nil
@@ -163,6 +160,6 @@ func (d *DeviceServerStrategy) ChooseDeviceTCPHandler(device entity.Device) (ser
 	case entity.DeviceTypeBiomedicaNCC61:
 		return d.ncc61Handler, nil
 	default:
-		return d.defaultHandler, nil
+		return nil, nil
 	}
 }
