@@ -759,9 +759,13 @@ func (r WorkOrderRepository) FindOneByBarcode(ctx context.Context, barcode strin
 	var workOrder entity.WorkOrder
 	err := r.db.Where("barcode = ?", barcode).
 		Preload("Patient").
-		Preload("Patient.Specimen").
-		Preload("Patient.Specimen.ObservationRequest").
-		Preload("Patient.Specimen.ObservationRequest.TestType").
+		Preload("Specimen").
+		Preload("Specimen.ObservationRequest").
+		Preload("Specimen.ObservationRequest.TestType").
+		Preload("Specimen.ObservationResult").
+		Preload("Specimen.ObservationResult.TestType").
+		Preload("Doctors").
+		Preload("Analyzers").
 		First(&workOrder).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return entity.WorkOrder{}, entity.ErrNotFound

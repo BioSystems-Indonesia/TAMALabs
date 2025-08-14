@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"sort"
 	"time"
 )
 
@@ -104,6 +105,89 @@ func (wo *WorkOrder) FillData() {
 	wo.TestTemplateIDs = testTemplateIDs
 }
 
+// TODO make all code in usecase to use this to fill TestResult
+func (w *WorkOrder) FillTestResultDetail(hideEmpty bool) {
+	var allObservationRequests []ObservationRequest
+	var allObservationResults []ObservationResult
+	for _, specimen := range w.Specimen {
+		allObservationRequests = append(allObservationRequests, specimen.ObservationRequest...)
+		allObservationResults = append(allObservationResults, specimen.ObservationResult...)
+	}
+
+	allTests := make([]TestResult, len(allObservationRequests))
+	// create the placeholder first
+	for i, request := range allObservationRequests {
+		allTests[i] = TestResult{}.CreateEmpty(request)
+	}
+
+	// sort by test code
+	sort.Slice(allTests, func(i, j int) bool {
+		return allTests[i].Test < allTests[j].Test
+	})
+
+	// prepare the data that will be filled into the placeholder
+	// prepare by grouping into code. But before that, sort by updated_at
+	// the latest updated_at will be the first element
+	sort.Slice(allObservationResults, func(i, j int) bool {
+		return allObservationResults[i].CreatedAt.After(allObservationResults[j].CreatedAt)
+	})
+
+	// ok final step to create the order data
+	testResults := map[string][]ObservationResult{}
+	for _, observation := range allObservationResults {
+		// TODO check whether this will create chaos in order or not
+		testResults[observation.TestCode] = append(testResults[observation.TestCode], observation)
+	}
+
+	// fill the placeholder
+	totalResultFilled := 0
+	for i, test := range allTests {
+		newTest := test
+		history := testResults[test.Test]
+		if len(history) > 0 {
+			// Pick the latest history or the manually picked one
+			pickedTest := history[0]
+			for _, v := range history {
+				if v.Picked {
+					pickedTest = v
+					break
+				}
+			}
+
+			newTest = newTest.FromObservationResult(pickedTest)
+		}
+		newTest = newTest.FillHistory(history)
+
+		// or should be like this or we can just use the above code
+		allTests[i] = newTest
+
+		// count the filled result
+		if newTest.Result != nil {
+			totalResultFilled++
+		}
+	}
+
+	w.TotalRequest = int64(len(allObservationRequests))
+	w.TotalResultFilled = int64(totalResultFilled)
+	w.HaveCompleteData = len(allObservationRequests) == totalResultFilled
+	if len(allObservationRequests) != 0 {
+		w.PercentComplete = float64(totalResultFilled) / float64(len(allObservationRequests))
+	}
+
+	if hideEmpty {
+		var filteredTests []TestResult
+		for _, test := range allTests {
+			if test.Result == nil || *test.Result == 0 {
+				continue
+			}
+			filteredTests = append(filteredTests, test)
+		}
+		allTests = filteredTests
+	}
+
+	w.TestResult = allTests
+}
+
 type WorkOrderDoctor struct {
 	WorkOrderID int64 `json:"work_order_id" gorm:"primaryKey" validate:"required"`
 	AdminID     int64 `json:"admin_id" gorm:"primaryKey" validate:"required"`
@@ -163,6 +247,8 @@ func (w *WorkOrderRunRequest) ProgressWriter() chan WorkOrderRunStreamMessage {
 func (w *WorkOrderRunRequest) SetProgressWriter(progress chan WorkOrderRunStreamMessage) {
 	w.progressWriter = progress
 }
+
+
 
 type WorkOrderGetManyRequest struct {
 	GetManyRequest

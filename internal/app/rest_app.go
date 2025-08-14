@@ -40,6 +40,7 @@ import (
 	barcodeGeneratorUC "github.com/oibacidem/lims-hl-seven/internal/usecase/barcode_generator"
 	configuc "github.com/oibacidem/lims-hl-seven/internal/usecase/config"
 	deviceuc "github.com/oibacidem/lims-hl-seven/internal/usecase/device"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/external"
 	externaluc "github.com/oibacidem/lims-hl-seven/internal/usecase/external"
 	khanzauc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
 	observation_requestuc "github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
@@ -82,6 +83,7 @@ var restUsecaseSet = wire.NewSet(
 	wire.Bind(new(usecase.Analyzer), new(*analyzer.Usecase)),
 	khanzauc.NewUsecase,
 	externaluc.NewUsecase,
+	wire.Struct(new(external.UseCase), "*"),
 )
 
 var restRepositorySet = wire.NewSet(
@@ -144,6 +146,7 @@ var restHandlerSet = wire.NewSet(
 	rest.NewServerControllerHandler,
 	rest.NewLogHandler,
 	rest.NewExternalHandler,
+	wire.Struct(new(rest.HRISExternalHandler), "*"),
 )
 
 var (

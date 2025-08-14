@@ -98,6 +98,7 @@ func RegisterRoutes(
 	adminHandler *AdminHandler,
 	authHandler *AuthHandler,
 	roleHandler *RoleHandler,
+	hrisExternalHandler *HRISExternalHandler,
 	externalHandler *ExternalHandler,
 	authMiddleware *appMiddleware.JWTMiddleware,
 ) {
@@ -223,6 +224,8 @@ func RegisterRoutes(
 	{
 		log.GET("/export", handler.LogHandler.ExportLog)
 	}
+
+	hrisExternalHandler.RegisterRoutes(unauthenticatedV1.Group("softmedix"))
 
 	handler.RegisterFeatureList(authenticatedV1)
 
