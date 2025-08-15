@@ -41,5 +41,5 @@ func (h *HRISExternalHandler) GetResult(c echo.Context) error {
 
 func (h *HRISExternalHandler) RegisterRoutes(g *echo.Group) {
 	g.POST("/order", h.ProcessRequest)
-	g.POST("/result/user/key/:id", h.GetResult)
+	g.GET("/result/user/key/:id", h.GetResult)
 }
