@@ -82,7 +82,7 @@ func (u *UseCase) ProcessRequest(ctx context.Context, rawRequest []byte) error {
 		// TODO make this not N+1
 		testType, err := u.TestTypeRepo.FindOneByCode(ctx, testName)
 		if err != nil {
-			slog.Error("find test type %s failed: %v", testName, err)
+			slog.Error("find test type failed", "testName", testName, "error", err)
 		}
 
 		specimenType := "SER"
