@@ -163,7 +163,7 @@ func (u *UseCase) convertIntoPatient(r Request) (entity.Patient, error) {
 
 	birthdate, err := time.Parse("2006-01-02", r.Order.PID.BirthDT)
 	if err != nil {
-		return entity.Patient{}, fmt.Errorf("cannot parsing birth date")
+		return entity.Patient{}, fmt.Errorf("cannot parse birth date")
 	}
 
 	return entity.Patient{
