@@ -198,7 +198,7 @@ type Response struct {
 	Response struct {
 		Sample struct {
 			ResultTest []ResponseResultTest `json:"result_test"`
-		} `json:"sampel"` // It's not typo its the request for
+		} `json:"sampel"` // "sampel" is required by the external API specification; this is intentional and not a typo.
 	} `json:"response"`
 }
 
