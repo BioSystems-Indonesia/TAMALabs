@@ -6,6 +6,10 @@ type Schema struct {
 	LogLevel   string `validate:"required"`
 	SigningKey string `validate:"required"`
 
+	// MySQL Configuration
+	KhanzaIntegrationEnabled string `validate:"-"`
+	KhanzaDatabaseDSN        string `validate:"-"`
+
 	// Runtime
 	Version  string `validate:"required"`
 	Revision string

@@ -1,0 +1,59 @@
+package khanza
+
+import (
+	"database/sql"
+	"fmt"
+	"log/slog"
+	"time"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/oibacidem/lims-hl-seven/config"
+)
+
+// DB represents a MySQL database connection wrapper
+type DB struct {
+	conn   *sql.DB
+	config *config.Schema
+}
+
+// NewDB creates a new MySQL database connection using configuration
+func NewDB(cfg *config.Schema) (*DB, error) {
+	// Build MySQL connection string
+	dsn := cfg.KhanzaDatabaseDSN
+
+	// Open database connection
+	conn, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database connection: %w", err)
+	}
+
+	// Configure connection pool
+	conn.SetMaxOpenConns(25)
+	conn.SetMaxIdleConns(25)
+	conn.SetConnMaxLifetime(5 * time.Minute)
+
+	slog.Info("Connection to khanza database success")
+
+	return &DB{
+		conn:   conn,
+		config: cfg,
+	}, nil
+}
+
+// GetConnection returns the underlying sql.DB connection
+func (db *DB) GetConnection() *sql.DB {
+	return db.conn
+}
+
+// Close closes the database connection
+func (db *DB) Close() error {
+	if db.conn != nil {
+		return db.conn.Close()
+	}
+	return nil
+}
+
+// Ping tests the database connection
+func (db *DB) Ping() error {
+	return db.conn.Ping()
+}

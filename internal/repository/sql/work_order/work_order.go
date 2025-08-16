@@ -129,12 +129,15 @@ func (r WorkOrderRepository) FindAll(
 	db := r.db.WithContext(ctx)
 	db = sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{})
 
-	if !req.CreatedAtStart.IsZero() {
-		db = db.Where("work_orders.created_at >= ?", req.CreatedAtStart.Add(-24*time.Hour))
-	}
+	// Prioritize ID filter
+	if len(req.GetManyRequest.ID) == 0 {
+		if !req.CreatedAtStart.IsZero() {
+			db = db.Where("work_orders.created_at >= ?", req.CreatedAtStart.Add(-24*time.Hour))
+		}
 
-	if !req.CreatedAtEnd.IsZero() {
-		db = db.Where("work_orders.created_at <= ?", req.CreatedAtEnd.Add(24*time.Hour))
+		if !req.CreatedAtEnd.IsZero() {
+			db = db.Where("work_orders.created_at <= ?", req.CreatedAtEnd.Add(24*time.Hour))
+		}
 	}
 
 	if len(req.BarcodeIds) > 0 {

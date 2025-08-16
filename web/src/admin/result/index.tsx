@@ -1,4 +1,5 @@
 import RefreshIcon from '@mui/icons-material/Refresh';
+import SyncIcon from '@mui/icons-material/Sync';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { Box, Chip, Button as MUIButton, Stack, Typography, useTheme } from "@mui/material";
 import dayjs from "dayjs";
@@ -32,10 +33,6 @@ export const ResultList = () => (
         sort={{ field: "id", order: "DESC" }}
         aside={<ResultSideFilter />}
         filters={ResultMoreFilter}
-        filterDefaultValues={{
-            created_at_start: dayjs().subtract(7, "day").toISOString(),
-            created_at_end: dayjs().toISOString(),
-        }}
         actions={<ResultActions />}
         exporter={false}
         storeKey={false}
@@ -71,6 +68,15 @@ function ResultActions() {
                 })
             }}>
                 <RefreshIcon />
+            </Button>
+            <Button label={"Sync All Result"} onClick={async () => {
+                const response = await axios.post("/external/sync-all-results", {})
+
+                notify("Sync Success " + response.statusText, {
+                    type: "success"
+                })
+            }}>
+                <SyncIcon />
             </Button>
         </TopToolbar>
     )

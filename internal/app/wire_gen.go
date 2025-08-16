@@ -35,6 +35,8 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/barcode_generator"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/config"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/device"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/external"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
@@ -124,7 +126,11 @@ func InitRestApp() server.RestServer {
 	adminHandler := rest.NewAdminHandler(schema, adminUsecase)
 	roleUsecase := role_uc.NewRoleUsecase(roleRepository)
 	roleHandler := rest.NewRoleHandler(schema, roleUsecase)
+	khanzaRepository := provideKhanzaRepository(schema)
+	khanzaucUsecase := khanzauc.NewUsecase(khanzaRepository, workOrderRepository, resultUsecase)
+	externalucUsecase := externaluc.NewUsecase(khanzaucUsecase, schema)
+	externalHandler := rest.NewExternalHandler(externalucUsecase)
 	jwtMiddleware := middleware.NewJWTMiddleware(schema)
-	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, jwtMiddleware)
+	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, externalHandler, jwtMiddleware)
 	return restServer
 }

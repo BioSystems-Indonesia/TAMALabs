@@ -98,6 +98,7 @@ func RegisterRoutes(
 	adminHandler *AdminHandler,
 	authHandler *AuthHandler,
 	roleHandler *RoleHandler,
+	externalHandler *ExternalHandler,
 	authMiddleware *appMiddleware.JWTMiddleware,
 ) {
 	slog.Info("registering routes")
@@ -224,6 +225,8 @@ func RegisterRoutes(
 	}
 
 	handler.RegisterFeatureList(authenticatedV1)
+
+	externalHandler.RegisterRoutes(authenticatedV1)
 }
 
 func registerFrontendPath(e *echo.Echo) {

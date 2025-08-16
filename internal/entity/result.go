@@ -49,8 +49,25 @@ type TestResult struct {
 	ReferenceRange  string         `json:"reference_range"`
 	CreatedAt       string         `json:"created_at"`
 	Picked          bool           `json:"picked"`
+	TestType        TestType       `json:"test_type"`
 
 	History []TestResult `json:"history"`
+}
+
+func (r TestResult) GetResult() float64 {
+	if r.Result == nil {
+		return 0
+	}
+
+	return *r.Result
+}
+
+func (r TestResult) GetFormattedResult() float64 {
+	if r.FormattedResult == nil {
+		return 0
+	}
+
+	return *r.FormattedResult
 }
 
 // CreateEmpty why we create empty result test? because we need the placeholder for the result test
@@ -71,6 +88,7 @@ func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
 		Abnormal:       NoDataResult,
 		Picked:         false,
 		History:        []TestResult{},
+		TestType:       request.TestType,
 	}
 }
 

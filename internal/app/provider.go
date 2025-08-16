@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"log/slog"
 	"os"
 	"sync"
@@ -20,6 +21,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
+	khanza "github.com/oibacidem/lims-hl-seven/internal/repository/external/khanza"
 	devicerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
 	"github.com/oibacidem/lims-hl-seven/migrations"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
@@ -53,6 +55,7 @@ func provideRestServer(
 	authHandler *rest.AuthHandler,
 	adminHandler *rest.AdminHandler,
 	roleHandler *rest.RoleHandler,
+	khanzaHandler *rest.ExternalHandler,
 	authMiddleware *middleware.JWTMiddleware,
 ) server.RestServer {
 	serv := server.NewRest(config.Port, validate)
@@ -64,6 +67,7 @@ func provideRestServer(
 		adminHandler,
 		authHandler,
 		roleHandler,
+		khanzaHandler,
 		authMiddleware,
 	)
 	return serv
@@ -347,4 +351,18 @@ func provideConfig(db *gorm.DB) *config.Schema {
 		panic(err)
 	}
 	return &cfg
+}
+
+func provideKhanzaRepository(cfg *config.Schema) *khanza.Repository {
+	if cfg.KhanzaIntegrationEnabled != "true" {
+		return nil
+	}
+
+	db, err := khanza.NewDB(cfg)
+	if err != nil {
+		slog.Error("Error on create khanza db connection. If you want to disable khanza integration, set KhanzaIntegrationEnabled to false on config", "error", err)
+		log.Fatalf("failed to create khanza db connection: %v", err)
+	}
+
+	return khanza.NewRepository(db)
 }
