@@ -153,6 +153,8 @@ func RegisterRoutes(
 		testType.GET("", handler.ListTestType)
 		testType.GET("/filter", handler.ListTestTypeFilter)
 		testType.GET("/:id", handler.GetOneTestType)
+		testType.GET("/code/:code", handler.GetOneTestTypeByCode)
+		testType.GET("/alias-code/:alias_code", handler.GetOneTestTypeByAliasCode)
 		testType.POST("", handler.CreateTestType)
 		testType.PUT("/:id", handler.UpdateTestType)
 		testType.DELETE("/:id", handler.DeleteTestType)

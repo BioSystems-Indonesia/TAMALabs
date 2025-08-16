@@ -12,7 +12,6 @@ import {
     Link,
     List,
     NumberField,
-    ReferenceArrayField,
     ReferenceInput,
     TopToolbar,
     useNotify,
@@ -81,6 +80,9 @@ export const ResultDataGrid = (props: any) => {
     return (
         <Datagrid bulkActionButtons={false} >
             <NumberField source="id" />
+            <WithRecord label="Barcode" render={(record: WorkOrder) => (
+                <Typography variant="body2">{record.barcode}</Typography>
+            )} />
             <WithRecord label="Patient" render={(record: any) => (
                 <Link to={`/patient/${record.patient.id}/show`} resource="patient" label={"Patient"}
                     onClick={e => e.stopPropagation()}>
@@ -108,7 +110,6 @@ export const ResultDataGrid = (props: any) => {
             <WithRecord label="Verified" render={(record: WorkOrder) => (
                 <VerifiedChip verified={record.verified_status !== '' ? record.verified_status : "VERIFIED"} />
             )} />
-            <ReferenceArrayField label="Doctor" source="doctor_ids" reference="user" />
             <DateField source="created_at" showDate showTime />
             <WithRecord label="Print Result" render={(record: WorkOrder) => {
                 if (record.verified_status !== "" && record.verified_status !== "VERIFIED") {

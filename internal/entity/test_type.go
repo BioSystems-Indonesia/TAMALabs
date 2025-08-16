@@ -10,6 +10,7 @@ type TestType struct {
 	ID           int     `json:"id" gorm:"primaryKey"`
 	Name         string  `json:"name"`
 	Code         string  `json:"code" gorm:"unique"`
+	AliasCode    string  `json:"alias_code"`
 	Unit         string  `json:"unit"`
 	LowRefRange  float64 `json:"low_ref_range"`
 	HighRefRange float64 `json:"high_ref_range"`
