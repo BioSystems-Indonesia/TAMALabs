@@ -17,7 +17,7 @@ import { Patient } from "../types/patient.ts";
 import { WorkOrder } from '../types/work_order.ts';
 
 Font.register({
-    family: 'Times-Roman',
+    family: 'Helvetica',
     fonts: [
         { src: 'https://fonts.gstatic.com/s/crimsontext/v19/wlpigwHKFkZgtmSR3NB0oRJvaAJSA_JN3Q.ttf', fontWeight: 400 },
         { src: 'https://fonts.gstatic.com/s/crimsontext/v19/wlp7gwHKFkZgtmSR3NB0oRJX6QJbBfJH3QkG.ttf', fontWeight: 700 },
@@ -33,7 +33,6 @@ const styles = StyleSheet.create({
     },
     header: {
         marginBottom: 20,
-        fontFamily: 'Times-Roman',
     },
     companyInfo: {
         width: '100%',
@@ -194,11 +193,8 @@ const Header = () => {
                 <View style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: 5}}>
                     <Text style={{textAlign: 'center', fontSize: '1.8rem', fontWeight: 'bold'}}>{settings.company_name}</Text>
                     <Text style={{textAlign: 'center', fontSize: '1.1rem'}}>{settings.company_address}</Text>
-                    <Text style={{textAlign: 'center', fontSize: '1.1rem'}}>Telpon. {settings.company_contact_phone}, HP. {settings.company_contact_hp}</Text>
-                    <Text style={{textAlign: 'center', fontSize: '1.1rem'}}>
-                        <Text>Email: </Text>
-                        <Text style={{textDecoration:'underline'}}>{settings.company_contact_email}</Text>
-                    </Text>
+                    <Text style={{textAlign: 'center', fontSize: '1.1rem'}}>Telp: {settings.company_contact_phone} | HP. {settings.company_contact_hp}</Text>
+                    <Text style={{textAlign: 'center', fontSize: '1.1rem'}}>Email: {settings.company_contact_email}</Text>
                 </View>
             </View>
             <View style={{height: 3, width: "100%", backgroundColor: "black", marginTop: 5}}></View>

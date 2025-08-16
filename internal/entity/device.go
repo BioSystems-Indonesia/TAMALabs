@@ -6,8 +6,8 @@ type DeviceType string
 
 const (
 	DeviceTypeA15         DeviceType = "A15"
-	DeviceTypeSwelabAlfa  DeviceType = "SWELAB_ALFA_PLUS"
-	DeviceTypeSwelabBasic DeviceType = "SWELAB_ALFA_BASIC"
+	DeviceTypeSwelabAlfa  DeviceType = "SWELAB_ALFA_PLUS_SATANDARD"
+	DeviceTypeSwelabBasic DeviceType = "SWELAB_ALFA_PLUS_BASIC"
 )
 
 func (d DeviceType) String() string {

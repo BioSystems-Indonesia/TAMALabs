@@ -29,8 +29,8 @@ export const defaultSettings: Settings = {
     barcode_height: 50,
     barcode_orientation: "landscape",
     company_name: "RUMAH SAKIT ALINDA HUSADA",
-    company_address: "Jl. Raya Tanjung Lesung KM.1, Depan SMPN 1 Panimbang, Pandeglang - Banten",
+    company_address: "Jl. Raya Tanjung Lesung KM.01, Kec. Panimbang, Kab. Pandeglang, Banten 42281",
     company_contact_email: "rumahsakit.alindahusada@gmail.com",
-    company_contact_phone: "(0253) 5806781",
-    company_contact_hp: "081399366841 / 087772714887"
+    company_contact_phone: "02535806781",
+    company_contact_hp: "087772714887 | 081399366841"
 };

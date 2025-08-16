@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
@@ -20,13 +21,21 @@ func (t TCPHandlerFunc) Handle(c *net.TCPConn) {
 	t(c)
 }
 
+// ConnectionInfo tracks individual connection information
+type ConnectionInfo struct {
+	conn         *net.TCPConn
+	lastActivity time.Time
+	isActive     bool
+}
+
 // TCP structure
 type TCP struct {
-	port            string
-	listener        *net.TCPListener
-	handler         TCPHandler
-	state           constant.ServerState
-	timeLastConnect time.Time
+	port        string
+	listener    *net.TCPListener
+	handler     TCPHandler
+	state       constant.ServerState
+	connections map[string]*ConnectionInfo
+	mu          sync.RWMutex
 }
 
 // Ensure TCP implements ServerController interface
@@ -35,7 +44,8 @@ var _ Controller = (*TCP)(nil)
 // NewTCP returns a new TCP server
 func NewTCP(port string) *TCP {
 	return &TCP{
-		port: port,
+		port:        port,
+		connections: make(map[string]*ConnectionInfo),
 	}
 }
 
@@ -73,21 +83,51 @@ func (t *TCP) Start() error {
 	return nil
 }
 
+// cleanupDeadConnections removes connections that are no longer active
+func (t *TCP) cleanupDeadConnections() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	for addr, connInfo := range t.connections {
+		if !connInfo.isActive || time.Since(connInfo.lastActivity) > disconnectTimeout {
+			slog.Info("removing dead connection", "address", addr)
+			if connInfo.conn != nil {
+				connInfo.conn.Close()
+			}
+			delete(t.connections, addr)
+		}
+	}
+
+	// Update server state based on active connections
+	if len(t.connections) > 0 {
+		t.state = constant.ServerStateConnect
+	} else {
+		t.state = constant.ServerStateServing
+	}
+}
+
 // Serve
 func (t *TCP) Serve() {
 	t.state = constant.ServerStateServing
 	defer func() { t.state = constant.ServerStateStopped }()
+
+	// Start a goroutine to periodically cleanup dead connections
+	cleanupTicker := time.NewTicker(2 * time.Second)
+	defer cleanupTicker.Stop()
+
+	go func() {
+		for range cleanupTicker.C {
+			if t.state == constant.ServerStateStopped {
+				return
+			}
+			t.cleanupDeadConnections()
+		}
+	}()
+
 	for {
 		if t.state == constant.ServerStateStopped {
 			slog.Info("server stopped", "state", t.state, "port", t.port)
 			return
-		}
-
-		if t.state == constant.ServerStateConnect {
-			if time.Since(t.timeLastConnect) > disconnectTimeout {
-				t.state = constant.ServerStateServing
-				slog.Info("disconnect timeout, change to serving")
-			}
 		}
 
 		conn, err := t.listener.AcceptTCP()
@@ -97,11 +137,50 @@ func (t *TCP) Serve() {
 			continue
 		}
 
-		t.timeLastConnect = time.Now()
+		// Add new connection to tracking
+		remoteAddr := conn.RemoteAddr().String()
+		t.mu.Lock()
+		t.connections[remoteAddr] = &ConnectionInfo{
+			conn:         conn,
+			lastActivity: time.Now(),
+			isActive:     true,
+		}
 		t.state = constant.ServerStateConnect
+		t.mu.Unlock()
 
-		t.handler.Handle(conn)
+		slog.Info("new connection accepted", "address", remoteAddr)
+
+		// Handle connection in a separate goroutine
+		go t.handleConnection(conn, remoteAddr)
 	}
+}
+
+// handleConnection handles individual connection
+func (t *TCP) handleConnection(conn *net.TCPConn, remoteAddr string) {
+	defer func() {
+		conn.Close()
+		t.mu.Lock()
+		delete(t.connections, remoteAddr)
+		t.mu.Unlock()
+		slog.Info("connection closed", "address", remoteAddr)
+	}()
+
+	// Update last activity
+	t.mu.Lock()
+	if connInfo, exists := t.connections[remoteAddr]; exists {
+		connInfo.lastActivity = time.Now()
+	}
+	t.mu.Unlock()
+
+	// Let the handler handle the connection
+	t.handler.Handle(conn)
+
+	// Mark connection as inactive when handler returns
+	t.mu.Lock()
+	if connInfo, exists := t.connections[remoteAddr]; exists {
+		connInfo.isActive = false
+	}
+	t.mu.Unlock()
 }
 
 // State
@@ -111,7 +190,23 @@ func (t *TCP) State() constant.ServerState {
 
 // Stop
 func (t *TCP) Stop() error {
-	// TODO try to do wait of unfinished handle func
 	t.state = constant.ServerStateStopped
-	return t.listener.Close()
+
+	// Close all active connections
+	t.mu.Lock()
+	for addr, connInfo := range t.connections {
+		if connInfo.conn != nil {
+			slog.Info("closing connection during stop", "address", addr)
+			connInfo.conn.Close()
+		}
+	}
+	// Clear connections map
+	t.connections = make(map[string]*ConnectionInfo)
+	t.mu.Unlock()
+
+	// Close listener
+	if t.listener != nil {
+		return t.listener.Close()
+	}
+	return nil
 }

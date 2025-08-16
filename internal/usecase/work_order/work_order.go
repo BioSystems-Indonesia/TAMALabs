@@ -64,11 +64,13 @@ func (p WorkOrderUseCase) FindOneByID(id int64) (entity.WorkOrder, error) {
 }
 
 func (p WorkOrderUseCase) Create(req *entity.WorkOrderCreateRequest) (entity.WorkOrder, error) {
-	barcode, err := p.barcodeGeneratorUC.NextOrderBarcode(context.Background())
-	if err != nil {
-		return entity.WorkOrder{}, fmt.Errorf("failed to p.barcodeGeneratorUC.NextOrderBarcode %w", err)
+	if req.Barcode == "" {
+		barcode, err := p.barcodeGeneratorUC.NextOrderBarcode(context.Background())
+		if err != nil {
+			return entity.WorkOrder{}, fmt.Errorf("failed to p.barcodeGeneratorUC.NextOrderBarcode %w", err)
+		}
+		req.Barcode = barcode
 	}
-	req.Barcode = barcode
 	return p.workOrderRepo.Create(req)
 }
 

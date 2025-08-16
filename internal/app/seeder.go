@@ -195,6 +195,7 @@ var seedUnits = []entity.Unit{
 	// Volume-Based Units
 	{Value: "10^6/µL", Base: VolumeBase},
 	{Value: "10^3/µL", Base: VolumeBase},
+	{Value: "pg", Base: VolumeBase},
 	{Value: "fL", Base: VolumeBase},
 
 	// Mass/Weight-Based Units
@@ -226,7 +227,7 @@ var seedAdmin = []entity.Admin{
 func initAdmin() entity.Admin {
 	defaultEmail := "admin@admin.com"
 	const defaultUsername = "admin"
-	const defaultPassword = "123456"
+	const defaultPassword = "adminlishl7"
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), bcrypt.DefaultCost)
 	if err != nil {
@@ -236,7 +237,7 @@ func initAdmin() entity.Admin {
 	return entity.Admin{
 		ID:           1,
 		Username:     defaultUsername,
-		Fullname:     "First Admin",
+		Fullname:     "Admin",
 		Email:        &defaultEmail,
 		PasswordHash: string(hash),
 		IsActive:     true,
