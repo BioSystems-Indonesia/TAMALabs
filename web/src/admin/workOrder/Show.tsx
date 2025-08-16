@@ -1,7 +1,7 @@
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import PrintIcon from '@mui/icons-material/Print';
 import ScienceIcon from '@mui/icons-material/Science';
-import { Avatar, Card, CardContent, Grid, List, ListItem, ListItemAvatar, ListItemText } from "@mui/material";
+import { Avatar, Box, Card, CardContent, Grid, List, ListItem, ListItemAvatar, ListItemText } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import React from "react";
@@ -202,9 +202,12 @@ export function WorkOrderShow() {
                             <Typography variant='subtitle1'>Patient Info</Typography>
                             <WithRecord render={(record: WorkOrder) => {
                                 return (
+                                    <Box>
+                                        
                                     <RecordContextProvider value={record.patient}>
                                         <PatientForm readonly mode={"SHOW"} />
                                     </RecordContextProvider>
+                                    </Box>
                                 )
                             }} />
                         </CardContent>

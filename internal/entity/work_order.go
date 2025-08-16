@@ -31,7 +31,7 @@ type WorkOrderCreateRequest struct {
 	AnalyzerIDs     []int64                          `json:"analyzer_ids" gorm:"-"`
 	TestTemplateIDs []int64                          `json:"test_template_ids" gorm:"-"`
 
-	Barcode string `json:"-"`
+	Barcode string `json:"barcode"`
 }
 
 type WorkOrderCreateRequestTestType struct {
