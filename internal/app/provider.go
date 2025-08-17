@@ -18,6 +18,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/oibacidem/lims-hl-seven/config"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/cron"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
@@ -57,8 +58,9 @@ func provideRestServer(
 	roleHandler *rest.RoleHandler,
 	khanzaHandler *rest.ExternalHandler,
 	authMiddleware *middleware.JWTMiddleware,
+	cronManager *cron.CronManager,
 ) server.RestServer {
-	serv := server.NewRest(config.Port, validate)
+	serv := server.NewRest(config.Port, validate, cronManager)
 	rest.RegisterMiddleware(serv.GetClient())
 	rest.RegisterRoutes(serv.GetClient(), handlers,
 		deviceHandler,

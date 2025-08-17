@@ -13,6 +13,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/cron"
+	"github.com/oibacidem/lims-hl-seven/pkg/panics"
 )
 
 // RestServer is an interface for rest server
@@ -26,6 +28,7 @@ type RestServer interface {
 type Rest struct {
 	Port   string
 	Client *echo.Echo
+	Cron   *cron.CronManager
 	ctx    context.Context
 	cancel context.CancelFunc
 }
@@ -34,13 +37,20 @@ func (r *Rest) Serve() {
 	// Create context for graceful shutdown
 	r.ctx, r.cancel = context.WithCancel(context.Background())
 
+	go panics.CapturePanic(r.ctx, func() {
+		err := r.Cron.Start()
+		if err != nil {
+			slog.Error("Failed to start cron", slog.String("error", err.Error()))
+		}
+	})
+
 	// Start server in a goroutine so that it doesn't block.
 	errChan := make(chan error, 1)
-	go func() {
+	go panics.CapturePanic(r.ctx, func() {
 		if err := r.Client.Start("0.0.0.0:" + r.Port); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errChan <- fmt.Errorf("error starting server: %w", err)
 		}
-	}()
+	})
 	slog.Info("Server started at", slog.String("port", r.Port))
 
 	quit := make(chan os.Signal, 1)
@@ -78,6 +88,11 @@ func (r *Rest) Stop() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	err := r.Cron.Stop()
+	if err != nil {
+		slog.Error("Failed to stop cron", slog.String("error", err.Error()))
+	}
+
 	return r.Client.Shutdown(ctx)
 }
 
@@ -93,12 +108,14 @@ func (v *Validator) Validate(i interface{}) error {
 }
 
 // NewRest returns a new rest server
-func NewRest(port string, validate *validator.Validate) RestServer {
+func NewRest(port string, validate *validator.Validate, cronManager *cron.CronManager) RestServer {
 	e := echo.New()
 	e.Validator = &Validator{v: validate}
 	e.HideBanner = true
+
 	return &Rest{
 		Port:   port,
 		Client: e,
+		Cron:   cronManager,
 	}
 }

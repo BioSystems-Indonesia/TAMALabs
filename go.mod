@@ -15,6 +15,7 @@ require (
 	github.com/kardianos/hl7 v1.1.2
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/mock v0.5.2

@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/google/wire"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/cron"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/a15"
@@ -151,6 +152,8 @@ var (
 		restMiddlewareSet,
 		restHandlerSet,
 		tcpHandlerSet,
+		cron.NewCronHandler,
+		cron.NewCronManager,
 		provideRestHandler,
 		provideRestServer,
 	)

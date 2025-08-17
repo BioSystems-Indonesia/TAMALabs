@@ -8,6 +8,7 @@ package app
 
 import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/cron"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	a15_2 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/a15"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
@@ -131,6 +132,8 @@ func InitRestApp() server.RestServer {
 	externalucUsecase := externaluc.NewUsecase(khanzaucUsecase, schema)
 	externalHandler := rest.NewExternalHandler(externalucUsecase)
 	jwtMiddleware := middleware.NewJWTMiddleware(schema)
-	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, externalHandler, jwtMiddleware)
+	cronHandler := cron.NewCronHandler(khanzaucUsecase)
+	cronManager := cron.NewCronManager(cronHandler)
+	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, externalHandler, jwtMiddleware, cronManager)
 	return restServer
 }
