@@ -25,7 +25,11 @@ var seedConfig = []entity.Config{
 		Value: "false",
 	},
 	{
-		ID:    "KhanzaDatabaseDSN",
+		ID:    "KhanzaBridgeDatabaseDSN",
+		Value: "root:secret@tcp(localhost:3306)/khanza?parseTime=true",
+	},
+	{
+		ID:    "KhanzaMainDatabaseDSN",
 		Value: "root:secret@tcp(localhost:3306)/khanza?parseTime=true",
 	},
 }

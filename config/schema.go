@@ -8,7 +8,8 @@ type Schema struct {
 
 	// MySQL Configuration
 	KhanzaIntegrationEnabled string `validate:"-"`
-	KhanzaDatabaseDSN        string `validate:"-"`
+	KhanzaBridgeDatabaseDSN  string `validate:"-"`
+	KhanzaMainDatabaseDSN    string `validate:"-"`
 
 	// Runtime
 	Version  string `validate:"required"`

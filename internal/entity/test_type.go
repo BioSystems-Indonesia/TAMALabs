@@ -10,7 +10,7 @@ type TestType struct {
 	ID           int     `json:"id" gorm:"primaryKey"`
 	Name         string  `json:"name"`
 	Code         string  `json:"code" gorm:"unique"`
-	AliasCode    string  `json:"alias_code"`
+	AliasCode    string  `json:"alias_code" gorm:"index:test_type_alias_code"`
 	Unit         string  `json:"unit"`
 	LowRefRange  float64 `json:"low_ref_range"`
 	HighRefRange float64 `json:"high_ref_range"`
@@ -22,6 +22,14 @@ type TestType struct {
 	Type []TestTypeSpecimenType `json:"types" gorm:"-"`
 	// TypeDB is a specimen type separated by comma
 	TypeDB string `json:"-" gorm:"column:type"`
+}
+
+func (t *TestType) GetFirstType() string {
+	if len(t.Type) == 0 {
+		return "SER"
+	}
+
+	return t.Type[0].Type
 }
 
 // TestTypeSpecimenType is a specimen type struct, we need it to conform with react-admin standard

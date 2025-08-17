@@ -65,13 +65,13 @@ type ObservationResult struct {
 // TODO do we really need more than one values?
 func (o ObservationResult) GetFirstValue() float64 {
 	if len(o.Values) < 1 {
-		slog.Info("values from observation is empty or negative", "id", o.ID)
+		slog.Info("failed to get first values: is empty", "id", o.ID)
 		return 0
 	}
 
 	v, err := strconv.ParseFloat(o.Values[0], 64)
 	if err != nil {
-		slog.Info("parse observation.Values from observation failed", "id", o.ID, "error", err)
+		slog.Warn("failed to parse observation.Values from observation", "id", o.ID, "error", err)
 		return v
 	}
 

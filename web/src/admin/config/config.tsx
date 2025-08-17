@@ -65,7 +65,7 @@ export const ConfigList = () => {
 
 
 export const ConfigEdit = () => (
-    <Edit>
+    <Edit >
         <SimpleForm>
             <TextInput source="id" readOnly />
             <TextInput source="value" />

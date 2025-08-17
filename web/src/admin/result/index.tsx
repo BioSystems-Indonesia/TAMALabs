@@ -16,6 +16,7 @@ import {
     ReferenceInput,
     TopToolbar,
     useNotify,
+    useRefresh,
     WithRecord
 } from "react-admin";
 import CustomDateInput from "../../component/CustomDateInput";
@@ -54,6 +55,7 @@ export const ResultList = () => (
 function ResultActions() {
     const axios = useAxios()
     const notify = useNotify()
+    const refresh = useRefresh()
     return (
         <TopToolbar>
             <Button label={"Refresh"} onClick={() => {
@@ -72,6 +74,7 @@ function ResultActions() {
             <Button label={"Sync Result to SIMRS"} onClick={async () => {
                 const response = await axios.post("/external/sync-all-results", {})
 
+                refresh()
                 notify("Sync Success " + response.statusText, {
                     type: "success"
                 })

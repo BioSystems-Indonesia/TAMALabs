@@ -425,11 +425,13 @@ const WorkOrderListBulkActionButtons = (props: RunWorkOrderProps) => (
 function WorkOrderListActions() {
     const axios = useAxios()
     const notify = useNotify()
+    const refresh = useRefresh()
     return (
         <TopToolbar>
             <Button label={"Sync request from SIMRS"} onClick={async () => {
                 const response = await axios.post("/external/sync-all-requests", {})
 
+                refresh()
                 notify("Sync Success " + response.statusText, {
                     type: "success"
                 })

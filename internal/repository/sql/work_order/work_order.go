@@ -812,3 +812,17 @@ func (r WorkOrderRepository) findNearestNumber(ctx context.Context, where string
 
 	return id, err
 }
+
+func (r WorkOrderRepository) GetBySIMRSBarcode(ctx context.Context, barcode string) (entity.WorkOrder, error) {
+	var workOrder entity.WorkOrder
+	err := r.db.Where("barcode_simrs = ?", barcode).
+		Take(&workOrder).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return entity.WorkOrder{}, entity.ErrNotFound
+	}
+	if err != nil {
+		return entity.WorkOrder{}, fmt.Errorf("error finding workOrder: %w", err)
+	}
+
+	return workOrder, nil
+}

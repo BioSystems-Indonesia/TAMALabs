@@ -360,11 +360,17 @@ func provideKhanzaRepository(cfg *config.Schema) *khanza.Repository {
 		return nil
 	}
 
-	db, err := khanza.NewDB(cfg)
+	bridgeDB, err := khanza.NewBridgeDB(cfg)
 	if err != nil {
 		slog.Error("Error on create khanza db connection. If you want to disable khanza integration, set KhanzaIntegrationEnabled to false on config", "error", err)
 		log.Fatalf("failed to create khanza db connection: %v", err)
 	}
 
-	return khanza.NewRepository(db)
+	mainDB, err := khanza.NewMainDB(cfg)
+	if err != nil {
+		slog.Error("Error on create khanza db connection. If you want to disable khanza integration, set KhanzaIntegrationEnabled to false on config", "error", err)
+		log.Fatalf("failed to create khanza db connection: %v", err)
+	}
+
+	return khanza.NewRepository(bridgeDB, mainDB)
 }

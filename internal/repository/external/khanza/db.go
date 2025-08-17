@@ -16,10 +16,34 @@ type DB struct {
 	config *config.Schema
 }
 
-// NewDB creates a new MySQL database connection using configuration
-func NewDB(cfg *config.Schema) (*DB, error) {
+// NewBridgeDB creates a new MySQL database connection using configuration
+func NewBridgeDB(cfg *config.Schema) (*DB, error) {
 	// Build MySQL connection string
-	dsn := cfg.KhanzaDatabaseDSN
+	dsn := cfg.KhanzaBridgeDatabaseDSN
+
+	// Open database connection
+	conn, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database connection: %w", err)
+	}
+
+	// Configure connection pool
+	conn.SetMaxOpenConns(25)
+	conn.SetMaxIdleConns(25)
+	conn.SetConnMaxLifetime(5 * time.Minute)
+
+	slog.Info("Connection to khanza database success")
+
+	return &DB{
+		conn:   conn,
+		config: cfg,
+	}, nil
+}
+
+// NewMainDB creates a new MySQL database connection using configuration
+func NewMainDB(cfg *config.Schema) (*DB, error) {
+	// Build MySQL connection string
+	dsn := cfg.KhanzaMainDatabaseDSN
 
 	// Open database connection
 	conn, err := sql.Open("mysql", dsn)

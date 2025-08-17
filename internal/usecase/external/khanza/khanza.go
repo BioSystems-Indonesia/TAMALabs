@@ -10,18 +10,24 @@ import (
 	"strings"
 	"time"
 
+	"github.com/labstack/gommon/log"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/external/khanza"
 	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
 	workOrderRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
 	"github.com/oibacidem/lims-hl-seven/internal/util"
+	"gorm.io/gorm"
 )
 
 type Usecase struct {
 	repo                *khanza.Repository
 	patientRepository   *patientrepo.PatientRepository
+	testTypeRepo        *test_type.Repository
 	workOrderRepository *workOrderRepo.WorkOrderRepository
+	barcodeUC           usecase.BarcodeGenerator
 	resultUC            *result.Usecase
 }
 
@@ -29,12 +35,16 @@ func NewUsecase(
 	repo *khanza.Repository,
 	workOrderRepository *workOrderRepo.WorkOrderRepository,
 	patientRepository *patientrepo.PatientRepository,
+	testTypeRepo *test_type.Repository,
+	barcodeUC usecase.BarcodeGenerator,
 	resultUC *result.Usecase,
 ) *Usecase {
 	return &Usecase{
 		repo:                repo,
 		patientRepository:   patientRepository,
+		testTypeRepo:        testTypeRepo,
 		workOrderRepository: workOrderRepository,
+		barcodeUC:           barcodeUC,
 		resultUC:            resultUC,
 	}
 }
@@ -86,10 +96,17 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 	var reqs []entity.KhanzaResDT
 	for _, testResult := range tests {
 		slog.Info("testResult", "testResult", testResult)
-		barcode := workOrder.BarcodeSIMRS
+		barcode := workOrder.BarcodeSIMRS // visit no
 		if barcode == "" {
-			barcode = workOrder.Barcode
+			continue
 		}
+
+		// Translate visit no to ono
+		order, err := u.repo.GetLisOrderByVisitNo(barcode)
+		if err != nil {
+			return fmt.Errorf("error getting lis order by visit no: %w", err)
+		}
+		barcode = order.ONO
 
 		code := testResult.TestType.AliasCode
 		if code == "" {
@@ -101,7 +118,7 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 			TESTCD:      code,
 			TestNM:      code,
 			DataTyp:     entity.DataTypNumeric,
-			ResultValue: fmt.Sprintf("%.2f", testResult.GetFormattedResult()),
+			ResultValue: fmt.Sprintf("%.2f", testResult.GetResult()),
 			Unit:        testResult.Unit,
 			Flag:        entity.NewKhanzaFlag(testResult),
 			RefRange:    testResult.ReferenceRange,
@@ -157,5 +174,89 @@ func (u *Usecase) SyncAllRequest(ctx context.Context) error {
 		patients = append(patients, patient)
 	}
 
-	return u.patientRepository.CreateManyFromSIMRS(patients)
+	err = u.patientRepository.CreateManyFromSIMRS(patients)
+	if err != nil {
+		return fmt.Errorf("error creating patient: %w", err)
+	}
+
+	groupedPatientBySIMRS := make(map[string]entity.Patient)
+	for _, patient := range patients {
+		groupedPatientBySIMRS[patient.SIMRSPID.String] = patient
+	}
+
+	groupedByOrder := make(map[string][]entity.KhanzaLisOrder)
+	for _, order := range orders {
+		groupedByOrder[order.ONO] = append(groupedByOrder[order.ONO], order)
+	}
+
+	for _, group := range groupedByOrder {
+		firstOrder := group[0]
+
+		patient := groupedPatientBySIMRS[firstOrder.PID]
+		if patient.ID == 0 {
+			return fmt.Errorf("patient not found with PID: %s", firstOrder.PID)
+		}
+
+		lisOrders, err := u.repo.GetLabRequestByNoOrder(ctx, firstOrder.ONO)
+		if err != nil {
+			return fmt.Errorf("error getting tests by ONO: %w", err)
+		}
+
+		var tests []entity.WorkOrderCreateRequestTestType
+		for _, lisOrder := range lisOrders {
+			testType, err := u.testTypeRepo.FindOneByAliasCode(ctx, lisOrder.Pemeriksaan)
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					log.Warnf("test type not found with alias code: %s", lisOrder.Pemeriksaan)
+					continue
+				}
+
+				log.Warnf("error getting test type by alias code: %s", lisOrder.Pemeriksaan)
+				continue
+			}
+
+			tests = append(tests, entity.WorkOrderCreateRequestTestType{
+				TestTypeID:   int64(testType.ID),
+				TestTypeCode: testType.Code,
+				SpecimenType: testType.GetFirstType(),
+			})
+		}
+
+		barcode, err := u.barcodeUC.NextOrderBarcode(context.Background())
+		if err != nil {
+			return fmt.Errorf("failed to u.barcodeGeneratorUC.NextOrderBarcode %w", err)
+		}
+
+		createReq := entity.WorkOrderCreateRequest{
+			PatientID:    patient.ID,
+			Barcode:      barcode,
+			BarcodeSIMRS: firstOrder.VisitNo,
+			TestTypes:    tests,
+			CreatedBy:    -1,
+		}
+
+		existingWorkOrder, err := u.workOrderRepository.GetBySIMRSBarcode(ctx, firstOrder.VisitNo)
+		if err != nil {
+			if errors.Is(err, entity.ErrNotFound) {
+				_, err = u.workOrderRepository.Create(&createReq)
+				if err != nil {
+					return fmt.Errorf("error creating work order: %w", err)
+				}
+				continue
+			}
+
+			return fmt.Errorf("error checking work order by barcode: %w", err)
+		}
+
+		if existingWorkOrder.Status != entity.WorkOrderStatusNew {
+			continue
+		}
+
+		_, err = u.workOrderRepository.Edit(int(existingWorkOrder.ID), &createReq)
+		if err != nil {
+			return fmt.Errorf("error updating work order: %w", err)
+		}
+	}
+
+	return nil
 }

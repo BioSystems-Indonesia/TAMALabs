@@ -31,8 +31,8 @@ type WorkOrderCreateRequest struct {
 	AnalyzerIDs     []int64                          `json:"analyzer_ids" gorm:"-"`
 	TestTemplateIDs []int64                          `json:"test_template_ids" gorm:"-"`
 
-	Barcode      string `json:"barcode"`
-	BarcodeSIMRS string `json:"barcode_simrs"`
+	Barcode      string `json:"barcode" gorm:"column:barcode;index:work_order_barcode,unique"`
+	BarcodeSIMRS string `json:"barcode_simrs" gorm:"column:barcode_simrs;index:work_order_barcode_simrs"`
 }
 
 type WorkOrderCreateRequestTestType struct {

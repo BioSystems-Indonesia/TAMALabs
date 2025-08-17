@@ -163,7 +163,6 @@ func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder, hideEmpty bool) 
 	allTests := make([]entity.TestResult, len(allObservationRequests))
 	// create the placeholder first
 	for i, request := range allObservationRequests {
-		slog.Info("request", "request", request)
 		allTests[i] = entity.TestResult{}.CreateEmpty(request)
 	}
 
