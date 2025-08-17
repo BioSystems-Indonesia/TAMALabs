@@ -103,6 +103,7 @@ func (r TestResult) FromObservationResult(observation ObservationResult) TestRes
 		ReferenceRange: fmt.Sprintf("%.2f - %.2f", observation.TestType.LowRefRange, observation.TestType.HighRefRange),
 		CreatedAt:      observation.UpdatedAt.Format(time.RFC3339),
 		Picked:         observation.Picked,
+		TestType:       observation.TestType,
 
 		// Result, Abnormal will be filled below
 		Result:   nil,
@@ -178,6 +179,7 @@ func (r TestResult) FillHistory(history []ObservationResult) TestResult {
 			ReferenceRange: fmt.Sprintf("%.2f - %.2f", h.TestType.LowRefRange, h.TestType.HighRefRange),
 			CreatedAt:      h.CreatedAt.Format(time.RFC3339),
 			Picked:         h.Picked,
+			TestType:       h.TestType,
 		}
 	}
 

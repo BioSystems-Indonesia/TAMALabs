@@ -173,7 +173,7 @@ func (k *Repository) GetAllLisOrders() ([]entity.KhanzaLisOrder, error) {
 		VISITNO,
 		ORDER_TESTID,
 		FLAG
-	FROM lis_order`
+	FROM lis_order ORDER BY ID DESC`
 
 	conn := k.db.GetConnection()
 	rows, err := conn.Query(query)

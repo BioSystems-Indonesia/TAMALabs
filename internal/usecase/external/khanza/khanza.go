@@ -85,6 +85,7 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 
 	var reqs []entity.KhanzaResDT
 	for _, testResult := range tests {
+		slog.Info("testResult", "testResult", testResult)
 		barcode := workOrder.BarcodeSIMRS
 		if barcode == "" {
 			barcode = workOrder.Barcode
@@ -149,7 +150,7 @@ func (u *Usecase) SyncAllRequest(ctx context.Context) error {
 			},
 			FirstName: firstName,
 			LastName:  lastName,
-			Birthdate: time.Time{},
+			Birthdate: firstOrder.BirthDT,
 			Sex:       entity.NewPatientSexFromKhanza(entity.KhanzaPatientSex(firstOrder.Sex)),
 			Address:   address,
 		}
