@@ -222,6 +222,7 @@ func (r WorkOrderRepository) Create(req *entity.WorkOrderCreateRequest) (entity.
 			VerifiedStatus:  verifiedStatus,
 			PatientID:       req.PatientID,
 			Barcode:         req.Barcode,
+			BarcodeSIMRS:    req.BarcodeSIMRS,
 			AnalyzerIDs:     req.AnalyzerIDs,
 			DoctorIDs:       req.DoctorIDs,
 			TestTemplateIDs: req.TestTemplateIDs,
@@ -277,6 +278,8 @@ func (r WorkOrderRepository) Edit(id int, req *entity.WorkOrderCreateRequest) (e
 			workOrder.VerifiedStatus = string(entity.WorkOrderVerifiedStatusPending)
 		}
 		workOrder.PatientID = req.PatientID
+		workOrder.Barcode = req.Barcode
+		workOrder.BarcodeSIMRS = req.BarcodeSIMRS
 		workOrder.LastUpdatedBy = req.CreatedBy
 		workOrder.FillData()
 

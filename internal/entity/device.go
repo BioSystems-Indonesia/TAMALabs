@@ -16,8 +16,10 @@ func (d DeviceType) String() string {
 
 var TableDeviceType = Tables{
 	{ID: string(DeviceTypeA15), Name: string(DeviceTypeA15), AdditionalInfo: DeviceCapability{
+		HavePath:   true,
 		CanReceive: true,
-		CanSend:    false,
+		CanSend:    true,
+		HaveAuth:   true,
 	}},
 	{ID: string(DeviceTypeSwelabAlfa), Name: string(DeviceTypeSwelabAlfa), AdditionalInfo: DeviceCapability{
 		CanReceive: true,

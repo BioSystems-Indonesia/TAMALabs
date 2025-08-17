@@ -173,6 +173,7 @@ var seedDevice = []entity.Device{
 		Name:        "A15",
 		Type:        entity.DeviceTypeA15,
 		ReceivePort: "10512",
+		Path:        "C:\\Users\\Public\\Documents\\A15\\Import",
 	},
 	{
 		ID:          2,

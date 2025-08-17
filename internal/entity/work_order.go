@@ -31,7 +31,8 @@ type WorkOrderCreateRequest struct {
 	AnalyzerIDs     []int64                          `json:"analyzer_ids" gorm:"-"`
 	TestTemplateIDs []int64                          `json:"test_template_ids" gorm:"-"`
 
-	Barcode string `json:"barcode"`
+	Barcode      string `json:"barcode"`
+	BarcodeSIMRS string `json:"barcode_simrs"`
 }
 
 type WorkOrderCreateRequestTestType struct {
@@ -47,6 +48,7 @@ type WorkOrder struct {
 	DeviceIDDeprecated int64           `json:"device_id" gorm:"column:device_id;type:not null;default:0"`
 	//nolint:lll // tag cannot be shorter
 	Barcode        string    `json:"barcode" gorm:"column:barcode;type:varchar(255);default:'';index:work_order_barcode,unique"`
+	BarcodeSIMRS   string    `json:"barcode_simrs" gorm:"column:barcode_simrs;type:varchar(255);default:''"`
 	VerifiedStatus string    `json:"verified_status" gorm:"column:verified_status;type:varchar(255);default:''"`
 	CreatedBy      int64     `json:"created_by" gorm:"column:created_by;type:bigint;default:0"`
 	LastUpdatedBy  int64     `json:"last_updated_by" gorm:"column:last_updated_by;type:bigint;default:0"`

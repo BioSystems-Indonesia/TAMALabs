@@ -452,6 +452,9 @@ export const WorkOrderList = () => {
                 <ReferenceField source="patient_id" reference="patient">
                 </ReferenceField>
                 <TextField source="barcode" />
+                <WithRecord label="Barcode SIMRS" render={(record: any) => (
+                    <Typography variant="body2">{record.barcode_simrs || '-'}</Typography>
+                )} />
                 <WithRecord label="Request" render={(record: any) => (
                     <Typography variant="body2" >
                         {getRequestLength(record)}
