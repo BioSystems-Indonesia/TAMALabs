@@ -718,6 +718,16 @@ func (r WorkOrderRepository) GetBarcodeSequence(ctx context.Context) int64 {
 }
 
 func (r WorkOrderRepository) IncrementBarcodeSequence(ctx context.Context) error {
+	_, _, found := r.cache.GetWithExpiration(constant.KeyWorkOrderBarcodeSequence)
+	if !found {
+		err := r.SyncBarcodeSequence(ctx)
+		if err != nil {
+			return fmt.Errorf("error syncing barcode sequence: %w", err)
+		}
+
+		return nil
+	}
+
 	err := r.cache.Increment(constant.KeyWorkOrderBarcodeSequence, int64(1))
 	if err != nil {
 		return err
@@ -736,7 +746,7 @@ func (r WorkOrderRepository) SyncBarcodeSequence(ctx context.Context) error {
 		Where("created_at >= ? and created_at < ?", currentDayMidnight, tomorrowMidnight).
 		Count(&count).Error
 	if err != nil {
-		return err
+		return fmt.Errorf("error counting workOrder: %w", err)
 	}
 
 	expire := tomorrowMidnight.Sub(now)
