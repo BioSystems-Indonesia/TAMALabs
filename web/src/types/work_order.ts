@@ -13,6 +13,7 @@ export type WorkOrder = {
   device_id: number;
   verified_status: VerifiedStatus;
   barcode: string;
+  barcode_simrs: string;
   devices: Device[] | null;
   created_at: string;
   updated_at: string;

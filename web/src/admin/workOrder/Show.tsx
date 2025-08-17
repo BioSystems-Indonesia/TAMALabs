@@ -251,6 +251,8 @@ export function WorkOrderShow() {
                 </TabbedShowLayout.Tab>
                 <TabbedShowLayout.Tab label="Detail">
                     <TextField source="id" />
+                    <TextField source="barcode" label="Barcode" />
+                    <TextField source="barcode_simrs" label="Barcode SIMRS" />
                     <DateField source="created_at" showTime />
                     <DateField source="updated_at" showTime />
                     <ReferenceField source="created_by" reference='user' />

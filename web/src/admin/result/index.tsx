@@ -81,6 +81,12 @@ export const ResultDataGrid = (props: any) => {
     return (
         <Datagrid bulkActionButtons={false} >
             <NumberField source="id" />
+            <WithRecord label="Barcode" render={(record: WorkOrder) => (
+                <Typography variant="body2">{record.barcode}</Typography>
+            )} />
+            <WithRecord label="Barcode SIMRS" render={(record: WorkOrder) => (
+                <Typography variant="body2">{record.barcode_simrs || '-'}</Typography>
+            )} />
             <WithRecord label="Patient" render={(record: any) => (
                 <Link to={`/patient/${record.patient.id}/show`} resource="patient" label={"Patient"}
                     onClick={e => e.stopPropagation()}>
@@ -144,17 +150,17 @@ export const ResultDataGrid = (props: any) => {
 function ResultSideFilter() {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
-    
+
     return (
         <SideFilter sx={{
-            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
+            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
         }}>
             <FilterLiveForm debounce={1500}>
                 <Stack spacing={0}>
                     <Box>
-                        <Typography variant="h6" sx={{ 
-                            color: theme.palette.text.primary, 
-                            marginBottom: 2, 
+                        <Typography variant="h6" sx={{
+                            color: theme.palette.text.primary,
+                            marginBottom: 2,
                             fontWeight: 600,
                             fontSize: '1.1rem',
                             textAlign: 'center'
@@ -162,10 +168,10 @@ function ResultSideFilter() {
                             🔬 Filter Lab Results
                         </Typography>
                     </Box>
-                    <ReferenceInput 
-                        source={"patient_ids"} 
-                        reference="patient" 
-                        label={"Patient"} 
+                    <ReferenceInput
+                        source={"patient_ids"}
+                        reference="patient"
+                        label={"Patient"}
                         alwaysOn
                         sx={{
                             '& .MuiInputLabel-root': {
@@ -175,8 +181,8 @@ function ResultSideFilter() {
                             }
                         }}
                     >
-                        <AutocompleteArrayInput 
-                            size="small" 
+                        <AutocompleteArrayInput
+                            size="small"
                             sx={{
                                 '& .MuiOutlinedInput-root': {
                                     backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
@@ -184,16 +190,16 @@ function ResultSideFilter() {
                                     transition: 'all 0.3s ease',
                                     '&:hover': {
                                         backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
-                                       
+
                                     },
-                                  
+
                                 }
                             }}
                         />
                     </ReferenceInput>
                     <Box>
-                        <Typography variant="body2" sx={{ 
-                            color: theme.palette.text.secondary, 
+                        <Typography variant="body2" sx={{
+                            color: theme.palette.text.secondary,
                             marginBottom: 1.5,
                             fontSize: '0.85rem',
                             fontWeight: 500
@@ -201,12 +207,12 @@ function ResultSideFilter() {
                             📅 Date Range
                         </Typography>
                         <Stack>
-                            <CustomDateInput 
-                                label={"Start Date"} 
-                                source="created_at_start" 
-                                disableFuture 
-                                alwaysOn 
-                                size="small" 
+                            <CustomDateInput
+                                label={"Start Date"}
+                                source="created_at_start"
+                                disableFuture
+                                alwaysOn
+                                size="small"
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
@@ -216,8 +222,8 @@ function ResultSideFilter() {
                                         '&:hover': {
                                             backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
                                             borderColor: isDarkMode ? theme.palette.primary.main : '#9ca3af',
-                                            boxShadow: isDarkMode 
-                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)' 
+                                            boxShadow: isDarkMode
+                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)'
                                                 : '0 4px 12px rgba(0, 0, 0, 0.1)',
                                         },
                                         '&.Mui-focused': {
@@ -231,14 +237,14 @@ function ResultSideFilter() {
                                         fontWeight: 500,
                                         fontSize: '0.85rem',
                                     }
-                                }} 
+                                }}
                             />
-                            <CustomDateInput 
-                                label={"End Date"} 
-                                source="created_at_end" 
-                                disableFuture 
-                                alwaysOn 
-                                size="small" 
+                            <CustomDateInput
+                                label={"End Date"}
+                                source="created_at_end"
+                                disableFuture
+                                alwaysOn
+                                size="small"
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
@@ -248,8 +254,8 @@ function ResultSideFilter() {
                                         '&:hover': {
                                             backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
                                             borderColor: isDarkMode ? theme.palette.primary.main : '#9ca3af',
-                                            boxShadow: isDarkMode 
-                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)' 
+                                            boxShadow: isDarkMode
+                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)'
                                                 : '0 4px 12px rgba(0, 0, 0, 0.1)',
                                         },
                                         '&.Mui-focused': {
@@ -263,7 +269,7 @@ function ResultSideFilter() {
                                         fontWeight: 500,
                                         fontSize: '0.85rem',
                                     }
-                                }} 
+                                }}
                             />
                         </Stack>
                     </Box>
