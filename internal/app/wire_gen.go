@@ -127,7 +127,7 @@ func InitRestApp() server.RestServer {
 	roleUsecase := role_uc.NewRoleUsecase(roleRepository)
 	roleHandler := rest.NewRoleHandler(schema, roleUsecase)
 	khanzaRepository := provideKhanzaRepository(schema)
-	khanzaucUsecase := khanzauc.NewUsecase(khanzaRepository, workOrderRepository, resultUsecase)
+	khanzaucUsecase := khanzauc.NewUsecase(khanzaRepository, workOrderRepository, patientRepository, resultUsecase)
 	externalucUsecase := externaluc.NewUsecase(khanzaucUsecase, schema)
 	externalHandler := rest.NewExternalHandler(externalucUsecase)
 	jwtMiddleware := middleware.NewJWTMiddleware(schema)

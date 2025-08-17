@@ -24,6 +24,7 @@ func NewExternalHandler(usecase *externaluc.Usecase) *ExternalHandler {
 func (h *ExternalHandler) RegisterRoutes(router *echo.Group) {
 	external := router.Group("/external")
 	external.POST("/sync-all-results", h.SyncAllResults)
+	external.POST("/sync-all-requests", h.SyncAllRequests)
 }
 
 // SyncAllResults syncs all completed work order results to external system
@@ -39,4 +40,18 @@ func (h *ExternalHandler) SyncAllResults(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "All results synced successfully"})
+}
+
+func (h *ExternalHandler) SyncAllRequests(c echo.Context) error {
+	var req entity.ExternalSyncAllResultsRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return handleError(c, err)
+	}
+
+	err := h.usecase.SyncAllRequest(c.Request().Context())
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "All requests synced successfully"})
 }

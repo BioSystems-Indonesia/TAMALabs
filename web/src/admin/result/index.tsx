@@ -69,7 +69,7 @@ function ResultActions() {
             }}>
                 <RefreshIcon />
             </Button>
-            <Button label={"Sync All Result"} onClick={async () => {
+            <Button label={"Sync Result to SIMRS"} onClick={async () => {
                 const response = await axios.post("/external/sync-all-results", {})
 
                 notify("Sync Success " + response.statusText, {

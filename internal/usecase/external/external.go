@@ -21,6 +21,18 @@ func NewUsecase(khanzauUC *khanzauc.Usecase, cfg *config.Schema) *Usecase {
 	}
 }
 
+func (u *Usecase) SyncAllRequest(ctx context.Context) error {
+	var errs []error
+	if u.cfg.KhanzaIntegrationEnabled == "true" {
+		err := u.khanzauUC.SyncAllRequest(ctx)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("error syncing all requests khanza: %w", err))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
 func (u *Usecase) SyncAllResult(ctx context.Context, orderIDs []int64) error {
 	var errs []error
 	if u.cfg.KhanzaIntegrationEnabled == "true" {

@@ -55,26 +55,33 @@ type KhanzaResDT struct {
 
 // KhanzaLisOrder represents the lis_order table entity
 type KhanzaLisOrder struct {
-	ID           int64      `json:"id" db:"ID"`
-	MessageDT    *time.Time `json:"message_dt" db:"MESSAGE_DT"`
-	OrderControl *string    `json:"order_control" db:"ORDER_CONTROL"` // enum('NW','RP','CA')
-	PID          *string    `json:"pid" db:"PID"`
-	PName        *string    `json:"pname" db:"PNAME"`
-	Address1     *string    `json:"address1" db:"ADDRESS1"`
-	Address2     *string    `json:"address2" db:"ADDRESS2"`
-	Address3     *string    `json:"address3" db:"ADDRESS3"`
-	Address4     *string    `json:"address4" db:"ADDRESS4"`
-	PType        *string    `json:"ptype" db:"PTYPE"` // enum('IN','OP')
-	BirthDT      *time.Time `json:"birth_dt" db:"BIRTH_DT"`
-	Sex          *string    `json:"sex" db:"SEX"` // enum('1','2')
-	ONO          *string    `json:"ono" db:"ONO"`
-	RequestDT    *time.Time `json:"request_dt" db:"REQUEST_DT"`
-	Source       *string    `json:"source" db:"SOURCE"`
-	Clinician    *string    `json:"clinician" db:"CLINICIAN"`
-	RoomNo       *string    `json:"room_no" db:"ROOM_NO"`
-	Priority     *string    `json:"priority" db:"PRIORITY"` // enum('R','U')
-	Comment      *string    `json:"comment" db:"COMMENT"`
-	VisitNo      *string    `json:"visitno" db:"VISITNO"`
-	OrderTestID  *string    `json:"order_testid" db:"ORDER_TESTID"`
-	Flag         *string    `json:"flag" db:"FLAG"` // enum('0','1')
+	ID           int64     `json:"id" db:"ID"`
+	MessageDT    time.Time `json:"message_dt" db:"MESSAGE_DT"`
+	OrderControl string    `json:"order_control" db:"ORDER_CONTROL"` // enum('NW','RP','CA')
+	PID          string    `json:"pid" db:"PID"`
+	PName        string    `json:"pname" db:"PNAME"`
+	Address1     string    `json:"address1" db:"ADDRESS1"`
+	Address2     string    `json:"address2" db:"ADDRESS2"`
+	Address3     string    `json:"address3" db:"ADDRESS3"`
+	Address4     string    `json:"address4" db:"ADDRESS4"`
+	PType        string    `json:"ptype" db:"PTYPE"` // enum('IN','OP')
+	BirthDT      time.Time `json:"birth_dt" db:"BIRTH_DT"`
+	Sex          string    `json:"sex" db:"SEX"` // enum('1','2')
+	ONO          string    `json:"ono" db:"ONO"`
+	RequestDT    time.Time `json:"request_dt" db:"REQUEST_DT"`
+	Source       string    `json:"source" db:"SOURCE"`
+	Clinician    string    `json:"clinician" db:"CLINICIAN"`
+	RoomNo       string    `json:"room_no" db:"ROOM_NO"`
+	Priority     string    `json:"priority" db:"PRIORITY"` // enum('R','U')
+	Comment      string    `json:"comment" db:"COMMENT"`
+	VisitNo      string    `json:"visitno" db:"VISITNO"`
+	OrderTestID  string    `json:"order_testid" db:"ORDER_TESTID"`
+	Flag         string    `json:"flag" db:"FLAG"` // enum('0','1')
 }
+
+type KhanzaPatientSex string
+
+const (
+	KhanzaPatientSexMale   KhanzaPatientSex = "1"
+	KhanzaPatientSexFemale KhanzaPatientSex = "2"
+)

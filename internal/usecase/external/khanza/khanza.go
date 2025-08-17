@@ -2,20 +2,25 @@ package khanzauc
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/external/khanza"
+	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
 	workOrderRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
+	"github.com/oibacidem/lims-hl-seven/internal/util"
 )
 
 type Usecase struct {
 	repo                *khanza.Repository
+	patientRepository   *patientrepo.PatientRepository
 	workOrderRepository *workOrderRepo.WorkOrderRepository
 	resultUC            *result.Usecase
 }
@@ -23,10 +28,12 @@ type Usecase struct {
 func NewUsecase(
 	repo *khanza.Repository,
 	workOrderRepository *workOrderRepo.WorkOrderRepository,
+	patientRepository *patientrepo.PatientRepository,
 	resultUC *result.Usecase,
 ) *Usecase {
 	return &Usecase{
 		repo:                repo,
+		patientRepository:   patientRepository,
 		workOrderRepository: workOrderRepository,
 		resultUC:            resultUC,
 	}
@@ -107,4 +114,47 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 	}
 
 	return nil
+}
+
+func (u *Usecase) SyncAllRequest(ctx context.Context) error {
+	orders, err := u.repo.GetAllLisOrders()
+	if err != nil {
+		return err
+	}
+
+	// Insert patient PID
+	groupedByPID := make(map[string][]entity.KhanzaLisOrder)
+	for _, order := range orders {
+		groupedByPID[order.PID] = append(groupedByPID[order.PID], order)
+	}
+
+	slog.InfoContext(ctx, "grouped by PID", "count", len(groupedByPID))
+
+	var patients []entity.Patient
+	for _, group := range groupedByPID {
+		firstOrder := group[0]
+		firstName, lastName := util.SplitName(firstOrder.PName)
+		addresses := []string{
+			firstOrder.Address1,
+			firstOrder.Address2,
+			firstOrder.Address3,
+			firstOrder.Address4,
+		}
+		address := strings.Join(addresses, ",")
+
+		patient := entity.Patient{
+			SIMRSPID: sql.NullString{
+				String: firstOrder.PID,
+				Valid:  true,
+			},
+			FirstName: firstName,
+			LastName:  lastName,
+			Birthdate: time.Time{},
+			Sex:       entity.NewPatientSexFromKhanza(entity.KhanzaPatientSex(firstOrder.Sex)),
+			Address:   address,
+		}
+		patients = append(patients, patient)
+	}
+
+	return u.patientRepository.CreateManyFromSIMRS(patients)
 }
