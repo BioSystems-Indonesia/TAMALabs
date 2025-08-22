@@ -3,7 +3,7 @@ import WifiOffIcon from '@mui/icons-material/WifiOff';
 import { IconButton, Tooltip } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import useAxios from '../hooks/useAxios';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 
 const AppIndicator = () => {
     var [state, setState] = useState("loading");
@@ -46,12 +46,12 @@ const AppIndicator = () => {
         return "server: " + detailState.rest ;
     }
 
-    const navigate = useNavigate()
+    // const navigate = useNavigate()
 
     return (
         <Tooltip title={tooltipTitle()}>
             <IconButton color="inherit" onClick={() => {
-                navigate("/device")
+                // navigate("/device")
             }}>
                 {icon()}
             </IconButton>

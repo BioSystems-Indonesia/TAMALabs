@@ -195,7 +195,7 @@ func (r AdminRepository) FindOneByEmail(ctx context.Context, email string) (enti
 
 func (r AdminRepository) FindOneByUsername(ctx context.Context, username string) (entity.Admin, error) {
 	var admin entity.Admin
-	err := r.db.Where("username = ?", username).First(&admin).Error
+	err := r.db.Where("username = ?", username).Preload("Roles").First(&admin).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return entity.Admin{}, entity.ErrNotFound
 	}

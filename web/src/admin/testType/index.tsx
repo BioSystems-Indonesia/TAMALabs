@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrayInput, AutocompleteInput, BooleanField, BooleanInput, Create, Datagrid, Edit, FunctionField, List, NumberInput, SimpleForm, SimpleFormIterator, TextField, TextInput, required } from "react-admin";
+import { ArrayInput, AutocompleteInput, BooleanField, BooleanInput, Create, Datagrid, Edit, FunctionField, List, NumberInput, Show, SimpleForm, SimpleFormIterator, TextField, TextInput, required } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
 import FeatureList from "../../component/FeatureList";
@@ -23,16 +23,32 @@ export const TestTypeDatagrid = (props: any) => {
             <TextField source="high_ref_range" label="high" />
             <BooleanField source="is_calculated_test" label="Calc Test" sortable />
             <TextField source="unit" />
-            <FunctionField 
-                label="Types" 
-                render={(record: TestType) => 
-                    record.types && record.types.length > 0 
+            <FunctionField
+                label="Types"
+                render={(record: TestType) =>
+                    record.types && record.types.length > 0
                         ? record.types.map(t => t.type).join(", ")
                         : "-"
-                } 
+                }
             />
             <TextField source="decimal" />
         </Datagrid>
+    )
+}
+
+export function TestTypeShow() {
+    const theme = useTheme();
+
+    return (
+        <Box sx={{
+            minHeight: '100vh',
+            bgcolor: theme.palette.background.default,
+            pb: 4
+        }}>
+            <Show resource="test-type">
+                <TestTypeForm readonly mode={"SHOW"} />
+            </Show>
+        </Box>
     )
 }
 
@@ -100,7 +116,7 @@ function TestTypeInput(props: TestTypeFormProps) {
     useEffect(() => {
         if (units && Array.isArray(units)) {
             const unitValues = units.map(unit => unit.value);
-            const uniqueUnits = [...new Set(unitValues)]; 
+            const uniqueUnits = [...new Set(unitValues)];
             setUnit(uniqueUnits);
         }
     }, [units, isUnitLoading]);
@@ -213,9 +229,9 @@ function TestTypeInput(props: TestTypeFormProps) {
                 />
             </Box>
             <Box sx={{ gridColumn: 'span 4' }}>
-                <BooleanInput 
-                    source="is_calculated_test" 
-                    label="Calc Test" 
+                <BooleanInput
+                    source="is_calculated_test"
+                    label="Calc Test"
                     disabled={props.readonly}
                 />
             </Box>
@@ -234,9 +250,22 @@ function TestTypeInput(props: TestTypeFormProps) {
 
 function TestTypeForm(props: TestTypeFormProps) {
     return (
-        <SimpleForm>
-            <TestTypeInput {...props} />
-        </SimpleForm>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
+            <SimpleForm
+                disabled={props.readonly}
+                toolbar={props.readonly === true ? false : undefined}
+                warnWhenUnsavedChanges
+                sx={{
+                    '& .RaSimpleForm-form': {
+                        backgroundColor: 'transparent',
+                        boxShadow: 'none',
+                        padding: 0
+                    }
+                }}
+            >
+                <TestTypeInput {...props} />
+            </SimpleForm>
+        </Box>
     )
 }
 

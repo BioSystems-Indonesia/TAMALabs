@@ -21,7 +21,7 @@ export type WorkOrder = {
 
   patient: Patient;
   doctors: User[];
-  analyzers: User[];
+  analyst: User[];
   specimen_list: Specimen[];
 
   test_result: TestResult[];

@@ -67,6 +67,7 @@ type AdminClaims struct {
 	Fullname  string `json:"fullname"`
 	Email     string `json:"email"`
 	IsActive  bool   `json:"is_active"`
+	Role      string `json:"role"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 	jwt.RegisteredClaims
