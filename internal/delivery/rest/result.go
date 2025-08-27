@@ -2,10 +2,13 @@ package rest
 
 import (
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
+	"sync"
 
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
+	"github.com/oibacidem/lims-hl-seven/pkg/panics"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
@@ -99,10 +102,26 @@ func (h *ResultHandler) TooglePickTestResult(c echo.Context) error {
 }
 
 func (h Handler) RefreshResult(c echo.Context) error {
-	err := h.analyzerUsecase.ProcessA15(c.Request().Context())
-	if err != nil {
-		return handleError(c, err)
-	}
+	ctx := c.Request().Context()
+	wg := &sync.WaitGroup{}
+
+	wg.Add(1)
+	go panics.CapturePanic(ctx, func() {
+		err := h.analyzerUsecase.ProcessA15(ctx)
+		if err != nil {
+			slog.Warn("error processing a15", "error", err)
+		}
+	})
+
+	wg.Add(1)
+	go panics.CapturePanic(ctx, func() {
+		err := h.analyzerUsecase.ProcessBTS(ctx)
+		if err != nil {
+			slog.Warn("error processing bts", "error", err)
+		}
+	})
+
+	wg.Wait()
 
 	return c.NoContent(http.StatusOK)
 }

@@ -1,70 +1,109 @@
-package main
+package analyzer
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
-type Response struct {
-	Message string `json:"message"`
+func (u *Usecase) ProcessBTS(ctx context.Context) error {
+	devicesFind, err := u.DeviceRepository.FindAll(ctx, &entity.GetManyRequestDevice{
+		Type: []entity.DeviceType{entity.DeviceTypeBTS},
+	})
+	if err != nil {
+		return fmt.Errorf("error getting devices: %w", err)
+	}
+
+	errors := make([]error, 0)
+	results := make([]entity.ObservationResult, 0)
+	for _, device := range devicesFind.Data {
+		data, err := u.getBTSData(device)
+		if err != nil {
+			return err
+		}
+
+		specimenCache := make(map[string]entity.Specimen)
+		for _, record := range data {
+			specimen, err := u.getSpecimenWithCache(ctx, specimenCache, record.ID)
+			if err != nil {
+				errors = append(errors, fmt.Errorf("error getting specimen: %v, barcode: %s", err, record.ID))
+				continue
+			}
+
+			date, _ := time.Parse("2006-01-02 15:04:05", fmt.Sprintf("%s %s", record.Date, record.Time))
+			results = append(results, entity.ObservationResult{
+				SpecimenID:  int64(specimen.ID),
+				TestCode:    record.Analyte,
+				Description: record.Analyte,
+				Values: entity.JSONStringArray{
+					fmt.Sprintf("%.2f", record.Result),
+				},
+				Type:           record.Analyte,
+				Unit:           record.Units,
+				ReferenceRange: record.LowerRange + " - " + record.UpperRange,
+				Date:           date,
+				AbnormalFlag: entity.JSONStringArray{
+					record.Status,
+				},
+				Comments: record.Status,
+			})
+		}
+	}
+
+	if len(errors) > 0 {
+		slog.Error("error getting specimen", "errors", errors)
+	}
+
+	return nil
 }
 
-type MeasurementData struct {
-	MeasureType  string  `json:"measureType"`
-	ID           string  `json:"id"`
-	Analyte      string  `json:"analyte"`
-	Result       float64 `json:"result"`
-	Units        string  `json:"units"`
-	Absorbance   float64 `json:"absorbance"`
-	Date         string  `json:"date"`
-	Time         string  `json:"time"`
-	Status       string  `json:"status,omitempty"`
-	LowerRange   string  `json:"lowerRange,omitempty"`
-	UpperRange   string  `json:"upperRange,omitempty"`
+func (u *Usecase) getSpecimenWithCache(ctx context.Context, specimenCache map[string]entity.Specimen, barcode string) (entity.Specimen, error) {
+	if _, ok := specimenCache[barcode]; ok {
+		return specimenCache[barcode], nil
+	}
+
+	specimen, err := u.SpecimenRepository.FindByBarcode(ctx, barcode)
+	if err != nil {
+		return entity.Specimen{}, fmt.Errorf("specimen not found")
+	}
+	specimenCache[barcode] = specimen
+
+	return specimen, nil
 }
 
-func main() {
-	baseURL := "http://192.168.1.52:8080"
+func (u *Usecase) getBTSData(d entity.Device) ([]entity.BTSMeasurementData, error) {
+	baseURL := fmt.Sprintf("http://%s:%s", d.IPAddress, d.ReceivePort)
 	commandsURL := baseURL + "/commands"
 
-	// JSON payload
 	payload := `{"command":{"type":"ExportDataDownloading","payload":{"operationId":"14bc1e38-68d7-4087-9e68-5f0818c46087","filters":{"readingType":["Blank","Calibration","QualityControl","Sample","AbsorbanceSample"],"sampleId":null,"techniqueId":null,"startDate":"2025-07-01T00:00:00.000+07:00","endDate":"2025-08-06T23:59:59.999+07:00","timePeriod":"RANGE"},"exportOptions":{"fileName":"file0001.csv","format":"CSV","target":"Download","deleteAfterDump":false}}}}`
 
-	// Parse the payload to get the filename
 	var payloadMap map[string]interface{}
 	if err := json.Unmarshal([]byte(payload), &payloadMap); err != nil {
-		fmt.Printf("Error parsing payload: %v\n", err)
-		return
+		return nil, fmt.Errorf("error parsing payload: %v", err)
 	}
 
 	command := payloadMap["command"].(map[string]interface{})
 	exportOptions := command["payload"].(map[string]interface{})["exportOptions"].(map[string]interface{})
 	fileName := exportOptions["fileName"].(string)
 
-	// Create output directory if it doesn't exist
-	outputDir := "output"
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		fmt.Printf("Error creating output directory: %v\n", err)
-		return
-	}
-
-	// Create a new request
 	req, err := http.NewRequest("POST", commandsURL, bytes.NewBuffer([]byte(payload)))
 	if err != nil {
-		fmt.Printf("Error creating request: %v\n", err)
-		return
+		return nil, fmt.Errorf("error creating request: %v", err)
 	}
 
-	// Set headers
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
 	req.Header.Set("Connection", "keep-alive")
@@ -73,66 +112,46 @@ func main() {
 	req.Header.Set("Referer", baseURL+"/")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0")
 
-	// Create a custom HTTP client that skips TLS verification
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
 
-	// Send the initial request
-	fmt.Println("Sending export request...")
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("Error sending request: %v\n", err)
-		return
+		return nil, fmt.Errorf("error sending request: %v", err)
 	}
 	defer resp.Body.Close()
 
-	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("Error reading response: %v\n", err)
-		return
+		return nil, fmt.Errorf("error reading response: %v", err)
 	}
 
-	// Check if the response is successful
 	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("Request failed with status: %s\nResponse: %s\n", resp.Status, string(body))
-		return
+		return nil, fmt.Errorf("request failed with status: %s\nResponse: %s\n", resp.Status, string(body))
 	}
 
-	// Parse the response
-	var response Response
+	var response entity.BTSResponse
 	if err := json.Unmarshal(body, &response); err != nil {
-		fmt.Printf("Error parsing response: %v\n", err)
-		return
+		return nil, fmt.Errorf("error parsing response: %v", err)
 	}
 
-	// Construct the file download URL
 	fileURL := fmt.Sprintf("%s/files/%s", baseURL, fileName)
+	outputDir := os.TempDir()
 	outputPath := filepath.Join(outputDir, fileName)
 
-	// Download and parse the file
-	fmt.Printf("Downloading file from %s...\n", fileURL)
 	data, err := downloadAndParseFile(fileURL, outputPath, client)
 	if err != nil {
-		fmt.Printf("Error downloading and parsing file: %v\n", err)
-		return
+		return nil, fmt.Errorf("error downloading and parsing file: %v", err)
 	}
 
-	fmt.Printf("File successfully downloaded to: %s\n", outputPath)
-	fmt.Printf("Parsed %d records\n", len(data))
+	slog.Info("Received data from BTS", "data", data)
 
-	// Print first few records as example
-	for i, record := range data {
-		if i >= 3 { // Show only first 3 records
-			break
-		}
-		fmt.Printf("Record %d: %+v\n", i+1, record)
-	}
+	return data, nil
 }
 
-func downloadAndParseFile(url, outputPath string, client *http.Client) ([]MeasurementData, error) {
+func downloadAndParseFile(url, outputPath string, client *http.Client) ([]entity.BTSMeasurementData, error) {
 	// Get the file data
 	resp, err := client.Get(url)
 	if err != nil {
@@ -171,9 +190,9 @@ func downloadAndParseFile(url, outputPath string, client *http.Client) ([]Measur
 	return data, nil
 }
 
-func parseCSVData(csvContent string) ([]MeasurementData, error) {
+func parseCSVData(csvContent string) ([]entity.BTSMeasurementData, error) {
 	reader := csv.NewReader(strings.NewReader(csvContent))
-	reader.Comma = '\t' // Set delimiter to tab
+	reader.Comma = '\t'         // Set delimiter to tab
 	reader.FieldsPerRecord = -1 // Allow variable number of fields
 
 	records, err := reader.ReadAll()
@@ -186,7 +205,7 @@ func parseCSVData(csvContent string) ([]MeasurementData, error) {
 	}
 
 	// Skip header row
-	var data []MeasurementData
+	var data []entity.BTSMeasurementData
 	for i, record := range records[1:] {
 		if len(record) < 8 {
 			fmt.Printf("Warning: Row %d has insufficient columns, skipping\n", i+2)
@@ -207,7 +226,7 @@ func parseCSVData(csvContent string) ([]MeasurementData, error) {
 			continue
 		}
 
-		measurement := MeasurementData{
+		measurement := entity.BTSMeasurementData{
 			MeasureType: record[0],
 			ID:          record[1],
 			Analyte:     record[2],

@@ -18,6 +18,7 @@ const (
 	DeviceTypeBiomedicaNCC3300 DeviceType = "BIOMEDICA_NCC_3300"
 	DeviceTypeBiomedicaNCC61   DeviceType = "BIOMEDICA_NCC_61"
 	DeviceTypeAlifax           DeviceType = "ALIFAX"
+	DeviceTypeBTS              DeviceType = "BTS"
 )
 
 func (d DeviceType) String() string {
@@ -71,6 +72,9 @@ var TableDeviceType = Tables{
 	{ID: string(DeviceTypeBiomedicaNCC61), Name: string(DeviceTypeBiomedicaNCC61), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
 	}},
+	{ID: string(DeviceTypeBTS), Name: string(DeviceTypeBTS), AdditionalInfo: DeviceCapability{
+		CanSend: true,
+	}},
 }
 
 type DeviceCapability struct {
@@ -98,6 +102,7 @@ type Device struct {
 
 type GetManyRequestDevice struct {
 	GetManyRequest
+	Type []DeviceType `query:"types"`
 }
 
 type DeviceConnectionStatus string
