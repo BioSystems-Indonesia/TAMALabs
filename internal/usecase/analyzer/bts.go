@@ -6,9 +6,11 @@ import (
 	"crypto/tls"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
@@ -30,7 +33,7 @@ func (u *Usecase) ProcessBTS(ctx context.Context) error {
 	errors := make([]error, 0)
 	results := make([]entity.ObservationResult, 0)
 	for _, device := range devicesFind.Data {
-		data, err := u.getBTSData(device)
+		data, err := u.getBTSData(ctx, device)
 		if err != nil {
 			return err
 		}
@@ -39,7 +42,7 @@ func (u *Usecase) ProcessBTS(ctx context.Context) error {
 		for _, record := range data {
 			specimen, err := u.getSpecimenWithCache(ctx, specimenCache, record.ID)
 			if err != nil {
-				errors = append(errors, fmt.Errorf("error getting specimen: %v, barcode: %s", err, record.ID))
+				errors = append(errors, fmt.Errorf("error getting specimen: %w, barcode: %s", err, record.ID))
 				continue
 			}
 
@@ -63,45 +66,77 @@ func (u *Usecase) ProcessBTS(ctx context.Context) error {
 		}
 	}
 
+	for _, result := range results {
+		if err := u.ObservationResultRepository.Create(ctx, &result); err != nil {
+			errors = append(errors, fmt.Errorf("error creating observation result: %w", err))
+		}
+	}
+
 	if len(errors) > 0 {
-		slog.Error("error getting specimen", "errors", errors)
+		slog.Error("error process BTS", "errors", errors)
 	}
 
 	return nil
 }
 
-func (u *Usecase) getSpecimenWithCache(ctx context.Context, specimenCache map[string]entity.Specimen, barcode string) (entity.Specimen, error) {
+func (u *Usecase) getSpecimenWithCache(
+	ctx context.Context,
+	specimenCache map[string]entity.Specimen,
+	barcode string,
+) (entity.Specimen, error) {
 	if _, ok := specimenCache[barcode]; ok {
 		return specimenCache[barcode], nil
 	}
 
 	specimen, err := u.SpecimenRepository.FindByBarcode(ctx, barcode)
 	if err != nil {
-		return entity.Specimen{}, fmt.Errorf("specimen not found")
+		return entity.Specimen{}, errors.New("specimen not found")
 	}
 	specimenCache[barcode] = specimen
 
 	return specimen, nil
 }
 
-func (u *Usecase) getBTSData(d entity.Device) ([]entity.BTSMeasurementData, error) {
-	baseURL := fmt.Sprintf("http://%s:%s", d.IPAddress, d.ReceivePort)
+func (u *Usecase) getBTSData(
+	ctx context.Context,
+	d entity.Device,
+) ([]entity.BTSMeasurementData, error) {
+	baseURL := "http://" + net.JoinHostPort(d.IPAddress, d.ReceivePort)
 	commandsURL := baseURL + "/commands"
 
-	payload := `{"command":{"type":"ExportDataDownloading","payload":{"operationId":"14bc1e38-68d7-4087-9e68-5f0818c46087","filters":{"readingType":["Blank","Calibration","QualityControl","Sample","AbsorbanceSample"],"sampleId":null,"techniqueId":null,"startDate":"2025-07-01T00:00:00.000+07:00","endDate":"2025-08-06T23:59:59.999+07:00","timePeriod":"RANGE"},"exportOptions":{"fileName":"file0001.csv","format":"CSV","target":"Download","deleteAfterDump":false}}}}`
-
-	var payloadMap map[string]interface{}
-	if err := json.Unmarshal([]byte(payload), &payloadMap); err != nil {
-		return nil, fmt.Errorf("error parsing payload: %v", err)
+	randomFilename := strings.ReplaceAll(uuid.New().String(), "-", "")[:8]
+	filename := randomFilename + ".csv"
+	payload := entity.BTSRequest{
+		Command: entity.BTSCommand{
+			Type: "ExportDataDownloading",
+			Payload: entity.BTSPayload{
+				OperationID: uuid.New().String(),
+				Filters: entity.BTSFilters{
+					ReadingType: []string{"Blank", "Calibration", "QualityControl", "Sample", "AbsorbanceSample"},
+					SampleID:    nil,
+					TechniqueID: nil,
+					StartDate:   time.Now().AddDate(0, 0, -14),
+					EndDate:     time.Now(),
+					TimePeriod:  "RANGE",
+				},
+				ExportOptions: entity.BTSExportOptions{
+					FileName:        filename,
+					Format:          "CSV",
+					Target:          "Download",
+					DeleteAfterDump: false,
+				},
+			},
+		},
 	}
 
-	command := payloadMap["command"].(map[string]interface{})
-	exportOptions := command["payload"].(map[string]interface{})["exportOptions"].(map[string]interface{})
-	fileName := exportOptions["fileName"].(string)
-
-	req, err := http.NewRequest("POST", commandsURL, bytes.NewBuffer([]byte(payload)))
+	payloadByte, err := json.Marshal(payload)
 	if err != nil {
-		return nil, fmt.Errorf("error creating request: %v", err)
+		return nil, fmt.Errorf("error marshaling payload: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, commandsURL, bytes.NewBuffer(payloadByte))
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -110,7 +145,10 @@ func (u *Usecase) getBTSData(d entity.Device) ([]entity.BTSMeasurementData, erro
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Origin", baseURL)
 	req.Header.Set("Referer", baseURL+"/")
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0")
+	req.Header.Set(
+		"User-Agent",
+		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0",
+	)
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -119,31 +157,31 @@ func (u *Usecase) getBTSData(d entity.Device) ([]entity.BTSMeasurementData, erro
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("error sending request: %v", err)
+		return nil, fmt.Errorf("error sending request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error reading response: %v", err)
+		return nil, fmt.Errorf("error reading response: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("request failed with status: %s\nResponse: %s\n", resp.Status, string(body))
+		return nil, fmt.Errorf("request failed with status: %s Response: %s", resp.Status, string(body))
 	}
 
 	var response entity.BTSResponse
 	if err := json.Unmarshal(body, &response); err != nil {
-		return nil, fmt.Errorf("error parsing response: %v", err)
+		return nil, fmt.Errorf("error parsing response: %w", err)
 	}
 
-	fileURL := fmt.Sprintf("%s/files/%s", baseURL, fileName)
+	fileURL := fmt.Sprintf("%s/files/%s", baseURL, filename)
 	outputDir := os.TempDir()
-	outputPath := filepath.Join(outputDir, fileName)
+	outputPath := filepath.Join(outputDir, filename)
 
 	data, err := downloadAndParseFile(fileURL, outputPath, client)
 	if err != nil {
-		return nil, fmt.Errorf("error downloading and parsing file: %v", err)
+		return nil, fmt.Errorf("error downloading and parsing file: %w", err)
 	}
 
 	slog.Info("Received data from BTS", "data", data)
@@ -155,7 +193,7 @@ func downloadAndParseFile(url, outputPath string, client *http.Client) ([]entity
 	// Get the file data
 	resp, err := client.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("error downloading file: %v", err)
+		return nil, fmt.Errorf("error downloading file: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -166,25 +204,25 @@ func downloadAndParseFile(url, outputPath string, client *http.Client) ([]entity
 	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error reading response body: %v", err)
+		return nil, fmt.Errorf("error reading response body: %w", err)
 	}
 
 	// Save the file
 	out, err := os.Create(outputPath)
 	if err != nil {
-		return nil, fmt.Errorf("error creating file: %v", err)
+		return nil, fmt.Errorf("error creating file: %w", err)
 	}
 	defer out.Close()
 
 	_, err = out.Write(body)
 	if err != nil {
-		return nil, fmt.Errorf("error saving file: %v", err)
+		return nil, fmt.Errorf("error saving file: %w", err)
 	}
 
 	// Parse the CSV data
 	data, err := parseCSVData(string(body))
 	if err != nil {
-		return nil, fmt.Errorf("error parsing CSV data: %v", err)
+		return nil, fmt.Errorf("error parsing CSV data: %w", err)
 	}
 
 	return data, nil
@@ -197,32 +235,32 @@ func parseCSVData(csvContent string) ([]entity.BTSMeasurementData, error) {
 
 	records, err := reader.ReadAll()
 	if err != nil {
-		return nil, fmt.Errorf("error reading CSV: %v", err)
+		return nil, fmt.Errorf("error reading CSV: %w", err)
 	}
 
 	if len(records) == 0 {
-		return nil, fmt.Errorf("no data found in CSV")
+		return nil, errors.New("no data found in CSV")
 	}
 
 	// Skip header row
 	var data []entity.BTSMeasurementData
 	for i, record := range records[1:] {
 		if len(record) < 8 {
-			fmt.Printf("Warning: Row %d has insufficient columns, skipping\n", i+2)
+			slog.Warn("BTS: Warning: Row has insufficient columns, skipping", "row", i+2)
 			continue
 		}
 
 		// Parse result as float
 		result, err := strconv.ParseFloat(record[3], 64)
 		if err != nil {
-			fmt.Printf("Warning: Row %d has invalid result value '%s', skipping\n", i+2, record[3])
+			slog.Warn("BTS: Warning: Row has invalid result value, skipping", "row", i+2, "value", record[3])
 			continue
 		}
 
 		// Parse absorbance as float
 		absorbance, err := strconv.ParseFloat(record[5], 64)
 		if err != nil {
-			fmt.Printf("Warning: Row %d has invalid absorbance value '%s', skipping\n", i+2, record[5])
+			slog.Warn("BTS: Warning: Row d has invalid absorbance value, skipping", "row", i+2, "value", record[5])
 			continue
 		}
 
