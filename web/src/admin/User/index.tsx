@@ -20,7 +20,6 @@ import {
     DateTimeInput,
     Edit,
     FilterLiveForm,
-    FilterLiveSearch,
     List,
     PasswordInput,
     ReferenceArrayInput,
