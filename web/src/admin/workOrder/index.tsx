@@ -1,5 +1,6 @@
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import { Box, CircularProgress, Dialog, DialogContent, DialogTitle, Divider, useTheme } from "@mui/material";
+import ScienceIcon from '@mui/icons-material/Science';
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -26,7 +27,8 @@ import {
     WrapperField,
     useListContext,
     useNotify,
-    useRefresh
+    useRefresh,
+
 } from "react-admin";
 import { useParams, useSearchParams } from "react-router-dom";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
@@ -109,18 +111,18 @@ export function WorkOrderAddTest() {
 function WorkOrderSideFilters() {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
-    
+
     return (
         <SideFilter sx={{
-            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
+            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
         }}>
             <FilterLiveForm debounce={1500}>
                 <Stack spacing={0}>
                     {/* Judul filter */}
                     <Box>
-                        <Typography variant="h6" sx={{ 
-                            color: theme.palette.text.primary, 
-                            marginBottom: 2, 
+                        <Typography variant="h6" sx={{
+                            color: theme.palette.text.primary,
+                            marginBottom: 2,
                             fontWeight: 600,
                             fontSize: '1.1rem',
                             textAlign: 'center'
@@ -128,12 +130,12 @@ function WorkOrderSideFilters() {
                             🔍 Filter Lab Requests
                         </Typography>
                     </Box>
-                    
+
                     {/* Filter Patient */}
-                    <ReferenceInput 
-                        source={"patient_ids"} 
-                        reference="patient" 
-                        label={"Patient"} 
+                    <ReferenceInput
+                        source={"patient_ids"}
+                        reference="patient"
+                        label={"Patient"}
                         alwaysOn
                         sx={{
                             '& .MuiInputLabel-root': {
@@ -143,8 +145,8 @@ function WorkOrderSideFilters() {
                             }
                         }}
                     >
-                        <AutocompleteArrayInput 
-                            size="small" 
+                        <AutocompleteArrayInput
+                            size="small"
                             sx={{
                                 '& .MuiOutlinedInput-root': {
                                     backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
@@ -168,8 +170,8 @@ function WorkOrderSideFilters() {
                                 fontSize: '0.9rem',
                             }
                         }}>
-                        <AutocompleteArrayInput size="small" 
-                        sx={{
+                        <AutocompleteArrayInput size="small"
+                            sx={{
                                 '& .MuiOutlinedInput-root': {
                                     backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
                                     borderRadius: '12px',
@@ -178,15 +180,15 @@ function WorkOrderSideFilters() {
                                         backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
                                     },
                                 }
-                            }}/>
+                            }} />
                     </ReferenceInput>
 
                     <Divider sx={{ marginBottom: 2 }} />
 
                     {/* Filter Date Range */}
                     <Box>
-                        <Typography variant="body2" sx={{ 
-                            color: theme.palette.text.secondary, 
+                        <Typography variant="body2" sx={{
+                            color: theme.palette.text.secondary,
                             marginBottom: 1.5,
                             fontSize: '0.85rem',
                             fontWeight: 500
@@ -194,12 +196,12 @@ function WorkOrderSideFilters() {
                             📅 Date Range
                         </Typography>
                         <Stack>
-                            <CustomDateInput 
-                                label={"Start Date"} 
-                                source="created_at_start" 
-                                disableFuture 
-                                alwaysOn 
-                                size="small" 
+                            <CustomDateInput
+                                label={"Start Date"}
+                                source="created_at_start"
+                                disableFuture
+                                alwaysOn
+                                size="small"
                                 clearable
                                 sx={{
                                     marginBottom: '4px',
@@ -211,8 +213,8 @@ function WorkOrderSideFilters() {
                                         '&:hover': {
                                             backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
                                             borderColor: isDarkMode ? theme.palette.primary.main : '#9ca3af',
-                                            boxShadow: isDarkMode 
-                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)' 
+                                            boxShadow: isDarkMode
+                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)'
                                                 : '0 4px 12px rgba(0, 0, 0, 0.1)',
                                         },
                                         '&.Mui-focused': {
@@ -226,14 +228,14 @@ function WorkOrderSideFilters() {
                                         fontWeight: 500,
                                         fontSize: '0.85rem',
                                     }
-                                }} 
+                                }}
                             />
-                            <CustomDateInput 
-                                label={"End Date"} 
-                                source="created_at_end" 
-                                disableFuture 
-                                alwaysOn 
-                                size="small" 
+                            <CustomDateInput
+                                label={"End Date"}
+                                source="created_at_end"
+                                disableFuture
+                                alwaysOn
+                                size="small"
                                 clearable
                                 sx={{
                                     marginBottom: '4px',
@@ -245,8 +247,8 @@ function WorkOrderSideFilters() {
                                         '&:hover': {
                                             backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
                                             borderColor: isDarkMode ? theme.palette.primary.main : '#9ca3af',
-                                            boxShadow: isDarkMode 
-                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)' 
+                                            boxShadow: isDarkMode
+                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)'
                                                 : '0 4px 12px rgba(0, 0, 0, 0.1)',
                                         },
                                         '&.Mui-focused': {
@@ -260,7 +262,7 @@ function WorkOrderSideFilters() {
                                         fontWeight: 500,
                                         fontSize: '0.85rem',
                                     }
-                                }} 
+                                }}
                             />
                         </Stack>
                     </Box>
@@ -420,23 +422,90 @@ const WorkOrderListBulkActionButtons = (props: RunWorkOrderProps) => (
     </>
 )
 
-export const WorkOrderList = () => {
-    const [open, setOpen] = useState(false)
+const WorkOrderDataGrid = () => {
+    const { isLoading, isFetching, data } = useListContext();
+    const [open, setOpen] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(true);
+
+    useEffect(() => {
+        if (data && data.length > 0) {
+            const timer = setTimeout(() => {
+                setInitialLoading(false);
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [data]);
+
+    const shouldShowLoading = isLoading || isFetching || initialLoading || !data;
+
+    if (shouldShowLoading) {
+        return (
+            <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                minHeight="200px"
+                flexDirection="column"
+                gap={2}
+                sx={{
+                    backgroundColor: 'background.paper',
+                    borderRadius: 2,
+                    p: 3
+                }}
+            >
+                <Box position="relative">
+                    <CircularProgress
+                        size={60}
+                        thickness={4}
+                        sx={{
+                            color: 'primary.main',
+                            animationDuration: '1.5s',
+                        }}
+                    />
+                    <Box
+                        position="absolute"
+                        top="50%"
+                        left="50%"
+                        sx={{
+                            transform: 'translate(-50%, -50%)',
+                        }}
+                    >
+                        <ScienceIcon
+                            sx={{
+                                fontSize: 24,
+                                color: 'primary.main',
+                                animation: 'pulse 2s infinite',
+                                '@keyframes pulse': {
+                                    '0%': { opacity: 1 },
+                                    '50%': { opacity: 0.5 },
+                                    '100%': { opacity: 1 },
+                                },
+                            }}
+                        />
+                    </Box>
+                </Box>
+
+                <Typography
+                    variant="h6"
+                    color="text.primary"
+                    sx={{ fontWeight: 500 }}
+                >
+                    Loading Lab Requests...
+                </Typography>
+
+                <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    textAlign="center"
+                >
+                    Please wait while we fetch your data
+                </Typography>
+            </Box>
+        );
+    }
 
     return (
-        <List sort={{
-            field: "id",
-            order: "DESC"
-        }} aside={<WorkOrderSideFilters />} title="Lab Request" exporter={false}
-            storeKey={false}
-            sx={{
-                '& .RaList-content': {
-                    backgroundColor: 'background.paper',
-                    padding: 2,
-                    borderRadius: 1,
-                },
-            }}
-        >
+        <>
             <Datagrid
                 rowClick={(id, resource, record) => {
                     return false
@@ -469,6 +538,26 @@ export const WorkOrderList = () => {
                 </WrapperField>
             </Datagrid>
             <RunWorkOrderDialog open={open} onClose={() => setOpen(false)} setOpen={setOpen} />
+        </>
+    );
+};
+
+export const WorkOrderList = () => {
+    return (
+        <List sort={{
+            field: "id",
+            order: "DESC"
+        }} aside={<WorkOrderSideFilters />} title="Lab Request" exporter={false}
+            storeKey={false}
+            sx={{
+                '& .RaList-content': {
+                    backgroundColor: 'background.paper',
+                    padding: 2,
+                    borderRadius: 1,
+                },
+            }}
+        >
+            <WorkOrderDataGrid />
         </List>
     )
 };
