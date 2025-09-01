@@ -163,4 +163,26 @@ var (
 		provideRestHandler,
 		provideRestServer,
 	)
+
+	canalHandlerSet = wire.NewSet(
+		provideDB,
+		provideConfig,
+		provideValidator,
+		provideCache,
+
+		workOrderrepo.NewWorkOrderRepository,
+		patientrepo.NewPatientRepository,
+		testTypeRepo.NewRepository,
+		observation_result.NewRepository,
+		observation_request.NewRepository,
+		specimen.NewRepository,
+		daily_sequence.NewRepository,
+		provideKhanzaRepository,
+
+		resultUC.NewUsecase,
+		barcodeGeneratorUC.NewUsecase,
+		wire.Bind(new(usecase.BarcodeGenerator), new(*barcodeGeneratorUC.Usecase)),
+
+		provideCanalHandler,
+	)
 )

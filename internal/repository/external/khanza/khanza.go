@@ -178,7 +178,10 @@ func (k *Repository) GetAllLisOrders() ([]entity.KhanzaLisOrder, error) {
 		VISITNO,
 		ORDER_TESTID,
 		FLAG
-	FROM lis_order ORDER BY ID DESC`
+	FROM lis_order 
+	WHERE MESSAGE_DT >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+	ORDER BY ID DESC 
+	LIMIT 1000`
 
 	conn := k.bridgeDB.GetConnection()
 	rows, err := conn.Query(query)

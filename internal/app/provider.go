@@ -24,6 +24,12 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
 	khanza "github.com/oibacidem/lims-hl-seven/internal/repository/external/khanza"
 	devicerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
+	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
+	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase"
+	khanzauc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
 	"github.com/oibacidem/lims-hl-seven/migrations"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 	gormSqlite "gorm.io/driver/sqlite"
@@ -373,4 +379,31 @@ func provideKhanzaRepository(cfg *config.Schema) *khanza.Repository {
 	}
 
 	return khanza.NewRepository(bridgeDB, mainDB)
+}
+
+func provideCanalHandler(
+	cfg *config.Schema,
+	khanzaRepo *khanza.Repository,
+	workOrderRepo *workOrderrepo.WorkOrderRepository,
+	patientRepo *patientrepo.PatientRepository,
+	testTypeRepo *test_type.Repository,
+	barcodeUC usecase.BarcodeGenerator,
+	resultUC *result.Usecase,
+) *khanzauc.CanalHandler {
+	if cfg.KhanzaIntegrationEnabled != "true" {
+		slog.Info("Khanza integration is disabled, Canal Handler will not be created")
+		return nil
+	}
+
+	khanzaUC := khanzauc.NewUsecase(
+		khanzaRepo,
+		workOrderRepo,
+		patientRepo,
+		testTypeRepo,
+		barcodeUC,
+		resultUC,
+	)
+
+	slog.Info("Creating Canal Handler with fully configured dependencies")
+	return khanzauc.NewCanalHandler(khanzaUC, cfg)
 }

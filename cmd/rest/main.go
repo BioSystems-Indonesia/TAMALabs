@@ -48,10 +48,28 @@ func main() {
 	provideGlobalLog()
 
 	server := app.InitRestApp()
+	go func() {
+		slog.Info("Initializing Khanza Canal Handler...")
+		startCanalHandler()
+	}()
 
 	go openb()
 	go opensystray(server)
 	server.Serve()
+}
+
+func startCanalHandler() {
+	time.Sleep(5 * time.Second)
+
+	canalHandler := app.InitCanalHandler()
+
+	if canalHandler == nil {
+		slog.Error("Failed to create Canal Handler - dependency injection failed")
+		return
+	}
+
+	slog.Info("Canal Handler initialized successfully with all dependencies")
+	canalHandler.StartCanalHandler()
 }
 
 func showErrorOnPanic() {

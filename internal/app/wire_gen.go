@@ -151,3 +151,21 @@ func InitRestApp() server.RestServer {
 	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, externalHandler, jwtMiddleware, cronManager)
 	return restServer
 }
+
+// InitCanalHandler is a Wire provider function that returns a CanalHandler.
+func InitCanalHandler() *khanzauc.CanalHandler {
+	gormDB := provideDB()
+	schema := provideConfig(gormDB)
+	repository := provideKhanzaRepository(schema)
+	specimenRepository := specimen.NewRepository(gormDB, schema)
+	cache := provideCache()
+	workOrderRepository := workOrderrepo.NewWorkOrderRepository(gormDB, schema, specimenRepository, cache)
+	patientRepository := patientrepo.NewPatientRepository(gormDB, schema)
+	test_typeRepository := test_type.NewRepository(gormDB, schema)
+	daily_sequenceRepository := daily_sequence.NewRepository(gormDB)
+	usecase := barcode_generator.NewUsecase(daily_sequenceRepository)
+	observation_resultRepository := observation_result.NewRepository(gormDB, schema)
+	resultUsecase := result.NewUsecase(observation_resultRepository, workOrderRepository, specimenRepository, test_typeRepository)
+	canalHandler := provideCanalHandler(schema, repository, workOrderRepository, patientRepository, test_typeRepository, usecase, resultUsecase)
+	return canalHandler
+}
