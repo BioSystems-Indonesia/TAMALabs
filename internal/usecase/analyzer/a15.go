@@ -167,6 +167,11 @@ func ParseLabResults(data string) ([]A15Result, error) {
 		sampleType := strings.TrimSpace(record[2])
 
 		valueStr := strings.ReplaceAll(strings.TrimSpace(record[3]), ",", ".")
+
+		if valueStr == "--" {
+			continue
+		}
+
 		value, err := strconv.ParseFloat(valueStr, 64)
 		if err != nil {
 			return nil, fmt.Errorf("line %d: could not parse value '%s': %w", i+1, record[3], err)
@@ -215,6 +220,8 @@ func (u *Usecase) SaveFileResult(context context.Context, data string) error {
 	}
 
 	var errs []error
+	uniqueWorkOrderIDs := make(map[int64]struct{})
+
 	for _, result := range results {
 		speciment, err := u.SpecimenRepository.FindByBarcode(context, result.PatientID)
 		if err != nil {
@@ -234,6 +241,8 @@ func (u *Usecase) SaveFileResult(context context.Context, data string) error {
 			errs = append(errs, err)
 		}
 
+		uniqueWorkOrderIDs[int64(speciment.WorkOrder.ID)] = struct{}{}
+
 		slog.Info(
 			"observation result created",
 			"specimen_id",
@@ -249,8 +258,27 @@ func (u *Usecase) SaveFileResult(context context.Context, data string) error {
 		)
 	}
 
+	for workOrderID := range uniqueWorkOrderIDs {
+		workOrder, err := u.WorkOrderRepository.FindOne(workOrderID)
+		if err != nil {
+			slog.Error("failed to find work order", "work_order_id", workOrderID, "error", err)
+			errs = append(errs, err)
+			continue
+		}
+
+		workOrder.Status = entity.WorkOrderStatusCompleted
+		err = u.WorkOrderRepository.Update(&workOrder)
+		if err != nil {
+			slog.Error("failed to update work order status", "work_order_id", workOrderID, "error", err)
+			errs = append(errs, err)
+			continue
+		}
+
+		slog.Info("work order status updated to SUCCESS", "work_order_id", workOrderID)
+	}
+
 	if len(errs) > 0 {
-		slog.Error("failed to create observation result", "errors", errors.Join(errs...))
+		slog.Error("failed to create observation result or update work order status", "errors", errors.Join(errs...))
 	}
 
 	return nil
