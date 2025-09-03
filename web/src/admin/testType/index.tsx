@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrayInput, AutocompleteInput, Create, Datagrid, Edit, FunctionField, List, NumberInput, SimpleForm, SimpleFormIterator, TextField, TextInput, required } from "react-admin";
+import { ArrayInput, AutocompleteInput, BooleanField, BooleanInput, Create, Datagrid, Edit, FunctionField, List, NumberInput, SimpleForm, SimpleFormIterator, TextField, TextInput, required } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
 import FeatureList from "../../component/FeatureList";
@@ -21,6 +21,7 @@ export const TestTypeDatagrid = (props: any) => {
             <TextField source="sub_category" />
             <TextField source="low_ref_range" label="low" />
             <TextField source="high_ref_range" label="high" />
+            <BooleanField source="is_calculated_test" label="Calc Test" sortable />
             <TextField source="unit" />
             <FunctionField 
                 label="Types" 
@@ -209,7 +210,13 @@ function TestTypeInput(props: TestTypeFormProps) {
                     readOnly={props.readonly}
                     validate={[required()]}
                     fullWidth
-                    sx={{ mb: 2 }}
+                />
+            </Box>
+            <Box sx={{ gridColumn: 'span 4' }}>
+                <BooleanInput 
+                    source="is_calculated_test" 
+                    label="Calc Test" 
+                    disabled={props.readonly}
                 />
             </Box>
             <Box sx={{ gridColumn: 'span 12' }}>

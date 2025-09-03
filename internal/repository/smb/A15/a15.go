@@ -101,6 +101,9 @@ func createContentFile(req *entity.SendPayloadRequest) []byte {
 	for _, p := range req.Patients {
 		for _, s := range p.Specimen {
 			for _, r := range s.ObservationRequest {
+				if r.TestType.IsCalculatedTest {
+					continue
+				}
 				samples = append(samples, row(req, p, s, r))
 			}
 		}
