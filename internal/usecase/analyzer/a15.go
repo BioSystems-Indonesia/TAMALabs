@@ -168,13 +168,10 @@ func ParseLabResults(data string) ([]A15Result, error) {
 
 		valueStr := strings.ReplaceAll(strings.TrimSpace(record[3]), ",", ".")
 
-		if valueStr == "--" {
-			continue
-		}
-
 		value, err := strconv.ParseFloat(valueStr, 64)
 		if err != nil {
-			return nil, fmt.Errorf("line %d: could not parse value '%s': %w", i+1, record[3], err)
+			slog.Error("could not parse value", "line", i+1, "value", record[3], "error", err)
+			continue
 		}
 
 		unit := strings.TrimSpace(record[4])
