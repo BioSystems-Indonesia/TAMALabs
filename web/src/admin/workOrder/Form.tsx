@@ -422,6 +422,11 @@ function TestTable({
                         flex: 1,
                     },
                     {
+                        field: 'is_calculated_test',
+                        headerName: 'Calc Test',
+                        flex: 1,
+                    },
+                    {
                         field: 'picked_type',
                         headerName: 'Specimen Type',
                         flex: 1,
