@@ -1,6 +1,6 @@
 import CloseIcon from '@mui/icons-material/Close';
 import WarningIcon from '@mui/icons-material/WarningAmber';
-import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useTheme } from "@mui/material";
+import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useTheme, Card, CardContent } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import { AxiosError } from "axios";
 import { useEffect, useMemo, useState } from "react";
@@ -41,8 +41,9 @@ const TestTemplateFilterSidebar = () => {
     const isDarkMode = theme.palette.mode === 'dark';
 
     return (
-        <SideFilter sx={{
-            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
+
+        <SideFilter  sx={{
+            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
         }}>
             <FilterLiveForm debounce={1500}>
                 <Stack spacing={0}>
@@ -92,6 +93,7 @@ type TestTemplateFormProps = {
 }
 
 function TestTemplateForm(props: TestTemplateFormProps) {
+    const theme = useTheme();
     const [isLoading, setIsLoading] = useState(false);
     const [selectedType, setSelectedType] = useState<Record<number, ObservationRequestCreateRequest>>({});
 
@@ -120,43 +122,230 @@ function TestTemplateForm(props: TestTemplateFormProps) {
         }, [record])
     }
 
-
     if (isLoading) {
         return <></>
     }
 
     const currentUser = useCurrentUser()
     return (
-        <SimpleForm disabled={props.readonly} toolbar={false}>
-            <TestTypeToolbar />
-            <Divider sx={{
-                marginBottom: "0px",
-            }} />
-            <TextInput source="name" readOnly={props.readonly} validate={[required()]} />
-            <TextInput source="description" readOnly={props.readonly} multiline />
-            <ReferenceInput source={"doctor_ids"} reference="user" resource='user' target="id" label="Doctor" filter={{
-                role: [RoleNameValue.DOCTOR, RoleNameValue.ADMIN]
-            }}>
-                <AutocompleteArrayInput
-                    suggestionLimit={10}
-                    filterToQuery={(searchText) => ({
-                        q: searchText,
-                        role: [RoleNameValue.DOCTOR, RoleNameValue.ADMIN]
-                    })}
-                />
-            </ReferenceInput>
-            <ReferenceInput source={"analyzers_ids"} reference="user" resource='user' target="id" label="Analyzer" filter={{
-            }}>
-                <AutocompleteArrayInput
-                    suggestionLimit={10}
-                    filterToQuery={(searchText) => ({
-                        q: searchText,
-                    })}
-                    defaultValue={[currentUser?.id]}
-                />
-            </ReferenceInput>
-            <TestInput initSelectedType={selectedType} />
-        </SimpleForm>
+        <Box sx={{ml: 3, mr: 3}}>
+            <SimpleForm 
+                disabled={props.readonly} 
+                toolbar={false}
+                sx={{
+                    '& .RaSimpleForm-form': {
+                        backgroundColor: 'transparent',
+                        boxShadow: 'none',
+                        padding: 0
+                    }
+                }}
+            >
+                <TestTypeToolbar />
+              
+                
+                <Stack spacing={3} sx={{ width: '100%' }}>
+                    <Card 
+                        elevation={0} 
+                        sx={{ 
+                            border: `1px solid ${theme.palette.divider}`,
+                            borderRadius: 2
+                        }}
+                    >
+                        <CardContent sx={{ p: 3 }}>
+                            <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 1.5, 
+                                mb: 3 
+                            }}>
+                                <Typography 
+                                    variant="subtitle1" 
+                                    sx={{ 
+                                        fontWeight: 600,
+                                        color: theme.palette.text.primary
+                                    }}
+                                >
+                                    ❗Basic Information
+                                </Typography>
+                                <Chip 
+                                    label="Required" 
+                                    size="small" 
+                                    color="error" 
+                                    variant="outlined"
+                                    sx={{ ml: 'auto', fontSize: '0.75rem' }}
+                                />
+                            </Box>
+                            
+                            <Stack>
+                                <TextInput 
+                                    source="name" 
+                                    readOnly={props.readonly} 
+                                    validate={[required()]}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: 2,
+                                            transition: 'all 0.2s ease',
+                                            ...(!props.readonly && {
+                                                '&:hover': {
+                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                }
+                                            })
+                                        }
+                                    }}
+                                />
+                                <TextInput 
+                                    source="description" 
+                                    readOnly={props.readonly} 
+                                    multiline
+                                    rows={3}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: 2,
+                                            transition: 'all 0.2s ease',
+                                            ...(!props.readonly && {
+                                                '&:hover': {
+                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                }
+                                            })
+                                        }
+                                    }}
+                                />
+                            </Stack>
+                        </CardContent>
+                    </Card>
+
+                    <Card 
+                        elevation={0} 
+                        sx={{ 
+                            border: `1px solid ${theme.palette.divider}`,
+                            borderRadius: 2
+                        }}
+                    >
+                        <CardContent sx={{ p: 3 }}>
+                            <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 1.5, 
+                                mb: 3 
+                            }}>
+                                <Typography 
+                                    variant="subtitle1" 
+                                    sx={{ 
+                                        fontWeight: 600,
+                                        color: theme.palette.text.primary
+                                    }}
+                                >
+                                    👨‍⚕️ Assignments
+                                </Typography>
+                                <Chip 
+                                    label="Optional" 
+                                    size="small" 
+                                    color="default" 
+                                    variant="outlined"
+                                    sx={{ ml: 'auto', fontSize: '0.75rem' }}
+                                />
+                            </Box>
+                            
+                            <Stack>
+                                <ReferenceInput 
+                                    source={"doctor_ids"} 
+                                    reference="user" 
+                                    resource='user' 
+                                    target="id" 
+                                    label="Doctor" 
+                                    filter={{
+                                        role: [RoleNameValue.DOCTOR, RoleNameValue.ADMIN]
+                                    }}
+                                >
+                                    <AutocompleteArrayInput
+                                        suggestionLimit={10}
+                                        filterToQuery={(searchText) => ({
+                                            q: searchText,
+                                            role: [RoleNameValue.DOCTOR, RoleNameValue.ADMIN]
+                                        })}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: 2,
+                                                transition: 'all 0.2s ease',
+                                                ...(!props.readonly && {
+                                                    '&:hover': {
+                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                    }
+                                                })
+                                            }
+                                        }}
+                                    />
+                                </ReferenceInput>
+                                
+                                <ReferenceInput 
+                                    source={"analyzers_ids"} 
+                                    reference="user" 
+                                    resource='user' 
+                                    target="id" 
+                                    label="Analyzer" 
+                                    filter={{}}
+                                >
+                                    <AutocompleteArrayInput
+                                        suggestionLimit={10}
+                                        filterToQuery={(searchText) => ({
+                                            q: searchText,
+                                        })}
+                                        defaultValue={[currentUser?.id]}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: 2,
+                                                transition: 'all 0.2s ease',
+                                                ...(!props.readonly && {
+                                                    '&:hover': {
+                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                    }
+                                                })
+                                            }
+                                        }}
+                                    />
+                                </ReferenceInput>
+                            </Stack>
+                        </CardContent>
+                    </Card>
+
+                    <Card 
+                        elevation={0} 
+                        sx={{ 
+                            border: `1px solid ${theme.palette.divider}`,
+                            borderRadius: 2
+                        }}
+                    >
+                        <CardContent sx={{ p: 3 }}>
+                            <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 1.5, 
+                                mb: 3 
+                            }}>
+                                <Typography 
+                                    variant="subtitle1" 
+                                    sx={{ 
+                                        fontWeight: 600,
+                                        color: theme.palette.text.primary
+                                    }}
+                                >
+                                    🧪 Test Configuration
+                                </Typography>
+                                <Chip 
+                                    label="Required" 
+                                    size="small" 
+                                    color="error" 
+                                    variant="outlined"
+                                    sx={{ ml: 'auto', fontSize: '0.75rem' }}
+                                />
+                            </Box>
+                            
+                            <TestInput initSelectedType={selectedType} />
+                        </CardContent>
+                    </Card>
+                </Stack>
+            </SimpleForm>
+        </Box>
     )
 }
 
@@ -303,26 +492,42 @@ const TestTypeToolbar = () => {
 
 
 export function TestTemplateEdit() {
+    const theme = useTheme();
+    
     return (
-        <Edit mutationMode="pessimistic" title="Edit Test Template" sx={{
-            "& .RaEdit-card": {
-                overflow: "visible",
-            }
-        }} emptyWhileLoading>
-            <TestTemplateForm readonly={false} mode={"EDIT"} />
-        </Edit>
+        <Box sx={{ 
+            minHeight: '100vh', 
+            bgcolor: theme.palette.background.default,
+            pb: 4
+        }}>
+            <Edit mutationMode="pessimistic" title="Edit Test Template" sx={{
+                "& .RaEdit-card": {
+                    overflow: "visible",
+                }
+            }} emptyWhileLoading>
+                <TestTemplateForm readonly={false} mode={"EDIT"} />
+            </Edit>
+        </Box>
     )
 }
 
 export function TestTemplateCreate() {
+    const theme = useTheme();
+    
     return (
-        <Create title="Create Test Template" redirect={"show"} sx={{
-            "& .RaCreate-card": {
-                overflow: "visible",
-            }
+        <Box sx={{ 
+            minHeight: '100vh', 
+            bgcolor: theme.palette.background.default,
+            pb: 4
         }}>
-            <TestTemplateForm readonly={false} mode={"CREATE"} />
-        </Create>
+            <Create title="Create Test Template" redirect={"show"} sx={{
+                "& .RaCreate-card": {
+                    overflow: "visible",
+                }
+            }}>
+                <TestTemplateForm readonly={false} mode={"CREATE"} />
+            </Create>
+        </Box>
     )
 }
 

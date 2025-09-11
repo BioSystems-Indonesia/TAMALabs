@@ -45,6 +45,7 @@ type TestResult struct {
 	FormattedResult *float64       `json:"formatted_result"`
 	Unit            string         `json:"unit"`
 	Category        string         `json:"category"`
+	SpecimenType    string         `json:"specimen_type"`
 	Abnormal        AbnormalResult `json:"abnormal"`
 	ReferenceRange  string         `json:"reference_range"`
 	CreatedAt       string         `json:"created_at"`
@@ -57,7 +58,7 @@ type TestResult struct {
 // Result test can be filled manualy in frontend or from the result observation
 // When we fill we need to show to the user, what testCode that we are filling
 // What are the unit they will fill and what is the reference range
-func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
+func (r TestResult) CreateEmpty(request ObservationRequest, specimen Specimen) TestResult {
 	return TestResult{
 		ID:             0,
 		SpecimenID:     request.SpecimenID,
@@ -66,6 +67,7 @@ func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
 		TestTypeID:     int64(request.TestType.ID),
 		Unit:           request.TestType.Unit,
 		Category:       request.TestType.Category,
+		SpecimenType:   specimen.Type,
 		ReferenceRange: fmt.Sprintf("%.2f - %.2f", request.TestType.LowRefRange, request.TestType.HighRefRange),
 		CreatedAt:      request.UpdatedAt.Format(time.RFC3339),
 		Abnormal:       NoDataResult,
@@ -74,7 +76,7 @@ func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
 	}
 }
 
-func (r TestResult) FromObservationResult(observation ObservationResult) TestResult {
+func (r TestResult) FromObservationResult(observation ObservationResult, specimenType string) TestResult {
 	resultTest := TestResult{
 		ID:             observation.ID,
 		SpecimenID:     observation.SpecimenID,
@@ -82,6 +84,7 @@ func (r TestResult) FromObservationResult(observation ObservationResult) TestRes
 		TestTypeID:     int64(observation.TestType.ID),
 		Unit:           observation.TestType.Unit,
 		Category:       observation.TestType.Category,
+		SpecimenType:   specimenType,
 		ReferenceRange: fmt.Sprintf("%.2f - %.2f", observation.TestType.LowRefRange, observation.TestType.HighRefRange),
 		CreatedAt:      observation.UpdatedAt.Format(time.RFC3339),
 		Picked:         observation.Picked,
@@ -144,10 +147,11 @@ func (r TestResult) FromObservationResult(observation ObservationResult) TestRes
 	return resultTest
 }
 
-func (r TestResult) FillHistory(history []ObservationResult) TestResult {
+func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[int64]string) TestResult {
 	histories := make([]TestResult, len(history))
 	for i, h := range history {
 		result := h.GetFirstValue()
+		specimenType := specimenTypes[h.SpecimenID]
 
 		histories[i] = TestResult{
 			ID:             h.ID,
@@ -157,6 +161,7 @@ func (r TestResult) FillHistory(history []ObservationResult) TestResult {
 			TestTypeID:     int64(h.TestType.ID),
 			Unit:           h.Unit,
 			Category:       h.TestType.Category,
+			SpecimenType:   specimenType,
 			ReferenceRange: fmt.Sprintf("%.2f - %.2f", h.TestType.LowRefRange, h.TestType.HighRefRange),
 			CreatedAt:      h.CreatedAt.Format(time.RFC3339),
 			Picked:         h.Picked,

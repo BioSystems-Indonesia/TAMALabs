@@ -21,6 +21,13 @@ type AuthUseCase struct {
 }
 
 func NewAuthUseCase(adminRepo *adminrepo.AdminRepository, cfg *config.Schema) *AuthUseCase {
+	if adminRepo == nil {
+		panic("adminRepo cannot be nil")
+	}
+	if cfg == nil {
+		panic("config cannot be nil")
+	}
+
 	return &AuthUseCase{
 		adminRepo: adminRepo,
 		cfg:       cfg,
@@ -68,11 +75,18 @@ func (u *AuthUseCase) Login(ctx context.Context, req *entity.LoginRequest) (enti
 func (u *AuthUseCase) createAccessToken(ctx context.Context, admin entity.Admin) (string, error) {
 	expirationTime := time.Now().Add(u.tokenExpirationTime)
 
+	// Safe handling of Email pointer
+	var email string
+	if admin.Email != nil {
+		email = *admin.Email
+	}
+
 	claims := entity.AdminClaims{
 		ID:        admin.ID,
 		Fullname:  admin.Fullname,
-		Email:     *admin.Email,
+		Email:     email,
 		IsActive:  admin.IsActive,
+		Role:      admin.Roles[0].Name,
 		CreatedAt: admin.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: admin.UpdatedAt.Format(time.RFC3339),
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -83,6 +97,11 @@ func (u *AuthUseCase) createAccessToken(ctx context.Context, admin entity.Admin)
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Check if signing key is available
+	if u.cfg.SigningKey == "" {
+		return "", fmt.Errorf("signing key is not configured")
+	}
 
 	signedToken, err := token.SignedString([]byte(u.cfg.SigningKey))
 	if err != nil {

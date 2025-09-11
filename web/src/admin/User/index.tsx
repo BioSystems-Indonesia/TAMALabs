@@ -3,9 +3,8 @@ import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import CloseIcon from '@mui/icons-material/Close';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import ScienceIcon from '@mui/icons-material/Science';
-import { Button, Grid, IconButton, ListItem, ListItemIcon, ListItemText, Modal, List as MuiList, Paper, Stack, Typography, useTheme } from '@mui/material';
+import { Button, Grid, IconButton, ListItem, ListItemIcon, ListItemText, Modal, List as MuiList, Paper, Stack, Typography, useTheme, Card, CardContent, Chip } from '@mui/material';
 import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import {
@@ -20,7 +19,6 @@ import {
     DateTimeInput,
     Edit,
     FilterLiveForm,
-    // FilterLiveSearch,
     List,
     PasswordInput,
     ReferenceArrayInput,
@@ -47,6 +45,7 @@ export type UserFormProps = {
 }
 
 export function UserFormField(props: UserFormProps) {
+    const theme = useTheme();
     const axios = useAxios();
     const { data: roleData } = useQuery<Role[]>({
         queryKey: ['roles'],
@@ -64,38 +63,306 @@ export function UserFormField(props: UserFormProps) {
     const handleCloseModal = () => setOpenModal(false);
 
     return (
-        <>
-            {props.mode !== Action.CREATE && (
-                <Box sx={{
-                    width: "100%",
-                }}>
-                    <TextInput source={"id"} readOnly={true} />
-                    <Stack direction={"row"} gap={5} width={"100%"}>
-                        <DateTimeInput source={"created_at"} readOnly={true} />
-                        <DateTimeInput source={"updated_at"} readOnly={true} />
-                    </Stack>
-                    <Divider />
-                </Box>
-            )}
+        <Box sx={{ p: { xs: 2, sm: 3, width: '100%' } }}>
+            <Stack spacing={3} sx={{ width: '100%' }}>
+                {props.mode !== Action.CREATE && (
+                    <Card 
+                        elevation={0} 
+                        sx={{ 
+                            border: `1px solid ${theme.palette.divider}`,
+                            borderRadius: 2
+                        }}
+                    >
+                        <CardContent sx={{ p: 3 }}>
+                            <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 1.5, 
+                                mb: 3 
+                            }}>
+                                <Typography 
+                                    variant="subtitle1" 
+                                    sx={{ 
+                                        fontWeight: 600,
+                                        color: theme.palette.text.primary
+                                    }}
+                                >
+                                    ℹ️ System Information
+                                </Typography>
+                                <Chip 
+                                    label="Read Only" 
+                                    size="small" 
+                                    color="default" 
+                                    variant="outlined"
+                                    sx={{ ml: 'auto', fontSize: '0.75rem' }}
+                                />
+                            </Box>
+                            
+                            <Stack>
+                                <TextInput 
+                                    source={"id"} 
+                                    readOnly={true}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: 2,
+                                            transition: 'all 0.2s ease'
+                                        }
+                                    }}
+                                />
+                                <Stack direction={"row"} gap={2} width={"100%"}>
+                                    <DateTimeInput 
+                                        source={"created_at"} 
+                                        readOnly={true}
+                                        sx={{
+                                            flex: 1,
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: 2,
+                                                transition: 'all 0.2s ease'
+                                            }
+                                        }}
+                                    />
+                                    <DateTimeInput 
+                                        source={"updated_at"} 
+                                        readOnly={true}
+                                        sx={{
+                                            flex: 1,
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: 2,
+                                                transition: 'all 0.2s ease'
+                                            }
+                                        }}
+                                    />
+                                </Stack>
+                            </Stack>
+                        </CardContent>
+                    </Card>
+                )}
 
-            <TextInput source="username" validate={[required()]} readOnly={props.readonly} />
-            <TextInput source="fullname" validate={[required()]} readOnly={props.readonly} />
-            <TextInput source="email" readOnly={props.readonly} />
-            {props.mode !== Action.SHOW && <PasswordInput source="password" validate={
-                props.mode === Action.EDIT ? [] : [required()]} readOnly={props.readonly} />}
-            <BooleanInput source="is_active" defaultValue={true} readOnly={props.readonly} />
-            <Grid container spacing={2} sx={{ mt: 2 }} width={'100%'}>
-                <Grid size={8} >
-                    <ReferenceArrayInput source="roles_id" reference="role">
-                        <SelectArrayInput optionText="name" readOnly={props.readonly} validate={[required()]} />
-                    </ReferenceArrayInput>
-                </Grid>
-                <Grid size={2}>
-                    <Button variant="contained" onClick={handleOpenModal} sx={{ mt: 2 }} size='small'>
-                        View Available Roles
-                    </Button>
-                </Grid>
-            </Grid>
+                <Card 
+                    elevation={0} 
+                    sx={{ 
+                        border: `1px solid ${theme.palette.divider}`,
+                        borderRadius: 2
+                    }}
+                >
+                    <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 1.5, 
+                            mb: 3 
+                        }}>
+                            <Typography 
+                                variant="subtitle1" 
+                                sx={{ 
+                                    fontWeight: 600,
+                                    color: theme.palette.text.primary
+                                }}
+                            >
+                                👤 Basic Information
+                            </Typography>
+                            <Chip 
+                                label="Required" 
+                                size="small" 
+                                color="error" 
+                                variant="outlined"
+                                sx={{ ml: 'auto', fontSize: '0.75rem' }}
+                            />
+                        </Box>
+                        
+                        <Stack>
+                            <TextInput 
+                                source="username" 
+                                validate={[required()]} 
+                                readOnly={props.readonly}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                        transition: 'all 0.2s ease',
+                                        ...(!props.readonly && {
+                                            '&:hover': {
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                            }
+                                        })
+                                    }
+                                }}
+                            />
+                            <TextInput 
+                                source="fullname" 
+                                validate={[required()]} 
+                                readOnly={props.readonly}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                        transition: 'all 0.2s ease',
+                                        ...(!props.readonly && {
+                                            '&:hover': {
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                            }
+                                        })
+                                    }
+                                }}
+                            />
+                            <TextInput 
+                                source="email" 
+                                readOnly={props.readonly}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                        transition: 'all 0.2s ease',
+                                        ...(!props.readonly && {
+                                            '&:hover': {
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                            }
+                                        })
+                                    }
+                                }}
+                            />
+                        </Stack>
+                    </CardContent>
+                </Card>
+
+                <Card 
+                    elevation={0} 
+                    sx={{ 
+                        border: `1px solid ${theme.palette.divider}`,
+                        borderRadius: 2
+                    }}
+                >
+                    <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 1.5, 
+                            mb: 3 
+                        }}>
+                            <Typography 
+                                variant="subtitle1" 
+                                sx={{ 
+                                    fontWeight: 600,
+                                    color: theme.palette.text.primary
+                                }}
+                            >
+                                🔐 Security & Access
+                            </Typography>
+                            <Chip 
+                                label={props.mode === Action.EDIT ? "Optional" : "Required"} 
+                                size="small" 
+                                color={props.mode === Action.EDIT ? "default" : "error"} 
+                                variant="outlined"
+                                sx={{ ml: 'auto', fontSize: '0.75rem' }}
+                            />
+                        </Box>
+                        
+                        <Stack>
+                            {props.mode !== Action.SHOW && (
+                                <PasswordInput 
+                                    source="password" 
+                                    validate={props.mode === Action.EDIT ? [] : [required()]} 
+                                    readOnly={props.readonly}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: 2,
+                                            transition: 'all 0.2s ease',
+                                            ...(!props.readonly && {
+                                                '&:hover': {
+                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                }
+                                            })
+                                        }
+                                    }}
+                                />
+                            )}
+                            <BooleanInput 
+                                source="is_active" 
+                                defaultValue={true} 
+                                readOnly={props.readonly}
+                                sx={{
+                                    '& .MuiFormControlLabel-root': {
+                                        ml: 0,
+                                        '& .MuiSwitch-root': {
+                                            mr: 1
+                                        }
+                                    }
+                                }}
+                            />
+                        </Stack>
+                    </CardContent>
+                </Card>
+
+                <Card 
+                    elevation={0} 
+                    sx={{ 
+                        border: `1px solid ${theme.palette.divider}`,
+                        borderRadius: 2
+                    }}
+                >
+                    <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 1.5, 
+                            mb: 3 
+                        }}>
+                            <Typography 
+                                variant="subtitle1" 
+                                sx={{ 
+                                    fontWeight: 600,
+                                    color: theme.palette.text.primary
+                                }}
+                            >
+                                🎭 Role Management
+                            </Typography>
+                            <Chip 
+                                label="Required" 
+                                size="small" 
+                                color="error" 
+                                variant="outlined"
+                                sx={{ ml: 'auto', fontSize: '0.75rem' }}
+                            />
+                        </Box>
+                        
+                        <Grid sx={{ width: '100%' }} >
+                            <Grid size={8}>
+                                <ReferenceArrayInput source="roles_id" reference="role">
+                                    <SelectArrayInput 
+                                        optionText="name" 
+                                        readOnly={props.readonly} 
+                                        validate={[required()]}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: 2,
+                                                transition: 'all 0.2s ease',
+                                                ...(!props.readonly && {
+                                                    '&:hover': {
+                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                    }
+                                                })
+                                            }
+                                        }}
+                                    />
+                                </ReferenceArrayInput>
+                            </Grid>
+                            <Grid >
+                                <Button 
+                                    variant="outlined" 
+                                    onClick={handleOpenModal} 
+                                    sx={{ 
+                                        borderRadius: 2,
+                                        textTransform: 'none',
+                                        fontWeight: 500
+                                    }} 
+                                    size="small"
+                                    
+                                >
+                                    View Roles
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </CardContent>
+                </Card>
+            </Stack>
+
             <Modal
                 open={openModal}
                 onClose={handleCloseModal}
@@ -125,14 +392,13 @@ export function UserFormField(props: UserFormProps) {
                             <CloseIcon />
                         </IconButton>
                     </Box>
-                    {/* The RolePresentationList component is rendered inside the modal */}
                     <RolePresentationList roles={roleData ?? []} />
                     <Typography id="role-list-modal-description" sx={{ display: 'none' }}>
                         A list of roles with their descriptions.
                     </Typography>
                 </Paper>
             </Modal>
-        </>
+        </Box>
     )
 }
 
@@ -236,9 +502,17 @@ const RolePresentationList: React.FC<RolePresentationListProps> = ({ roles }) =>
 
 export function UserForm(props: UserFormProps) {
     return (
-        <SimpleForm disabled={props.readonly}
+        <SimpleForm 
+            disabled={props.readonly}
             toolbar={props.readonly === true ? false : undefined}
             warnWhenUnsavedChanges
+            sx={{
+                '& .RaSimpleForm-form': {
+                    backgroundColor: 'transparent',
+                    boxShadow: 'none',
+                    padding: 0
+                }
+            }}
         >
             <UserFormField {...props} />
         </SimpleForm>
@@ -246,28 +520,51 @@ export function UserForm(props: UserFormProps) {
 }
 
 export function UserCreate() {
+    const theme = useTheme();
     const redirect = useRefererRedirect("show");
 
     return (
-        <Create redirect={redirect} resource="user" mutationMode='pessimistic'>
-            <UserForm mode={"CREATE"} />
-        </Create>
+        <Box sx={{ 
+            minHeight: '100vh', 
+            bgcolor: theme.palette.background.default,
+            pb: 4
+        }}>
+            <Create redirect={redirect} resource="user" mutationMode='pessimistic'>
+                <UserForm mode={"CREATE"} />
+            </Create>
+        </Box>
     )
 }
 
 export function UserShow() {
+    const theme = useTheme();
+    
     return (
-        <Show resource="user">
-            <UserForm readonly mode={"SHOW"} />
-        </Show>
+        <Box sx={{ 
+            minHeight: '100vh', 
+            bgcolor: theme.palette.background.default,
+            pb: 4
+        }}>
+            <Show resource="user">
+                <UserForm readonly mode={"SHOW"} />
+            </Show>
+        </Box>
     )
 }
 
 export function UserEdit() {
+    const theme = useTheme();
+    
     return (
-        <Edit resource="user" mutationMode='pessimistic'>
-            <UserForm mode={"EDIT"} />
-        </Edit>
+        <Box sx={{ 
+            minHeight: '100vh', 
+            bgcolor: theme.palette.background.default,
+            pb: 4
+        }}>
+            <Edit resource="user" mutationMode='pessimistic'>
+                <UserForm mode={"EDIT"} />
+            </Edit>
+        </Box>
     )
 }
 
@@ -340,7 +637,7 @@ export const UserList = () => (
             <TextField source="fullname" />
             <TextField source="email" />
             <BooleanField source="is_active" />
-            <ArrayField source="roles">
+            <ArrayField source="roles" sortable={false}>
                 <SingleFieldList linkType={false}>
                     <UserRolesChipField source="name" size="small" />
                 </SingleFieldList>
@@ -362,6 +659,8 @@ export function UserRolesChipColorMap(value: string) {
             return 'primary';
         case 'Doctor':
             return 'secondary';
+        case 'Analyzer':
+            return 'error';
         default:
             return 'default';
     }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"regexp"
 
 	"github.com/hirochachacha/go-smb2"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -19,9 +20,33 @@ func NewA15() *A15 {
 }
 
 func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
+	// // For testing - write to local directory instead of SMB
+	// localDir := "tmp/a15_test"
+	// err := os.MkdirAll(localDir, 0755)
+	// if err != nil {
+	// 	return fmt.Errorf("cannot create local directory %s: %v", localDir, err)
+	// }
+
+	// filePath := filepath.Join(localDir, "import.txt")
+	// content := createContentFile(req)
+
+	// err = os.WriteFile(filePath, content, 0644)
+	// if err != nil {
+	// 	return fmt.Errorf("cannot write file to local directory: %v", err)
+	// }
+
+	// slog.Info("Send to A15 (local test)", "file_path", filePath)
+	// return nil
+
+	slog.Info("Attempting SMB connection",
+		"ip", req.Device.IPAddress,
+		"port", req.Device.SendPort,
+		"username", req.Device.Username,
+		"path", req.Device.Path)
+
 	conn, err := net.Dial("tcp", net.JoinHostPort(req.Device.IPAddress, req.Device.SendPort))
 	if err != nil {
-		return fmt.Errorf("cannot connect to %s:%s", req.Device.IPAddress, req.Device.SendPort)
+		return fmt.Errorf("cannot connect to %s:%s - %w", req.Device.IPAddress, req.Device.SendPort, err)
 	}
 	defer conn.Close()
 
@@ -34,7 +59,8 @@ func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 
 	s, err := d.Dial(conn)
 	if err != nil {
-		return fmt.Errorf("cannot dial smb2 to %s:%s", req.Device.IPAddress, req.Device.SendPort)
+		return fmt.Errorf("cannot dial smb2 to %s:%s - SMB authentication failed with user '%s': %w",
+			req.Device.IPAddress, req.Device.SendPort, req.Device.Username, err)
 	}
 	defer func() {
 		if err := s.Logoff(); err != nil {
@@ -42,9 +68,10 @@ func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 		}
 	}()
 
+	slog.Info("SMB authentication successful, attempting to mount", "path", req.Device.Path)
 	fs, err := s.Mount(req.Device.Path)
 	if err != nil {
-		return fmt.Errorf("cannot mount SMB session: %v", err)
+		return fmt.Errorf("cannot mount SMB path '%s': %w", req.Device.Path, err)
 	}
 	defer func() {
 		if err := fs.Umount(); err != nil {
@@ -52,9 +79,13 @@ func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 		}
 	}()
 
-	err = fs.WriteFile("import.txt", createContentFile(req), 0644)
+	slog.Info("SMB mount successful, writing file")
+	content := createContentFile(req)
+	slog.Info("File content created", "size", len(content))
+
+	err = fs.WriteFile("import.txt", content, 0644)
 	if err != nil {
-		return fmt.Errorf("cannot write file to SMB session: %v", err)
+		return fmt.Errorf("cannot write file 'import.txt' to SMB path '%s': %w", req.Device.Path, err)
 	}
 
 	slog.Info("Send to A15")
@@ -62,11 +93,18 @@ func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
 }
 
 func (a A15) CheckConnection(ctx context.Context, device entity.Device) error {
+	slog.Info("Testing SMB connection",
+		"ip", device.IPAddress,
+		"port", device.SendPort,
+		"username", device.Username,
+		"path", device.Path)
+
 	conn, err := net.Dial("tcp", net.JoinHostPort(device.IPAddress, device.SendPort))
 	if err != nil {
-		return fmt.Errorf("cannot connect to %s:%s", device.IPAddress, device.SendPort)
+		return fmt.Errorf("cannot connect to %s:%s - %w", device.IPAddress, device.SendPort, err)
 	}
 	defer conn.Close()
+	slog.Info("TCP connection successful")
 
 	d := &smb2.Dialer{
 		Initiator: &smb2.NTLMInitiator{
@@ -77,13 +115,29 @@ func (a A15) CheckConnection(ctx context.Context, device entity.Device) error {
 
 	s, err := d.Dial(conn)
 	if err != nil {
-		return fmt.Errorf("cannot dial smb2 to %s:%s", device.IPAddress, device.SendPort)
+		return fmt.Errorf("cannot dial smb2 to %s:%s - SMB authentication failed with user '%s': %w",
+			device.IPAddress, device.SendPort, device.Username, err)
 	}
 	defer func() {
 		if err := s.Logoff(); err != nil {
 			slog.Info("error logging off SMB session", "error", err)
 		}
 	}()
+	slog.Info("SMB authentication successful")
+
+	// Test mounting the path
+	if device.Path != "" {
+		fs, err := s.Mount(device.Path)
+		if err != nil {
+			return fmt.Errorf("cannot mount SMB path '%s': %w", device.Path, err)
+		}
+		defer func() {
+			if err := fs.Umount(); err != nil {
+				slog.Info("error unmounting SMB session", "error", err)
+			}
+		}()
+		slog.Info("SMB mount test successful")
+	}
 
 	return nil
 }
@@ -101,6 +155,9 @@ func createContentFile(req *entity.SendPayloadRequest) []byte {
 	for _, p := range req.Patients {
 		for _, s := range p.Specimen {
 			for _, r := range s.ObservationRequest {
+				if r.TestType.IsCalculatedTest {
+					continue
+				}
 				samples = append(samples, row(req, p, s, r))
 			}
 		}
@@ -130,11 +187,27 @@ func row(req *entity.SendPayloadRequest, p entity.Patient, s entity.Specimen, r 
 		class = "U"
 	}
 
+	// Remove any alphabetic prefix from barcode to get only the ID number
+	// This will handle SER, URI, or any other prefix followed by numbers
+	patientID := extractIDFromBarcode(s.Barcode)
+
 	return Sample{
 		Class:       class,
 		Type:        s.Type,
-		PatientID:   s.Barcode,
+		PatientID:   patientID,
 		TechniqueID: r.TestCode,
 		TestTubType: "T15",
 	}
+}
+
+// extractIDFromBarcode removes any alphabetic prefix and returns only the numeric part
+func extractIDFromBarcode(barcode string) string {
+	// Use regex to find the first sequence of digits in the barcode
+	re := regexp.MustCompile(`\d+`)
+	match := re.FindString(barcode)
+	if match != "" {
+		return match
+	}
+	// If no digits found, return the original barcode
+	return barcode
 }

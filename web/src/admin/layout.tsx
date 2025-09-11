@@ -24,47 +24,47 @@ import AppIndicator from '../component/AppIndicator';
 import Breadcrumbs, { type BreadcrumbsLink } from '../component/Breadcrumbs';
 import { toTitleCase } from '../helper/format';
 import FileOpenIcon from '@mui/icons-material/FileOpen';
+import { useCurrentUser, useCurrentUserRole } from '../hooks/currentUser';
 import logo from '../assets/elgatama-logo.png';
-import { useCurrentUser } from '../hooks/currentUser';
 
 
 const SettingsButton = () => (
     <Link to="/settings" color={"inherit"}>
-        <IconButton style={{color: '#555555'}}>
-            <SettingsIcon sx={{width: 30, height:'auto'}}/>
+        <IconButton style={{ color: '#555555' }}>
+            <SettingsIcon sx={{ width: 30, height: 'auto' }} />
         </IconButton>
     </Link>
 );
 
 const LogButton = () => (
     <Tooltip title="Logs">
-    <Link to="/logs" color={"inherit"}>
-        <IconButton style={{color:'#1E88E5'}}>
-            <FileOpenIcon  sx={{width: 30, height:'auto'}} />
-        </IconButton>
-    </Link>
+        <Link to="/logs" color={"inherit"}>
+            <IconButton style={{ color: '#1E88E5' }}>
+                <FileOpenIcon sx={{ width: 30, height: 'auto' }} />
+            </IconButton>
+        </Link>
     </Tooltip>
 );
 
 const CustomToggleThemeButton = () => {
     const [theme, setTheme] = useTheme();
-    
+
     // Debug: Log tema saat ini setiap kali berubah
     useEffect(() => {
         console.log(`Current theme mode: ${theme}`);
         console.log(`Is dark mode: ${theme === 'dark'}`);
         console.log(`Is light mode: ${theme === 'light'}`);
     }, [theme]);
-    
+
     return (
         <Tooltip title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>
-            <IconButton 
+            <IconButton
                 onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-                style={{ 
+                style={{
                     color: theme === 'light' ? '#FFA726' : '#FFD54F'
                 }}
             >
-                {theme === 'light' ? <LightModeIcon sx={{width: 30, height:'auto'}} /> : <DarkModeIcon sx={{width: 30, height:'auto'}} />}
+                {theme === 'light' ? <LightModeIcon sx={{ width: 30, height: 'auto' }} /> : <DarkModeIcon sx={{ width: 30, height: 'auto' }} />}
             </IconButton>
         </Tooltip>
     );
@@ -72,11 +72,12 @@ const CustomToggleThemeButton = () => {
 
 const UserProfile = () => {
     const currentUser = useCurrentUser();
+    const currentUserRole = useCurrentUserRole();
     const logout = useLogout();
-    const [theme] = useTheme(); 
+    const [theme] = useTheme();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
-    
+
     if (!currentUser) {
         return null;
     }
@@ -96,12 +97,25 @@ const UserProfile = () => {
         handleClose();
     };
 
+    let avatarColor;
+
+    switch (currentUserRole) {
+        case "Analyzer":
+            avatarColor = "#d9db3aff";
+            break;
+        case "Doctor":
+            avatarColor = "#2196F3";
+            break;
+        default:
+            avatarColor = "#4abaab";
+    }
+
     return (
         <>
-            <Box 
-                sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 1,
                     ml: 1,
                     cursor: 'pointer',
@@ -113,19 +127,19 @@ const UserProfile = () => {
                 }}
                 onClick={handleClick}
             >
-                <Avatar 
-                    sx={{ 
-                        width: 36, 
-                        height: 36, 
-                        bgcolor: '#4abaab',
+                <Avatar
+                    sx={{
+                        width: 36,
+                        height: 36,
+                        bgcolor: avatarColor,
                         fontSize: '14px'
                     }}
                 >
                     {currentUser.fullname?.charAt(0)?.toUpperCase() || <AccountCircleIcon />}
                 </Avatar>
-                <Typography 
-                    sx={{ 
-                        color: isDarkMode ? '#ffffff' : '#1d293d', 
+                <Typography
+                    sx={{
+                        color: isDarkMode ? '#ffffff' : '#1d293d',
                         fontWeight: 500,
                         display: { xs: 'none', md: 'block' }
                     }}
@@ -133,7 +147,7 @@ const UserProfile = () => {
                     {currentUser.fullname}
                 </Typography>
             </Box>
-            
+
             <Menu
                 anchorEl={anchorEl}
                 open={open}
@@ -167,9 +181,9 @@ const UserProfile = () => {
 };
 
 const CompanyLogo = () => (
-    <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
+    <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
         gap: 1,
         mr: 2,
         '&:hover': {
@@ -177,13 +191,13 @@ const CompanyLogo = () => (
             cursor: 'pointer'
         }
     }}>
-        <img 
-            src={logo} 
-            alt="Elga Tama Logo" 
-            style={{ 
+        <img
+            src={logo}
+            alt="Elga Tama Logo"
+            style={{
                 height: '40px',
                 width: 'auto'
-            }} 
+            }}
         />
         <Typography variant="h6">PT ELGA TAMA</Typography>
     </Box>
@@ -191,9 +205,10 @@ const CompanyLogo = () => (
 
 
 const MyAppBar = () => {
+    const currentUserRole = useCurrentUserRole();
     const location = useLocation();
-    const [theme] = useTheme(); 
-    
+    const [theme] = useTheme();
+
     const appBarAlwaysOn = () => {
         if (location.pathname.includes('/work-order/')) return true;
         if (location.pathname.includes('/test-template/')) return true;
@@ -203,13 +218,13 @@ const MyAppBar = () => {
     const isDarkMode = theme === 'dark';
 
     return (
-        <AppBar 
+        <AppBar
             userMenu={false}
-            color="primary" 
+            color="primary"
             sx={{
                 position: 'fixed',
                 color: isDarkMode ? '#ffffff' : '#1d293d',
-                backgroundColor: isDarkMode ? '#151221' : 'white', 
+                backgroundColor: isDarkMode ? '#151221' : 'white',
                 height: 80,
                 justifyContent: 'center',
                 boxShadow: 'rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px',
@@ -219,25 +234,29 @@ const MyAppBar = () => {
                 '& .MuiIconButton-root[aria-label="Open drawer"]': {
                     display: 'none !important',
                 },
-            }} 
+            }}
             alwaysOn={appBarAlwaysOn()}
             toolbar={
                 <>
-                    <Box sx={{ flexGrow: 1 }} /> 
-                    <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 4 
+                    <Box sx={{ flexGrow: 1 }} />
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4
                     }}>
                         <Box sx={{
                             display: 'flex',
-                            alignItems: 'center'  
+                            alignItems: 'center'
                         }}>
-                            <SettingsButton />
-                            <LogButton />
+                            {currentUserRole === "Admin" &&
+                                <>
+                                    <SettingsButton />
+                                    <LogButton />
+                                </>
+                            }
                             <AppIndicator />
                             <CustomToggleThemeButton />
-                            <LoadingIndicator sx={{scale: 1.2}} />
+                            <LoadingIndicator sx={{ scale: 1.2 }} />
                         </Box>
                         <UserProfile />
                     </Box>
@@ -253,7 +272,7 @@ const PageTitle = () => {
     const getPageData = (pathname: string) => {
         const pathParts = pathname.substring(1).split('/');
         const mainPath = pathParts[0];
-        
+
         const resourceData: { [key: string]: { title: string; icon: React.ReactElement } } = {
             'work-order': { title: 'Lab Request', icon: <BiotechIcon /> },
             'result': { title: 'Result', icon: <AssessmentIcon /> },
@@ -268,40 +287,40 @@ const PageTitle = () => {
             'logs': { title: 'Logs', icon: <FileOpenIcon /> },
             'about': { title: 'About Us', icon: <InfoIcon /> }
         };
-        
+
         const defaultData = { title: 'Dashboard', icon: <DashboardIcon /> };
         const resourceInfo = resourceData[mainPath] || { title: toTitleCase(mainPath), icon: <DashboardIcon /> };
-        
+
         if (pathParts.length > 1) {
             const action = pathParts[1];
-            
+
             if (action === 'create') return { title: `Create ${resourceInfo.title}`, icon: resourceInfo.icon };
             if (action === 'edit') return { title: `Edit ${resourceInfo.title}`, icon: resourceInfo.icon };
             if (action === 'show') return { title: `View ${resourceInfo.title}`, icon: resourceInfo.icon };
             if (pathParts[2] === 'show') return { title: `View ${resourceInfo.title} #${pathParts[1]}`, icon: resourceInfo.icon };
             if (pathParts[2] === 'edit') return { title: `Edit ${resourceInfo.title} #${pathParts[1]}`, icon: resourceInfo.icon };
         }
-        
+
         return mainPath ? resourceInfo : defaultData;
     };
 
     const pageData = getPageData(location.pathname);
 
     return (
-        <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
+        <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
             gap: 2,
-            mb: 1 
+            mb: 1
         }}>
-            <Box sx={{ 
+            <Box sx={{
                 color: 'primary.main',
                 display: 'flex',
                 alignItems: 'center'
             }}>
                 {React.cloneElement(pageData.icon, { sx: { fontSize: 32 } })}
             </Box>
-            <Typography variant='h5' sx={{ 
+            <Typography variant='h5' sx={{
                 fontWeight: 600,
                 color: 'text.primary'
             }}>
@@ -355,7 +374,7 @@ const DynamicBreadcrumbs = () => {
     const navigate = useNavigate();
 
     return (
-        <Stack direction={"row"} sx={{marginLeft: 3}}>
+        <Stack direction={"row"} sx={{ marginLeft: 3 }}>
             <Button label='Back' variant='contained' onClick={() => navigate(-1)} sx={{
                 display: location.pathname.split("/").length > 2 ? 'flex' : 'none',
                 my: 1.25,
@@ -369,9 +388,9 @@ const DynamicBreadcrumbs = () => {
 }
 
 const Footer = () => {
-    const [theme] = useTheme(); 
+    const [theme] = useTheme();
     const isDarkMode = theme === 'dark';
-    
+
     return (
         <Box
             component="footer"
@@ -387,10 +406,10 @@ const Footer = () => {
                 zIndex: 1000,
             }}
         >
-            <Typography 
-                variant="body2" 
+            <Typography
+                variant="body2"
                 sx={{
-                    color: isDarkMode ? '#ffffff' : 'text.secondary' 
+                    color: isDarkMode ? '#ffffff' : 'text.secondary'
                 }}
             >
                 © {new Date().getFullYear()} PT ELGA TAMA. All rights reserved.
@@ -403,7 +422,7 @@ export const DefaultLayout = ({ children }: { children: ReactNode }) => {
     return (
         <Layout sx={{}} appBar={MyAppBar}>
             <Box sx={{
-                marginTop: 7, 
+                marginTop: 7,
                 marginLeft: 3,
                 marginBottom: 1,
             }}>
@@ -412,7 +431,7 @@ export const DefaultLayout = ({ children }: { children: ReactNode }) => {
             <Stack direction={"row"} gap={2}>
                 <DynamicBreadcrumbs />
             </Stack>
-            <Box sx={{ paddingLeft: 3, paddingRight: 3, paddingBottom: 8}}>
+            <Box sx={{ paddingLeft: 3, paddingRight: 3, paddingBottom: 8 }}>
                 {children}
             </Box>
             <CheckForApplicationUpdate />

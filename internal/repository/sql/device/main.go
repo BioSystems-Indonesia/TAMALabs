@@ -32,6 +32,10 @@ func (r DeviceRepository) FindAll(
 			},
 		})
 
+	if len(req.Type) > 0 {
+		db = db.Where("type in (?)", req.Type)
+	}
+
 	return sql.GetWithPaginationResponse[entity.Device](db, req.GetManyRequest)
 }
 

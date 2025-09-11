@@ -174,6 +174,12 @@ export const ResultDataGrid = (props: any) => {
     return (
         <Datagrid bulkActionButtons={false} >
             <NumberField source="id" />
+            <WithRecord label="Barcode" render={(record: WorkOrder) => (
+                <Typography variant="body2">{record.barcode}</Typography>
+            )} />
+            <WithRecord label="Barcode SIMRS" render={(record: WorkOrder) => (
+                <Typography variant="body2">{record.barcode_simrs || '-'}</Typography>
+            )} />
             <WithRecord label="Patient" render={(record: any) => (
                 <Link to={`/patient/${record.patient.id}/show`} resource="patient" label={"Patient"}
                     onClick={e => e.stopPropagation()}>

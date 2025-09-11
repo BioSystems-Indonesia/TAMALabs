@@ -422,6 +422,11 @@ function TestTable({
                         flex: 1,
                     },
                     {
+                        field: 'is_calculated_test',
+                        headerName: 'Calc Test',
+                        flex: 1,
+                    },
+                    {
                         field: 'picked_type',
                         headerName: 'Specimen Type',
                         flex: 1,
@@ -471,7 +476,7 @@ export function TestInput(props: TestInputProps) {
     }, [])
     return (
         <Box sx={{
-            maxHeight: "calc(70vh - 48px)",
+            maxHeight: "calc(60vh - 48px)",
             overflow: "scroll",
             width: "100%",
             paddingTop: 10
@@ -675,6 +680,23 @@ function CreatePatientButton(props: CreatePatientButtonProps) {
     </Button>;
 }
 
+function BarcodeInput(props: InputProps) {
+    return (
+        <>
+            <Stack sx={{
+                marginBottom: "2rem",
+            }}>
+                <Typography variant="subtitle1" sx={{
+                    mb: "0.5rem",
+                }}>Barcode Configuration</Typography>
+                <Stack gap={1}>
+                    <TextInput source="barcode_simrs" label="SIMRS Barcode" helperText="Barcode for SIMRS integration" fullWidth required/>
+                </Stack>
+            </Stack>
+        </>
+    )
+}
+
 function AdditionalInput(props: InputProps) {
     const currentUser = useCurrentUser();
 
@@ -692,7 +714,6 @@ function AdditionalInput(props: InputProps) {
                     }}>
                         <AutocompleteArrayInput
                             suggestionLimit={10}
-                            // noOptionsText={<NoPatient setOpen={setOpen} />}
                             filterToQuery={(searchText) => ({
                                 q: searchText,
                                 role: [RoleNameValue.DOCTOR, RoleNameValue.ADMIN]
@@ -703,7 +724,6 @@ function AdditionalInput(props: InputProps) {
                     <ReferenceInput source={analystIDField} reference="user" target="id" label="Analyst">
                         <AutocompleteArrayInput
                             suggestionLimit={10}
-                            // noOptionsText={<NoPatient setOpen={setOpen} />}
                             defaultValue={[currentUser?.id]}
                             helperText="Default to current user"
                         />
@@ -715,7 +735,7 @@ function AdditionalInput(props: InputProps) {
 }
 
 
-const steps = ['Info', 'Test', 'Additional'];
+const steps = ['Info', 'Test', 'Barcode', 'Additional'];
 
 
 export default function WorkOrderForm(props: WorkOrderFormProps) {
@@ -759,6 +779,8 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
                 analyzer_ids: data[analystIDField],
                 doctor_ids: data[doctorIDField],
                 test_template_ids: data[testTemplateIDField],
+                barcode: data.barcode, // Tambahkan barcode ke payload
+                barcode_simrs: data.barcode_simrs, // Tambahkan barcode SIMRS ke payload
             });
         }
     };
@@ -776,7 +798,10 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
                         activeStep === 1 && <TestInput />
                     }
                     {
-                        activeStep === 2 && <AdditionalInput {...props} setDisableNext={setDisableNext} />
+                        activeStep === 2 && <BarcodeInput {...props} setDisableNext={setDisableNext} />
+                    }
+                    {
+                        activeStep === 3 && <AdditionalInput {...props} setDisableNext={setDisableNext} />
                     }
                 </FormStepper>
             </Box>

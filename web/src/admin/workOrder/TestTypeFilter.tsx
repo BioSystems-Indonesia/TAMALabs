@@ -203,7 +203,7 @@ export const TestFilterSidebar = ({
             <Typography variant="h6" sx={{ 
                             color: theme.palette.text.primary, 
                             fontWeight: 600,
-                            fontSize: '1.1rem',
+                            fontSize: '1rem',
                             textAlign: 'center'
                         }}>
                 🧪 Filter Type Test 

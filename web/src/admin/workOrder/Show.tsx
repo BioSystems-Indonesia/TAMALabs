@@ -1,7 +1,7 @@
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import PrintIcon from '@mui/icons-material/Print';
 import ScienceIcon from '@mui/icons-material/Science';
-import { Avatar, Card, CardContent, Grid, List, ListItem, ListItemAvatar, ListItemText } from "@mui/material";
+import { Avatar, Box, Card, CardContent, Grid, List, ListItem, ListItemAvatar, ListItemText } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import React from "react";
@@ -37,13 +37,13 @@ import { WorkOrderStatusChipField } from "./ChipFieldStatus";
 import RunWorkOrderForm from './RunWorkOrderForm';
 
 const detectBrowser = () => {
-  const userAgent = navigator.userAgent;
+    const userAgent = navigator.userAgent;
 
-  if (userAgent.includes("Edg/")) {
-    return "Edge";
-  } else {
-    return "Other";
-  }
+    if (userAgent.includes("Edg/")) {
+        return "Edge";
+    } else {
+        return "Other";
+    }
 };
 
 
@@ -134,7 +134,7 @@ export function WorkOrderShow() {
         <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef} workOrderID={Number(workOrderID)} />}>
             <TabbedShowLayout>
                 <TabbedShowLayout.Tab label="Test">
-                    <Card elevation={0} sx={{borderBottom:'2px solid rgba(0, 0, 0, 0.1)'}}>
+                    <Card elevation={0} sx={{ borderBottom: '2px solid rgba(0, 0, 0, 0.1)' }}>
                         <WithRecord render={(data: WorkOrder) => {
                             return (
                                 <CardContent sx={{
@@ -153,7 +153,7 @@ export function WorkOrderShow() {
                             )
                         }} />
                     </Card>
-                    <Card elevation={0} sx={{borderBottom:'2px solid rgba(0, 0, 0, 0.1)'}}>
+                    <Card elevation={0} sx={{ borderBottom: '2px solid rgba(0, 0, 0, 0.1)' }}>
                         <CardContent sx={{
                             display: "flex",
                             justifyContent: "center",
@@ -192,7 +192,7 @@ export function WorkOrderShow() {
                             }} />
                         </CardContent>
                     </Card>
-                    <Card elevation={0} sx={{borderBottom:'2px solid rgba(0, 0, 0, 0.1)'}}>
+                    <Card elevation={0} sx={{ borderBottom: '2px solid rgba(0, 0, 0, 0.1)' }}>
                         <CardContent sx={{
                             display: "flex",
                             justifyContent: "center",
@@ -202,9 +202,12 @@ export function WorkOrderShow() {
                             <Typography variant='subtitle1'>Patient Info</Typography>
                             <WithRecord render={(record: WorkOrder) => {
                                 return (
+                                    <Box>
+                                        
                                     <RecordContextProvider value={record.patient}>
                                         <PatientForm readonly mode={"SHOW"} />
                                     </RecordContextProvider>
+                                    </Box>
                                 )
                             }} />
                         </CardContent>
@@ -234,7 +237,7 @@ export function WorkOrderShow() {
                                                 <Typography variant='subtitle1' sx={{
                                                     textAlign: "center",
                                                 }}>Analyzer</Typography>
-                                                <RecordContextProvider value={record.analyzers}>
+                                                <RecordContextProvider value={record.analyst}>
                                                     <AdminShow icon={<ScienceIcon />} />
                                                 </RecordContextProvider>
                                             </Stack>
@@ -248,6 +251,8 @@ export function WorkOrderShow() {
                 </TabbedShowLayout.Tab>
                 <TabbedShowLayout.Tab label="Detail">
                     <TextField source="id" />
+                    <TextField source="barcode" label="Barcode" />
+                    <TextField source="barcode_simrs" label="Barcode SIMRS" />
                     <DateField source="created_at" showTime />
                     <DateField source="updated_at" showTime />
                     <ReferenceField source="created_by" reference='user' />
