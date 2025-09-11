@@ -440,6 +440,11 @@ const TestResultTable = (props: TestResultTableProps) => {
                     },
                 },
                 {
+                    field: 'specimen_type',
+                    headerName: 'Specimen Type',
+                    flex: 1,
+                },
+                {
                     field: 'result',
                     headerName: 'Result',
                     type: 'number',
@@ -585,6 +590,11 @@ const HistoryDialog = (props: HistoryDialogProps) => {
                         {
                             field: 'test',
                             headerName: 'Test',
+                            flex: 1,
+                        },
+                        {
+                            field: 'specimen_type',
+                            headerName: 'Specimen Type',
                             flex: 1,
                         },
                         {

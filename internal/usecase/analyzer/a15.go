@@ -167,9 +167,11 @@ func ParseLabResults(data string) ([]A15Result, error) {
 		sampleType := strings.TrimSpace(record[2])
 
 		valueStr := strings.ReplaceAll(strings.TrimSpace(record[3]), ",", ".")
+
 		value, err := strconv.ParseFloat(valueStr, 64)
 		if err != nil {
-			return nil, fmt.Errorf("line %d: could not parse value '%s': %w", i+1, record[3], err)
+			slog.Error("could not parse value", "line", i+1, "value", record[3], "error", err)
+			continue
 		}
 
 		unit := strings.TrimSpace(record[4])
@@ -215,11 +217,70 @@ func (u *Usecase) SaveFileResult(context context.Context, data string) error {
 	}
 
 	var errs []error
+	uniqueWorkOrderIDs := make(map[int64]struct{})
+
 	for _, result := range results {
-		speciment, err := u.SpecimenRepository.FindByBarcode(context, result.PatientID)
+		// First, try to find specimen by barcode with sample type prefix
+		specimenBarcode := fmt.Sprintf("%s%s", result.SampleType, result.PatientID)
+		speciment, err := u.SpecimenRepository.FindByBarcode(context, specimenBarcode)
+
+		// If not found with prefix, try without prefix (just patient ID)
 		if err != nil {
-			slog.Error("specimen not found", "barcode", result.PatientID, "error", err)
+			speciment, err = u.SpecimenRepository.FindByBarcode(context, result.PatientID)
+			if err != nil {
+				slog.Error("specimen not found", "barcode_with_prefix", specimenBarcode, "barcode_only", result.PatientID, "error", err)
+				continue
+			}
+		}
+
+		// Verify that the test code exists for this specimen type
+		// This ensures we match test code + specimen type combination
+		testTypes, err := u.TestTypeRepository.FindByCodeWithSpecimenTypes(context, result.TestName)
+		if err != nil {
+			slog.Error("test type not found", "test_code", result.TestName, "error", err)
 			continue
+		}
+
+		// Find the correct test type that matches both code and specimen type
+		var matchedTestType *entity.TestType
+		var matchedSpecimenType string
+		for _, tt := range testTypes {
+			// Check if this test type supports the specimen type
+			for _, specimenTypeStruct := range tt.Type {
+				if specimenTypeStruct.Type == result.SampleType {
+					matchedTestType = &tt
+					matchedSpecimenType = specimenTypeStruct.Type
+					break
+				}
+			}
+			if matchedTestType != nil {
+				break
+			}
+		}
+
+		if matchedTestType == nil {
+			slog.Error("no matching test type found for code and specimen type combination",
+				"test_code", result.TestName,
+				"specimen_type", result.SampleType,
+				"available_test_types", func() []string {
+					var types []string
+					for _, tt := range testTypes {
+						for _, specimenType := range tt.Type {
+							types = append(types, fmt.Sprintf("%s:%s", tt.Code, specimenType.Type))
+						}
+					}
+					return types
+				}())
+			continue
+		}
+
+		// Verify specimen type matches the found specimen
+		if speciment.Type != result.SampleType {
+			slog.Warn("specimen type mismatch",
+				"expected", result.SampleType,
+				"found", speciment.Type,
+				"specimen_id", speciment.ID,
+				"test_code", result.TestName)
 		}
 
 		err = u.ObservationResultRepository.Create(context, &entity.ObservationResult{
@@ -234,23 +295,41 @@ func (u *Usecase) SaveFileResult(context context.Context, data string) error {
 			errs = append(errs, err)
 		}
 
+		uniqueWorkOrderIDs[int64(speciment.WorkOrder.ID)] = struct{}{}
+
 		slog.Info(
-			"observation result created",
-			"specimen_id",
-			speciment.ID,
-			"test_code",
-			result.TestName,
-			"value",
-			result.Value,
-			"unit",
-			result.Unit,
-			"date",
-			result.Timestamp,
+			"observation result created with specimen type validation",
+			"specimen_id", speciment.ID,
+			"specimen_type", speciment.Type,
+			"test_code", result.TestName,
+			"matched_test_type_specimen_type", matchedSpecimenType,
+			"value", result.Value,
+			"unit", result.Unit,
+			"date", result.Timestamp,
 		)
 	}
 
+	for workOrderID := range uniqueWorkOrderIDs {
+		workOrder, err := u.WorkOrderRepository.FindOne(workOrderID)
+		if err != nil {
+			slog.Error("failed to find work order", "work_order_id", workOrderID, "error", err)
+			errs = append(errs, err)
+			continue
+		}
+
+		workOrder.Status = entity.WorkOrderStatusCompleted
+		err = u.WorkOrderRepository.Update(&workOrder)
+		if err != nil {
+			slog.Error("failed to update work order status", "work_order_id", workOrderID, "error", err)
+			errs = append(errs, err)
+			continue
+		}
+
+		slog.Info("work order status updated to SUCCESS", "work_order_id", workOrderID)
+	}
+
 	if len(errs) > 0 {
-		slog.Error("failed to create observation result", "errors", errors.Join(errs...))
+		slog.Error("failed to create observation result or update work order status", "errors", errors.Join(errs...))
 	}
 
 	return nil

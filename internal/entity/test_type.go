@@ -7,16 +7,17 @@ import (
 )
 
 type TestType struct {
-	ID           int     `json:"id" gorm:"primaryKey"`
-	Name         string  `json:"name"`
-	Code         string  `json:"code" gorm:"unique"`
-	Unit         string  `json:"unit"`
-	LowRefRange  float64 `json:"low_ref_range"`
-	HighRefRange float64 `json:"high_ref_range"`
-	Decimal      int     `json:"decimal"`
-	Category     string  `json:"category"`
-	SubCategory  string  `json:"sub_category"`
-	Description  string  `json:"description"`
+	ID               int     `json:"id" gorm:"primaryKey"`
+	Name             string  `json:"name"`
+	Code             string  `json:"code"`
+	Unit             string  `json:"unit"`
+	LowRefRange      float64 `json:"low_ref_range"`
+	HighRefRange     float64 `json:"high_ref_range"`
+	Decimal          int     `json:"decimal"`
+	Category         string  `json:"category"`
+	SubCategory      string  `json:"sub_category"`
+	Description      string  `json:"description"`
+	IsCalculatedTest bool    `json:"is_calculated_test" gorm:"column:is_calculated_test;default:false"`
 
 	Type []TestTypeSpecimenType `json:"types" gorm:"-"`
 	// TypeDB is a specimen type separated by comma
