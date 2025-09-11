@@ -43,9 +43,9 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-end',
-        justifyContent: 'center', 
+        justifyContent: 'center',
         fontSize: 7.5,
-        textAlign: 'right',  
+        textAlign: 'right',
     },
     logo: {
         width: 64,
@@ -113,34 +113,34 @@ const styles = StyleSheet.create({
         paddingHorizontal: 6,
     },
     rectangleContainer: {
-        width: '100%', 
+        width: '100%',
         borderWidth: 1,
         borderColor: '#cad5e2',
-        borderRadius: 2, 
-        padding:10,
+        borderRadius: 2,
+        padding: 10,
     },
     gridContainer: {
         flexDirection: 'column',
     },
     row: {
         flexDirection: 'row',
-        justifyContent: 'space-between',  
+        justifyContent: 'space-between',
         padding: 2,
     },
     leftColumn: {
-        flex: 1,  
-        paddingRight: 10,  
+        flex: 1,
+        paddingRight: 10,
     },
     rightColumn: {
-        flex: 1, 
+        flex: 1,
     },
     labelValue: {
-        flexDirection: 'row',  
-        alignItems: 'center', 
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     label: {
-        fontWeight: 'bold',  
-        width: 80, 
+        fontWeight: 'bold',
+        width: 80,
         display: 'flex',
     },
     value: {
@@ -193,13 +193,13 @@ const Header = () => {
 
     return (
         <View style={styles.header} fixed>
-                <Image
+            <Image
                 style={styles.logo}
                 src={logo}
-                />
-            <View style={{width: '85%'}}>
+            />
+            <View style={{ width: '85%' }}>
                 <Text style={{
-                    fontSize:24
+                    fontSize: 24
                 }}>{settings.company_name}</Text>
                 <View style={{
                     width: '100%',
@@ -208,17 +208,17 @@ const Header = () => {
                 }}>
                 </View>
                 <View style={styles.companyInfo}>
-                    <Text 
-                    wrap={true}
-                    style={{width: '45%'}}
+                    <Text
+                        wrap={true}
+                        style={{ width: '45%' }}
                     >{settings.company_address}</Text>
-                    <Text 
-                    wrap={true}
-                    style={{width: '45%'}}
+                    <Text
+                        wrap={true}
+                        style={{ width: '45%' }}
                     >{settings.company_contact_phone}</Text>
-                    <Text 
-                    wrap={true}
-                    style={{width: '45%'}}
+                    <Text
+                        wrap={true}
+                        style={{ width: '45%' }}
                     >{settings.company_contact_email}</Text>
                 </View>
             </View>
@@ -288,7 +288,7 @@ const PatientInfo = ({ patient, workOrder }: { patient: Patient, workOrder: Work
                 <View style={styles.rightColumn}>
                     <Text style={styles.labelValue}>
                         <Text style={styles.label}>Analyst</Text>
-                        <Text style={styles.value}>: {workOrder.analyzers?.length > 0 ? workOrder.analyzers[0].fullname : ""}</Text>
+                        <Text style={styles.value}>: {workOrder.analyst?.length > 0 ? workOrder.analyst[0].fullname : ""}</Text>
                     </Text>
                 </View>
             </View>
@@ -303,25 +303,26 @@ const Footer = () => (
             backgroundColor: 'rgb(74, 186, 171)'
         }}>
         </View>
-        <View style={{ 
+        <View style={{
             marginTop: 4,
             display: 'flex',
             flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'space-between',}}>
-            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
-                <Image src={yt} style={{width: 10, height: 10}}/>
-                <Text>BioSystems Indonesia</Text>    
-            </View>    
-            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
-                <Image src={ig} style={{width: 10, height: 10}}/>
-                <Text>@biosystems.ind</Text>    
-            </View>    
-            <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
-                <Image src={fb} style={{width: 10, height: 10}}/>
-                <Text>BioSystems Indonesia</Text>    
-            </View>    
-        </View>        
+            justifyContent: 'space-between',
+        }}>
+            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Image src={yt} style={{ width: 10, height: 10 }} />
+                <Text>BioSystems Indonesia</Text>
+            </View>
+            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Image src={ig} style={{ width: 10, height: 10 }} />
+                <Text>@biosystems.ind</Text>
+            </View>
+            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Image src={fb} style={{ width: 10, height: 10 }} />
+                <Text>BioSystems Indonesia</Text>
+            </View>
+        </View>
     </View>
 );
 
@@ -354,7 +355,7 @@ export const ReportDocument = ({ data, patientData, workOrderData }: { data: Rep
                         fontWeight: 'bold',
                     }}>MEDICAL CHECK-UP RESULTS</Text>
                 </View>
-                <PatientInfo patient={patientData} workOrder={workOrderData}/>
+                <PatientInfo patient={patientData} workOrder={workOrderData} />
                 {Object.entries(groupedData).map(([category, items]) => (
                     <View key={category} wrap>
                         <Text style={styles.category}>{category}</Text>
