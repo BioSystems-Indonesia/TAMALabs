@@ -1,4 +1,5 @@
 import Box from "@mui/material/Box";
+import { useTheme as useMuiTheme } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrayInput, AutocompleteInput, BooleanField, BooleanInput, Create, Datagrid, Edit, FunctionField, List, NumberInput, Show, SimpleForm, SimpleFormIterator, TextField, TextInput, required } from "react-admin";
@@ -37,7 +38,7 @@ export const TestTypeDatagrid = (props: any) => {
 }
 
 export function TestTypeShow() {
-    const theme = useTheme();
+    const theme = useMuiTheme();
 
     return (
         <Box sx={{

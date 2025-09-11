@@ -171,7 +171,7 @@ const ActionButton = () => {
                             <Button
                                 variant="contained"
                                 color="success"
-                                
+
                                 startIcon={<CheckIcon />}
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -309,7 +309,7 @@ const HeaderInfo = (props: any) => (
                 <WithRecord label="Analyzers" render={(record: WorkOrder) => {
                     return (
                         <Stack direction={"row"} gap={1}>
-                            {record?.analyzers?.map((user: User) => {
+                            {record?.analyst?.map((user: User) => {
                                 return (
                                     <Chip label={`${user.id} - ${user.fullname}`} />
                                 )
@@ -468,7 +468,7 @@ const TestResultTable = (props: TestResultTableProps) => {
                     flex: 1,
                     renderCell: (params: GridRenderCellParams) => {
                         switch (params.value) {
-                            case 0: return <Chip color="success" label="Normal"/>
+                            case 0: return <Chip color="success" label="Normal" />
                             case 1: return <Chip color="error" label="High" />
                             case 2: return <Chip color="secondary" label="Low" />
                             case 3: return <Chip color="default" label="No Data" />
@@ -489,7 +489,7 @@ const TestResultTable = (props: TestResultTableProps) => {
                     headerName: 'Action',
                     flex: 1,
                     renderCell: (params: GridRenderCellParams) => {
-                        let resultDifference = !params.row.history
+                        const resultDifference = !params.row.history
                             .map((h: TestResult) => "" + h.result + h.unit)
                             .every((v: string, _: number, a: string[]) => v === a[0])
 
