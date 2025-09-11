@@ -1,4 +1,4 @@
-import { CircularProgress, Stack, Card, CardContent, Typography, Chip, Box as MuiBox } from "@mui/material";
+import { CircularProgress, Stack, Card, CardContent, Typography, Chip, Box as MuiBox, useTheme } from "@mui/material";
 import Box from "@mui/material/Box";
 import { useEffect, useState } from 'react';
 import {
@@ -177,7 +177,7 @@ export function DeviceForm(props: DeviceFormProps) {
                     </Card>
 
                     <FormDataConsumer<{ type: DeviceTypeValue }>>
-                        {({ formData, ...rest }) => {
+                        {({ formData }) => {
                             const dynamicForm = []
                             if (isLoadingDeviceTypeFeatureList || !deviceTypeFeatureList) {
                                 return <Stack>
