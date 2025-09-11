@@ -20,7 +20,7 @@ import {
     DateTimeInput,
     Edit,
     FilterLiveForm,
-    FilterLiveSearch,
+    // FilterLiveSearch,
     List,
     PasswordInput,
     ReferenceArrayInput,
@@ -48,7 +48,7 @@ export type UserFormProps = {
 
 export function UserFormField(props: UserFormProps) {
     const axios = useAxios();
-    const { data: roleData} = useQuery<Role[]>({
+    const { data: roleData } = useQuery<Role[]>({
         queryKey: ['roles'],
         queryFn: async () => {
             const response = await axios.get('/role');
@@ -103,7 +103,7 @@ export function UserFormField(props: UserFormProps) {
                 aria-describedby="role-list-modal-description"
             >
                 <Paper sx={{
-                    position: 'absolute' as 'absolute',
+                    position: 'absolute' as const,
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
@@ -274,17 +274,17 @@ export function UserEdit() {
 const UserFilterSidebar = () => {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
-    
+
     return (
         <SideFilter sx={{
-            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
+            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
         }}>
             <FilterLiveForm debounce={1500}>
                 <Stack spacing={0}>
                     <Box>
-                        <Typography variant="h6" sx={{ 
-                            color: theme.palette.text.primary, 
-                            marginBottom: 2, 
+                        <Typography variant="h6" sx={{
+                            color: theme.palette.text.primary,
+                            marginBottom: 2,
                             fontWeight: 600,
                             fontSize: '1.1rem',
                             textAlign: 'center'
@@ -292,9 +292,9 @@ const UserFilterSidebar = () => {
                             👥 Filter Users
                         </Typography>
                     </Box>
-                    <SearchInput 
-                        source="q" 
-                        alwaysOn 
+                    <SearchInput
+                        source="q"
+                        alwaysOn
                         sx={{
                             '& .MuiOutlinedInput-root': {
                                 backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
@@ -312,7 +312,7 @@ const UserFilterSidebar = () => {
                                 color: theme.palette.text.secondary,
                                 fontWeight: 500,
                             }
-                        }} 
+                        }}
                     />
                 </Stack>
             </FilterLiveForm>

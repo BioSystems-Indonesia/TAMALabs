@@ -22,7 +22,7 @@ import {
     useListContext
 } from "react-admin";
 import CustomDateInput from "../../component/CustomDateInput";
-import PrintReportButton from "../../component/PrintReport";
+import GenerateReportButton from "../../component/GenerateReportButton";
 import SideFilter from "../../component/SideFilter";
 import useAxios from "../../hooks/useAxios";
 import type { WorkOrder } from "../../types/work_order";
@@ -83,15 +83,20 @@ function ResultActions() {
 export const ResultDataGrid = (props: any) => {
     const { isLoading, isFetching, data } = useListContext();
     const [initialLoading, setInitialLoading] = useState(true);
+    const [currentGeneratedId, setCurrentGeneratedId] = useState<string | null>(null);
 
     useEffect(() => {
         if (data && data.length > 0) {
             const timer = setTimeout(() => {
                 setInitialLoading(false);
-            }, 5000);
+            }, 1);
             return () => clearTimeout(timer);
         }
     }, [data]);
+
+    const handleGenerate = (buttonId: string) => {
+        setCurrentGeneratedId(buttonId);
+    };
 
     const shouldShowLoading = isLoading || isFetching || initialLoading || !data;
 
@@ -222,7 +227,13 @@ export const ResultDataGrid = (props: any) => {
                 }
 
                 return (
-                    <PrintReportButton results={record.test_result} patient={record.patient} workOrder={record} />
+                    <GenerateReportButton
+                        results={record.test_result}
+                        patient={record.patient}
+                        workOrder={record}
+                        currentGeneratedId={currentGeneratedId}
+                        onGenerate={handleGenerate}
+                    />
                 )
             }} />
         </Datagrid>

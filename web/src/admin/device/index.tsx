@@ -1,4 +1,4 @@
-import { CircularProgress, Stack, Card, CardContent, Typography, Chip, Box as MuiBox, useTheme } from "@mui/material";
+import { CircularProgress, Stack, Card, CardContent, Typography, Chip, Box as MuiBox } from "@mui/material";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import { useEffect, useState } from 'react';
@@ -6,8 +6,7 @@ import {
     AutocompleteInput,
     Create,
     Edit,
-    FilterLiveForm,
-    FilterLiveSearch,
+    // FilterLiveForm,
     // FilterLiveSearch,
     FormDataConsumer,
     List,
@@ -15,7 +14,7 @@ import {
     minValue,
     PasswordInput,
     required,
-    SearchInput,
+    // SearchInput,
     Show,
     SimpleForm,
     TextInput,
@@ -30,7 +29,7 @@ import { Device, DeviceTypeFeatureList, DeviceTypeValue } from "../../types/devi
 import { Action, ActionKeys } from "../../types/props.ts";
 import { ConnectionStatus } from './ConnectionStatus';
 import { ConnectionResponse, DeviceConnectionManager } from './DeviceConnectionManager';
-import SideFilter from "../../component/SideFilter.tsx";
+// import SideFilter from "../../component/SideFilter.tsx";
 
 type DeviceFormProps = {
     readonly?: boolean
@@ -170,7 +169,7 @@ function ReceiveConfig(props: ReceiveConfigProps) {
             { id: 460800, name: "460800" },
             { id: 921600, name: "921600" }
         ];
-      
+
         return (
             <>
                 <AutocompleteInput
@@ -186,8 +185,8 @@ function ReceiveConfig(props: ReceiveConfigProps) {
                     defaultValue={9600}
                     readOnly={props.readonly}
                 />
-                    readOnly={props.readonly}
-                    disabled={props.readonly}
+                readOnly={props.readonly}
+                disabled={props.readonly}
                 <FeatureList source={"baud_rate"} types={"baud-rate"}>
                     <AutocompleteInput
                         source="baud_rate"
@@ -245,97 +244,97 @@ export function DeviceEdit() {
 const DeviceCard = ({ record, connectionStatuses }: { record: Device, connectionStatuses: Record<number, ConnectionResponse> }) => {
     return (
         <Link to={`/device/${record.id}`} style={{ textDecoration: 'none' }}>
-            <Card 
+            <Card
                 elevation={0}
-                sx={{ 
+                sx={{
                     boxShadow: 'rgba(0, 0, 0, 0.16) 0px 1px 4px',
                     cursor: 'pointer',
-                    '&:hover': { 
+                    '&:hover': {
                         boxShadow: 4,
                         transform: 'translateY(-2px)',
                         transition: 'all 0.2s ease-in-out'
-                    } 
+                    }
                 }}
             >
-                <CardContent sx={{position: "relative", height: 220}}>
+                <CardContent sx={{ position: "relative", height: 220 }}>
                     <MuiBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                         <Typography variant="h5" component="div">
                             {record.name}
                         </Typography>
-                        <Chip 
-                            label={`ID: ${record.id}`} 
-                            size="small" 
-                            color="primary" 
+                        <Chip
+                            label={`ID: ${record.id}`}
+                            size="small"
+                            color="primary"
                             variant="outlined"
                         />
                     </MuiBox>
 
-                <MuiBox sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 2 }}>
-                    <MuiBox sx={{ flex: 1 }}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                            <strong>Type:</strong> {record.type}
-                        </Typography>
-                        {record.ip_address && (
+                    <MuiBox sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 2 }}>
+                        <MuiBox sx={{ flex: 1 }}>
                             <Typography variant="body2" color="text.secondary" gutterBottom>
-                                <strong>IP Address:</strong> {record.ip_address}
+                                <strong>Type:</strong> {record.type}
                             </Typography>
-                        )}
-                        
-                    </MuiBox>
-                    <MuiBox sx={{ flex: 1, textAlign: 'end' }}>
-                        {record.send_port !== undefined && Number(record.send_port) > 0 && (
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                                <strong>Send Port:</strong> {record.send_port}
-                            </Typography>
-                        )}
-                        {record.receive_port && (
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                                <strong>Receive Port:</strong> {record.receive_port}
-                            </Typography>
-                        )}
-                        {record.baud_rate !== undefined && Number(record.baud_rate) > 0 && (
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                                <strong>Baud Rate:</strong> {record.baud_rate}
-                            </Typography>
-                        )}
-                    </MuiBox>
-                </MuiBox>
+                            {record.ip_address && (
+                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                    <strong>IP Address:</strong> {record.ip_address}
+                                </Typography>
+                            )}
 
-                <MuiBox sx={{ display: 'flex', gap: 2, mt: 2 , justifyContent: "space-between", position:"absolute", bottom: 15, width: "92%"}}>
-                    <MuiBox>
-                        <Typography variant="caption" display="block" gutterBottom>
-                            Sender Status:
-                        </Typography>
-                        <ConnectionStatus
-                            deviceId={record.id}
-                            status={{
-                                device_id: record.id,
-                                message: connectionStatuses[record.id]?.sender_message,
-                                status: connectionStatuses[record.id]?.sender_status
-                            }}
-                        />
+                        </MuiBox>
+                        <MuiBox sx={{ flex: 1, textAlign: 'end' }}>
+                            {record.send_port !== undefined && Number(record.send_port) > 0 && (
+                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                    <strong>Send Port:</strong> {record.send_port}
+                                </Typography>
+                            )}
+                            {record.receive_port && (
+                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                    <strong>Receive Port:</strong> {record.receive_port}
+                                </Typography>
+                            )}
+                            {record.baud_rate !== undefined && Number(record.baud_rate) > 0 && (
+                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                    <strong>Baud Rate:</strong> {record.baud_rate}
+                                </Typography>
+                            )}
+                        </MuiBox>
                     </MuiBox>
-                    <MuiBox>
-                        <Typography variant="caption" display="block" gutterBottom>
-                            Receiver Status:
-                        </Typography>
-                        <ConnectionStatus
-                            deviceId={record.id}
-                            status={{
-                                device_id: record.id,
-                                message: connectionStatuses[record.id]?.receiver_message,
-                                status: connectionStatuses[record.id]?.receiver_status
-                            }}
-                        />
+
+                    <MuiBox sx={{ display: 'flex', gap: 2, mt: 2, justifyContent: "space-between", position: "absolute", bottom: 15, width: "92%" }}>
+                        <MuiBox>
+                            <Typography variant="caption" display="block" gutterBottom>
+                                Sender Status:
+                            </Typography>
+                            <ConnectionStatus
+                                deviceId={record.id}
+                                status={{
+                                    device_id: record.id,
+                                    message: connectionStatuses[record.id]?.sender_message,
+                                    status: connectionStatuses[record.id]?.sender_status
+                                }}
+                            />
+                        </MuiBox>
+                        <MuiBox>
+                            <Typography variant="caption" display="block" gutterBottom>
+                                Receiver Status:
+                            </Typography>
+                            <ConnectionStatus
+                                deviceId={record.id}
+                                status={{
+                                    device_id: record.id,
+                                    message: connectionStatuses[record.id]?.receiver_message,
+                                    status: connectionStatuses[record.id]?.receiver_status
+                                }}
+                            />
+                        </MuiBox>
                     </MuiBox>
-                </MuiBox>
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
         </Link>
     );
 };
 
-const DeviceCardList = ({ connectionStatuses, setDeviceIds }: { 
+const DeviceCardList = ({ connectionStatuses, setDeviceIds }: {
     connectionStatuses: Record<number, ConnectionResponse>,
     setDeviceIds: React.Dispatch<React.SetStateAction<number[]>>
 }) => {
@@ -368,8 +367,8 @@ const DeviceCardList = ({ connectionStatuses, setDeviceIds }: {
 
     return (
         <MuiBox sx={{ p: 2 }}>
-            <MuiBox 
-                sx={{ 
+            <MuiBox
+                sx={{
                     display: 'grid',
                     gridTemplateColumns: {
                         xs: '1fr',
@@ -380,9 +379,9 @@ const DeviceCardList = ({ connectionStatuses, setDeviceIds }: {
                 }}
             >
                 {data.map((device) => (
-                    <DeviceCard 
+                    <DeviceCard
                         key={device.id}
-                        record={device} 
+                        record={device}
                         connectionStatuses={connectionStatuses}
                     />
                 ))}
@@ -391,54 +390,54 @@ const DeviceCardList = ({ connectionStatuses, setDeviceIds }: {
     );
 };
 
-const DeviceFilterSidebar = () => {
-    const theme = useTheme();
-    const isDarkMode = theme.palette.mode === 'dark';
-    
-    return (
-        <SideFilter sx={{
-            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
-        }}>
-            <FilterLiveForm debounce={1500}>
-                <Stack spacing={0}>
-                    <Box>
-                        <Typography variant="h6" sx={{ 
-                            color: theme.palette.text.primary, 
-                            marginBottom: 2, 
-                            fontWeight: 600,
-                            fontSize: '1.1rem',
-                            textAlign: 'center'
-                        }}>
-                            🖥️ Filter Devices
-                        </Typography>
-                    </Box>
-                    <SearchInput 
-                        source="q" 
-                        alwaysOn 
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
-                                borderRadius: '12px',
-                                transition: 'all 0.3s ease',
-                                border: isDarkMode ? `1px solid ${theme.palette.divider}` : '1px solid #e5e7eb',
-                                '&:hover': {
-                                    backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
-                                },
-                                '&.Mui-focused': {
-                                    backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
-                                }
-                            },
-                            '& .MuiInputLabel-root': {
-                                color: theme.palette.text.secondary,
-                                fontWeight: 500,
-                            }
-                        }} 
-                    />
-                </Stack>
-            </FilterLiveForm>
-        </SideFilter>
-    )
-};
+// const DeviceFilterSidebar = () => {
+//     const theme = useTheme();
+//     const isDarkMode = theme.palette.mode === 'dark';
+
+//     return (
+//         <SideFilter sx={{
+//             backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
+//         }}>
+//             <FilterLiveForm debounce={1500}>
+//                 <Stack spacing={0}>
+//                     <Box>
+//                         <Typography variant="h6" sx={{
+//                             color: theme.palette.text.primary,
+//                             marginBottom: 2,
+//                             fontWeight: 600,
+//                             fontSize: '1.1rem',
+//                             textAlign: 'center'
+//                         }}>
+//                             🖥️ Filter Devices
+//                         </Typography>
+//                     </Box>
+//                     <SearchInput
+//                         source="q"
+//                         alwaysOn
+//                         sx={{
+//                             '& .MuiOutlinedInput-root': {
+//                                 backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
+//                                 borderRadius: '12px',
+//                                 transition: 'all 0.3s ease',
+//                                 border: isDarkMode ? `1px solid ${theme.palette.divider}` : '1px solid #e5e7eb',
+//                                 '&:hover': {
+//                                     backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
+//                                 },
+//                                 '&.Mui-focused': {
+//                                     backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
+//                                 }
+//                             },
+//                             '& .MuiInputLabel-root': {
+//                                 color: theme.palette.text.secondary,
+//                                 fontWeight: 500,
+//                             }
+//                         }}
+//                     />
+//                 </Stack>
+//             </FilterLiveForm>
+//         </SideFilter>
+//     )
+// };
 
 // const DeviceFilterSidebar = () => (
 //     <SideFilter>
@@ -464,17 +463,17 @@ export const DeviceList = () => {
                 deviceIds={deviceIds}
                 onStatusUpdate={handleStatusUpdate}
             />
-            <List 
+            <List
                 // aside={<DeviceFilterSidebar />} 
                 resource="device"
-                storeKey={false} 
+                storeKey={false}
                 exporter={false}
                 sort={{
                     field: "id",
                     order: "DESC"
                 }}
             >
-                <DeviceCardList 
+                <DeviceCardList
                     connectionStatuses={connectionStatuses}
                     setDeviceIds={setDeviceIds}
                 />
