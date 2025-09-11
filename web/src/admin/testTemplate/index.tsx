@@ -39,17 +39,18 @@ export const TestTemplateList = () => (
 const TestTemplateFilterSidebar = () => {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
-    
+
     return (
+
         <SideFilter  sx={{
             backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
         }}>
             <FilterLiveForm debounce={1500}>
                 <Stack spacing={0}>
                     <Box>
-                        <Typography variant="h6" sx={{ 
-                            color: theme.palette.text.primary, 
-                            marginBottom: 2, 
+                        <Typography variant="h6" sx={{
+                            color: theme.palette.text.primary,
+                            marginBottom: 2,
                             fontWeight: 600,
                             fontSize: '1.1rem',
                             textAlign: 'center'
@@ -57,9 +58,9 @@ const TestTemplateFilterSidebar = () => {
                             🧪 Filter Test Templates
                         </Typography>
                     </Box>
-                    <SearchInput 
-                        source="q" 
-                        alwaysOn 
+                    <SearchInput
+                        source="q"
+                        alwaysOn
                         sx={{
                             '& .MuiOutlinedInput-root': {
                                 backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
@@ -77,7 +78,7 @@ const TestTemplateFilterSidebar = () => {
                                 color: theme.palette.text.secondary,
                                 fontWeight: 500,
                             }
-                        }} 
+                        }}
                     />
                 </Stack>
             </FilterLiveForm>
@@ -394,7 +395,7 @@ const TestTemplateSaveButton = ({ disabled }: { disabled?: boolean }) => {
         if (!payload) {
             return;
         }
-        
+
         try {
             const isEditMode = !!payload.id;
             const url = isEditMode
@@ -459,13 +460,13 @@ const TestTemplateSaveButton = ({ disabled }: { disabled?: boolean }) => {
 const TestTypeToolbar = () => {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
-    
+
     return (
-        <Stack width={'100%'} 
+        <Stack width={'100%'}
             sx={{
                 position: "sticky",
                 top: 80,
-                display:'flex',
+                display: 'flex',
                 zIndex: 2147483647,
                 marginBottom: 1,
                 '& .MuiToolbar-root': {

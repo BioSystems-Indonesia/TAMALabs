@@ -1,4 +1,4 @@
-import { CircularProgress, Stack, Card, CardContent, Typography, Chip, Box as MuiBox, useTheme } from "@mui/material";
+import { CircularProgress, Stack, Card, CardContent, Typography, Chip, Box as MuiBox } from "@mui/material";
 import Box from "@mui/material/Box";
 import { useEffect, useState } from 'react';
 import {
@@ -721,61 +721,6 @@ const DeviceCardList = ({ connectionStatuses, setDeviceIds }: {
         </MuiBox>
     );
 };
-
-// const DeviceFilterSidebar = () => {
-//     const theme = useTheme();
-//     const isDarkMode = theme.palette.mode === 'dark';
-
-//     return (
-//         <SideFilter sx={{
-//             backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
-//         }}>
-//             <FilterLiveForm debounce={1500}>
-//                 <Stack spacing={0}>
-//                     <Box>
-//                         <Typography variant="h6" sx={{ 
-//                             color: theme.palette.text.primary, 
-//                             marginBottom: 2, 
-//                             fontWeight: 600,
-//                             fontSize: '1.1rem',
-//                             textAlign: 'center'
-//                         }}>
-//                             🖥️ Filter Devices
-//                         </Typography>
-//                     </Box>
-//                     <SearchInput 
-//                         source="q" 
-//                         alwaysOn 
-//                         sx={{
-//                             '& .MuiOutlinedInput-root': {
-//                                 backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
-//                                 borderRadius: '12px',
-//                                 transition: 'all 0.3s ease',
-//                                 border: isDarkMode ? `1px solid ${theme.palette.divider}` : '1px solid #e5e7eb',
-//                                 '&:hover': {
-//                                     backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
-//                                 },
-//                                 '&.Mui-focused': {
-//                                     backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
-//                                 }
-//                             },
-//                             '& .MuiInputLabel-root': {
-//                                 color: theme.palette.text.secondary,
-//                                 fontWeight: 500,
-//                             }
-//                         }} 
-//                     />
-//                 </Stack>
-//             </FilterLiveForm>
-//         </SideFilter>
-//     )
-// };
-
-// const DeviceFilterSidebar = () => (
-//     <SideFilter>
-//         <FilterLiveSearch />
-//     </SideFilter>
-// );
 
 
 export const DeviceList = () => {

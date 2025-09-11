@@ -1,7 +1,9 @@
 import RefreshIcon from '@mui/icons-material/Refresh';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { Box, Chip, Button as MUIButton, Stack, Typography, useTheme } from "@mui/material";
+import ScienceIcon from '@mui/icons-material/Science';
+import { Box, Chip, Button as MUIButton, Stack, Typography, useTheme, CircularProgress, } from "@mui/material";
 import dayjs from "dayjs";
+import { useEffect, useState } from "react";
 import {
     AutocompleteArrayInput,
     BooleanInput,
@@ -16,10 +18,11 @@ import {
     ReferenceInput,
     TopToolbar,
     useNotify,
-    WithRecord
+    WithRecord,
+    useListContext
 } from "react-admin";
 import CustomDateInput from "../../component/CustomDateInput";
-import PrintReportButton from "../../component/PrintReport";
+import GenerateReportButton from "../../component/GenerateReportButton";
 import SideFilter from "../../component/SideFilter";
 import useAxios from "../../hooks/useAxios";
 import type { WorkOrder } from "../../types/work_order";
@@ -78,6 +81,96 @@ function ResultActions() {
 }
 
 export const ResultDataGrid = (props: any) => {
+    const { isLoading, isFetching, data } = useListContext();
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [currentGeneratedId, setCurrentGeneratedId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (data && data.length > 0) {
+            const timer = setTimeout(() => {
+                setInitialLoading(false);
+            }, 1);
+            return () => clearTimeout(timer);
+        }
+    }, [data]);
+
+    const handleGenerate = (buttonId: string) => {
+        setCurrentGeneratedId(buttonId);
+    };
+
+    const shouldShowLoading = isLoading || isFetching || initialLoading || !data;
+
+    if (shouldShowLoading) {
+        return (
+            <Box>
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    minHeight="200px"
+                    flexDirection="column"
+                    gap={2}
+                    sx={{
+                        backgroundColor: 'background.paper',
+                        borderRadius: 2,
+                        mb: 2,
+                        p: 3
+                    }}
+                >
+                    <Box position="relative">
+                        <CircularProgress
+                            size={60}
+                            thickness={4}
+                            sx={{
+                                color: 'primary.main',
+                                animationDuration: '1.5s',
+                            }}
+                        />
+                        <Box
+                            position="absolute"
+                            top="50%"
+                            left="50%"
+                            sx={{
+                                transform: 'translate(-50%, -50%)',
+                            }}
+                        >
+                            <ScienceIcon
+                                sx={{
+                                    fontSize: 24,
+                                    color: 'primary.main',
+                                    animation: 'pulse 2s infinite',
+                                    '@keyframes pulse': {
+                                        '0%': { opacity: 1 },
+                                        '50%': { opacity: 0.5 },
+                                        '100%': { opacity: 1 },
+                                    }
+                                }}
+                            />
+                        </Box>
+                    </Box>
+
+                    <Typography
+                        variant="h6"
+                        color="text.primary"
+                        sx={{ fontWeight: 500 }}
+                    >
+                        Loading Lab Results...
+                    </Typography>
+
+                    <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        textAlign="center"
+                    >
+                        Please wait while we prepare your data and PDF reports...
+                    </Typography>
+                </Box>
+
+
+            </Box>
+        );
+    }
+
     return (
         <Datagrid bulkActionButtons={false} >
             <NumberField source="id" />
@@ -140,7 +233,13 @@ export const ResultDataGrid = (props: any) => {
                 }
 
                 return (
-                    <PrintReportButton results={record.test_result} patient={record.patient} workOrder={record} />
+                    <GenerateReportButton
+                        results={record.test_result}
+                        patient={record.patient}
+                        workOrder={record}
+                        currentGeneratedId={currentGeneratedId}
+                        onGenerate={handleGenerate}
+                    />
                 )
             }} />
         </Datagrid>
