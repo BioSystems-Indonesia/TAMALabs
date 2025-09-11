@@ -1,9 +1,9 @@
-import { Stack, useTheme, Card, CardContent, Chip } from '@mui/material';
+import { Stack, useTheme, Card, CardContent, Chip, Typography } from '@mui/material';
 import Box from "@mui/material/Box";
 import { useTheme as useMuiTheme } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrayInput, AutocompleteInput, BooleanField, BooleanInput, Create, Datagrid, Edit, FunctionField, List, NumberInput, Show, SimpleForm, SimpleFormIterator, TextField, TextInput, required } from "react-admin";
+import { ArrayInput, AutocompleteInput, BooleanField, Create, Datagrid, Edit, FunctionField, List, NumberInput, Show, SimpleForm, SimpleFormIterator, TextField, TextInput, required } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
 import FeatureList from "../../component/FeatureList";
