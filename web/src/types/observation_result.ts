@@ -28,6 +28,7 @@ export type TestResult = {
   formatted_result: number;
   unit: string;
   category: string;
+  specimen_type: string;
   abnormal: number;
   reference_range: string;
   created_at: string;

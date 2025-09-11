@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"regexp"
 
 	"github.com/hirochachacha/go-smb2"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -19,6 +20,24 @@ func NewA15() *A15 {
 }
 
 func (a A15) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
+	// // For testing - write to local directory instead of SMB
+	// localDir := "tmp/a15_test"
+	// err := os.MkdirAll(localDir, 0755)
+	// if err != nil {
+	// 	return fmt.Errorf("cannot create local directory %s: %v", localDir, err)
+	// }
+
+	// filePath := filepath.Join(localDir, "import.txt")
+	// content := createContentFile(req)
+
+	// err = os.WriteFile(filePath, content, 0644)
+	// if err != nil {
+	// 	return fmt.Errorf("cannot write file to local directory: %v", err)
+	// }
+
+	// slog.Info("Send to A15 (local test)", "file_path", filePath)
+	// return nil
+
 	conn, err := net.Dial("tcp", net.JoinHostPort(req.Device.IPAddress, req.Device.SendPort))
 	if err != nil {
 		return fmt.Errorf("cannot connect to %s:%s", req.Device.IPAddress, req.Device.SendPort)
@@ -133,11 +152,27 @@ func row(req *entity.SendPayloadRequest, p entity.Patient, s entity.Specimen, r 
 		class = "U"
 	}
 
+	// Remove any alphabetic prefix from barcode to get only the ID number
+	// This will handle SER, URI, or any other prefix followed by numbers
+	patientID := extractIDFromBarcode(s.Barcode)
+
 	return Sample{
 		Class:       class,
 		Type:        s.Type,
-		PatientID:   s.Barcode,
+		PatientID:   patientID,
 		TechniqueID: r.TestCode,
 		TestTubType: "T15",
 	}
+}
+
+// extractIDFromBarcode removes any alphabetic prefix and returns only the numeric part
+func extractIDFromBarcode(barcode string) string {
+	// Use regex to find the first sequence of digits in the barcode
+	re := regexp.MustCompile(`\d+`)
+	match := re.FindString(barcode)
+	if match != "" {
+		return match
+	}
+	// If no digits found, return the original barcode
+	return barcode
 }
