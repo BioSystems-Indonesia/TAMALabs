@@ -1,9 +1,9 @@
-import { 
-    Box, 
-    Card, 
-    CardContent, 
-    Typography, 
-    GridLegacy as Grid, 
+import {
+    Box,
+    Card,
+    CardContent,
+    Typography,
+    GridLegacy as Grid,
     Avatar,
     Stack,
     useTheme
@@ -24,48 +24,48 @@ export const AboutPage = () => {
 
 
     return (
-        <Box sx={{ 
+        <Box sx={{
             margin: '0 auto'
         }}>
             {/* Header Section */}
-            <Card sx={{ 
+            <Card sx={{
                 marginBottom: 4,
-                background: isDarkMode 
+                background: isDarkMode
                     ? `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`
                     : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                 color: 'white',
             }}>
                 <CardContent sx={{ padding: 4 }}>
-                    <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 3,
                         marginBottom: 3
                     }}>
-                        <Avatar sx={{ 
-                            width: 80, 
+                        <Avatar sx={{
+                            width: 80,
                             height: 80,
                             backgroundColor: 'white',
                             padding: 0.5
                         }}>
-                            <img 
-                                src={logo} 
-                                alt="Elga Tama Logo" 
-                                style={{ 
+                            <img
+                                src={logo}
+                                alt="Elga Tama Logo"
+                                style={{
                                     width: '100%',
                                     height: '100%',
                                     objectFit: 'contain',
-                                }} 
+                                }}
                             />
                         </Avatar>
                         <Box>
-                            <Typography variant="h3" sx={{ 
+                            <Typography variant="h3" sx={{
                                 fontWeight: 700,
                                 marginBottom: 1
                             }}>
-                                PT ELGA TAMA
+                                TAMALabs
                             </Typography>
-                            <Typography variant="h6" sx={{ 
+                            <Typography variant="h6" sx={{
                                 opacity: 0.9,
                                 fontWeight: 400
                             }}>
@@ -73,15 +73,15 @@ export const AboutPage = () => {
                             </Typography>
                         </Box>
                     </Box>
-                    
-                    <Typography variant="body1" sx={{ 
+
+                    <Typography variant="body1" sx={{
                         fontSize: '1.1rem',
                         lineHeight: 1.6,
                         opacity: 0.95
                     }}>
                         <strong>PT Elga Tama</strong> provides a smart and reliable <strong>Laboratory Information System (LIS)</strong> designed to simplify and automate laboratory processes. From sample tracking to result reporting, our system ensures speed, accuracy, and seamless integration with hospital systems and lab instruments.
                     </Typography>
-                    <Typography variant="body1" sx={{ 
+                    <Typography variant="body1" sx={{
                         fontSize: '1.1rem',
                         lineHeight: 1.6,
                         opacity: 0.95
@@ -94,26 +94,26 @@ export const AboutPage = () => {
             <Grid container spacing={4}>
                 {/* Company Information */}
                 <Grid item xs={12} md={6}>
-                    <Card sx={{ 
+                    <Card sx={{
                         height: '100%',
                         borderRadius: 2
                     }}>
                         <CardContent sx={{ padding: 3 }}>
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
                                 gap: 2,
                                 marginBottom: 3
                             }}>
-                                <BusinessIcon sx={{ 
-                                    fontSize: 32, 
-                                    color: theme.palette.primary.main 
+                                <BusinessIcon sx={{
+                                    fontSize: 32,
+                                    color: theme.palette.primary.main
                                 }} />
                                 <Typography variant="h5" sx={{ fontWeight: 600 }}>
                                     Company Information
                                 </Typography>
                             </Box>
-                            
+
                             <Stack spacing={2.5}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <EmailIcon sx={{ color: theme.palette.text.secondary }} />
@@ -126,7 +126,7 @@ export const AboutPage = () => {
                                         </Typography>
                                     </Box>
                                 </Box>
-                                
+
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <PhoneIcon sx={{ color: theme.palette.text.secondary }} />
                                     <Box>
@@ -138,7 +138,7 @@ export const AboutPage = () => {
                                         </Typography>
                                     </Box>
                                 </Box>
-                                
+
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <LocationOnIcon sx={{ color: theme.palette.text.secondary }} />
                                     <Box>
@@ -157,26 +157,26 @@ export const AboutPage = () => {
 
                 {/* System Features */}
                 <Grid item xs={12} md={6}>
-                    <Card sx={{ 
+                    <Card sx={{
                         height: '100%',
                         borderRadius: 2
                     }}>
                         <CardContent sx={{ padding: 3 }}>
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
                                 gap: 2,
                                 marginBottom: 3
                             }}>
-                                <ScienceIcon sx={{ 
-                                    fontSize: 32, 
-                                    color: theme.palette.success.main 
+                                <ScienceIcon sx={{
+                                    fontSize: 32,
+                                    color: theme.palette.success.main
                                 }} />
                                 <Typography variant="h5" sx={{ fontWeight: 600 }}>
                                     System Features
                                 </Typography>
                             </Box>
-                            
+
                             <Stack spacing={2}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <VerifiedIcon sx={{ color: theme.palette.success.main, fontSize: 20 }} />
@@ -184,21 +184,21 @@ export const AboutPage = () => {
                                         Sample Tracking & Management
                                     </Typography>
                                 </Box>
-                                
+
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <SecurityIcon sx={{ color: theme.palette.info.main, fontSize: 20 }} />
                                     <Typography variant="body1">
                                         Secure Data Management
                                     </Typography>
                                 </Box>
-                                
+
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <SpeedIcon sx={{ color: theme.palette.warning.main, fontSize: 20 }} />
                                     <Typography variant="body1">
                                         Real-time Result Processing
                                     </Typography>
                                 </Box>
-                                
+
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <VerifiedIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
                                     <Typography variant="body1">
