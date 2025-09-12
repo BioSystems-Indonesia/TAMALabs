@@ -1,4 +1,5 @@
 import RefreshIcon from '@mui/icons-material/Refresh';
+import SyncIcon from '@mui/icons-material/Sync';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ScienceIcon from '@mui/icons-material/Science';
 import { Box, Chip, Button as MUIButton, Stack, Typography, useTheme, CircularProgress, } from "@mui/material";
@@ -14,10 +15,10 @@ import {
     Link,
     List,
     NumberField,
-    ReferenceArrayField,
     ReferenceInput,
     TopToolbar,
     useNotify,
+    useRefresh,
     WithRecord,
     useListContext
 } from "react-admin";
@@ -36,10 +37,6 @@ export const ResultList = () => (
         sort={{ field: "id", order: "DESC" }}
         aside={<ResultSideFilter />}
         filters={ResultMoreFilter}
-        filterDefaultValues={{
-            created_at_start: dayjs().subtract(7, "day").toISOString(),
-            created_at_end: dayjs().toISOString(),
-        }}
         actions={<ResultActions />}
         exporter={false}
         storeKey={false}
@@ -61,6 +58,7 @@ export const ResultList = () => (
 function ResultActions() {
     const axios = useAxios()
     const notify = useNotify()
+    const refresh = useRefresh()
     return (
         <TopToolbar>
             <Button label={"Refresh"} onClick={() => {
@@ -75,6 +73,16 @@ function ResultActions() {
                 })
             }}>
                 <RefreshIcon />
+            </Button>
+            <Button label={"Sync Result to SIMRS"} onClick={async () => {
+                const response = await axios.post("/external/sync-all-results", {})
+
+                refresh()
+                notify("Sync Success " + response.statusText, {
+                    type: "success"
+                })
+            }}>
+                <SyncIcon />
             </Button>
         </TopToolbar>
     )
@@ -199,7 +207,6 @@ export const ResultDataGrid = (props: any) => {
             <WithRecord label="Verified" render={(record: WorkOrder) => (
                 <VerifiedChip verified={record.verified_status !== '' ? record.verified_status : "VERIFIED"} />
             )} />
-            <ReferenceArrayField label="Doctor" source="doctor_ids" reference="user" />
             <DateField source="created_at" showDate showTime />
             <WithRecord label="Print Result" render={(record: WorkOrder) => {
                 if (record.verified_status !== "" && record.verified_status !== "VERIFIED") {

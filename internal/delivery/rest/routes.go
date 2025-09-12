@@ -98,6 +98,7 @@ func RegisterRoutes(
 	adminHandler *AdminHandler,
 	authHandler *AuthHandler,
 	roleHandler *RoleHandler,
+	externalHandler *ExternalHandler,
 	authMiddleware *appMiddleware.JWTMiddleware,
 ) {
 	slog.Info("registering routes")
@@ -153,6 +154,8 @@ func RegisterRoutes(
 		testType.GET("", handler.ListTestType)
 		testType.GET("/filter", handler.ListTestTypeFilter)
 		testType.GET("/:id", handler.GetOneTestType)
+		testType.GET("/code/:code", handler.GetOneTestTypeByCode)
+		testType.GET("/alias-code/:alias_code", handler.GetOneTestTypeByAliasCode)
 		testType.POST("", handler.CreateTestType)
 		testType.PUT("/:id", handler.UpdateTestType)
 		testType.DELETE("/:id", handler.DeleteTestType)
@@ -222,6 +225,8 @@ func RegisterRoutes(
 	}
 
 	handler.RegisterFeatureList(authenticatedV1)
+
+	externalHandler.RegisterRoutes(authenticatedV1)
 }
 
 func registerFrontendPath(e *echo.Echo) {

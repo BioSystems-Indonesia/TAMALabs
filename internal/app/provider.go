@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"log/slog"
 	"os"
 	"sync"
@@ -17,9 +18,11 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/oibacidem/lims-hl-seven/config"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/cron"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
+	khanza "github.com/oibacidem/lims-hl-seven/internal/repository/external/khanza"
 	devicerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
 	"github.com/oibacidem/lims-hl-seven/migrations"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
@@ -53,9 +56,11 @@ func provideRestServer(
 	authHandler *rest.AuthHandler,
 	adminHandler *rest.AdminHandler,
 	roleHandler *rest.RoleHandler,
+	khanzaHandler *rest.ExternalHandler,
 	authMiddleware *middleware.JWTMiddleware,
+	cronManager *cron.CronManager,
 ) server.RestServer {
-	serv := server.NewRest(config.Port, validate)
+	serv := server.NewRest(config.Port, validate, cronManager)
 	rest.RegisterMiddleware(serv.GetClient())
 	rest.RegisterRoutes(serv.GetClient(), handlers,
 		deviceHandler,
@@ -64,6 +69,7 @@ func provideRestServer(
 		adminHandler,
 		authHandler,
 		roleHandler,
+		khanzaHandler,
 		authMiddleware,
 	)
 	return serv
@@ -347,4 +353,24 @@ func provideConfig(db *gorm.DB) *config.Schema {
 		panic(err)
 	}
 	return &cfg
+}
+
+func provideKhanzaRepository(cfg *config.Schema) *khanza.Repository {
+	if cfg.KhanzaIntegrationEnabled != "true" {
+		return nil
+	}
+
+	bridgeDB, err := khanza.NewBridgeDB(cfg)
+	if err != nil {
+		slog.Error("Error on create khanza db connection. If you want to disable khanza integration, set KhanzaIntegrationEnabled to false on config", "error", err)
+		log.Fatalf("failed to create khanza db connection: %v", err)
+	}
+
+	mainDB, err := khanza.NewMainDB(cfg)
+	if err != nil {
+		slog.Error("Error on create khanza db connection. If you want to disable khanza integration, set KhanzaIntegrationEnabled to false on config", "error", err)
+		log.Fatalf("failed to create khanza db connection: %v", err)
+	}
+
+	return khanza.NewRepository(bridgeDB, mainDB)
 }

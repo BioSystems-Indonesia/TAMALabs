@@ -20,6 +20,18 @@ var seedConfig = []entity.Config{
 		ID:    "SigningKey",
 		Value: string(generateRandomSigningKey(32)),
 	},
+	{
+		ID:    "KhanzaIntegrationEnabled",
+		Value: "false",
+	},
+	{
+		ID:    "KhanzaBridgeDatabaseDSN",
+		Value: "root:secret@tcp(localhost:3306)/khanza?parseTime=true",
+	},
+	{
+		ID:    "KhanzaMainDatabaseDSN",
+		Value: "root:secret@tcp(localhost:3306)/khanza?parseTime=true",
+	},
 }
 
 // GenerateRandomSigningKey creates a cryptographically secure random signing key.

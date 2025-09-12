@@ -32,3 +32,16 @@ go.work.sum
 /statik/
 /development/
 /vendor/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Log files
+*.log
+logs/
+*.log.*

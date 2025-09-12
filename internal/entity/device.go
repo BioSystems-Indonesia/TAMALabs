@@ -26,19 +26,11 @@ func (d DeviceType) String() string {
 }
 
 var TableDeviceType = Tables{
-	{ID: string(DeviceTypeBA400), Name: string(DeviceTypeBA400), AdditionalInfo: DeviceCapability{
-		CanSend:    true,
-		CanReceive: true,
-	}},
-	{ID: string(DeviceTypeBA200), Name: string(DeviceTypeBA200), AdditionalInfo: DeviceCapability{
-		CanSend:    true,
-		CanReceive: true,
-	}},
 	{ID: string(DeviceTypeA15), Name: string(DeviceTypeA15), AdditionalInfo: DeviceCapability{
+		HavePath:   true,
 		CanReceive: true,
 		CanSend:    true,
 		HaveAuth:   true,
-		HavePath:   true,
 	}},
 	{ID: string(DeviceTypeAnalyxTria), Name: string(DeviceTypeAnalyxTria), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
@@ -51,15 +43,10 @@ var TableDeviceType = Tables{
 	}},
 	{ID: string(DeviceTypeOther), Name: string(DeviceTypeOther), AdditionalInfo: DeviceCapability{
 		CanSend:    true,
-		CanReceive: true,
+		HaveAuth:   true,
 	}},
-	{ID: string(DeviceTypeCoax), Name: string(DeviceTypeCoax), AdditionalInfo: DeviceCapability{
+	{ID: string(DeviceTypeSwelabAlfa), Name: string(DeviceTypeSwelabAlfa), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
-		UseSerial:  true,
-	}},
-	{ID: string(DeviceTypeBiomedicaNCC3300), Name: string(DeviceTypeBiomedicaNCC3300), AdditionalInfo: DeviceCapability{
-		CanReceive: true,
-		UseSerial:  true,
 	}},
 	{ID: string(DeviceTypeSwelabBasic), Name: string(DeviceTypeSwelabBasic), AdditionalInfo: DeviceCapability{
 		CanReceive: true,

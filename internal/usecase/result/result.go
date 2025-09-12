@@ -108,7 +108,11 @@ func (u *Usecase) PutTestResult(ctx context.Context, result entity.TestResult) (
 
 	obs.TestType, err = u.testTypeRepository.FindOneByCode(ctx, obs.TestCode)
 	if err != nil {
-		slog.Info("cannot fill test type for result", "id", obs.ID, "error", err)
+		// Try to find by alias_code if not found by code
+		obs.TestType, err = u.testTypeRepository.FindOneByAliasCode(ctx, obs.TestCode)
+		if err != nil {
+			slog.Info("cannot fill test type for result", "id", obs.ID, "error", err)
+		}
 	}
 
 	// Get specimen type for this observation result

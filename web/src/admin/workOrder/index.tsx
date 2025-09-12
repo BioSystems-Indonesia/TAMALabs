@@ -1,5 +1,6 @@
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import { Box, CircularProgress, Dialog, DialogContent, DialogTitle, Divider, useTheme } from "@mui/material";
+import SyncIcon from "@mui/icons-material/Sync";
 import ScienceIcon from '@mui/icons-material/Science';
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
@@ -10,6 +11,7 @@ import {
     AutocompleteArrayInput,
     Button,
     Create,
+    CreateButton,
     Datagrid,
     DateField,
     DeleteButton,
@@ -421,7 +423,43 @@ const WorkOrderListBulkActionButtons = (props: RunWorkOrderProps) => (
     </>
 )
 
-const WorkOrderDataGrid = () => {
+
+function WorkOrderListActions() {
+    const axios = useAxios()
+    const notify = useNotify()
+    const refresh = useRefresh()
+    return (
+        <TopToolbar>
+            <Button label={"Sync request from SIMRS"} onClick={async () => {
+                const response = await axios.post("/external/sync-all-requests", {})
+
+                refresh()
+                notify("Sync Success " + response.statusText, {
+                    type: "success"
+                })
+            }}>
+                <SyncIcon />
+            </Button>
+            <CreateButton/>
+        </TopToolbar>
+    )
+}
+
+export const WorkOrderList = () => {
+    const [open, setOpen] = useState(false)
+
+    return (
+        <List sort={{
+            field: "id",
+            order: "DESC"
+        }} aside={<WorkOrderSideFilters />} 
+        actions={<WorkOrderListActions/>}
+        title="Lab Request" exporter={false}
+            storeKey={false}
+            sx={{
+                '& .RaList-content': {
+
+    const WorkOrderDataGrid = () => {
     const { isLoading, isFetching, data } = useListContext();
     const [open, setOpen] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);

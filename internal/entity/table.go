@@ -73,9 +73,6 @@ var TableSex = Tables{
 	{
 		ID: `F`, Name: `Female`,
 	},
-	{
-		ID: `U`, Name: `Unknown`,
-	},
 }
 
 var TableSpecimenTest = Tables{

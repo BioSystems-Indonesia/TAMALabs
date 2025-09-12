@@ -27,6 +27,14 @@ func (u *Usecase) FindOneByID(ctx context.Context, id int) (entity.TestType, err
 	return u.repository.FindOneByID(ctx, id)
 }
 
+func (u *Usecase) FindOneByCode(ctx context.Context, code string) (entity.TestType, error) {
+	return u.repository.FindOneByCode(ctx, code)
+}
+
+func (u *Usecase) FindOneByAliasCode(ctx context.Context, aliasCode string) (entity.TestType, error) {
+	return u.repository.FindOneByAliasCode(ctx, aliasCode)
+}
+
 func (u *Usecase) Create(ctx context.Context, req *entity.TestType) (entity.TestType, error) {
 	return u.repository.Create(ctx, req)
 }

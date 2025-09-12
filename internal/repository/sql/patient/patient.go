@@ -10,6 +10,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type PatientRepository struct {
@@ -81,6 +82,13 @@ func (r PatientRepository) FindOne(id int64) (entity.Patient, error) {
 
 func (r PatientRepository) Create(patient *entity.Patient) error {
 	return r.db.Create(patient).Error
+}
+
+func (r PatientRepository) CreateManyFromSIMRS(patients []entity.Patient) error {
+	return r.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "simrs_pid"}},
+		DoUpdates: clause.AssignmentColumns([]string{"first_name", "last_name", "birthdate", "sex", "address"}),
+	}).Create(patients).Error
 }
 
 func (r PatientRepository) Update(patient *entity.Patient) error {

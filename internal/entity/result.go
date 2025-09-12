@@ -50,8 +50,25 @@ type TestResult struct {
 	ReferenceRange  string         `json:"reference_range"`
 	CreatedAt       string         `json:"created_at"`
 	Picked          bool           `json:"picked"`
+	TestType        TestType       `json:"test_type"`
 
 	History []TestResult `json:"history"`
+}
+
+func (r TestResult) GetResult() float64 {
+	if r.Result == nil {
+		return 0
+	}
+
+	return *r.Result
+}
+
+func (r TestResult) GetFormattedResult() float64 {
+	if r.FormattedResult == nil {
+		return 0
+	}
+
+	return *r.FormattedResult
 }
 
 // CreateEmpty why we create empty result test? because we need the placeholder for the result test
@@ -73,6 +90,7 @@ func (r TestResult) CreateEmpty(request ObservationRequest, specimen Specimen) T
 		Abnormal:       NoDataResult,
 		Picked:         false,
 		History:        []TestResult{},
+		TestType:       request.TestType,
 	}
 }
 
@@ -88,6 +106,7 @@ func (r TestResult) FromObservationResult(observation ObservationResult, specime
 		ReferenceRange: fmt.Sprintf("%.2f - %.2f", observation.TestType.LowRefRange, observation.TestType.HighRefRange),
 		CreatedAt:      observation.UpdatedAt.Format(time.RFC3339),
 		Picked:         observation.Picked,
+		TestType:       observation.TestType,
 
 		// Result, Abnormal will be filled below
 		Result:   nil,
@@ -165,6 +184,7 @@ func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[i
 			ReferenceRange: fmt.Sprintf("%.2f - %.2f", h.TestType.LowRefRange, h.TestType.HighRefRange),
 			CreatedAt:      h.CreatedAt.Format(time.RFC3339),
 			Picked:         h.Picked,
+			TestType:       h.TestType,
 		}
 	}
 

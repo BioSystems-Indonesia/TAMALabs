@@ -1,5 +1,7 @@
 import { CircularProgress, Stack, Card, CardContent, Typography, Chip, Box as MuiBox, useTheme } from "@mui/material";
 import Box from "@mui/material/Box";
+import LanIcon from '@mui/icons-material/Lan';
+
 import { useEffect, useState } from 'react';
 import {
     AutocompleteInput,
@@ -90,7 +92,6 @@ export function DeviceForm(props: DeviceFormProps) {
                                 >
                                     ℹ️ System Information
                                 </Typography>
-
                                 <TextInput
                                     source={"id"}
                                     readOnly={true}
@@ -274,6 +275,7 @@ function NetworkConfig(props: NetworkConfigProps) {
                     >
                         🌐 Network Configuration
                     </Typography>
+
                     <Chip
                         label="Required"
                         size="small"
@@ -501,7 +503,6 @@ function PathConfig(props: DeviceFormProps) {
                         sx={{ ml: 'auto', fontSize: '0.75rem' }}
                     />
                 </Box>
-
                 <TextInput
                     source="path"
                     readOnly={props.readonly}
@@ -590,13 +591,17 @@ const DeviceCard = ({ record, connectionStatuses }: { record: Device, connection
             >
                 <CardContent sx={{ position: "relative", height: 220 }}>
                     <MuiBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                        <Typography variant="h5" component="div">
-                            {record.name}
-                        </Typography>
-                        <Chip
-                            label={`ID: ${record.id}`}
-                            size="small"
-                            color="primary"
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <LanIcon color="primary" />
+                            <Typography variant="h6" component="div">
+                                {record.name}
+                            </Typography>
+                        </Box>
+                        <Chip 
+                            label={`ID: ${record.id}`} 
+                            size="small" 
+                            color="primary" 
+
                             variant="outlined"
                         />
                     </MuiBox>
@@ -722,6 +727,60 @@ const DeviceCardList = ({ connectionStatuses, setDeviceIds }: {
     );
 };
 
+// const DeviceFilterSidebar = () => {
+//     const theme = useTheme();
+//     const isDarkMode = theme.palette.mode === 'dark';
+    
+//     return (
+//         <SideFilter sx={{
+//             backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
+//         }}>
+//             <FilterLiveForm debounce={1500}>
+//                 <Stack spacing={0}>
+//                     <Box>
+//                         <Typography variant="h6" sx={{ 
+//                             color: theme.palette.text.primary, 
+//                             marginBottom: 2, 
+//                             fontWeight: 600,
+//                             fontSize: '1.1rem',
+//                             textAlign: 'center'
+//                         }}>
+//                             🖥️ Filter Devices
+//                         </Typography>
+//                     </Box>
+//                     <SearchInput 
+//                         source="q" 
+//                         alwaysOn 
+//                         sx={{
+//                             '& .MuiOutlinedInput-root': {
+//                                 backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
+//                                 borderRadius: '12px',
+//                                 transition: 'all 0.3s ease',
+//                                 border: isDarkMode ? `1px solid ${theme.palette.divider}` : '1px solid #e5e7eb',
+//                                 '&:hover': {
+//                                     backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
+//                                 },
+//                                 '&.Mui-focused': {
+//                                     backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
+//                                 }
+//                             },
+//                             '& .MuiInputLabel-root': {
+//                                 color: theme.palette.text.secondary,
+//                                 fontWeight: 500,
+//                             }
+//                         }} 
+//                     />
+//                 </Stack>
+//             </FilterLiveForm>
+//         </SideFilter>
+//     )
+// };
+
+// const DeviceFilterSidebar = () => (
+//     <SideFilter>
+//         <FilterLiveSearch />
+//     </SideFilter>
+// );
 
 export const DeviceList = () => {
     const [deviceIds, setDeviceIds] = useState<number[]>([]);

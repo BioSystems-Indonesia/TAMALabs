@@ -67,6 +67,34 @@ func (h *TestTypeHandler) GetOneTestType(c echo.Context) error {
 	return c.JSON(http.StatusOK, testType)
 }
 
+func (h *TestTypeHandler) GetOneTestTypeByCode(c echo.Context) error {
+	code := c.Param("code")
+	if code == "" {
+		return handleError(c, entity.ErrBadRequest.WithInternal(nil))
+	}
+
+	testType, err := h.testTypeUsecase.FindOneByCode(c.Request().Context(), code)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, testType)
+}
+
+func (h *TestTypeHandler) GetOneTestTypeByAliasCode(c echo.Context) error {
+	aliasCode := c.Param("alias_code")
+	if aliasCode == "" {
+		return handleError(c, entity.ErrBadRequest.WithInternal(nil))
+	}
+
+	testType, err := h.testTypeUsecase.FindOneByAliasCode(c.Request().Context(), aliasCode)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, testType)
+}
+
 func (h *TestTypeHandler) CreateTestType(c echo.Context) error {
 	var req entity.TestType
 	if err := bindAndValidate(c, &req); err != nil {

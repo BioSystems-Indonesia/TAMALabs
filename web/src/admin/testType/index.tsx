@@ -1,6 +1,9 @@
+
+import Typography from "@mui/material/Typography";
 import { Stack, useTheme, Card, CardContent, Chip, Typography } from '@mui/material';
 import Box from "@mui/material/Box";
 import { useTheme as useMuiTheme } from "@mui/material/styles";
+
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrayInput, AutocompleteInput, BooleanField, Create, Datagrid, Edit, FunctionField, List, NumberInput, Show, SimpleForm, SimpleFormIterator, TextField, TextInput, required } from "react-admin";
@@ -19,6 +22,7 @@ export const TestTypeDatagrid = (props: any) => {
             <TextField source="id" />
             <TextField source="name" />
             <TextField source="code" />
+            <TextField source="alias_code" label="Alias Code" />
             <TextField source="category" />
             <TextField source="sub_category" />
             <TextField source="low_ref_range" label="low" />
@@ -80,7 +84,7 @@ export const TestTypeList = () => {
     );
 };
 
-function ReferenceSection() {
+function ReferenceSection() {    
     return (
         <Box sx={{ width: "100%" }}>
         </Box>
@@ -191,6 +195,25 @@ function TestTypeInput(props: TestTypeFormProps) {
                                 source="code"
                                 readOnly={props.readonly}
                                 validate={[required()]}
+                                fullWidth
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                        transition: 'all 0.2s ease',
+                                        ...(!props.readonly && {
+                                            '&:hover': {
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                            }
+                                        })
+                                    }
+                                }}
+                            />
+
+                            <TextInput
+                                source="alias_code"
+                                label="Alias Code (SIMRS)"
+                                helperText="Optional: For SIMRS integration"
+                                readOnly={props.readonly}
                                 fullWidth
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
@@ -490,7 +513,6 @@ export function TestTypeEdit() {
 
 export function TestTypeCreate() {
     const theme = useTheme();
-
     return (
         <Box sx={{
             minHeight: '100vh',

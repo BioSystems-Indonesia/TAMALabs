@@ -129,12 +129,15 @@ func (r WorkOrderRepository) FindAll(
 	db := r.db.WithContext(ctx)
 	db = sql.ProcessGetMany(db, req.GetManyRequest, sql.Modify{})
 
-	if !req.CreatedAtStart.IsZero() {
-		db = db.Where("work_orders.created_at >= ?", req.CreatedAtStart.Add(-24*time.Hour))
-	}
+	// Prioritize ID filter
+	if len(req.GetManyRequest.ID) == 0 {
+		if !req.CreatedAtStart.IsZero() {
+			db = db.Where("work_orders.created_at >= ?", req.CreatedAtStart.Add(-24*time.Hour))
+		}
 
-	if !req.CreatedAtEnd.IsZero() {
-		db = db.Where("work_orders.created_at <= ?", req.CreatedAtEnd.Add(24*time.Hour))
+		if !req.CreatedAtEnd.IsZero() {
+			db = db.Where("work_orders.created_at <= ?", req.CreatedAtEnd.Add(24*time.Hour))
+		}
 	}
 
 	if len(req.BarcodeIds) > 0 {
@@ -808,4 +811,18 @@ func (r WorkOrderRepository) findNearestNumber(ctx context.Context, where string
 		Scan(&id).Error
 
 	return id, err
+}
+
+func (r WorkOrderRepository) GetBySIMRSBarcode(ctx context.Context, barcode string) (entity.WorkOrder, error) {
+	var workOrder entity.WorkOrder
+	err := r.db.Where("barcode_simrs = ?", barcode).
+		Take(&workOrder).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return entity.WorkOrder{}, entity.ErrNotFound
+	}
+	if err != nil {
+		return entity.WorkOrder{}, fmt.Errorf("error finding workOrder: %w", err)
+	}
+
+	return workOrder, nil
 }

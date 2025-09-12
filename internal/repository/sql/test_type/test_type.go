@@ -28,12 +28,13 @@ func (r *Repository) FindAll(
 		ProcessSearch: func(db *gorm.DB, query string) *gorm.DB {
 			return db.Where("name like ?", "%"+query+"%").
 				Or("code like ?", "%"+query+"%").
+				Or("(alias_code like ? AND alias_code != '')", "%"+query+"%").
 				Or("description like ?", "%"+query+"%")
 		},
 	})
 
 	if req.Code != "" {
-		db = db.Where("code like ?", "%"+req.Code+"%")
+		db = db.Where("code like ? OR (alias_code like ? AND alias_code != '')", "%"+req.Code+"%", "%"+req.Code+"%")
 	}
 
 	if len(req.Categories) != 0 {
@@ -85,10 +86,19 @@ func (r *Repository) FindOneByCode(ctx context.Context, code string) (entity.Tes
 	return data, nil
 }
 
+
+func (r *Repository) FindOneByAliasCode(ctx context.Context, aliasCode string) (entity.TestType, error) {
+	var data entity.TestType
+	if aliasCode == "" {
+		return entity.TestType{}, gorm.ErrRecordNotFound
+	}
+	if err := r.DB.Where("alias_code = ? AND alias_code != ''", aliasCode).First(&data).Error; err != nil {
+
 // FindOneByCodeAndSpecimenType finds test type by code and specimen type combination
 func (r *Repository) FindOneByCodeAndSpecimenType(ctx context.Context, code string, specimenType string) (entity.TestType, error) {
 	var data entity.TestType
 	if err := r.DB.Where("code = ? AND type LIKE ?", code, "%"+specimenType+"%").First(&data).Error; err != nil {
+
 		return entity.TestType{}, err
 	}
 	return data, nil
