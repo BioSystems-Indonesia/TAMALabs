@@ -4,8 +4,12 @@ import type { Patient } from "./patient";
 import type { Specimen } from "./specimen";
 import { User } from "./user";
 
-export type WorkOrderStatus = "PENDING" | "INCOMPLETE_SEND" | "COMPLETE" | "CANCELLED"
-export type VerifiedStatus = "PENDING" | "VERIFIED" | "REJECTED" | ""
+export type WorkOrderStatus =
+  | "PENDING"
+  | "INCOMPLETE_SEND"
+  | "COMPLETE"
+  | "CANCELLED";
+export type VerifiedStatus = "PENDING" | "VERIFIED" | "REJECTED" | "";
 
 export type WorkOrder = {
   id: number;
@@ -30,7 +34,12 @@ export type WorkOrder = {
   total_result_filled: number;
   percent_complete: number;
   have_complete_data: boolean;
-}
+};
 
-export const workOrderStatusShowCancel: WorkOrderStatus[] = ["PENDING", "INCOMPLETE_SEND"] as const
-export const workOrderStatusDontShowRun: WorkOrderStatus[] = ["INCOMPLETE_SEND"] as const
+export const workOrderStatusShowCancel: WorkOrderStatus[] = [
+  "PENDING",
+  "INCOMPLETE_SEND",
+] as const;
+export const workOrderStatusDontShowRun: WorkOrderStatus[] = [
+  "INCOMPLETE_SEND",
+] as const;

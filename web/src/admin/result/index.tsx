@@ -3,7 +3,6 @@ import SyncIcon from '@mui/icons-material/Sync';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ScienceIcon from '@mui/icons-material/Science';
 import { Box, Chip, Button as MUIButton, Stack, Typography, useTheme, CircularProgress, } from "@mui/material";
-import dayjs from "dayjs";
 import { useState } from "react";
 import {
     AutocompleteArrayInput,
@@ -183,7 +182,7 @@ export const ResultDataGrid = (props: any) => {
             <WithRecord label="Patient" render={(record: any) => (
                 <Link to={`/patient/${record.patient.id}/show`} resource="patient" label={"Patient"}
                     onClick={e => e.stopPropagation()}>
-                    #{record.patient.id}-{record.patient.first_name} {record.patient.last_name}
+                    {record.patient.first_name} {record.patient.last_name}
                 </Link>
             )} />
             <WithRecord label="Request" render={(record: any) => (

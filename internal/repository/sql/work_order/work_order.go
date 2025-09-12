@@ -826,3 +826,18 @@ func (r WorkOrderRepository) GetBySIMRSBarcode(ctx context.Context, barcode stri
 
 	return workOrder, nil
 }
+
+func (r WorkOrderRepository) ChangeStatus(ctx context.Context, id int64, status entity.WorkOrderStatus) error {
+	res := r.db.WithContext(ctx).Model(&entity.WorkOrder{}).
+		Where("id = ?", id).
+		Update("status", status)
+	if res.Error != nil {
+		return fmt.Errorf("error updating workOrder status: %w", res.Error)
+	}
+
+	if res.RowsAffected == 0 {
+		return entity.ErrNotFound
+	}
+
+	return nil
+}

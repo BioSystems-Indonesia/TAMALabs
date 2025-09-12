@@ -1,5 +1,4 @@
 
-import Typography from "@mui/material/Typography";
 import { Stack, useTheme, Card, CardContent, Chip, Typography } from '@mui/material';
 import Box from "@mui/material/Box";
 import { useTheme as useMuiTheme } from "@mui/material/styles";
@@ -84,7 +83,7 @@ export const TestTypeList = () => {
     );
 };
 
-function ReferenceSection() {    
+function ReferenceSection() {
     return (
         <Box sx={{ width: "100%" }}>
         </Box>

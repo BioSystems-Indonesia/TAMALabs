@@ -1,0 +1,2 @@
+-- NOTE: alias_code column was already added in migration 20250817025749
+-- This migration is intentionally left empty to maintain chronological order

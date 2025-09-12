@@ -14,6 +14,7 @@ require (
 	github.com/hirochachacha/go-smb2 v1.1.0
 	github.com/kardianos/hl7 v1.1.2
 	github.com/labstack/echo/v4 v4.13.3
+	github.com/labstack/gommon v0.4.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/viper v1.19.0
@@ -45,7 +46,6 @@ require (
 	github.com/jackc/pgx/v5 v5.7.4 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-sqlite3 v1.14.27 // indirect
 	github.com/microsoft/go-mssqldb v1.8.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect

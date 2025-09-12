@@ -41,7 +41,16 @@ const GenerateReportButton = (prop: GenerateReportButtonProps) => {
     )
 
     useEffect(() => {
-        setData(prop.results?.map(v => {
+        // Add null check for prop.results
+        if (!prop.results || !Array.isArray(prop.results)) {
+            setData([]);
+            return;
+        }
+
+        setData(prop.results.map(v => {
+            // Add null check for each result item
+            if (!v) return null;
+
             let abnormality = "Normal" as ReportDataAbnormality
             switch (v.abnormal) {
                 case 0:
@@ -62,17 +71,17 @@ const GenerateReportButton = (prop: GenerateReportButtonProps) => {
             }
 
             const reportData: ReportData = {
-                category: v.category,
-                parameter: v.test,
-                reference: v.reference_range,
-                unit: v.unit,
-                result: v.formatted_result,
+                category: v.category || '',
+                parameter: v.test || '',
+                reference: v.reference_range || '',
+                unit: v.unit || '',
+                result: v.formatted_result || 0, // Keep as number, use 0 as fallback
                 abnormality: abnormality,
-                subCategory: v.category,
+                subCategory: v.category || '',
             }
 
             return reportData
-        }))
+        }).filter(Boolean) as ReportData[]); // Filter out null values
     }, [prop.results]);
 
     useEffect(() => {
@@ -131,83 +140,96 @@ const GenerateReportButton = (prop: GenerateReportButtonProps) => {
             display: 'flex',
             transition: 'all 0.3s ease'
         }}>
-            <BlobProvider document={reportDocument}>
-                {({ url, loading, error }) => {
-                    if (error) {
-                        return <span style={{ color: 'red', fontSize: '12px' }}>Error: {error.message}</span>;
-                    }
+            {/* Only render BlobProvider when data is ready */}
+            {data && Array.isArray(data) && data.length >= 0 && prop.patient && prop.workOrder ? (
+                <BlobProvider document={reportDocument}>
+                    {({ url, loading, error }) => {
+                        if (error) {
+                            return <span style={{ color: 'red', fontSize: '12px' }}>Error: {error.message}</span>;
+                        }
 
-                    return (
-                        <Stack gap={0.5} direction={"row"} sx={{
-                            opacity: loading ? 0.8 : 1,
-                            transition: 'opacity 0.3s ease'
-                        }}>
-                            {/* Download PDF Button */}
-                            <Tooltip title={
-                                loading ? "Preparing PDF..." : "Download PDF Report"
-                            }>
-                                <span>
-                                    <IconButton
-                                        onClick={e => e.stopPropagation()}
-                                        download={`MCU_Result_${dayjs(prop.workOrder.created_at).format("YYYYMMDD")}_${prop.patient.id}_${prop.patient.first_name}_${prop.patient.last_name}.pdf`}
-                                        href={url || ''}
-                                        disabled={loading}
-                                        size="small"
-                                        sx={{
-                                            backgroundColor: loading ? 'action.disabled' : '#e3f2fd',
-                                            color: loading ? 'text.disabled' : '#1976d2',
-                                            '&:hover': {
-                                                backgroundColor: loading ? 'action.disabled' : '#bbdefb',
-                                                color: loading ? 'text.disabled' : '#0d47a1',
-                                            },
-                                            '&:disabled': {
-                                                backgroundColor: 'action.disabled',
-                                                color: 'text.disabled',
-                                            },
-                                            transition: 'all 0.3s ease'
-                                        }}
-                                    >
-                                        {loading ? <CircularProgress size={16} color="inherit" /> : <FileDownloadIcon fontSize="small" />}
-                                    </IconButton>
-                                </span>
-                            </Tooltip>
+                        return (
+                            <Stack gap={0.5} direction={"row"} sx={{
+                                opacity: loading ? 0.8 : 1,
+                                transition: 'opacity 0.3s ease'
+                            }}>
+                                {/* Download PDF Button */}
+                                <Tooltip title={
+                                    loading ? "Preparing PDF..." : "Download PDF Report"
+                                }>
+                                    <span>
+                                        <IconButton
+                                            onClick={e => e.stopPropagation()}
+                                            download={`MCU_Result_${dayjs(prop.workOrder.created_at).format("YYYYMMDD")}_${prop.patient.id}_${prop.patient.first_name}_${prop.patient.last_name}.pdf`}
+                                            href={url || ''}
+                                            disabled={loading}
+                                            size="small"
+                                            sx={{
+                                                backgroundColor: loading ? 'action.disabled' : '#e3f2fd',
+                                                color: loading ? 'text.disabled' : '#1976d2',
+                                                '&:hover': {
+                                                    backgroundColor: loading ? 'action.disabled' : '#bbdefb',
+                                                    color: loading ? 'text.disabled' : '#0d47a1',
+                                                },
+                                                '&:disabled': {
+                                                    backgroundColor: 'action.disabled',
+                                                    color: 'text.disabled',
+                                                },
+                                                transition: 'all 0.3s ease'
+                                            }}
+                                        >
+                                            {loading ? <CircularProgress size={16} color="inherit" /> : <FileDownloadIcon fontSize="small" />}
+                                        </IconButton>
+                                    </span>
+                                </Tooltip>
 
-                            {/* Print PDF Button */}
-                            <Tooltip title={
-                                loading ? "Preparing PDF..." : "Print PDF Report"
-                            }>
-                                <span>
-                                    <IconButton
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            if (url) {
-                                                window.open(url, '_blank')?.focus();
-                                            }
-                                        }}
-                                        disabled={loading}
-                                        size="small"
-                                        sx={{
-                                            backgroundColor: loading ? 'action.disabled' : '#f3e5f5',
-                                            color: loading ? 'text.disabled' : '#7b1fa2',
-                                            '&:hover': {
-                                                backgroundColor: loading ? 'action.disabled' : '#e1bee7',
-                                                color: loading ? 'text.disabled' : '#4a148c',
-                                            },
-                                            '&:disabled': {
-                                                backgroundColor: 'action.disabled',
-                                                color: 'text.disabled',
-                                            },
-                                            transition: 'all 0.3s ease'
-                                        }}
-                                    >
-                                        {loading ? <CircularProgress size={16} color="inherit" /> : <PrintIcon fontSize="small" />}
-                                    </IconButton>
-                                </span>
-                            </Tooltip>
-                        </Stack>
-                    );
-                }}
-            </BlobProvider>
+                                {/* Print PDF Button */}
+                                <Tooltip title={
+                                    loading ? "Preparing PDF..." : "Print PDF Report"
+                                }>
+                                    <span>
+                                        <IconButton
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                if (url) {
+                                                    window.open(url, '_blank')?.focus();
+                                                }
+                                            }}
+                                            disabled={loading}
+                                            size="small"
+                                            sx={{
+                                                backgroundColor: loading ? 'action.disabled' : '#f3e5f5',
+                                                color: loading ? 'text.disabled' : '#7b1fa2',
+                                                '&:hover': {
+                                                    backgroundColor: loading ? 'action.disabled' : '#e1bee7',
+                                                    color: loading ? 'text.disabled' : '#4a148c',
+                                                },
+                                                '&:disabled': {
+                                                    backgroundColor: 'action.disabled',
+                                                    color: 'text.disabled',
+                                                },
+                                                transition: 'all 0.3s ease'
+                                            }}
+                                        >
+                                            {loading ? <CircularProgress size={16} color="inherit" /> : <PrintIcon fontSize="small" />}
+                                        </IconButton>
+                                    </span>
+                                </Tooltip>
+                            </Stack>
+                        );
+                    }}
+                </BlobProvider>
+            ) : (
+                <Stack gap={0.5} direction={"row"}>
+                    <Tooltip title="Loading report data...">
+                        <span>
+                            <IconButton disabled size="small">
+                                <CircularProgress size={16} />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                </Stack>
+            )}
         </div>
     );
 };

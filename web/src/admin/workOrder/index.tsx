@@ -440,26 +440,12 @@ function WorkOrderListActions() {
             }}>
                 <SyncIcon />
             </Button>
-            <CreateButton/>
+            <CreateButton />
         </TopToolbar>
     )
 }
 
-export const WorkOrderList = () => {
-    const [open, setOpen] = useState(false)
-
-    return (
-        <List sort={{
-            field: "id",
-            order: "DESC"
-        }} aside={<WorkOrderSideFilters />} 
-        actions={<WorkOrderListActions/>}
-        title="Lab Request" exporter={false}
-            storeKey={false}
-            sx={{
-                '& .RaList-content': {
-
-    const WorkOrderDataGrid = () => {
+const WorkOrderDataGrid = () => {
     const { isLoading, isFetching, data } = useListContext();
     const [open, setOpen] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -556,7 +542,12 @@ export const WorkOrderList = () => {
                 <WithRecord label="Status" render={(record: any) => (
                     <Chip label={`${record.status}`} color={WorkOrderChipColorMap(record.status)} />
                 )} />
-                <ReferenceField source="patient_id" reference="patient">
+                <ReferenceField source="patient_id" reference="patient" link={false}>
+                    <WithRecord render={(patient: any) => (
+                        <Typography variant="body2">
+                            {patient?.full_name || patient?.patient_name || patient?.name || `${patient?.first_name || ''} ${patient?.last_name || ''}`.trim() || '-'}
+                        </Typography>
+                    )} />
                 </ReferenceField>
                 <TextField source="barcode" />
                 <WithRecord label="Barcode SIMRS" render={(record: any) => (
@@ -587,7 +578,9 @@ export const WorkOrderList = () => {
         <List sort={{
             field: "id",
             order: "DESC"
-        }} aside={<WorkOrderSideFilters />} title="Lab Request" exporter={false}
+        }} aside={<WorkOrderSideFilters />}
+            actions={<WorkOrderListActions />}
+            title="Lab Request" exporter={false}
             storeKey={false}
             sx={{
                 '& .RaList-content': {

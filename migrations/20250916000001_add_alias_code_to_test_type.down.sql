@@ -1,0 +1,2 @@
+-- NOTE: This migration was intentionally left empty in the up migration
+-- No action needed for rollback as alias_code column was added in migration 20250817025749

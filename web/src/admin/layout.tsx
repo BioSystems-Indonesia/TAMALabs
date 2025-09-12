@@ -199,7 +199,7 @@ const CompanyLogo = () => (
                 width: 'auto'
             }}
         />
-        <Typography variant="h6">RS. Alinda Husada</Typography>
+        <Typography variant="h6">PT Elga Tama</Typography>
     </Box>
 );
 

@@ -8,10 +8,10 @@ import {
     View,
 } from '@react-pdf/renderer';
 import useSettings from '../hooks/useSettings';
-import logo from '../assets/alinda-husada-logo.png'
-// import yt from '../assets/youtube.png'
-// import fb from '../assets/facebook.png'
-// import ig from '../assets/instagram.png'
+import logo from '../assets/elgatama-logo.png'
+import yt from '../assets/youtube.png'
+import fb from '../assets/facebook.png'
+import ig from '../assets/instagram.png'
 import type { ReportData } from '../types/observation_result';
 import { Patient } from "../types/patient.ts";
 import { WorkOrder } from '../types/work_order.ts';
@@ -19,8 +19,8 @@ import { WorkOrder } from '../types/work_order.ts';
 Font.register({
     family: 'Helvetica',
     fonts: [
-        { src: 'https://fonts.gstatic.com/s/crimsontext/v19/wlpigwHKFkZgtmSR3NB0oRJvaAJSA_JN3Q.ttf', fontWeight: 400 },
-        { src: 'https://fonts.gstatic.com/s/crimsontext/v19/wlp7gwHKFkZgtmSR3NB0oRJX6QJbBfJH3QkG.ttf', fontWeight: 700 },
+        { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxP.ttf', fontWeight: 400 },
+        { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmEU9fBBc9.ttf', fontWeight: 700 },
     ],
 });
 
@@ -32,7 +32,10 @@ const styles = StyleSheet.create({
         padding: 40,
     },
     header: {
-        marginBottom: 20,
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
     companyInfo: {
         width: '100%',
@@ -44,13 +47,13 @@ const styles = StyleSheet.create({
         textAlign: 'right',
     },
     logo: {
-        width: 60,
-        height: 60,
+        width: 64,
+        height: 64,
+        marginBottom: 10,
     },
     footer: {
-        marginTop: 20,
         position: 'absolute',
-        bottom: 10,
+        bottom: 30,
         padding: '0 40px',
         left: 0,
         right: 0,
@@ -198,7 +201,7 @@ const Header = () => {
                 }}>{settings.company_name}</Text>
                 <View style={{
                     width: '100%',
-                    height: 2,
+                    height: '0.2rem',
                     backgroundColor: 'rgb(74, 186, 171)'
                 }}>
                 </View>
@@ -217,7 +220,6 @@ const Header = () => {
                     >{settings.company_contact_email}</Text>
                 </View>
             </View>
-            <View style={{height: 3, width: "100%", backgroundColor: "black", marginTop: 5}}></View>
         </View>
     )
 };
@@ -293,9 +295,9 @@ const PatientInfo = ({ patient, workOrder }: { patient: Patient, workOrder: Work
 );
 
 const Footer = () => (
-    <View style={styles.footer} fixed>
+    <View style={styles.footer}>
         <View style={{
-            height: 2,
+            height: '0.2rem',
             backgroundColor: 'rgb(74, 186, 171)'
         }}>
         </View>
@@ -306,16 +308,16 @@ const Footer = () => (
             alignItems: 'center',
             justifyContent: 'space-between',
         }}>
-            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Image src={yt} style={{ width: 10, height: 10 }} />
+            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Image src={yt} style={{ width: 15, height: 15 }} />
                 <Text>BioSystems Indonesia</Text>
             </View>
-            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Image src={ig} style={{ width: 10, height: 10 }} />
+            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Image src={ig} style={{ width: 15, height: 15 }} />
                 <Text>@biosystems.ind</Text>
             </View>
-            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Image src={fb} style={{ width: 10, height: 10 }} />
+            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Image src={fb} style={{ width: 15, height: 15 }} />
                 <Text>BioSystems Indonesia</Text>
             </View>
         </View>
@@ -341,15 +343,15 @@ export const ReportDocument = ({ data, patientData, workOrderData }: { data: Rep
         <Document>
             <Page size={"A4"} style={styles.page} wrap>
                 <Header />
-                {/* <Footer /> */}
                 <View style={{
+                    marginTop: 20,
                     marginBottom: 15,
                 }}>
                     <Text style={{
                         textAlign: 'center',
                         fontSize: 12,
                         fontWeight: 'bold',
-                    }}>LABORATORY TEST RESULT</Text>
+                    }}>TEST RESULT</Text>
                 </View>
                 <PatientInfo patient={patientData} workOrder={workOrderData} />
                 {Object.entries(groupedData).map(([category, items]) => (
@@ -389,6 +391,7 @@ export const ReportDocument = ({ data, patientData, workOrderData }: { data: Rep
                         })}
                     </View>
                 ))}
+                <Footer />
             </Page>
         </Document>
     );

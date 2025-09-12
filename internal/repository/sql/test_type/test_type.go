@@ -86,13 +86,16 @@ func (r *Repository) FindOneByCode(ctx context.Context, code string) (entity.Tes
 	return data, nil
 }
 
-
 func (r *Repository) FindOneByAliasCode(ctx context.Context, aliasCode string) (entity.TestType, error) {
 	var data entity.TestType
 	if aliasCode == "" {
 		return entity.TestType{}, gorm.ErrRecordNotFound
 	}
 	if err := r.DB.Where("alias_code = ? AND alias_code != ''", aliasCode).First(&data).Error; err != nil {
+		return entity.TestType{}, err
+	}
+	return data, nil
+}
 
 // FindOneByCodeAndSpecimenType finds test type by code and specimen type combination
 func (r *Repository) FindOneByCodeAndSpecimenType(ctx context.Context, code string, specimenType string) (entity.TestType, error) {

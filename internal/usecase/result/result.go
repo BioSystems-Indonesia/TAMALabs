@@ -46,6 +46,7 @@ func (u *Usecase) Results(
 
 	for i := range resp.Data {
 		u.fillResultDetail(&resp.Data[i], true)
+		u.changeStatusIfNeeded(ctx, &resp.Data[i])
 	}
 
 	return resp, nil
@@ -297,4 +298,37 @@ func (u *Usecase) RejectResult(context context.Context, workOrderID int64, admin
 	}
 
 	return u.resultRepository.RejectResult(context, workOrderID)
+}
+
+func (u *Usecase) changeStatusIfNeeded(ctx context.Context, workOrder *entity.WorkOrder) {
+	if !u.needToChangeStatus(workOrder) {
+		return
+	}
+
+	workOrder.Status = entity.WorkOrderStatusCompleted
+
+	go func(id int64) {
+		err := u.workOrderRepository.ChangeStatus(ctx, id, entity.WorkOrderStatusCompleted)
+
+		if err != nil {
+			slog.ErrorContext(ctx, "failed to change status", "workOrderID", id, "error", err)
+			return
+		}
+	}(workOrder.ID)
+}
+
+func (u *Usecase) needToChangeStatus(workOrder *entity.WorkOrder) bool {
+	if workOrder.Status == entity.WorkOrderCancelled {
+		return false
+	}
+
+	if workOrder.Status == entity.WorkOrderStatusCompleted {
+		return false
+	}
+
+	if workOrder.PercentComplete < 1 {
+		return false
+	}
+
+	return true
 }
