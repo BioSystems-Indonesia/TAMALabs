@@ -3,7 +3,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ScienceIcon from '@mui/icons-material/Science';
 import { Box, Chip, Button as MUIButton, Stack, Typography, useTheme, CircularProgress, } from "@mui/material";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     AutocompleteArrayInput,
     BooleanInput,
@@ -82,23 +82,15 @@ function ResultActions() {
 
 export const ResultDataGrid = (props: any) => {
     const { isLoading, isFetching, data } = useListContext();
-    const [initialLoading, setInitialLoading] = useState(true);
     const [currentGeneratedId, setCurrentGeneratedId] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (data && data.length > 0) {
-            const timer = setTimeout(() => {
-                setInitialLoading(false);
-            }, 1);
-            return () => clearTimeout(timer);
-        }
-    }, [data]);
 
     const handleGenerate = (buttonId: string) => {
         setCurrentGeneratedId(buttonId);
     };
 
-    const shouldShowLoading = isLoading || isFetching || initialLoading || !data;
+
+    // Show loading only when actually loading and data hasn't been fetched yet
+    const shouldShowLoading = (isLoading || isFetching) && data === undefined;
 
     if (shouldShowLoading) {
         return (
