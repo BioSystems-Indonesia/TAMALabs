@@ -62,7 +62,7 @@ func showErrorOnPanic() {
 		default:
 			slog.Error("Error on startup", slog.String("error", fmt.Sprintf("%v", err)))
 		}
-		showErrorMessage("Cannot open LIS", fmt.Sprintf("%v", err))
+		// showErrorMessage("Cannot open LIS", fmt.Sprintf("%v", err))
 		os.Exit(1)
 	}
 }

@@ -86,6 +86,7 @@ func (u *AuthUseCase) createAccessToken(ctx context.Context, admin entity.Admin)
 		Fullname:  admin.Fullname,
 		Email:     email,
 		IsActive:  admin.IsActive,
+		Role:      admin.Roles[0].Name,
 		CreatedAt: admin.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: admin.UpdatedAt.Format(time.RFC3339),
 		RegisteredClaims: jwt.RegisteredClaims{

@@ -37,13 +37,13 @@ import { WorkOrderStatusChipField } from "./ChipFieldStatus";
 import RunWorkOrderForm from './RunWorkOrderForm';
 
 const detectBrowser = () => {
-  const userAgent = navigator.userAgent;
+    const userAgent = navigator.userAgent;
 
-  if (userAgent.includes("Edg/")) {
-    return "Edge";
-  } else {
-    return "Other";
-  }
+    if (userAgent.includes("Edg/")) {
+        return "Edge";
+    } else {
+        return "Other";
+    }
 };
 
 
@@ -134,7 +134,7 @@ export function WorkOrderShow() {
         <Show actions={<WorkOrderShowActions barcodeRef={barcodeRef} workOrderID={Number(workOrderID)} />}>
             <TabbedShowLayout>
                 <TabbedShowLayout.Tab label="Test">
-                    <Card elevation={0} sx={{borderBottom:'2px solid rgba(0, 0, 0, 0.1)'}}>
+                    <Card elevation={0} sx={{ borderBottom: '2px solid rgba(0, 0, 0, 0.1)' }}>
                         <WithRecord render={(data: WorkOrder) => {
                             return (
                                 <CardContent sx={{
@@ -153,7 +153,7 @@ export function WorkOrderShow() {
                             )
                         }} />
                     </Card>
-                    <Card elevation={0} sx={{borderBottom:'2px solid rgba(0, 0, 0, 0.1)'}}>
+                    <Card elevation={0} sx={{ borderBottom: '2px solid rgba(0, 0, 0, 0.1)' }}>
                         <CardContent sx={{
                             display: "flex",
                             justifyContent: "center",
@@ -192,7 +192,7 @@ export function WorkOrderShow() {
                             }} />
                         </CardContent>
                     </Card>
-                    <Card elevation={0} sx={{borderBottom:'2px solid rgba(0, 0, 0, 0.1)'}}>
+                    <Card elevation={0} sx={{ borderBottom: '2px solid rgba(0, 0, 0, 0.1)' }}>
                         <CardContent sx={{
                             display: "flex",
                             justifyContent: "center",
@@ -237,7 +237,7 @@ export function WorkOrderShow() {
                                                 <Typography variant='subtitle1' sx={{
                                                     textAlign: "center",
                                                 }}>Analyzer</Typography>
-                                                <RecordContextProvider value={record.analyzers}>
+                                                <RecordContextProvider value={record.analyst}>
                                                     <AdminShow icon={<ScienceIcon />} />
                                                 </RecordContextProvider>
                                             </Stack>

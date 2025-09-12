@@ -115,7 +115,16 @@ func (u *Usecase) PutTestResult(ctx context.Context, result entity.TestResult) (
 		}
 	}
 
-	result = result.FromObservationResult(obs)
+	// Get specimen type for this observation result
+	specimen, err := u.specimenRepository.FindOne(ctx, obs.SpecimenID)
+	specimenType := ""
+	if err != nil {
+		slog.Info("cannot find specimen for result", "specimen_id", obs.SpecimenID, "error", err)
+	} else {
+		specimenType = specimen.Type
+	}
+
+	result = result.FromObservationResult(obs, specimenType)
 	// Hack so the front end is not add first then replace
 	// TODO maybe need to find better way than this
 	if oldResult.ID != 0 {
@@ -127,7 +136,11 @@ func (u *Usecase) PutTestResult(ctx context.Context, result entity.TestResult) (
 		slog.Info("cannot get history", "error", err)
 	}
 
-	result = result.FillHistory(history)
+	// Create specimen types map for history
+	specimenTypes := make(map[int64]string)
+	specimenTypes[obs.SpecimenID] = specimenType
+
+	result = result.FillHistory(history, specimenTypes)
 
 	return result, nil
 }
@@ -155,7 +168,12 @@ func (u *Usecase) groupResultInCategory(tests []entity.TestResult) map[string][]
 func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder, hideEmpty bool) {
 	var allObservationRequests []entity.ObservationRequest
 	var allObservationResults []entity.ObservationResult
+
+	// Create a map from specimen ID to specimen type for quick lookup
+	specimenTypes := make(map[int64]string)
+
 	for _, specimen := range workOrder.Specimen {
+		specimenTypes[int64(specimen.ID)] = specimen.Type
 		allObservationRequests = append(allObservationRequests, specimen.ObservationRequest...)
 		allObservationResults = append(allObservationResults, specimen.ObservationResult...)
 	}
@@ -163,7 +181,15 @@ func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder, hideEmpty bool) 
 	allTests := make([]entity.TestResult, len(allObservationRequests))
 	// create the placeholder first
 	for i, request := range allObservationRequests {
-		allTests[i] = entity.TestResult{}.CreateEmpty(request)
+		// Find the corresponding specimen for this request
+		var correspondingSpecimen entity.Specimen
+		for _, specimen := range workOrder.Specimen {
+			if int64(specimen.ID) == request.SpecimenID {
+				correspondingSpecimen = specimen
+				break
+			}
+		}
+		allTests[i] = entity.TestResult{}.CreateEmpty(request, correspondingSpecimen)
 	}
 
 	// sort by test code
@@ -181,15 +207,22 @@ func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder, hideEmpty bool) 
 	// ok final step to create the order data
 	testResults := map[string][]entity.ObservationResult{}
 	for _, observation := range allObservationResults {
-		// TODO check whether this will create chaos in order or not
-		testResults[observation.TestCode] = append(testResults[observation.TestCode], observation)
+		// Create a composite key: testCode + specimenType for more precise matching
+		// Get specimen type for this observation
+		specimenType := specimenTypes[observation.SpecimenID]
+		compositeKey := fmt.Sprintf("%s:%s", observation.TestCode, specimenType)
+
+		testResults[compositeKey] = append(testResults[compositeKey], observation)
 	}
 
 	// fill the placeholder
 	totalResultFilled := 0
 	for i, test := range allTests {
 		newTest := test
-		history := testResults[test.Test]
+		// Create composite key for matching: testCode + specimenType
+		compositeKey := fmt.Sprintf("%s:%s", test.Test, test.SpecimenType)
+		history := testResults[compositeKey]
+
 		if len(history) > 0 {
 			// Pick the latest history or the manually picked one
 			pickedTest := history[0]
@@ -200,9 +233,11 @@ func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder, hideEmpty bool) 
 				}
 			}
 
-			newTest = newTest.FromObservationResult(pickedTest)
+			// Get specimen type for this observation result
+			specimenType := specimenTypes[pickedTest.SpecimenID]
+			newTest = newTest.FromObservationResult(pickedTest, specimenType)
 		}
-		newTest = newTest.FillHistory(history)
+		newTest = newTest.FillHistory(history, specimenTypes)
 
 		// or should be like this or we can just use the above code
 		allTests[i] = newTest

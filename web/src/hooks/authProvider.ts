@@ -9,6 +9,7 @@ import {
 } from "../types/constant";
 import { createAxiosInstance } from "./useAxios";
 import { AxiosError } from "axios";
+import { jwtDecode } from "jwt-decode";
 
 const authProvider: AuthProvider = {
   async login({ username, password }) {
@@ -18,9 +19,6 @@ const authProvider: AuthProvider = {
         username: username,
         password: password,
       });
-
-
-
       localStorage.setItem(
         LOCAL_STORAGE_ACCESS_TOKEN,
         response.data.access_token
@@ -83,6 +81,19 @@ const authProvider: AuthProvider = {
       id: admin.id,
       fullName: admin.fullname,
     };
+  },
+  async getPermissions(): Promise<string> {
+    const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN);
+    if (!token) {
+      throw new Error("No token");
+    }
+
+    try {
+      const decoded = jwtDecode(token) as { role: string };
+      return decoded.role;
+    } catch (error) {
+      throw new Error("Invalid token");
+    }
   },
 };
 

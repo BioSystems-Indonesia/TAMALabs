@@ -50,7 +50,7 @@ func (p DeviceUseCase) FindOneByID(ctx context.Context, id int64) (entity.Device
 
 func (p DeviceUseCase) Create(ctx context.Context, req *entity.Device) error {
 	if req.ReceivePort == "" {
-		req.ReceivePort = strconv.Itoa(p.RandomPort())
+		req.ReceivePort = p.getReceivePort(req)
 	}
 
 	device, err := p.deviceRepo.FindOneByReceivePort(req.ReceivePort)
@@ -76,9 +76,20 @@ func (p DeviceUseCase) Create(ctx context.Context, req *entity.Device) error {
 	return nil
 }
 
+func (p DeviceUseCase) getReceivePort(req *entity.Device) string {
+	//nolint:exhaustive
+	switch req.Type {
+	// BTS has specific port because it used UI from the device
+	case entity.DeviceTypeBTS:
+		return "8080"
+	default:
+		return strconv.Itoa(p.RandomPort())
+	}
+}
+
 func (p DeviceUseCase) Update(ctx context.Context, req *entity.Device) error {
 	if req.ReceivePort == "" {
-		req.ReceivePort = strconv.Itoa(p.RandomPort())
+		req.ReceivePort = p.getReceivePort(req)
 	}
 
 	device, err := p.deviceRepo.FindOneByReceivePort(req.ReceivePort)

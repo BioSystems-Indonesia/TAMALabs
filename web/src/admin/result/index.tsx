@@ -1,8 +1,10 @@
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SyncIcon from '@mui/icons-material/Sync';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { Box, Chip, Button as MUIButton, Stack, Typography, useTheme } from "@mui/material";
+import ScienceIcon from '@mui/icons-material/Science';
+import { Box, Chip, Button as MUIButton, Stack, Typography, useTheme, CircularProgress, } from "@mui/material";
 import dayjs from "dayjs";
+import { useState } from "react";
 import {
     AutocompleteArrayInput,
     BooleanInput,
@@ -17,10 +19,11 @@ import {
     TopToolbar,
     useNotify,
     useRefresh,
-    WithRecord
+    WithRecord,
+    useListContext
 } from "react-admin";
 import CustomDateInput from "../../component/CustomDateInput";
-import PrintReportButton from "../../component/PrintReport";
+import GenerateReportButton from "../../component/GenerateReportButton";
 import SideFilter from "../../component/SideFilter";
 import useAxios from "../../hooks/useAxios";
 import type { WorkOrder } from "../../types/work_order";
@@ -86,6 +89,88 @@ function ResultActions() {
 }
 
 export const ResultDataGrid = (props: any) => {
+    const { isLoading, isFetching, data } = useListContext();
+    const [currentGeneratedId, setCurrentGeneratedId] = useState<string | null>(null);
+
+    const handleGenerate = (buttonId: string) => {
+        setCurrentGeneratedId(buttonId);
+    };
+
+
+    // Show loading only when actually loading and data hasn't been fetched yet
+    const shouldShowLoading = (isLoading || isFetching) && data === undefined;
+
+    if (shouldShowLoading) {
+        return (
+            <Box>
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    minHeight="200px"
+                    flexDirection="column"
+                    gap={2}
+                    sx={{
+                        backgroundColor: 'background.paper',
+                        borderRadius: 2,
+                        mb: 2,
+                        p: 3
+                    }}
+                >
+                    <Box position="relative">
+                        <CircularProgress
+                            size={60}
+                            thickness={4}
+                            sx={{
+                                color: 'primary.main',
+                                animationDuration: '1.5s',
+                            }}
+                        />
+                        <Box
+                            position="absolute"
+                            top="50%"
+                            left="50%"
+                            sx={{
+                                transform: 'translate(-50%, -50%)',
+                            }}
+                        >
+                            <ScienceIcon
+                                sx={{
+                                    fontSize: 24,
+                                    color: 'primary.main',
+                                    animation: 'pulse 2s infinite',
+                                    '@keyframes pulse': {
+                                        '0%': { opacity: 1 },
+                                        '50%': { opacity: 0.5 },
+                                        '100%': { opacity: 1 },
+                                    }
+                                }}
+                            />
+                        </Box>
+                    </Box>
+
+                    <Typography
+                        variant="h6"
+                        color="text.primary"
+                        sx={{ fontWeight: 500 }}
+                    >
+                        Loading Lab Results...
+                    </Typography>
+
+                    <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        textAlign="center"
+                    >
+                        Please wait while we prepare your data and PDF reports...
+                    </Typography>
+                </Box>
+
+
+            </Box>
+        );
+    }
+
     return (
         <Datagrid bulkActionButtons={false} >
             <NumberField source="id" />
@@ -147,7 +232,13 @@ export const ResultDataGrid = (props: any) => {
                 }
 
                 return (
-                    <PrintReportButton results={record.test_result} patient={record.patient} workOrder={record} />
+                    <GenerateReportButton
+                        results={record.test_result}
+                        patient={record.patient}
+                        workOrder={record}
+                        currentGeneratedId={currentGeneratedId}
+                        onGenerate={handleGenerate}
+                    />
                 )
             }} />
         </Datagrid>
@@ -157,17 +248,17 @@ export const ResultDataGrid = (props: any) => {
 function ResultSideFilter() {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
-    
+
     return (
         <SideFilter sx={{
-            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
+            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
         }}>
             <FilterLiveForm debounce={1500}>
                 <Stack spacing={0}>
                     <Box>
-                        <Typography variant="h6" sx={{ 
-                            color: theme.palette.text.primary, 
-                            marginBottom: 2, 
+                        <Typography variant="h6" sx={{
+                            color: theme.palette.text.primary,
+                            marginBottom: 2,
                             fontWeight: 600,
                             fontSize: '1.1rem',
                             textAlign: 'center'
@@ -175,10 +266,10 @@ function ResultSideFilter() {
                             🔬 Filter Lab Results
                         </Typography>
                     </Box>
-                    <ReferenceInput 
-                        source={"patient_ids"} 
-                        reference="patient" 
-                        label={"Patient"} 
+                    <ReferenceInput
+                        source={"patient_ids"}
+                        reference="patient"
+                        label={"Patient"}
                         alwaysOn
                         sx={{
                             '& .MuiInputLabel-root': {
@@ -188,8 +279,8 @@ function ResultSideFilter() {
                             }
                         }}
                     >
-                        <AutocompleteArrayInput 
-                            size="small" 
+                        <AutocompleteArrayInput
+                            size="small"
                             sx={{
                                 '& .MuiOutlinedInput-root': {
                                     backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
@@ -197,16 +288,16 @@ function ResultSideFilter() {
                                     transition: 'all 0.3s ease',
                                     '&:hover': {
                                         backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
-                                       
+
                                     },
-                                  
+
                                 }
                             }}
                         />
                     </ReferenceInput>
                     <Box>
-                        <Typography variant="body2" sx={{ 
-                            color: theme.palette.text.secondary, 
+                        <Typography variant="body2" sx={{
+                            color: theme.palette.text.secondary,
                             marginBottom: 1.5,
                             fontSize: '0.85rem',
                             fontWeight: 500
@@ -214,12 +305,12 @@ function ResultSideFilter() {
                             📅 Date Range
                         </Typography>
                         <Stack>
-                            <CustomDateInput 
-                                label={"Start Date"} 
-                                source="created_at_start" 
-                                disableFuture 
-                                alwaysOn 
-                                size="small" 
+                            <CustomDateInput
+                                label={"Start Date"}
+                                source="created_at_start"
+                                disableFuture
+                                alwaysOn
+                                size="small"
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
@@ -229,8 +320,8 @@ function ResultSideFilter() {
                                         '&:hover': {
                                             backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
                                             borderColor: isDarkMode ? theme.palette.primary.main : '#9ca3af',
-                                            boxShadow: isDarkMode 
-                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)' 
+                                            boxShadow: isDarkMode
+                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)'
                                                 : '0 4px 12px rgba(0, 0, 0, 0.1)',
                                         },
                                         '&.Mui-focused': {
@@ -244,14 +335,14 @@ function ResultSideFilter() {
                                         fontWeight: 500,
                                         fontSize: '0.85rem',
                                     }
-                                }} 
+                                }}
                             />
-                            <CustomDateInput 
-                                label={"End Date"} 
-                                source="created_at_end" 
-                                disableFuture 
-                                alwaysOn 
-                                size="small" 
+                            <CustomDateInput
+                                label={"End Date"}
+                                source="created_at_end"
+                                disableFuture
+                                alwaysOn
+                                size="small"
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
@@ -261,8 +352,8 @@ function ResultSideFilter() {
                                         '&:hover': {
                                             backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
                                             borderColor: isDarkMode ? theme.palette.primary.main : '#9ca3af',
-                                            boxShadow: isDarkMode 
-                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)' 
+                                            boxShadow: isDarkMode
+                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)'
                                                 : '0 4px 12px rgba(0, 0, 0, 0.1)',
                                         },
                                         '&.Mui-focused': {
@@ -276,7 +367,7 @@ function ResultSideFilter() {
                                         fontWeight: 500,
                                         fontSize: '0.85rem',
                                     }
-                                }} 
+                                }}
                             />
                         </Stack>
                     </Box>

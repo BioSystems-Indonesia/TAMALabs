@@ -47,11 +47,11 @@ var seedPatient = []entity.Patient{
 }
 
 var seedDataTestType = []entity.TestType{
-	{Name: "RBC", Code: "RBC", Unit: "10^6/µL", LowRefRange: 4.5, HighRefRange: 5.9, TypeDB: "SER", Decimal: 0, Category: "Hematology", SubCategory: "Red Series", Description: "Red blood cell count."},
-	{Name: "HEMOGLOBIN", Code: "HGB", Unit: "g/dL", LowRefRange: 13.5, HighRefRange: 17.5, TypeDB: "", Decimal: 0, Category: "Hematology", SubCategory: "Red Series", Description: "Hemoglobin concentration in blood."},
-	{Name: "HEMATOCRIT", Code: "HCT", Unit: "%", LowRefRange: 41, HighRefRange: 50, TypeDB: "", Decimal: 0, Category: "Hematology", SubCategory: "Red Series", Description: "Percentage of red blood cells in blood."},
-	{Name: "MCV", Code: "MCV", Unit: "fL", LowRefRange: 80, HighRefRange: 100, TypeDB: "SER", Decimal: 0, Category: "Hematology", SubCategory: "Red Series", Description: "Mean corpuscular volume (size of red blood cells)."},
-	{Name: "MCH", Code: "MCH", Unit: "pg", LowRefRange: 27, HighRefRange: 31, TypeDB: "SER", Decimal: 0, Category: "Hematology", SubCategory: "Red Series", Description: "Mean corpuscular hemoglobin (average hemoglobin per red blood cell)."},
+	{Name: "RBC", Code: "RBC", Unit: "10^6/µL", LowRefRange: 4.5, HighRefRange: 5.9, TypeDB: "SER", Decimal: 0, Category: "Hematology", SubCategory: "Red Series", Description: "Red blood cell count.", IsCalculatedTest: false},
+	{Name: "HEMOGLOBIN", Code: "HGB", Unit: "g/dL", LowRefRange: 13.5, HighRefRange: 17.5, TypeDB: "", Decimal: 0, Category: "Hematology", SubCategory: "Red Series", Description: "Hemoglobin concentration in blood.", IsCalculatedTest: false},
+	{Name: "HEMATOCRIT", Code: "HCT", Unit: "%", LowRefRange: 41, HighRefRange: 50, TypeDB: "", Decimal: 0, Category: "Hematology", SubCategory: "Red Series", Description: "Percentage of red blood cells in blood.", IsCalculatedTest: false},
+	{Name: "MCV", Code: "MCV", Unit: "fL", LowRefRange: 80, HighRefRange: 100, TypeDB: "SER", Decimal: 0, Category: "Hematology", SubCategory: "Red Series", Description: "Mean corpuscular volume (size of red blood cells).", IsCalculatedTest: false},
+	{Name: "MCH", Code: "MCH", Unit: "pg", LowRefRange: 27, HighRefRange: 31, TypeDB: "SER", Decimal: 0, Category: "Hematology", SubCategory: "Red Series", Description: "Mean corpuscular hemoglobin (average hemoglobin per red blood cell).", IsCalculatedTest: false},
 	{Name: "MCHC", Code: "MCHC", Unit: "g/dL", LowRefRange: 32, HighRefRange: 36, TypeDB: "SER", Decimal: 0, Category: "Hematology", SubCategory: "Red Series", Description: "Mean corpuscular hemoglobin concentration."},
 	{Name: "RDW", Code: "RDW", Unit: "%", LowRefRange: 11.5, HighRefRange: 14.5, TypeDB: "SER", Decimal: 0, Category: "Hematology", SubCategory: "Red Series", Description: "Red cell distribution width (variation in size of red blood cells)."},
 	{Name: "RDW_CV", Code: "RDW_CV", Unit: "%", LowRefRange: 11.5, HighRefRange: 14.5, TypeDB: "SER", Decimal: 0, Category: "Hematology", SubCategory: "Red Series", Description: "Coefficient of variation in red cell distribution width."},

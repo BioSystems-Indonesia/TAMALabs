@@ -11,6 +11,7 @@ export interface TestType {
     category:       string;
     sub_category:   string;
     description:    string;
+    is_calculated_test: boolean;
     types: TestTypeSpecimenType[];
     decimal: number;
     work_order: WorkOrder;

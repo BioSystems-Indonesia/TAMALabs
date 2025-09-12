@@ -1,9 +1,12 @@
-import { Stack, useTheme, Card, CardContent, Chip } from '@mui/material';
-import Box from "@mui/material/Box";
+
 import Typography from "@mui/material/Typography";
+import { Stack, useTheme, Card, CardContent, Chip, Typography } from '@mui/material';
+import Box from "@mui/material/Box";
+import { useTheme as useMuiTheme } from "@mui/material/styles";
+
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrayInput, AutocompleteInput, Create, Datagrid, Edit, FunctionField, List, NumberInput, SimpleForm, SimpleFormIterator, TextField, TextInput, required } from "react-admin";
+import { ArrayInput, AutocompleteInput, BooleanField, Create, Datagrid, Edit, FunctionField, List, NumberInput, Show, SimpleForm, SimpleFormIterator, TextField, TextInput, required } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
 import FeatureList from "../../component/FeatureList";
@@ -24,17 +27,34 @@ export const TestTypeDatagrid = (props: any) => {
             <TextField source="sub_category" />
             <TextField source="low_ref_range" label="low" />
             <TextField source="high_ref_range" label="high" />
+            <BooleanField source="is_calculated_test" label="Calc Test" sortable />
             <TextField source="unit" />
-            <FunctionField 
-                label="Types" 
-                render={(record: TestType) => 
-                    record.types && record.types.length > 0 
+            <FunctionField
+                label="Types"
+                render={(record: TestType) =>
+                    record.types && record.types.length > 0
                         ? record.types.map(t => t.type).join(", ")
                         : "-"
-                } 
+                }
             />
             <TextField source="decimal" />
         </Datagrid>
+    )
+}
+
+export function TestTypeShow() {
+    const theme = useMuiTheme();
+
+    return (
+        <Box sx={{
+            minHeight: '100vh',
+            bgcolor: theme.palette.background.default,
+            pb: 4
+        }}>
+            <Show resource="test-type">
+                <TestTypeForm readonly mode={"SHOW"} />
+            </Show>
+        </Box>
     )
 }
 
@@ -103,7 +123,7 @@ function TestTypeInput(props: TestTypeFormProps) {
     useEffect(() => {
         if (units && Array.isArray(units)) {
             const unitValues = units.map(unit => unit.value);
-            const uniqueUnits = [...new Set(unitValues)]; 
+            const uniqueUnits = [...new Set(unitValues)];
             setUnit(uniqueUnits);
         }
     }, [units, isUnitLoading]);
@@ -120,38 +140,38 @@ function TestTypeInput(props: TestTypeFormProps) {
 
     return (
         <Stack spacing={3} sx={{ width: '100%' }}>
-            <Card 
-                elevation={0} 
-                sx={{ 
+            <Card
+                elevation={0}
+                sx={{
                     border: `1px solid ${theme.palette.divider}`,
                     borderRadius: 2
                 }}
             >
                 <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 1.5, 
-                        mb: 3 
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        mb: 3
                     }}>
-                        <Typography 
-                            variant="subtitle1" 
-                            sx={{ 
+                        <Typography
+                            variant="subtitle1"
+                            sx={{
                                 fontWeight: 600,
                                 color: theme.palette.text.primary
                             }}
                         >
                             ❗Basic Information
                         </Typography>
-                        <Chip 
-                            label="Required" 
-                            size="small" 
-                            color="error" 
+                        <Chip
+                            label="Required"
+                            size="small"
+                            color="error"
                             variant="outlined"
                             sx={{ ml: 'auto', fontSize: '0.75rem' }}
                         />
                     </Box>
-                    
+
                     <Stack spacing={3}>
                         <Stack direction={"row"} gap={3} width={"100%"}>
                             <TextInput
@@ -188,6 +208,7 @@ function TestTypeInput(props: TestTypeFormProps) {
                                     }
                                 }}
                             />
+
                             <TextInput
                                 source="alias_code"
                                 label="Alias Code (SIMRS)"
@@ -207,7 +228,7 @@ function TestTypeInput(props: TestTypeFormProps) {
                                 }}
                             />
                         </Stack>
-                        
+
                         <Stack direction={"row"} gap={3} width={"100%"}>
                             <AutocompleteInput
                                 source="category"
@@ -263,38 +284,38 @@ function TestTypeInput(props: TestTypeFormProps) {
                 </CardContent>
             </Card>
 
-            <Card 
-                elevation={0} 
-                sx={{ 
+            <Card
+                elevation={0}
+                sx={{
                     border: `1px solid ${theme.palette.divider}`,
                     borderRadius: 2
                 }}
             >
                 <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 1.5, 
-                        mb: 3 
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        mb: 3
                     }}>
-                        <Typography 
-                            variant="subtitle1" 
-                            sx={{ 
+                        <Typography
+                            variant="subtitle1"
+                            sx={{
                                 fontWeight: 600,
                                 color: theme.palette.text.primary
                             }}
                         >
                             📊 Range & Units
                         </Typography>
-                        <Chip 
-                            label="Required" 
-                            size="small" 
-                            color="error" 
+                        <Chip
+                            label="Required"
+                            size="small"
+                            color="error"
                             variant="outlined"
                             sx={{ ml: 'auto', fontSize: '0.75rem' }}
                         />
                     </Box>
-                    
+
                     <Stack spacing={3}>
                         <Stack direction={"row"} gap={3} width={"100%"}>
                             <NumberInput
@@ -362,38 +383,38 @@ function TestTypeInput(props: TestTypeFormProps) {
                 </CardContent>
             </Card>
 
-            <Card 
-                elevation={0} 
-                sx={{ 
+            <Card
+                elevation={0}
+                sx={{
                     border: `1px solid ${theme.palette.divider}`,
                     borderRadius: 2
                 }}
             >
                 <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 1.5, 
-                        mb: 3 
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        mb: 3
                     }}>
-                        <Typography 
-                            variant="subtitle1" 
-                            sx={{ 
+                        <Typography
+                            variant="subtitle1"
+                            sx={{
                                 fontWeight: 600,
                                 color: theme.palette.text.primary
                             }}
                         >
                             📋 Additional Settings
                         </Typography>
-                        <Chip 
-                            label="Required" 
-                            size="small" 
-                            color="error" 
+                        <Chip
+                            label="Required"
+                            size="small"
+                            color="error"
                             variant="outlined"
                             sx={{ ml: 'auto', fontSize: '0.75rem' }}
                         />
                     </Box>
-                    
+
                     <Stack spacing={3}>
                         <NumberInput
                             source="decimal"
@@ -412,11 +433,11 @@ function TestTypeInput(props: TestTypeFormProps) {
                                 }
                             }}
                         />
-                        
+
                         <Box>
-                            <Typography 
-                                variant="body1" 
-                                sx={{ 
+                            <Typography
+                                variant="body1"
+                                sx={{
                                     fontWeight: 500,
                                     color: theme.palette.text.secondary,
                                     mb: 2
@@ -427,8 +448,8 @@ function TestTypeInput(props: TestTypeFormProps) {
                             <ArrayInput source="types">
                                 <SimpleFormIterator inline>
                                     <FeatureList source="type" readOnly={props.readonly} types="specimen-type">
-                                        <AutocompleteInput 
-                                            source="type" 
+                                        <AutocompleteInput
+                                            source="type"
                                             readOnly={props.readonly}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
@@ -473,10 +494,10 @@ function TestTypeForm(props: TestTypeFormProps) {
 
 export function TestTypeEdit() {
     const theme = useTheme();
-    
+
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
@@ -492,10 +513,9 @@ export function TestTypeEdit() {
 
 export function TestTypeCreate() {
     const theme = useTheme();
-    
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>

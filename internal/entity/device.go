@@ -5,9 +5,20 @@ import "fmt"
 type DeviceType string
 
 const (
-	DeviceTypeA15         DeviceType = "A15"
-	DeviceTypeSwelabAlfa  DeviceType = "SWELAB_ALFA_PLUS_SATANDARD"
-	DeviceTypeSwelabBasic DeviceType = "SWELAB_ALFA_PLUS_BASIC"
+	DeviceTypeBA400            DeviceType = "BA400"
+	DeviceTypeBA200            DeviceType = "BA200"
+	DeviceTypeA15              DeviceType = "A15"
+	DeviceTypeOther            DeviceType = "OTHER"
+	DeviceTypeAnalyxTria       DeviceType = "ANALYX_TRIA"
+	DeviceTypeAnalyxPanca      DeviceType = "ANALYX_PANCA"
+	DeviceTypeSwelabAlfa       DeviceType = "SWELAB_ALFA"
+	DeviceTypeSwelabBasic      DeviceType = "SWELAB_BASIC"
+	DeviceTypeSwelabLumi       DeviceType = "SWELAB_LUMI"
+	DeviceTypeCoax             DeviceType = "COAX"
+	DeviceTypeBiomedicaNCC3300 DeviceType = "BIOMEDICA_NCC_3300"
+	DeviceTypeBiomedicaNCC61   DeviceType = "BIOMEDICA_NCC_61"
+	DeviceTypeAlifax           DeviceType = "ALIFAX"
+	DeviceTypeBTS              DeviceType = "BTS"
 )
 
 func (d DeviceType) String() string {
@@ -21,11 +32,37 @@ var TableDeviceType = Tables{
 		CanSend:    true,
 		HaveAuth:   true,
 	}},
+	{ID: string(DeviceTypeAnalyxTria), Name: string(DeviceTypeAnalyxTria), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+	}},
+	{ID: string(DeviceTypeAnalyxPanca), Name: string(DeviceTypeAnalyxPanca), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+	}},
+	{ID: string(DeviceTypeSwelabAlfa), Name: string(DeviceTypeSwelabAlfa), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+	}},
+	{ID: string(DeviceTypeOther), Name: string(DeviceTypeOther), AdditionalInfo: DeviceCapability{
+		CanSend:    true,
+		HaveAuth:   true,
+	}},
 	{ID: string(DeviceTypeSwelabAlfa), Name: string(DeviceTypeSwelabAlfa), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
 	}},
 	{ID: string(DeviceTypeSwelabBasic), Name: string(DeviceTypeSwelabBasic), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
+	}},
+	{ID: string(DeviceTypeSwelabLumi), Name: string(DeviceTypeSwelabLumi), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+	}},
+	{ID: string(DeviceTypeAlifax), Name: string(DeviceTypeAlifax), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+		UseSerial:  true,
+	}},
+	{ID: string(DeviceTypeBiomedicaNCC61), Name: string(DeviceTypeBiomedicaNCC61), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+	}},
+	{ID: string(DeviceTypeBTS), Name: string(DeviceTypeBTS), AdditionalInfo: DeviceCapability{
+		CanSend: true,
 	}},
 }
 
@@ -54,6 +91,7 @@ type Device struct {
 
 type GetManyRequestDevice struct {
 	GetManyRequest
+	Type []DeviceType `query:"types"`
 }
 
 type DeviceConnectionStatus string

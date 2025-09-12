@@ -1,6 +1,7 @@
 import { CircularProgress, Stack, Card, CardContent, Typography, Chip, Box as MuiBox, useTheme } from "@mui/material";
 import Box from "@mui/material/Box";
 import LanIcon from '@mui/icons-material/Lan';
+
 import { useEffect, useState } from 'react';
 import {
     AutocompleteInput,
@@ -59,7 +60,7 @@ export function DeviceForm(props: DeviceFormProps) {
 
     return (
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
-            <SimpleForm 
+            <SimpleForm
                 disabled={props.readonly}
                 toolbar={props.readonly === true ? false : undefined}
                 warnWhenUnsavedChanges
@@ -73,17 +74,17 @@ export function DeviceForm(props: DeviceFormProps) {
             >
                 <Stack spacing={3} sx={{ width: '100%' }}>
                     {props.mode !== Action.CREATE && (
-                        <Card 
-                            elevation={0} 
-                            sx={{ 
+                        <Card
+                            elevation={0}
+                            sx={{
                                 border: `1px solid ${theme.palette.divider}`,
                                 borderRadius: 2
                             }}
                         >
                             <CardContent sx={{ p: 3 }}>
-                                <Typography 
-                                    variant="subtitle1" 
-                                    sx={{ 
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
                                         fontWeight: 600,
                                         color: theme.palette.text.primary,
                                         mb: 3
@@ -91,9 +92,8 @@ export function DeviceForm(props: DeviceFormProps) {
                                 >
                                     ℹ️ System Information
                                 </Typography>
-                                
-                                <TextInput 
-                                    source={"id"} 
+                                <TextInput
+                                    source={"id"}
                                     readOnly={true}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
@@ -106,42 +106,42 @@ export function DeviceForm(props: DeviceFormProps) {
                         </Card>
                     )}
 
-                    <Card 
-                        elevation={0} 
-                        sx={{ 
+                    <Card
+                        elevation={0}
+                        sx={{
                             border: `1px solid ${theme.palette.divider}`,
                             borderRadius: 2
                         }}
                     >
                         <CardContent sx={{ p: 3 }}>
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 1.5, 
-                                mb: 3 
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1.5,
+                                mb: 3
                             }}>
-                                <Typography 
-                                    variant="subtitle1" 
-                                    sx={{ 
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
                                         fontWeight: 600,
                                         color: theme.palette.text.primary
                                     }}
                                 >
                                     ❗Basic Information
                                 </Typography>
-                                <Chip 
-                                    label="Required" 
-                                    size="small" 
-                                    color="error" 
+                                <Chip
+                                    label="Required"
+                                    size="small"
+                                    color="error"
                                     variant="outlined"
                                     sx={{ ml: 'auto', fontSize: '0.75rem' }}
                                 />
                             </Box>
-                            
+
                             <Stack>
-                                <TextInput 
-                                    source="name" 
-                                    validate={[required()]} 
+                                <TextInput
+                                    source="name"
+                                    validate={[required()]}
                                     readOnly={props.readonly}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
@@ -156,9 +156,9 @@ export function DeviceForm(props: DeviceFormProps) {
                                     }}
                                 />
                                 <FeatureList source={"type"} types={"device-type"}>
-                                    <AutocompleteInput 
-                                        source={"type"} 
-                                        readOnly={props.readonly} 
+                                    <AutocompleteInput
+                                        source={"type"}
+                                        readOnly={props.readonly}
                                         validate={[required()]}
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
@@ -178,7 +178,7 @@ export function DeviceForm(props: DeviceFormProps) {
                     </Card>
 
                     <FormDataConsumer<{ type: DeviceTypeValue }>>
-                        {({ formData, ...rest }) => {
+                        {({ formData }) => {
                             const dynamicForm = []
                             if (isLoadingDeviceTypeFeatureList || !deviceTypeFeatureList) {
                                 return <Stack>
@@ -232,13 +232,13 @@ type NetworkConfigProps = DeviceFormProps & {
 
 function NetworkConfig(props: NetworkConfigProps) {
     const theme = useTheme();
-    
+
     if (props.canReceive && props.useSerial) {
         if (props.isLoadingSerialPortList || !props.serialPortList) {
             return (
-                <Card 
-                    elevation={0} 
-                    sx={{ 
+                <Card
+                    elevation={0}
+                    sx={{
                         border: `1px solid ${theme.palette.divider}`,
                         borderRadius: 2
                     }}
@@ -250,46 +250,47 @@ function NetworkConfig(props: NetworkConfigProps) {
             )
         }
     }
-    
+
     return (
-        <Card 
-            elevation={0} 
-            sx={{ 
+        <Card
+            elevation={0}
+            sx={{
                 border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 2,
             }}
         >
             <CardContent sx={{ p: 3 }}>
-                <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 1.5, 
-                    mb: 3 
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    mb: 3
                 }}>
-                    <Typography 
-                        variant="subtitle1" 
-                        sx={{ 
+                    <Typography
+                        variant="subtitle1"
+                        sx={{
                             fontWeight: 600,
                             color: theme.palette.text.primary
                         }}
                     >
                         🌐 Network Configuration
                     </Typography>
-                    <Chip 
-                        label="Required" 
-                        size="small" 
-                        color="error" 
+
+                    <Chip
+                        label="Required"
+                        size="small"
+                        color="error"
                         variant="outlined"
                         sx={{ ml: 'auto', fontSize: '0.75rem' }}
                     />
                 </Box>
-                
+
                 <Stack>
                     {props.canSend && (
                         <>
-                            <TextInput 
-                                source="ip_address" 
-                                validate={[required()]} 
+                            <TextInput
+                                source="ip_address"
+                                validate={[required()]}
                                 readOnly={props.readonly}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
@@ -303,9 +304,9 @@ function NetworkConfig(props: NetworkConfigProps) {
                                     }
                                 }}
                             />
-                            <TextInput 
-                                source="send_port" 
-                                validate={[required()]} 
+                            <TextInput
+                                source="send_port"
+                                validate={[required()]}
                                 readOnly={props.readonly}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
@@ -321,7 +322,7 @@ function NetworkConfig(props: NetworkConfigProps) {
                             />
                         </>
                     )}
-                    
+
                     {props.canReceive && (
                         <>
                             {props.useSerial ? (
@@ -368,9 +369,9 @@ function NetworkConfig(props: NetworkConfigProps) {
                                 </>
                             ) : (
                                 props.mode !== "CREATE" && (
-                                    <TextInput 
-                                        source="receive_port" 
-                                        validate={[required(), minValue(0), maxValue(65535)]} 
+                                    <TextInput
+                                        source="receive_port"
+                                        validate={[required(), minValue(0), maxValue(65535)]}
                                         readOnly={props.readonly}
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
@@ -396,43 +397,43 @@ function NetworkConfig(props: NetworkConfigProps) {
 
 function AuthenticationConfig(props: DeviceFormProps) {
     const theme = useTheme();
-    
+
     return (
-        <Card 
-            elevation={0} 
-            sx={{ 
+        <Card
+            elevation={0}
+            sx={{
                 border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 2
             }}
         >
             <CardContent sx={{ p: 3 }}>
-                <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 1.5, 
-                    mb: 3 
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    mb: 3
                 }}>
-                    <Typography 
-                        variant="subtitle1" 
-                        sx={{ 
+                    <Typography
+                        variant="subtitle1"
+                        sx={{
                             fontWeight: 600,
                             color: theme.palette.text.primary
                         }}
                     >
                         🔐 Authentication
                     </Typography>
-                    <Chip 
-                        label="Optional" 
-                        size="small" 
-                        color="default" 
+                    <Chip
+                        label="Optional"
+                        size="small"
+                        color="default"
                         variant="outlined"
                         sx={{ ml: 'auto', fontSize: '0.75rem' }}
                     />
                 </Box>
-                
+
                 <Stack>
-                    <TextInput 
-                        source="username" 
+                    <TextInput
+                        source="username"
                         readOnly={props.readonly}
                         sx={{
                             '& .MuiOutlinedInput-root': {
@@ -446,8 +447,8 @@ function AuthenticationConfig(props: DeviceFormProps) {
                             }
                         }}
                     />
-                    <PasswordInput 
-                        source="password" 
+                    <PasswordInput
+                        source="password"
                         readOnly={props.readonly}
                         sx={{
                             '& .MuiOutlinedInput-root': {
@@ -469,42 +470,41 @@ function AuthenticationConfig(props: DeviceFormProps) {
 
 function PathConfig(props: DeviceFormProps) {
     const theme = useTheme();
-    
+
     return (
-        <Card 
-            elevation={0} 
-            sx={{ 
+        <Card
+            elevation={0}
+            sx={{
                 border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 2
             }}
         >
             <CardContent sx={{ p: 3 }}>
-                <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 1.5, 
-                    mb: 3 
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    mb: 3
                 }}>
-                    <Typography 
-                        variant="subtitle1" 
-                        sx={{ 
+                    <Typography
+                        variant="subtitle1"
+                        sx={{
                             fontWeight: 600,
                             color: theme.palette.text.primary
                         }}
                     >
                         📁 Path Configuration
                     </Typography>
-                    <Chip 
-                        label="Optional" 
-                        size="small" 
-                        color="default" 
+                    <Chip
+                        label="Optional"
+                        size="small"
+                        color="default"
                         variant="outlined"
                         sx={{ ml: 'auto', fontSize: '0.75rem' }}
                     />
                 </Box>
-                
-                <TextInput 
-                    source="path" 
+                <TextInput
+                    source="path"
                     readOnly={props.readonly}
                     sx={{
                         '& .MuiOutlinedInput-root': {
@@ -525,10 +525,10 @@ function PathConfig(props: DeviceFormProps) {
 
 export function DeviceCreate() {
     const theme = useTheme();
-    
+
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
@@ -541,10 +541,10 @@ export function DeviceCreate() {
 
 export function DeviceShow() {
     const theme = useTheme();
-    
+
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
@@ -560,10 +560,10 @@ export function DeviceShow() {
 
 export function DeviceEdit() {
     const theme = useTheme();
-    
+
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
@@ -577,19 +577,19 @@ export function DeviceEdit() {
 const DeviceCard = ({ record, connectionStatuses }: { record: Device, connectionStatuses: Record<number, ConnectionResponse> }) => {
     return (
         <Link to={`/device/${record.id}`} style={{ textDecoration: 'none' }}>
-            <Card 
+            <Card
                 elevation={0}
-                sx={{ 
+                sx={{
                     boxShadow: 'rgba(0, 0, 0, 0.16) 0px 1px 4px',
                     cursor: 'pointer',
-                    '&:hover': { 
+                    '&:hover': {
                         boxShadow: 4,
                         transform: 'translateY(-2px)',
                         transition: 'all 0.2s ease-in-out'
-                    } 
+                    }
                 }}
             >
-                <CardContent sx={{position: "relative", height: 220}}>
+                <CardContent sx={{ position: "relative", height: 220 }}>
                     <MuiBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <LanIcon color="primary" />
@@ -601,76 +601,77 @@ const DeviceCard = ({ record, connectionStatuses }: { record: Device, connection
                             label={`ID: ${record.id}`} 
                             size="small" 
                             color="primary" 
+
                             variant="outlined"
                         />
                     </MuiBox>
 
-                <MuiBox sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 2 }}>
-                    <MuiBox sx={{ flex: 1 }}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                            <strong>Type:</strong> {record.type}
-                        </Typography>
-                        {record.ip_address && (
+                    <MuiBox sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 2 }}>
+                        <MuiBox sx={{ flex: 1 }}>
                             <Typography variant="body2" color="text.secondary" gutterBottom>
-                                <strong>IP Address:</strong> {record.ip_address}
+                                <strong>Type:</strong> {record.type}
                             </Typography>
-                        )}
-                        
-                    </MuiBox>
-                    <MuiBox sx={{ flex: 1, textAlign: 'end' }}>
-                        {record.send_port !== undefined && Number(record.send_port) > 0 && (
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                                <strong>Send Port:</strong> {record.send_port}
-                            </Typography>
-                        )}
-                        {record.receive_port && (
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                                <strong>Receive Port:</strong> {record.receive_port}
-                            </Typography>
-                        )}
-                        {record.baud_rate !== undefined && Number(record.baud_rate) > 0 && (
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                                <strong>Baud Rate:</strong> {record.baud_rate}
-                            </Typography>
-                        )}
-                    </MuiBox>
-                </MuiBox>
+                            {record.ip_address && (
+                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                    <strong>IP Address:</strong> {record.ip_address}
+                                </Typography>
+                            )}
 
-                <MuiBox sx={{ display: 'flex', gap: 2, mt: 2 , justifyContent: "space-between", position:"absolute", bottom: 15, width: "92%"}}>
-                    <MuiBox>
-                        <Typography variant="caption" display="block" gutterBottom>
-                            Sender Status:
-                        </Typography>
-                        <ConnectionStatus
-                            deviceId={record.id}
-                            status={{
-                                device_id: record.id,
-                                message: connectionStatuses[record.id]?.sender_message,
-                                status: connectionStatuses[record.id]?.sender_status
-                            }}
-                        />
+                        </MuiBox>
+                        <MuiBox sx={{ flex: 1, textAlign: 'end' }}>
+                            {record.send_port !== undefined && Number(record.send_port) > 0 && (
+                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                    <strong>Send Port:</strong> {record.send_port}
+                                </Typography>
+                            )}
+                            {record.receive_port && (
+                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                    <strong>Receive Port:</strong> {record.receive_port}
+                                </Typography>
+                            )}
+                            {record.baud_rate !== undefined && Number(record.baud_rate) > 0 && (
+                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                    <strong>Baud Rate:</strong> {record.baud_rate}
+                                </Typography>
+                            )}
+                        </MuiBox>
                     </MuiBox>
-                    <MuiBox>
-                        <Typography variant="caption" display="block" gutterBottom>
-                            Receiver Status:
-                        </Typography>
-                        <ConnectionStatus
-                            deviceId={record.id}
-                            status={{
-                                device_id: record.id,
-                                message: connectionStatuses[record.id]?.receiver_message,
-                                status: connectionStatuses[record.id]?.receiver_status
-                            }}
-                        />
+
+                    <MuiBox sx={{ display: 'flex', gap: 2, mt: 2, justifyContent: "space-between", position: "absolute", bottom: 15, width: "92%" }}>
+                        <MuiBox>
+                            <Typography variant="caption" display="block" gutterBottom>
+                                Sender Status:
+                            </Typography>
+                            <ConnectionStatus
+                                deviceId={record.id}
+                                status={{
+                                    device_id: record.id,
+                                    message: connectionStatuses[record.id]?.sender_message,
+                                    status: connectionStatuses[record.id]?.sender_status
+                                }}
+                            />
+                        </MuiBox>
+                        <MuiBox>
+                            <Typography variant="caption" display="block" gutterBottom>
+                                Receiver Status:
+                            </Typography>
+                            <ConnectionStatus
+                                deviceId={record.id}
+                                status={{
+                                    device_id: record.id,
+                                    message: connectionStatuses[record.id]?.receiver_message,
+                                    status: connectionStatuses[record.id]?.receiver_status
+                                }}
+                            />
+                        </MuiBox>
                     </MuiBox>
-                </MuiBox>
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
         </Link>
     );
 };
 
-const DeviceCardList = ({ connectionStatuses, setDeviceIds }: { 
+const DeviceCardList = ({ connectionStatuses, setDeviceIds }: {
     connectionStatuses: Record<number, ConnectionResponse>,
     setDeviceIds: React.Dispatch<React.SetStateAction<number[]>>
 }) => {
@@ -703,8 +704,8 @@ const DeviceCardList = ({ connectionStatuses, setDeviceIds }: {
 
     return (
         <MuiBox sx={{ p: 2 }}>
-            <MuiBox 
-                sx={{ 
+            <MuiBox
+                sx={{
                     display: 'grid',
                     gridTemplateColumns: {
                         xs: '1fr',
@@ -715,9 +716,9 @@ const DeviceCardList = ({ connectionStatuses, setDeviceIds }: {
                 }}
             >
                 {data.map((device) => (
-                    <DeviceCard 
+                    <DeviceCard
                         key={device.id}
-                        record={device} 
+                        record={device}
                         connectionStatuses={connectionStatuses}
                     />
                 ))}
@@ -781,7 +782,6 @@ const DeviceCardList = ({ connectionStatuses, setDeviceIds }: {
 //     </SideFilter>
 // );
 
-
 export const DeviceList = () => {
     const [deviceIds, setDeviceIds] = useState<number[]>([]);
     const [connectionStatuses, setConnectionStatuses] = useState<Record<number, ConnectionResponse>>({});
@@ -799,17 +799,17 @@ export const DeviceList = () => {
                 deviceIds={deviceIds}
                 onStatusUpdate={handleStatusUpdate}
             />
-            <List 
+            <List
                 // aside={<DeviceFilterSidebar />} 
                 resource="device"
-                storeKey={false} 
+                storeKey={false}
                 exporter={false}
                 sort={{
                     field: "id",
                     order: "DESC"
                 }}
             >
-                <DeviceCardList 
+                <DeviceCardList
                     connectionStatuses={connectionStatuses}
                     setDeviceIds={setDeviceIds}
                 />
