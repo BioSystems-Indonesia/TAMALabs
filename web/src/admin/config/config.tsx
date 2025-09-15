@@ -5,7 +5,7 @@ import {
     Divider,
     Stack,
     Typography,
-    Box,
+    // Box,
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { Datagrid, Edit, List, SimpleForm, TextField, TextInput } from "react-admin";
