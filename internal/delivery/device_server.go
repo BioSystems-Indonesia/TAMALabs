@@ -80,7 +80,7 @@ func init() {
 
 var serialDeviceType = []entity.DeviceType{
 	entity.DeviceTypeCoax,
-	entity.DeviceTypeBiomedicaNCC3300,
+	entity.DeviceTypeNeomedicaNCC3300,
 	entity.DeviceTypeAlifax,
 }
 
@@ -93,7 +93,7 @@ var tcpDeviceType = []entity.DeviceType{
 	entity.DeviceTypeSwelabAlfa,
 	entity.DeviceTypeSwelabBasic,
 	entity.DeviceTypeSwelabLumi,
-	entity.DeviceTypeBiomedicaNCC61,
+	entity.DeviceTypeNeomedicaNCC61,
 	entity.DeviceTypeOther,
 }
 
@@ -128,7 +128,7 @@ func (d *DeviceServerStrategy) ChooseDeviceSerialHandler(device entity.Device) (
 	switch device.Type {
 	case entity.DeviceTypeCoax:
 		return d.coaxHandler, nil
-	case entity.DeviceTypeBiomedicaNCC3300:
+	case entity.DeviceTypeNeomedicaNCC3300:
 		return d.ncc3300, nil
 	case entity.DeviceTypeAlifax:
 		return d.alifaxHandler, nil
@@ -157,7 +157,7 @@ func (d *DeviceServerStrategy) ChooseDeviceTCPHandler(device entity.Device) (ser
 		return d.swelabLumiHandler, nil
 	case entity.DeviceTypeA15:
 		return d.a15Handler, nil
-	case entity.DeviceTypeBiomedicaNCC61:
+	case entity.DeviceTypeNeomedicaNCC61:
 		return d.ncc61Handler, nil
 	default:
 		return nil, nil

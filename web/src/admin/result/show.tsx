@@ -392,7 +392,12 @@ const TestResultTable = (props: TestResultTableProps) => {
             return
         }
 
-        setRows(props.rows.map((r: any) => ({ ...r, id: r.id || negID-- })))
+        setRows(props.rows.map((r: any) => ({
+            ...r,
+            id: r.id || negID--,
+            name: r?.test_type?.name || r?.history?.[0]?.test_type?.name || r.test,
+            alias: r?.test_type?.alias_code || r?.history?.[0]?.test_type?.alias_code || r.alias || r.test,
+        })))
     }, [props?.rows])
 
     return (
@@ -405,39 +410,10 @@ const TestResultTable = (props: TestResultTableProps) => {
             rowHeight={60}
             columns={[
                 {
-                    field: 'test',
-                    headerName: 'Test',
-                    flex: 2,
-                    renderCell: (params: GridRenderCellParams) => {
-                        if (!params.row.test_type_id) {
-                            return <Link to={`/test-type/create?code=${params.row.test}`} onClick={e => e.stopPropagation()} sx={{
-                                textAlign: "center",
-                                width: "100%",
-                                height: "100%",
-                                display: "flex",
-                                justifyContent: "start",
-                                textDecoration: "unset",
-                                alignItems: "center",
-                            }}>
-                                <Tooltip title="Test Type is Unset, please create it first">
-                                    <Chip label={params.row.test} color="error" />
-                                </Tooltip>
-                            </Link >
-                        }
+                    field: 'name',
+                    headerName: 'Parameter Name',
+                    flex: 1,
 
-                        return <>
-                            <Link to={`/test-type/${params.row.test_type_id}/show`} onClick={e => e.stopPropagation()} sx={{
-                                width: "100%",
-                                height: "100%",
-                                textAlign: "center",
-                                display: "flex",
-                                justifyContent: "start",
-                                alignItems: "center",
-                            }}>
-                                <p>{params.row.test}</p>
-                            </Link>
-                        </>
-                    },
                 },
                 {
                     field: 'specimen_type',

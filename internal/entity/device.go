@@ -15,8 +15,8 @@ const (
 	DeviceTypeSwelabBasic      DeviceType = "SWELAB_BASIC"
 	DeviceTypeSwelabLumi       DeviceType = "SWELAB_LUMI"
 	DeviceTypeCoax             DeviceType = "COAX"
-	DeviceTypeBiomedicaNCC3300 DeviceType = "BIOMEDICA_NCC_3300"
-	DeviceTypeBiomedicaNCC61   DeviceType = "BIOMEDICA_NCC_61"
+	DeviceTypeNeomedicaNCC3300 DeviceType = "NEOMEDICA_NCC_3300"
+	DeviceTypeNeomedicaNCC61   DeviceType = "NEOMEDICA_NCC_61"
 	DeviceTypeAlifax           DeviceType = "ALIFAX"
 	DeviceTypeBTS              DeviceType = "BTS"
 )
@@ -26,6 +26,14 @@ func (d DeviceType) String() string {
 }
 
 var TableDeviceType = Tables{
+	{ID: string(DeviceTypeBA200), Name: string(DeviceTypeBA200), AdditionalInfo: DeviceCapability{
+		CanSend:    true,
+		CanReceive: true,
+	}},
+	{ID: string(DeviceTypeBA400), Name: string(DeviceTypeBA400), AdditionalInfo: DeviceCapability{
+		CanSend:    true,
+		CanReceive: true,
+	}},
 	{ID: string(DeviceTypeA15), Name: string(DeviceTypeA15), AdditionalInfo: DeviceCapability{
 		HavePath:   true,
 		CanReceive: true,
@@ -38,12 +46,10 @@ var TableDeviceType = Tables{
 	{ID: string(DeviceTypeAnalyxPanca), Name: string(DeviceTypeAnalyxPanca), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
 	}},
-	{ID: string(DeviceTypeSwelabAlfa), Name: string(DeviceTypeSwelabAlfa), AdditionalInfo: DeviceCapability{
-		CanReceive: true,
-	}},
+
 	{ID: string(DeviceTypeOther), Name: string(DeviceTypeOther), AdditionalInfo: DeviceCapability{
-		CanSend:    true,
-		HaveAuth:   true,
+		CanSend:  true,
+		HaveAuth: true,
 	}},
 	{ID: string(DeviceTypeSwelabAlfa), Name: string(DeviceTypeSwelabAlfa), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
@@ -58,11 +64,19 @@ var TableDeviceType = Tables{
 		CanReceive: true,
 		UseSerial:  true,
 	}},
-	{ID: string(DeviceTypeBiomedicaNCC61), Name: string(DeviceTypeBiomedicaNCC61), AdditionalInfo: DeviceCapability{
+	{ID: string(DeviceTypeNeomedicaNCC61), Name: string(DeviceTypeNeomedicaNCC61), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
+	}},
+	{ID: string(DeviceTypeNeomedicaNCC3300), Name: string(DeviceTypeNeomedicaNCC3300), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+		UseSerial:  true,
 	}},
 	{ID: string(DeviceTypeBTS), Name: string(DeviceTypeBTS), AdditionalInfo: DeviceCapability{
 		CanSend: true,
+	}},
+	{ID: string(DeviceTypeCoax), Name: string(DeviceTypeCoax), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+		UseSerial:  true,
 	}},
 }
 

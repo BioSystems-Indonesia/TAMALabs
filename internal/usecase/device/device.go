@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/oibacidem/lims-hl-seven/config"
@@ -262,8 +263,14 @@ func (p *DeviceUseCase) buildStatusResponse(err error) entity.DeviceConnectionSt
 }
 
 func (p *DeviceUseCase) ChooseDeviceSender(ctx context.Context, device entity.Device) (usecase.DeviceSender, error) {
-	// Check if device can send based on capability
-	for _, deviceType := range entity.TableDeviceType {
+	// Check if device can send based on capability, sorted by Name
+	sortedDeviceTypes := make([]entity.Table, len(entity.TableDeviceType))
+	copy(sortedDeviceTypes, entity.TableDeviceType)
+	// Sort by Name A-Z
+	sort.Slice(sortedDeviceTypes, func(i, j int) bool {
+		return sortedDeviceTypes[i].Name < sortedDeviceTypes[j].Name
+	})
+	for _, deviceType := range sortedDeviceTypes {
 		if deviceType.ID == string(device.Type) {
 			capability, ok := deviceType.AdditionalInfo.(entity.DeviceCapability)
 			if !ok || !capability.CanSend {
@@ -274,8 +281,8 @@ func (p *DeviceUseCase) ChooseDeviceSender(ctx context.Context, device entity.De
 	}
 
 	switch device.Type {
-	// case entity.DeviceTypeBA400, entity.DeviceTypeBA200, entity.DeviceTypeOther:
-	// 	return p.ba400, nil
+	case entity.DeviceTypeBA400, entity.DeviceTypeBA200, entity.DeviceTypeOther:
+		return p.ba400, nil
 	case entity.DeviceTypeA15:
 		return p.a15, nil
 	default:
