@@ -124,3 +124,16 @@ func (r PatientRepository) IsExists(patient *entity.Patient) (bool, error) {
 
 	return c > 0, err
 }
+
+
+func (r PatientRepository) FirstOrCreate(patient *entity.Patient) (entity.Patient, error) {
+	err := r.db.
+		Model(&entity.Patient{}).
+		Where("first_name = ?", patient.FirstName).
+		Where("last_name = ?", patient.LastName).
+		Where("date(birthdate) = ?", patient.Birthdate.Format("2006-01-02")).
+		FirstOrCreate(patient).
+		Error
+
+	return *patient, err
+}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
-	"sort"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
@@ -45,7 +44,7 @@ func (u *Usecase) Results(
 	}
 
 	for i := range resp.Data {
-		u.fillResultDetail(&resp.Data[i], true)
+		resp.Data[i].FillTestResultDetail(true)
 		u.changeStatusIfNeeded(ctx, &resp.Data[i])
 	}
 
@@ -57,7 +56,7 @@ func (u *Usecase) ResultDetail(ctx context.Context, workOrderID int64) (entity.R
 	if err != nil {
 		return entity.ResultDetail{}, err
 	}
-	u.fillResultDetail(&workOrder, false)
+	workOrder.FillTestResultDetail(false)
 
 	// Why inverted? preve is get from next and next from get
 	// because the default of ordering in front end are from the latest
@@ -164,110 +163,6 @@ func (u *Usecase) groupResultInCategory(tests []entity.TestResult) map[string][]
 	}
 
 	return resultTestsCategory
-}
-
-func (u *Usecase) fillResultDetail(workOrder *entity.WorkOrder, hideEmpty bool) {
-	var allObservationRequests []entity.ObservationRequest
-	var allObservationResults []entity.ObservationResult
-
-	// Create a map from specimen ID to specimen type for quick lookup
-	specimenTypes := make(map[int64]string)
-
-	for _, specimen := range workOrder.Specimen {
-		specimenTypes[int64(specimen.ID)] = specimen.Type
-		allObservationRequests = append(allObservationRequests, specimen.ObservationRequest...)
-		allObservationResults = append(allObservationResults, specimen.ObservationResult...)
-	}
-
-	allTests := make([]entity.TestResult, len(allObservationRequests))
-	// create the placeholder first
-	for i, request := range allObservationRequests {
-		// Find the corresponding specimen for this request
-		var correspondingSpecimen entity.Specimen
-		for _, specimen := range workOrder.Specimen {
-			if int64(specimen.ID) == request.SpecimenID {
-				correspondingSpecimen = specimen
-				break
-			}
-		}
-		allTests[i] = entity.TestResult{}.CreateEmpty(request, correspondingSpecimen)
-	}
-
-	// sort by test code
-	sort.Slice(allTests, func(i, j int) bool {
-		return allTests[i].Test < allTests[j].Test
-	})
-
-	// prepare the data that will be filled into the placeholder
-	// prepare by grouping into code. But before that, sort by updated_at
-	// the latest updated_at will be the first element
-	sort.Slice(allObservationResults, func(i, j int) bool {
-		return allObservationResults[i].CreatedAt.After(allObservationResults[j].CreatedAt)
-	})
-
-	// ok final step to create the order data
-	testResults := map[string][]entity.ObservationResult{}
-	for _, observation := range allObservationResults {
-		// Create a composite key: testCode + specimenType for more precise matching
-		// Get specimen type for this observation
-		specimenType := specimenTypes[observation.SpecimenID]
-		compositeKey := fmt.Sprintf("%s:%s", observation.TestCode, specimenType)
-
-		testResults[compositeKey] = append(testResults[compositeKey], observation)
-	}
-
-	// fill the placeholder
-	totalResultFilled := 0
-	for i, test := range allTests {
-		newTest := test
-		// Create composite key for matching: testCode + specimenType
-		compositeKey := fmt.Sprintf("%s:%s", test.Test, test.SpecimenType)
-		history := testResults[compositeKey]
-
-		if len(history) > 0 {
-			// Pick the latest history or the manually picked one
-			pickedTest := history[0]
-			for _, v := range history {
-				if v.Picked {
-					pickedTest = v
-					break
-				}
-			}
-
-			// Get specimen type for this observation result
-			specimenType := specimenTypes[pickedTest.SpecimenID]
-			newTest = newTest.FromObservationResult(pickedTest, specimenType)
-		}
-		newTest = newTest.FillHistory(history, specimenTypes)
-
-		// or should be like this or we can just use the above code
-		allTests[i] = newTest
-
-		// count the filled result
-		if newTest.Result != nil {
-			totalResultFilled++
-		}
-	}
-
-	workOrder.TotalRequest = int64(len(allObservationRequests))
-	workOrder.TotalResultFilled = int64(totalResultFilled)
-	workOrder.HaveCompleteData = len(allObservationRequests) == totalResultFilled
-	if len(allObservationRequests) != 0 {
-		workOrder.PercentComplete = float64(totalResultFilled) / float64(len(allObservationRequests))
-	}
-
-	if hideEmpty {
-		var filteredTests []entity.TestResult
-		for _, test := range allTests {
-			if test.Result == nil || *test.Result == 0 {
-				continue
-			}
-			filteredTests = append(filteredTests, test)
-		}
-		allTests = filteredTests
-	}
-
-	workOrder.TestResult = allTests
 }
 
 func (u *Usecase) TooglePickTestResult(ctx context.Context, testResultID int64) (entity.ObservationResult, error) {

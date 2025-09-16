@@ -98,6 +98,7 @@ func RegisterRoutes(
 	adminHandler *AdminHandler,
 	authHandler *AuthHandler,
 	roleHandler *RoleHandler,
+	khanzaExternalHandler *KhanzaExternalHandler,
 	externalHandler *ExternalHandler,
 	authMiddleware *appMiddleware.JWTMiddleware,
 ) {
@@ -224,8 +225,8 @@ func RegisterRoutes(
 		log.GET("/export", handler.LogHandler.ExportLog)
 	}
 
+	khanzaExternalHandler.RegisterRoutes(unauthenticatedV1)
 	handler.RegisterFeatureList(authenticatedV1)
-
 	externalHandler.RegisterRoutes(authenticatedV1)
 }
 

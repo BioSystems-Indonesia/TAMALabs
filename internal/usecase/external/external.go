@@ -6,12 +6,18 @@ import (
 	"fmt"
 
 	"github.com/oibacidem/lims-hl-seven/config"
+	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
+	testType "github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
+	workOrder "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	khanzauc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
 )
 
 type Usecase struct {
-	khanzauUC *khanzauc.Usecase
-	cfg       *config.Schema
+	khanzauUC     *khanzauc.Usecase
+	workOrderRepo *workOrder.WorkOrderRepository
+	patientRepo   *patientrepo.PatientRepository
+	testTypeRepo  *testType.Repository
+	cfg           *config.Schema
 }
 
 func NewUsecase(khanzauUC *khanzauc.Usecase, cfg *config.Schema) *Usecase {

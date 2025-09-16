@@ -88,28 +88,28 @@ const (
 
 // KhanzaLabRequest represents the result of lab request query from main DB
 type KhanzaLabRequest struct {
-	NoOrder                string    `json:"noorder" db:"noorder"`
-	NoRawat                string    `json:"no_rawat" db:"no_rawat"`
-	NoRkmMedis             string    `json:"no_rkm_medis" db:"no_rkm_medis"`
-	NmPasien               string    `json:"nm_pasien" db:"nm_pasien"`
-	NmPerawatan            string    `json:"nm_perawatan" db:"nm_perawatan"`
-	Pemeriksaan            string    `json:"pemeriksaan" db:"Pemeriksaan"`
-	Satuan                 string    `json:"satuan" db:"satuan"`
-	NilaiRujukanLD         string    `json:"nilai_rujukan_ld" db:"nilai_rujukan_ld"`
-	KdPj                   string    `json:"kd_pj" db:"kd_pj"`
-	NilaiRujukanLA         string    `json:"nilai_rujukan_la" db:"nilai_rujukan_la"`
-	NilaiRujukanPD         string    `json:"nilai_rujukan_pd" db:"nilai_rujukan_pd"`
-	NilaiRujukanPA         string    `json:"nilai_rujukan_pa" db:"nilai_rujukan_pa"`
-	TglPermintaan          time.Time `json:"tgl_permintaan" db:"tgl_permintaan"`
-	PngJawab               string    `json:"png_jawab" db:"png_jawab"`
-	JamPermintaan          string    `json:"jam_permintaan" db:"jam_permintaan"`
-	TglSampel              time.Time `json:"tgl_sampel" db:"tgl_sampel"`
-	JamSampel              string    `json:"jam_sampel" db:"jam_sampel"`
-	TglHasil               time.Time `json:"tgl_hasil" db:"tgl_hasil"`
-	JamHasil               string    `json:"jam_hasil" db:"jam_hasil"`
-	DokterPerujuk          string    `json:"dokter_perujuk" db:"dokter_perujuk"`
-	NmDokter               string    `json:"nm_dokter" db:"nm_dokter"`
-	NmPoli                 string    `json:"nm_poli" db:"nm_poli"`
-	InformasiTambahan      string    `json:"informasi_tambahan" db:"informasi_tambahan"`
-	DiagnosaKlinis         string    `json:"diagnosa_klinis" db:"diagnosa_klinis"`
+	NoOrder           string    `json:"noorder" db:"noorder"`
+	NoRawat           string    `json:"no_rawat" db:"no_rawat"`
+	NoRkmMedis        string    `json:"no_rkm_medis" db:"no_rkm_medis"`
+	NmPasien          string    `json:"nm_pasien" db:"nm_pasien"`
+	NmPerawatan       string    `json:"nm_perawatan" db:"nm_perawatan"`
+	Pemeriksaan       string    `json:"pemeriksaan" db:"Pemeriksaan"`
+	Satuan            string    `json:"satuan" db:"satuan"`
+	NilaiRujukanLD    string    `json:"nilai_rujukan_ld" db:"nilai_rujukan_ld"`
+	KdPj              string    `json:"kd_pj" db:"kd_pj"`
+	NilaiRujukanLA    string    `json:"nilai_rujukan_la" db:"nilai_rujukan_la"`
+	NilaiRujukanPD    string    `json:"nilai_rujukan_pd" db:"nilai_rujukan_pd"`
+	NilaiRujukanPA    string    `json:"nilai_rujukan_pa" db:"nilai_rujukan_pa"`
+	TglPermintaan     time.Time `json:"tgl_permintaan" db:"tgl_permintaan"`
+	PngJawab          string    `json:"png_jawab" db:"png_jawab"`
+	JamPermintaan     string    `json:"jam_permintaan" db:"jam_permintaan"`
+	TglSampel         time.Time `json:"tgl_sampel" db:"tgl_sampel"`
+	JamSampel         string    `json:"jam_sampel" db:"jam_sampel"`
+	TglHasil          time.Time `json:"tgl_hasil" db:"tgl_hasil"`
+	JamHasil          string    `json:"jam_hasil" db:"jam_hasil"`
+	DokterPerujuk     string    `json:"dokter_perujuk" db:"dokter_perujuk"`
+	NmDokter          string    `json:"nm_dokter" db:"nm_dokter"`
+	NmPoli            string    `json:"nm_poli" db:"nm_poli"`
+	InformasiTambahan string    `json:"informasi_tambahan" db:"informasi_tambahan"`
+	DiagnosaKlinis    string    `json:"diagnosa_klinis" db:"diagnosa_klinis"`
 }

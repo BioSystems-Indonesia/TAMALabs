@@ -62,6 +62,7 @@ func provideRestServer(
 	authHandler *rest.AuthHandler,
 	adminHandler *rest.AdminHandler,
 	roleHandler *rest.RoleHandler,
+	hrisExternal *rest.KhanzaExternalHandler,
 	khanzaHandler *rest.ExternalHandler,
 	authMiddleware *middleware.JWTMiddleware,
 	cronManager *cron.CronManager,
@@ -75,6 +76,7 @@ func provideRestServer(
 		adminHandler,
 		authHandler,
 		roleHandler,
+		hrisExternal,
 		khanzaHandler,
 		authMiddleware,
 	)

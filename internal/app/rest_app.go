@@ -144,6 +144,7 @@ var restHandlerSet = wire.NewSet(
 	rest.NewServerControllerHandler,
 	rest.NewLogHandler,
 	rest.NewExternalHandler,
+	rest.NewKhanzaExternalHandler,
 )
 
 var (
