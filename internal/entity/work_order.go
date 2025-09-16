@@ -31,9 +31,8 @@ type WorkOrderCreateRequest struct {
 	DoctorIDs       []int64                          `json:"doctor_ids" gorm:"-"`
 	AnalyzerIDs     []int64                          `json:"analyzer_ids" gorm:"-"`
 	TestTemplateIDs []int64                          `json:"test_template_ids" gorm:"-"`
-	Barcode      string `json:"barcode" gorm:"column:barcode;index:work_order_barcode,unique"`
-	BarcodeSIMRS string `json:"barcode_simrs" gorm:"column:barcode_simrs;index:work_order_barcode_simrs"`
-
+	Barcode         string                           `json:"barcode" gorm:"column:barcode;index:work_order_barcode,unique"`
+	BarcodeSIMRS    string                           `json:"barcode_simrs" gorm:"column:barcode_simrs;index:work_order_barcode_simrs"`
 }
 
 type WorkOrderCreateRequestTestType struct {
@@ -109,7 +108,12 @@ func (wo *WorkOrder) FillData() {
 func (w *WorkOrder) FillTestResultDetail(hideEmpty bool) {
 	var allObservationRequests []ObservationRequest
 	var allObservationResults []ObservationResult
+
+	// Create a map from specimen ID to specimen type for quick lookup
+	specimenTypes := make(map[int64]string)
+
 	for _, specimen := range w.Specimen {
+		specimenTypes[int64(specimen.ID)] = specimen.Type
 		allObservationRequests = append(allObservationRequests, specimen.ObservationRequest...)
 		allObservationResults = append(allObservationResults, specimen.ObservationResult...)
 	}
@@ -117,7 +121,15 @@ func (w *WorkOrder) FillTestResultDetail(hideEmpty bool) {
 	allTests := make([]TestResult, len(allObservationRequests))
 	// create the placeholder first
 	for i, request := range allObservationRequests {
-		allTests[i] = TestResult{}.CreateEmpty(request)
+		// Find the corresponding specimen for this request
+		var correspondingSpecimen Specimen
+		for _, specimen := range w.Specimen {
+			if int64(specimen.ID) == request.SpecimenID {
+				correspondingSpecimen = specimen
+				break
+			}
+		}
+		allTests[i] = TestResult{}.CreateEmpty(request, correspondingSpecimen)
 	}
 
 	// sort by test code
@@ -135,15 +147,22 @@ func (w *WorkOrder) FillTestResultDetail(hideEmpty bool) {
 	// ok final step to create the order data
 	testResults := map[string][]ObservationResult{}
 	for _, observation := range allObservationResults {
-		// TODO check whether this will create chaos in order or not
-		testResults[observation.TestCode] = append(testResults[observation.TestCode], observation)
+		// Create a composite key: testCode + specimenType for more precise matching
+		// Get specimen type for this observation
+		specimenType := specimenTypes[observation.SpecimenID]
+		compositeKey := fmt.Sprintf("%s:%s", observation.TestCode, specimenType)
+
+		testResults[compositeKey] = append(testResults[compositeKey], observation)
 	}
 
 	// fill the placeholder
 	totalResultFilled := 0
 	for i, test := range allTests {
 		newTest := test
-		history := testResults[test.Test]
+		// Create composite key for matching: testCode + specimenType
+		compositeKey := fmt.Sprintf("%s:%s", test.Test, test.SpecimenType)
+		history := testResults[compositeKey]
+
 		if len(history) > 0 {
 			// Pick the latest history or the manually picked one
 			pickedTest := history[0]
@@ -154,9 +173,11 @@ func (w *WorkOrder) FillTestResultDetail(hideEmpty bool) {
 				}
 			}
 
-			newTest = newTest.FromObservationResult(pickedTest)
+			// Get specimen type for this observation result
+			specimenType := specimenTypes[pickedTest.SpecimenID]
+			newTest = newTest.FromObservationResult(pickedTest, specimenType)
 		}
-		newTest = newTest.FillHistory(history)
+		newTest = newTest.FillHistory(history, specimenTypes)
 
 		// or should be like this or we can just use the above code
 		allTests[i] = newTest
@@ -247,8 +268,6 @@ func (w *WorkOrderRunRequest) ProgressWriter() chan WorkOrderRunStreamMessage {
 func (w *WorkOrderRunRequest) SetProgressWriter(progress chan WorkOrderRunStreamMessage) {
 	w.progressWriter = progress
 }
-
-
 
 type WorkOrderGetManyRequest struct {
 	GetManyRequest

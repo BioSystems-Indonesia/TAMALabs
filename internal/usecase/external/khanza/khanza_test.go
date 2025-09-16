@@ -1,4 +1,4 @@
-package external
+package khanzauc
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 func TestUseCase_ProcessRequest(t *testing.T) {
 	t.Skip()
 
-	u := &UseCase{}
+	u := &Usecase{}
 
 	err := u.ProcessRequest(context.Background(), []byte(rawRequest))
 
@@ -28,7 +28,7 @@ func TestUseCase_UnmarshalRequest(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	u := &UseCase{}
+	u := &Usecase{}
 
 	p, err := u.convertIntoPatient(r)
 	assert.NoError(t, err)
@@ -40,7 +40,6 @@ func TestUseCase_UnmarshalRequest(t *testing.T) {
 	//assert.Equal(t, time.Date(2020, 1, 2, 0, 0, 0, 0, time.Local), p.Birthdate)
 	assert.Equal(t, time.Date(2020, 1, 2, 0, 0, 0, 0, time.UTC), p.Birthdate)
 }
-
 
 const rawRequest = `
 { 

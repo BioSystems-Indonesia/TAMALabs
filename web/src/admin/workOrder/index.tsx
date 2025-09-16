@@ -564,7 +564,7 @@ const WorkOrderDataGrid = () => {
                 <WrapperField label="Actions" sortable={false} >
                     <Stack direction={"row"} spacing={2}>
                         <ShowButton variant="contained" />
-                        <DeleteButton variant="contained" />
+                        <DeleteButton variant="contained" mutationMode="pessimistic"/>
                     </Stack>
                 </WrapperField>
             </Datagrid>

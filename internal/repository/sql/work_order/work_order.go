@@ -495,14 +495,6 @@ func (r WorkOrderRepository) upsertRelation(
 			return err
 		}
 
-		slog.Info("specimen insert",
-			"patientID", patient.ID,
-			"specimenID", specimen.ID,
-			"workOrderID", specimen.OrderID,
-			"type", specimenType,
-			"rowAffected", specimenQuery.RowsAffected,
-		)
-
 		if specimenQuery.RowsAffected == 0 {
 			err = trx.Where("patient_id = ? AND order_id = ? AND type = ?", patient.ID, workOrder.ID, specimenType).
 				First(&specimen).Error
@@ -510,12 +502,6 @@ func (r WorkOrderRepository) upsertRelation(
 				return fmt.Errorf("error finding specimen: %w", err)
 			}
 
-			slog.Info("specimen find",
-				"patientID", patient.ID,
-				"specimenID", specimen.ID,
-				"type", specimenType,
-				"rowAffected", specimenQuery.RowsAffected,
-			)
 		}
 
 		for _, testType := range testTypes {
@@ -532,13 +518,6 @@ func (r WorkOrderRepository) upsertRelation(
 				return err
 			}
 
-			slog.Info("observation request insert",
-				"testCode", testType.Code,
-				"testDescription", testType.Name,
-				"patientID", patient.ID,
-				"specimenID", specimen.ID,
-				"rowAffected", observationRequestQuery.RowsAffected,
-			)
 			if observationRequestQuery.RowsAffected == 0 {
 				continue
 			}
@@ -820,7 +799,15 @@ func (r WorkOrderRepository) findNearestNumber(ctx context.Context, where string
 func (r WorkOrderRepository) GetBySIMRSBarcode(ctx context.Context, barcode string) (entity.WorkOrder, error) {
 	var workOrder entity.WorkOrder
 	err := r.db.Where("barcode_simrs = ?", barcode).
-		Take(&workOrder).Error
+		Preload("Patient").
+		Preload("Specimen").
+		Preload("Specimen.ObservationRequest").
+		Preload("Specimen.ObservationRequest.TestType").
+		Preload("Specimen.ObservationResult").
+		Preload("Specimen.ObservationResult.TestType").
+		Preload("Doctors").
+		Preload("Analyzers").
+		First(&workOrder).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return entity.WorkOrder{}, entity.ErrNotFound
 	}

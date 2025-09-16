@@ -141,8 +141,15 @@ func InitRestApp() server.RestServer {
 	adminHandler := rest.NewAdminHandler(schema, adminUsecase)
 	roleUsecase := role_uc.NewRoleUsecase(roleRepository)
 	roleHandler := rest.NewRoleHandler(schema, roleUsecase)
+	khanzaRepository := provideKhanzaRepository(schema)
+	khanzaucUsecase := khanzauc.NewUsecase(khanzaRepository, workOrderRepository, patientRepository, test_typeRepository, barcode_generatorUsecase, resultUsecase)
+	khanzaExternalHandler := rest.NewKhanzaExternalHandler(khanzaucUsecase)
+	externalucUsecase := externaluc.NewUsecase(khanzaucUsecase, schema)
+	externalHandler := rest.NewExternalHandler(externalucUsecase)
 	jwtMiddleware := middleware.NewJWTMiddleware(schema)
-	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, jwtMiddleware)
+	cronHandler := cron.NewCronHandler(khanzaucUsecase)
+	cronManager := cron.NewCronManager(cronHandler)
+	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, externalHandler, jwtMiddleware, cronManager)
 	return restServer
 }
 
