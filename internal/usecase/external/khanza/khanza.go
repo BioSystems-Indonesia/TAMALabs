@@ -302,35 +302,36 @@ func (u *Usecase) ProcessRequest(ctx context.Context, rawRequest []byte) error {
 	return nil
 }
 
-func (u *Usecase) GetResult(ctx context.Context, ono string) ([]byte, error) {
-	res := Response{}
+func (u *Usecase) GetResult(ctx context.Context, ono string) (Response, error) {
 
 	slog.InfoContext(ctx, "debug khanza get result", "ono", ono)
 
 	orders, err := u.repo.GetLabRequestByNoOrder(ctx, ono)
 	if err != nil {
-		return nil, fmt.Errorf("error getting order by no order: %w", err)
+		return Response{}, fmt.Errorf("error getting order by no order: %w", err)
 	}
 
 	if len(orders) == 0 {
-		return nil, fmt.Errorf("order not found")
+		return Response{}, fmt.Errorf("order not found")
 	}
 
 	firstOrders := orders[0]
 	workOrder, err := u.workOrderRepository.GetBySIMRSBarcode(ctx, firstOrders.NoRawat)
 	if err != nil {
-		return nil, err
+		return Response{}, err
 	}
 	workOrder.FillTestResultDetail(false)
 
-	res.Result.OBX.OrderLab = ono
+	testNameOrderMap, err := u.groupedByTestName(ctx, orders)
+	if err != nil {
+		return Response{}, fmt.Errorf("error grouping by template id: %w", err)
+	}
 
 	resultTest := make([]ResponseResultTest, len(workOrder.TestResult))
-
 	for i, t := range workOrder.TestResult {
 		hasil := ""
 		if t.Result != nil {
-			hasil = strconv.FormatFloat(*t.Result, 'f', 4, 64)
+			hasil = strconv.FormatFloat(*t.Result, 'f', t.TestType.Decimal, 64)
 		}
 
 		testName := t.TestType.AliasCode
@@ -338,24 +339,41 @@ func (u *Usecase) GetResult(ctx context.Context, ono string) ([]byte, error) {
 			testName = t.TestType.Name
 		}
 
+		order := testNameOrderMap[testName]
+		if order.IDTemplate == "" {
+			slog.WarnContext(
+				ctx,
+				"Khanza: test name does not have template id",
+				"name", testName,
+				"reason", "probably does not have correct LIS mapping",
+			)
+			continue
+		}
+
 		resultTest[i] = ResponseResultTest{
-			TestID:      strconv.FormatInt(t.ID, 10),
+			TestID:      order.IDTemplate,
 			NamaTest:    testName,
 			Hasil:       hasil,
 			NilaiNormal: t.ReferenceRange,
 			Satuan:      t.Unit,
-			Flag:        "",
+			Flag:        string(entity.NewKhanzaFlag(t)),
 		}
 	}
 
-	resByte, err := json.Marshal(res)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling response: %w", err)
+	res := Response{}
+	res.Result.OBX.OrderLab = ono
+	res.Response.Sample.ResultTest = resultTest
+	slog.InfoContext(ctx, "debug khanza get result", "res", res)
+
+	return res, nil
+}
+
+func (u *Usecase) groupedByTestName(ctx context.Context, orders []entity.KhanzaLabRequest) (map[string]entity.KhanzaLabRequest, error) {
+	grouped := make(map[string]entity.KhanzaLabRequest)
+	for _, order := range orders {
+		grouped[order.Pemeriksaan] = order
 	}
-
-	slog.InfoContext(ctx, "debug khanza get result", "res", string(resByte))
-
-	return resByte, nil
+	return grouped, nil
 }
 
 func (u *Usecase) findOrCreatePatient(r Request) (entity.Patient, error) {

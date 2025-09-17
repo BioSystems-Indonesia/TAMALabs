@@ -93,6 +93,7 @@ type KhanzaLabRequest struct {
 	NoRkmMedis        string    `json:"no_rkm_medis" db:"no_rkm_medis"`
 	NmPasien          string    `json:"nm_pasien" db:"nm_pasien"`
 	NmPerawatan       string    `json:"nm_perawatan" db:"nm_perawatan"`
+	IDTemplate        string    `json:"id_template" db:"id_template"`
 	Pemeriksaan       string    `json:"pemeriksaan" db:"Pemeriksaan"`
 	Satuan            string    `json:"satuan" db:"satuan"`
 	NilaiRujukanLD    string    `json:"nilai_rujukan_ld" db:"nilai_rujukan_ld"`
