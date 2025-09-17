@@ -282,7 +282,7 @@ function TestTemplateForm(props: TestTemplateFormProps) {
                                     reference="user" 
                                     resource='user' 
                                     target="id" 
-                                    label="Analyzer" 
+                                    label="Analyst" 
                                     filter={{}}
                                 >
                                     <AutocompleteArrayInput

@@ -112,6 +112,10 @@ export function WorkOrderAddTest() {
 function WorkOrderSideFilters() {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
+    
+    const axios = useAxios()
+    const notify = useNotify()
+    const refresh = useRefresh()
 
     return (
         <SideFilter sx={{
@@ -266,6 +270,18 @@ function WorkOrderSideFilters() {
                                 }}
                             />
                         </Stack>
+                    <Divider sx={{ marginBottom: 2 }} />
+
+                        <Button fullWidth label={"Sync request from SIMRS"} onClick={async () => {
+                            const response = await axios.post("/external/sync-all-requests", {})
+
+                            refresh()
+                            notify("Sync Success " + response.statusText, {
+                                type: "success"
+                            })
+                        }}>
+                            <SyncIcon />
+                        </Button>
                     </Box>
                 </Stack>
             </FilterLiveForm>
@@ -527,8 +543,25 @@ const WorkOrderDataGrid = () => {
         );
     }
 
+export const WorkOrderList = () => {
+    const [open, setOpen] = useState(false)
+
     return (
-        <>
+        <List sort={{
+            field: "id",
+            order: "DESC"
+        }} aside={<WorkOrderSideFilters />} 
+        actions={<WorkOrderListActions/>}
+        title="Lab Request" exporter={false}
+            storeKey={false}
+            sx={{
+                '& .RaList-content': {
+                    backgroundColor: 'background.paper',
+                    padding: 2,
+                    borderRadius: 1,
+                },
+            }}
+        >
             <Datagrid
                 rowClick={(id, resource, record) => {
                     return false
@@ -569,28 +602,8 @@ const WorkOrderDataGrid = () => {
                 </WrapperField>
             </Datagrid>
             <RunWorkOrderDialog open={open} onClose={() => setOpen(false)} setOpen={setOpen} />
-        </>
+        </List>
     );
 };
 
-export const WorkOrderList = () => {
-    return (
-        <List sort={{
-            field: "id",
-            order: "DESC"
-        }} aside={<WorkOrderSideFilters />}
-            actions={<WorkOrderListActions />}
-            title="Lab Request" exporter={false}
-            storeKey={false}
-            sx={{
-                '& .RaList-content': {
-                    backgroundColor: 'background.paper',
-                    padding: 2,
-                    borderRadius: 1,
-                },
-            }}
-        >
-            <WorkOrderDataGrid />
-        </List>
-    )
-};
+

@@ -47,12 +47,34 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                     break
             }
 
+            const aliasCode = v.test_type?.alias_code;
+            let displayResult = v.formatted_result;
+            let displayUnit = v.unit;
+            let displayReference = v.reference_range;
+            
+            // Convert specific test results to /µL
+            if (aliasCode === "Jumlah Trombosit" || aliasCode === "Jumlah Leukosit") {
+                displayResult = v.formatted_result ? v.formatted_result * 1000 : 0;
+                displayUnit = '/µL';
+                
+                // Convert reference range by multiplying by 1000
+                if (v.reference_range) {
+                    const rangeMatch = v.reference_range.match(/(\d+\.?\d*)\s*-\s*(\d+\.?\d*)/);
+                    if (rangeMatch) {
+                        const lowRef = parseFloat(rangeMatch[1]) * 1000;
+                        const highRef = parseFloat(rangeMatch[2]) * 1000;
+                        displayReference = `${lowRef.toLocaleString()} - ${highRef.toLocaleString()}`;
+                    }
+                }
+            }
+
             const reportData: ReportData = {
                 category: v.category,
                 parameter: v.test,
-                reference: v.reference_range,
-                unit: v.unit,
-                result: v.formatted_result,
+                alias_code: aliasCode,
+                reference: displayReference,
+                unit: displayUnit,
+                result: displayResult,
                 abnormality: abnormality,
                 subCategory: v.category,
             }

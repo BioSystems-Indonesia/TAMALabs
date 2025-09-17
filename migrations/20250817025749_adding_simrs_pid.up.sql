@@ -35,7 +35,7 @@ SELECT
     `id`,
     `name`,
     `code`,
-    NULL as `alias_code`,
+    `alias_code`,
     `unit`,
     `low_ref_range`,
     `high_ref_range`,
@@ -45,6 +45,20 @@ SELECT
     `description`,
     `type`
 FROM `test_types`;
+  `name` text NULL,
+  `code` text NULL,
+  `alias_code` text NULL,
+  `unit` text NULL,
+  `low_ref_range` real NULL,
+  `high_ref_range` real NULL,
+  `decimal` integer NULL,
+  `category` text NULL,
+  `sub_category` text NULL,
+  `description` text NULL,
+  `type` text NULL
+);
+-- copy rows from old table "test_types" to new temporary table "new_test_types"
+INSERT INTO `new_test_types` (`id`, `name`, `code`, `alias_code`, `unit`, `low_ref_range`, `high_ref_range`, `decimal`, `category`, `sub_category`, `description`, `type`) SELECT `id`, `name`, `code`, `alias_code`, `unit`, `low_ref_range`, `high_ref_range`, `decimal`, `category`, `sub_category`, `description`, `type` FROM `test_types`;
 -- drop "test_types" table after copying rows
 DROP TABLE `test_types`;
 -- rename temporary table "new_test_types" to "test_types"

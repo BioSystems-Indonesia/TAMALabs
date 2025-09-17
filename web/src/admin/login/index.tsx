@@ -24,7 +24,7 @@ import {
 } from '@mui/icons-material';
 import { useLogin, useNotify } from 'react-admin';
 import { useForm, Controller } from 'react-hook-form';
-import logo from '../../assets/elgatama-logo.png'
+import logo from '../../assets/alinda-husada-logo.png'
 import { radiantLightTheme } from '../theme.tsx';
 
 interface LoginFormData {
@@ -56,8 +56,8 @@ const CustomLoginPage: React.FC = () => {
             notify('Login success', { type: 'success' });
         } catch (error) {
             if (error instanceof Error) {
-                setError('Usernamae or password wrong');
-                setValue('password', '');
+                setError('Username or password wrong');
+                setValue('password', ''); 
             }
             notify('Login failed', { type: 'error' });
         } finally {
@@ -297,7 +297,7 @@ const CustomLoginPage: React.FC = () => {
                         }}
                     >
                         <Typography variant="body2" color="text.secondary">
-                            © 2025 PT Elga Tama. All rights reserved.
+                            © 2025 RS Alinda Husada. All rights reserved.
                         </Typography>
                     </Box> */}
                     </Paper>

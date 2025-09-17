@@ -237,7 +237,7 @@ export function WorkOrderShow() {
                                                 <Typography variant='subtitle1' sx={{
                                                     textAlign: "center",
                                                 }}>Analyzer</Typography>
-                                                <RecordContextProvider value={record.analyst}>
+                                                <RecordContextProvider value={record.analyzers}>
                                                     <AdminShow icon={<ScienceIcon />} />
                                                 </RecordContextProvider>
                                             </Stack>

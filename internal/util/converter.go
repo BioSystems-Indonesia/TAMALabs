@@ -3,6 +3,7 @@ package util
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -55,6 +56,19 @@ var (
 		"pU":  1e-12, // 1 pU = 1e-12 U
 		"fU":  1e-15, // 1 fU = 1e-15 U
 	}
+
+	// Count units (base unit: /µL)
+	countConversions = map[string]float64{
+		"G/µL":    1e9,  // 1 G/µL = 1e9 /µL
+		"M/µL":    1e6,  // 1 M/µL = 1e6 /µL
+		"K/µL":    1e3,  // 1 K/µL = 1e3 /µL
+		"10^3/µL": 1e3,  // 1 10^3/µL = 1e3 /µL (same as K/µL)
+		"10^6/µL": 1e6,  // 1 10^6/µL = 1e6 /µL (same as M/µL)
+		"10^9/µL": 1e9,  // 1 10^9/µL = 1e9 /µL (same as G/µL)
+		"/µL":     1,    // 1 /µL = 1 /µL
+		"/mL":     1e-3, // 1 /mL = 1e-3 /µL
+		"/L":      1e-6, // 1 /L = 1e-6 /µL
+	}
 )
 
 // normalizeUnit replaces escape sequences or alternative representations with standard units
@@ -65,11 +79,22 @@ func normalizeUnit(unit string) string {
 	unit = strings.ReplaceAll(unit, "ug", "µg")    // Replace ug with µg
 	unit = strings.ReplaceAll(unit, "uL", "µL")    // Replace uL with µL
 	unit = strings.ReplaceAll(unit, "uU", "µU")    // Replace uU with µU
+
+	// Handle alternative representations for scientific notation
+	unit = strings.ReplaceAll(unit, "10^3/uL", "10^3/µL") // Replace 10^3/uL with 10^3/µL
+	unit = strings.ReplaceAll(unit, "10^6/uL", "10^6/µL") // Replace 10^6/uL with 10^6/µL
+	unit = strings.ReplaceAll(unit, "10^9/uL", "10^9/µL") // Replace 10^9/uL with 10^9/µL
+
 	return unit
 }
 
 // parseCompoundUnit splits a compound unit into numerator and denominator
 func parseCompoundUnit(unit string) (string, string) {
+	// Handle count units specially - these should be treated as single units
+	if isCountUnit(unit) {
+		return unit, "" // Treat count units as single units
+	}
+
 	parts := strings.Split(unit, "/")
 	if len(parts) == 1 {
 		return parts[0], "" // No denominator
@@ -96,6 +121,8 @@ func convertSimpleUnit(value float64, fromUnit, toUnit string) (float64, error) 
 		conversionMap = volumeConversions
 	case isEnzymeUnit(fromUnit) || isEnzymeUnit(toUnit):
 		conversionMap = enzymeConversions
+	case isCountUnit(fromUnit) || isCountUnit(toUnit):
+		conversionMap = countConversions
 	default:
 		return 0, errors.New("unsupported unit type")
 	}
@@ -161,6 +188,11 @@ func isEnzymeUnit(unit string) bool {
 	return ok
 }
 
+func isCountUnit(unit string) bool {
+	_, ok := countConversions[unit]
+	return ok
+}
+
 // Helper function to compare floating-point numbers with a tolerance
 func almostEqual(a, b, tolerance float64) bool {
 	return abs(a-b) <= tolerance
@@ -171,4 +203,43 @@ func abs(x float64) float64 {
 		return -x
 	}
 	return x
+}
+
+// ConvertReferenceRange converts a reference range by multiplying both values by a factor
+func ConvertReferenceRange(refRange string, factor float64) string {
+	if refRange == "" {
+		return ""
+	}
+
+	// Use regex to match format like "4.0 - 10.0" or "150 - 450"
+	parts := strings.Split(refRange, "-")
+	if len(parts) != 2 {
+		return refRange // Return original if format doesn't match
+	}
+
+	lowStr := strings.TrimSpace(parts[0])
+	highStr := strings.TrimSpace(parts[1])
+
+	lowValue, err := strconv.ParseFloat(lowStr, 64)
+	if err != nil {
+		return refRange // Return original if parsing fails
+	}
+
+	highValue, err := strconv.ParseFloat(highStr, 64)
+	if err != nil {
+		return refRange // Return original if parsing fails
+	}
+
+	// Convert values
+	convertedLow := lowValue * factor
+	convertedHigh := highValue * factor
+
+	// Format with appropriate decimal places
+	if convertedLow == float64(int(convertedLow)) && convertedHigh == float64(int(convertedHigh)) {
+		// If both are whole numbers, format without decimal places
+		return fmt.Sprintf("%.0f - %.0f", convertedLow, convertedHigh)
+	} else {
+		// Otherwise, format with 2 decimal places
+		return fmt.Sprintf("%.2f - %.2f", convertedLow, convertedHigh)
+	}
 }

@@ -1,9 +1,14 @@
 package entity
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"sort"
+	"strings"
 	"time"
+
+	"github.com/oibacidem/lims-hl-seven/internal/util"
 )
 
 type WorkOrderStatus string
@@ -31,8 +36,9 @@ type WorkOrderCreateRequest struct {
 	DoctorIDs       []int64                          `json:"doctor_ids" gorm:"-"`
 	AnalyzerIDs     []int64                          `json:"analyzer_ids" gorm:"-"`
 	TestTemplateIDs []int64                          `json:"test_template_ids" gorm:"-"`
-	Barcode         string                           `json:"barcode" gorm:"column:barcode;index:work_order_barcode,unique"`
-	BarcodeSIMRS    string                           `json:"barcode_simrs" gorm:"column:barcode_simrs;index:work_order_barcode_simrs"`
+
+	Barcode      string `json:"barcode" gorm:"column:barcode;index:work_order_barcode,unique"`
+	BarcodeSIMRS string `json:"barcode_simrs" gorm:"column:barcode_simrs;index:work_order_barcode_simrs"`
 }
 
 type WorkOrderCreateRequestTestType struct {
@@ -81,6 +87,203 @@ func (wo *WorkOrder) GetFirstDoctor() Admin {
 	}
 
 	return Admin{}
+}
+
+type ResultDetailOption struct {
+	HideEmpty   bool
+	HideHistory bool
+}
+
+// CalculateEGFRForResults calculates eGFR for creatinine results in the work order
+func (wo *WorkOrder) CalculateEGFRForResults(ctx context.Context) {
+	// Find creatinine results
+	for i := range wo.TestResult {
+		testResult := &wo.TestResult[i]
+
+		// Check if this is a creatinine test
+		if wo.isCreatinineTest(testResult.Test) && testResult.Result != nil {
+			// Get patient information
+			if wo.Patient.ID == 0 {
+				continue // Skip if no patient data
+			}
+
+			// Calculate age
+			age := util.CalculateAge(wo.Patient.Birthdate)
+
+			// Convert creatinine to mg/dL if needed
+			creatinineValue := *testResult.Result
+			if testResult.Unit != "mg/dL" {
+				convertedValue, err := util.ConvertCreatinineUnit(creatinineValue, testResult.Unit, "mg/dL")
+				if err != nil {
+					slog.WarnContext(ctx, "Failed to convert creatinine unit for eGFR calculation",
+						"test_result_id", testResult.ID,
+						"unit", testResult.Unit,
+						"error", err)
+					continue
+				}
+				creatinineValue = convertedValue
+			}
+
+			// Calculate eGFR using CKD-EPI formula
+			var sex util.PatientSex
+			if wo.Patient.Sex == PatientSexMale {
+				sex = util.PatientSexMale
+			} else {
+				sex = util.PatientSexFemale
+			}
+
+			egfrResult := util.CalculateEGFRCKDEPI(creatinineValue, age, sex)
+
+			// Add eGFR to the test result
+			testResult.EGFR = &EGFRCalculation{
+				Value:    egfrResult.Value,
+				Formula:  egfrResult.Formula,
+				Unit:     egfrResult.Unit,
+				Category: egfrResult.Category,
+			}
+
+			// Also add eGFR to history results if they exist
+			for j := range testResult.History {
+				if testResult.History[j].Result != nil {
+					historyCreatinine := *testResult.History[j].Result
+					if testResult.History[j].Unit != "mg/dL" {
+						convertedValue, err := util.ConvertCreatinineUnit(historyCreatinine, testResult.History[j].Unit, "mg/dL")
+						if err != nil {
+							continue
+						}
+						historyCreatinine = convertedValue
+					}
+
+					historyEGFR := util.CalculateEGFRCKDEPI(historyCreatinine, age, sex)
+					testResult.History[j].EGFR = &EGFRCalculation{
+						Value:    historyEGFR.Value,
+						Formula:  historyEGFR.Formula,
+						Unit:     historyEGFR.Unit,
+						Category: historyEGFR.Category,
+					}
+				}
+			}
+		}
+	}
+}
+
+// isCreatinineTest checks if the test code represents a creatinine test
+func (wo *WorkOrder) isCreatinineTest(testCode string) bool {
+	testCodeUpper := strings.ToUpper(testCode)
+	creatinineCodes := []string{
+		"CREATININE", "KREATININ",
+	}
+
+	for _, code := range creatinineCodes {
+		if testCodeUpper == code {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (wo *WorkOrder) FillResultDetail(opt ResultDetailOption) {
+	var allObservationRequests []ObservationRequest
+	var allObservationResults []ObservationResult
+	for _, specimen := range wo.Specimen {
+		allObservationRequests = append(allObservationRequests, specimen.ObservationRequest...)
+		allObservationResults = append(allObservationResults, specimen.ObservationResult...)
+	}
+
+	allTests := make([]TestResult, len(allObservationRequests))
+	// create the placeholder first
+	for i, request := range allObservationRequests {
+		allTests[i] = TestResult{}.CreateEmpty(request)
+	}
+
+	// sort by test code
+	sort.Slice(allTests, func(i, j int) bool {
+		return allTests[i].Test < allTests[j].Test
+	})
+
+	// prepare the data that will be filled into the placeholder
+	// prepare by grouping into code. But before that, sort by updated_at
+	// the latest updated_at will be the first element
+	sort.Slice(allObservationResults, func(i, j int) bool {
+		return allObservationResults[i].CreatedAt.After(allObservationResults[j].CreatedAt)
+	})
+
+	// ok final step to create the order data
+	testResults := map[string][]ObservationResult{}
+	for _, observation := range allObservationResults {
+		// TODO check whether this will create chaos in order or not
+		testResults[observation.TestCode] = append(testResults[observation.TestCode], observation)
+	}
+
+	// fill the placeholder
+	totalResultFilled := wo.pickDefaultResult(allTests, testResults, opt)
+
+	wo.TotalRequest = int64(len(allObservationRequests))
+	wo.TotalResultFilled = int64(totalResultFilled)
+	wo.HaveCompleteData = len(allObservationRequests) == totalResultFilled
+	if len(allObservationRequests) != 0 {
+		wo.PercentComplete = float64(totalResultFilled) / float64(len(allObservationRequests))
+	}
+
+	if opt.HideEmpty {
+		var filteredTests []TestResult
+		for _, test := range allTests {
+			if test.Result == nil || *test.Result == 0 {
+				continue
+			}
+			filteredTests = append(filteredTests, test)
+		}
+		allTests = filteredTests
+	}
+
+	wo.TestResult = allTests
+}
+
+func (wo *WorkOrder) pickDefaultResult(
+	allTests []TestResult,
+	testResults map[string][]ObservationResult,
+	opt ResultDetailOption,
+) int {
+	totalResultFilled := 0
+	for i, test := range allTests {
+		newTest := test
+		history := testResults[test.Test]
+		if len(history) > 0 {
+			// Pick the latest history or the manually picked one
+			pickedTest := history[0]
+			for _, v := range history {
+				if v.Picked {
+					pickedTest = v
+					break
+				}
+			}
+
+			newTest = newTest.FromObservationResult(pickedTest)
+		}
+		newTest = wo.fillTestHistory(newTest, history, opt)
+
+		// or should be like this or we can just use the above code
+		allTests[i] = newTest
+
+		// count the filled result
+		if newTest.Result != nil {
+			totalResultFilled++
+		}
+	}
+	return totalResultFilled
+}
+
+func (wo *WorkOrder) fillTestHistory(
+	test TestResult,
+	history []ObservationResult,
+	opt ResultDetailOption,
+) TestResult {
+	if opt.HideHistory {
+		return test
+	}
+
+	return test.FillHistory(history)
 }
 
 func (wo *WorkOrder) FillData() {

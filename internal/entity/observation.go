@@ -1,11 +1,13 @@
 package entity
 
 import (
+	"fmt"
 	"log/slog"
 	"strconv"
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
+	"gorm.io/gorm"
 )
 
 type ObservationRequest struct {
@@ -41,6 +43,13 @@ type ObservationResultCreate struct {
 	Tests      []ObservationResultTestsCreate `json:"tests" validate:"required"`
 }
 
+type EGFRCalculation struct {
+	Value    float64 `json:"value"`
+	Formula  string  `json:"formula"`
+	Unit     string  `json:"unit"`
+	Category string  `json:"category"`
+}
+
 type ObservationResult struct {
 	ID             int64           `json:"id" gorm:"primaryKey;autoIncrement"`
 	SpecimenID     int64           `json:"specimen_id"`
@@ -58,6 +67,44 @@ type ObservationResult struct {
 	UpdatedAt      time.Time       `json:"updated_at" gorm:"not null"`
 
 	TestType TestType `json:"test_type" gorm:"foreignKey:TestCode;references:Code" validate:"required"`
+
+	// Calculated fields (not stored in database)
+	EGFR *EGFRCalculation `json:"egfr,omitempty" gorm:"-"`
+}
+
+// BeforeCreate is called before creating ObservationResult
+func (o *ObservationResult) BeforeCreate(tx *gorm.DB) error {
+	return o.generateReferenceRange(tx)
+}
+
+// BeforeUpdate is called before updating ObservationResult
+func (o *ObservationResult) BeforeUpdate(tx *gorm.DB) error {
+	return o.generateReferenceRange(tx)
+}
+
+// generateReferenceRange generates reference range based on TestType
+func (o *ObservationResult) generateReferenceRange(tx *gorm.DB) error {
+	if o.TestCode == "" {
+		return nil
+	}
+
+	var testType TestType
+	err := tx.Where("code = ?", o.TestCode).First(&testType).Error
+	if err != nil {
+		// Try to find by alias_code if not found by code
+		err = tx.Where("alias_code = ? AND alias_code != ''", o.TestCode).First(&testType).Error
+		if err != nil {
+			return nil // Skip if test type not found
+		}
+	}
+
+	decimal := testType.Decimal
+	if decimal < 0 {
+		decimal = 0
+	}
+
+	o.ReferenceRange = fmt.Sprintf("%.*f - %.*f", decimal, testType.LowRefRange, decimal, testType.HighRefRange)
+	return nil
 }
 
 // GetFirstValue get the first value from the values

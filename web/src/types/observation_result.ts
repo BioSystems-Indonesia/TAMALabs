@@ -2,10 +2,18 @@ import type { Patient } from "./patient";
 import { User } from "./user";
 import { VerifiedStatus } from "./work_order";
 
+export type EGFRCalculation = {
+  value: number;
+  formula: string;
+  unit: string;
+  category: string;
+}
+
 export type ObservationResult = {
   id: number;
   specimen_id: number;
   code: string;
+  name: string;
   description: string;
   values: string[];
   type: string;
@@ -17,11 +25,13 @@ export type ObservationResult = {
   created_at: string;
   updated_at: string;
   test_type: TestType;
+  egfr?: EGFRCalculation;
 }
 
 export type TestResult = {
   id: number;
   test_type_id: number;
+  alias_code: string;
   specimen_id: number;
   test: string;
   result: number;
@@ -33,12 +43,15 @@ export type TestResult = {
   reference_range: string;
   created_at: string;
   history: TestResult[] | null;
+  test_type: TestType;
+  egfr?: EGFRCalculation;
 }
 
 export type TestType ={
   id: number;
   name: string;
   code: string;
+  alias_code: string;
   unit: string;
   low_ref_range: number;
   high_ref_range: number;
@@ -52,6 +65,7 @@ export type ReportData = {
   category: string;
   subCategory: string;
   parameter: string;
+  alias_code?: string;
   result: number;
   reference: string;
   unit: string;

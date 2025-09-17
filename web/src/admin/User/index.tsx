@@ -447,7 +447,7 @@ const RolePresentationList: React.FC<RolePresentationListProps> = ({ roles }) =>
                 const backgroundColor = {
                     Admin: 'primary.main',
                     Doctor: 'warning.main',
-                    Analyzer: 'info.main',
+                    Analyst: 'info.main',
                 }[role.name] || 'grey.100';
                 const textColor = isPrivilegedRole ? 'primary.contrastText' : 'text.primary';
                 const iconColor = isPrivilegedRole ? 'primary.contrastText' : 'action.active';
@@ -659,7 +659,7 @@ export function UserRolesChipColorMap(value: string) {
             return 'primary';
         case 'Doctor':
             return 'secondary';
-        case 'Analyzer':
+        case 'Analyst':
             return 'error';
         default:
             return 'default';

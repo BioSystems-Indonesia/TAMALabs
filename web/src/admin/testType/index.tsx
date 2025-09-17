@@ -17,7 +17,7 @@ import { TestType } from "../../types/test_type";
 
 export const TestTypeDatagrid = (props: any) => {
     return (
-        <Datagrid bulkActionButtons={false}>
+        <Datagrid bulkActionButtons={false} >
             <TextField source="id" />
             <TextField source="name" />
             <TextField source="code" />
@@ -68,6 +68,7 @@ export const TestTypeList = () => {
                 field: "id",
                 order: "DESC",
             }}
+            perPage={50}
             sx={{
                 '& .RaList-main': {},
                 '& .RaList-content': {
@@ -476,7 +477,10 @@ function TestTypeInput(props: TestTypeFormProps) {
 function TestTypeForm(props: TestTypeFormProps) {
     return (
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
-            <SimpleForm
+            <SimpleForm 
+                disabled={props.readonly}
+                toolbar={props.readonly === true ? false : undefined}
+                warnWhenUnsavedChanges
                 sx={{
                     '& .RaSimpleForm-form': {
                         backgroundColor: 'transparent',

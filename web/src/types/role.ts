@@ -10,7 +10,7 @@ export type Role = {
 export const RoleNameValue = {
     ADMIN: "Admin",
     DOCTOR: "Doctor",
-    ANALYZER: "Analyzer",
+    ANALYZER: "Analyst",
 } as const
 
 

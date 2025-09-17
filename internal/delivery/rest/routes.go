@@ -117,6 +117,7 @@ func RegisterRoutes(
 	{
 		patient.GET("", handler.FindPatients)
 		patient.GET("/:id", handler.GetOnePatient)
+		patient.GET("/:id/result/history", handler.GetPatientResultHistory)
 		patient.POST("", handler.CreatePatient)
 		patient.PUT("/:id", handler.UpdatePatient)
 		patient.DELETE("/:id", handler.DeletePatient)
@@ -182,6 +183,7 @@ func RegisterRoutes(
 		result.PUT("/:work_order_id/test", handler.AddTestResult)
 		result.PUT("/:work_order_id/test/:test_result_id/pick", handler.TooglePickTestResult)
 		result.DELETE("/:work_order_id/test/:test_result_id", handler.DeleteTestResult)
+		result.POST("/egfr/calculate", handler.CalculateEGFR)
 	}
 	resultUnauthenticated := unauthenticatedV1.Group("/result")
 	{

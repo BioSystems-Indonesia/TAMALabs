@@ -15,20 +15,21 @@ export const settingSchema = z.object({
   company_address: z.string().optional(),
   company_contact_email: z.string().optional(),
   company_contact_phone: z.string().optional(),
+  company_contact_hp: z.string().optional(),
 });
 
 export type Settings = z.infer<typeof settingSchema>;
 
 export const defaultSettings: Settings = {
   id: "1", // ID is default to "1" because it is used as the default record ID
-  barcode_page_width: 78,
-  barcode_page_height: 60,
-  barcode_width: 1.3,
+  barcode_page_width: 50,
+  barcode_page_height: 20,
+  barcode_width: 1,
   barcode_height: 50,
   barcode_orientation: "landscape",
-  company_name: "PT ELGA TAMA",
-  company_address:
-    "JI. Kyai Caringin No.18A-20, RT.11/RW.4, Cideng, Kecamatan Gambir Daerah Khusus Ibukota Jakarta 10150",
-  company_contact_email: "help@elgatama.com",
-  company_contact_phone: "+6281938123234",
+  company_name: "RUMAH SAKIT ALINDA HUSADA",
+  company_address: "Jl. Raya Tanjung Lesung KM.01, Kec. Panimbang, Kab. Pandeglang, Banten 42281",
+  company_contact_email: "rumahsakit.alindahusada@gmail.com",
+  company_contact_phone: "02535806781",
+  company_contact_hp: "087772714887 | 081399366841"
 };

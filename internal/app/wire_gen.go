@@ -83,7 +83,7 @@ func InitRestApp() server.RestServer {
 	healthCheckHandler := rest.NewHealthCheckHandler(schema)
 	patientRepository := patientrepo.NewPatientRepository(gormDB, schema)
 	validate := provideValidator()
-	patientUseCase := patientuc.NewPatientUseCase(schema, patientRepository, validate)
+	patientUseCase := patientuc.NewPatientUseCase(schema, patientRepository, workOrderRepository, validate)
 	patientHandler := rest.NewPatientHandler(schema, patientUseCase)
 	specimenUseCase := specimenuc.NewSpecimenUseCase(schema, specimenRepository, validate)
 	specimenHandler := rest.NewSpecimenHandler(schema, specimenUseCase)

@@ -44,7 +44,14 @@ func (u *Usecase) Results(
 	}
 
 	for i := range resp.Data {
-		resp.Data[i].FillTestResultDetail(true)
+		resp.Data[i].FillResultDetail(entity.ResultDetailOption{
+			HideEmpty: true,
+		})
+
+		// Calculate eGFR for each work order
+		resp.Data[i].CalculateEGFRForResults(ctx)
+		
+		// Maintain status management functionality
 		u.changeStatusIfNeeded(ctx, &resp.Data[i])
 	}
 
@@ -56,7 +63,12 @@ func (u *Usecase) ResultDetail(ctx context.Context, workOrderID int64) (entity.R
 	if err != nil {
 		return entity.ResultDetail{}, err
 	}
-	workOrder.FillTestResultDetail(false)
+	workOrder.FillResultDetail(entity.ResultDetailOption{
+		HideEmpty: false,
+	})
+
+	// Calculate eGFR for creatinine results
+	workOrder.CalculateEGFRForResults(ctx)
 
 	// Why inverted? preve is get from next and next from get
 	// because the default of ordering in front end are from the latest
@@ -86,10 +98,11 @@ func (u *Usecase) PutTestResult(ctx context.Context, result entity.TestResult) (
 	oldResult := result
 
 	obs := entity.ObservationResult{
-		SpecimenID:     result.SpecimenID,
-		TestCode:       result.Test,
-		Unit:           result.Unit,
-		ReferenceRange: result.ReferenceRange,
+		SpecimenID: result.SpecimenID,
+		TestCode:   result.Test,
+		Unit:       result.Unit,
+		// Don't use result.ReferenceRange from old data
+		// ReferenceRange will be generated from TestType
 	}
 
 	if result.Result != nil {

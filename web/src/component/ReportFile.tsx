@@ -377,14 +377,14 @@ export const ReportDocument = ({ data, patientData, workOrderData }: { data: Rep
                             };
                             return (
                                 <View key={index} style={styles.tableRow}>
-                                    <Text style={[styles.columnHeader, styles.cell, abnormalColor]}>{item.parameter}</Text>
+                                    <Text style={[styles.columnHeader, styles.cell, abnormalColor]}>{item.alias_code || item.parameter}</Text>
                                     <Text style={[styles.columnResult, styles.cell, abnormalColor]}>{item.result}</Text>
                                     <Text style={[styles.columnResult, styles.cell, abnormalColor]}>{item.unit}</Text>
                                     <Text style={[styles.columnReference, styles.cell, abnormalColor]}>
                                         {item.reference}
                                     </Text>
                                     <Text style={[styles.columnReference, styles.cell, abnormalColor]}>
-                                        {item.abnormality}
+                                        {item.abnormality !== "Normal" ? item.abnormality : "-"}
                                     </Text>
                                 </View>
                             );

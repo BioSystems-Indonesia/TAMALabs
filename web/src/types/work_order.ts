@@ -34,7 +34,8 @@ export type WorkOrder = {
   total_result_filled: number;
   percent_complete: number;
   have_complete_data: boolean;
-};
+  analyzers: any[];
+}
 
 export const workOrderStatusShowCancel: WorkOrderStatus[] = [
   "PENDING",

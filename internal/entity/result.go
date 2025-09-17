@@ -39,6 +39,7 @@ type DeleteResultBulkReq struct {
 type TestResult struct {
 	ID              int64          `json:"id"`
 	SpecimenID      int64          `json:"specimen_id"`
+	AliasCode       string         `json:"alias_code"`
 	TestTypeID      int64          `json:"test_type_id"`
 	Test            string         `json:"test"`
 	Result          *float64       `json:"result"`
@@ -53,6 +54,9 @@ type TestResult struct {
 	TestType        TestType       `json:"test_type"`
 
 	History []TestResult `json:"history"`
+
+	// Calculated fields (not stored in database)
+	EGFR *EGFRCalculation `json:"egfr,omitempty"`
 }
 
 func (r TestResult) GetResult() float64 {
@@ -75,7 +79,12 @@ func (r TestResult) GetFormattedResult() float64 {
 // Result test can be filled manualy in frontend or from the result observation
 // When we fill we need to show to the user, what testCode that we are filling
 // What are the unit they will fill and what is the reference range
-func (r TestResult) CreateEmpty(request ObservationRequest, specimen Specimen) TestResult {
+func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
+	decimal := request.TestType.Decimal
+	if decimal < 0 {
+		decimal = 0
+	}
+
 	return TestResult{
 		ID:             0,
 		SpecimenID:     request.SpecimenID,
@@ -84,8 +93,7 @@ func (r TestResult) CreateEmpty(request ObservationRequest, specimen Specimen) T
 		TestTypeID:     int64(request.TestType.ID),
 		Unit:           request.TestType.Unit,
 		Category:       request.TestType.Category,
-		SpecimenType:   specimen.Type,
-		ReferenceRange: fmt.Sprintf("%.*f - %.*f", request.TestType.Decimal, request.TestType.LowRefRange, request.TestType.Decimal, request.TestType.HighRefRange),
+		ReferenceRange: fmt.Sprintf("%.*f - %.*f", decimal, request.TestType.LowRefRange, decimal, request.TestType.HighRefRange),
 		CreatedAt:      request.UpdatedAt.Format(time.RFC3339),
 		Abnormal:       NoDataResult,
 		Picked:         false,
@@ -102,9 +110,8 @@ func (r TestResult) FromObservationResult(observation ObservationResult, specime
 		TestTypeID:     int64(observation.TestType.ID),
 		Unit:           observation.TestType.Unit,
 		Category:       observation.TestType.Category,
-		SpecimenType:   specimenType,
 		ReferenceRange: fmt.Sprintf("%.*f - %.*f", observation.TestType.Decimal, observation.TestType.LowRefRange, observation.TestType.Decimal, observation.TestType.HighRefRange),
-		CreatedAt:      observation.UpdatedAt.Format(time.RFC3339),
+		CreatedAt:      observation.CreatedAt.Format(time.RFC3339),
 		Picked:         observation.Picked,
 		TestType:       observation.TestType,
 
@@ -172,6 +179,11 @@ func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[i
 		result := h.GetFirstValue()
 		specimenType := specimenTypes[h.SpecimenID]
 
+		decimal := h.TestType.Decimal
+		if decimal < 0 {
+			decimal = 0
+		}
+
 		histories[i] = TestResult{
 			ID:             h.ID,
 			SpecimenID:     h.SpecimenID,
@@ -180,8 +192,7 @@ func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[i
 			TestTypeID:     int64(h.TestType.ID),
 			Unit:           h.Unit,
 			Category:       h.TestType.Category,
-			SpecimenType:   specimenType,
-			ReferenceRange: fmt.Sprintf("%.*f - %.*f", h.TestType.Decimal, h.TestType.LowRefRange, h.TestType.Decimal, h.TestType.HighRefRange),
+			ReferenceRange: fmt.Sprintf("%.*f - %.*f", decimal, h.TestType.LowRefRange, decimal, h.TestType.HighRefRange),
 			CreatedAt:      h.CreatedAt.Format(time.RFC3339),
 			Picked:         h.Picked,
 			TestType:       h.TestType,

@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
+	"github.com/oibacidem/lims-hl-seven/internal/util"
 
 	"github.com/labstack/echo/v4"
 	"github.com/oibacidem/lims-hl-seven/config"
@@ -180,4 +182,54 @@ func (h ResultHandler) UploadFileA15(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+func (h *ResultHandler) CalculateEGFR(c echo.Context) error {
+	var req struct {
+		CreatinineValue float64 `json:"creatinine_value" validate:"required,gt=0"`
+		CreatinineUnit  string  `json:"creatinine_unit" validate:"required"`
+		Age             float64 `json:"age" validate:"required,gte=0"`
+		Sex             string  `json:"sex" validate:"required"`
+		Formula         string  `json:"formula,omitempty"` // Optional: "CKD-EPI" or "MDRD"
+	}
+
+	if err := bindAndValidate(c, &req); err != nil {
+		return handleError(c, err)
+	}
+
+	// Convert sex to util.PatientSex
+	var sex util.PatientSex
+	switch req.Sex {
+	case "M", "Male":
+		sex = util.PatientSexMale
+	case "F", "Female":
+		sex = util.PatientSexFemale
+	default:
+		return handleError(c, entity.ErrBadRequest.WithInternal(errors.New("invalid sex value, must be M or F")))
+	}
+
+	// Convert creatinine to mg/dL if needed
+	creatinineValue := req.CreatinineValue
+	if req.CreatinineUnit != "mg/dL" {
+		convertedValue, err := util.ConvertCreatinineUnit(req.CreatinineValue, req.CreatinineUnit, "mg/dL")
+		if err != nil {
+			return handleError(c, entity.ErrBadRequest.WithInternal(err))
+		}
+		creatinineValue = convertedValue
+	}
+
+	// Calculate eGFR using the specified formula (default to CKD-EPI)
+	var egfrResult util.EGFRResult
+	if req.Formula == "MDRD" {
+		egfrResult = util.CalculateEGFRMDRD(creatinineValue, req.Age, sex)
+	} else {
+		egfrResult = util.CalculateEGFRCKDEPI(creatinineValue, req.Age, sex)
+	}
+
+	return c.JSON(http.StatusOK, entity.EGFRCalculation{
+		Value:    egfrResult.Value,
+		Formula:  egfrResult.Formula,
+		Unit:     egfrResult.Unit,
+		Category: egfrResult.Category,
+	})
 }

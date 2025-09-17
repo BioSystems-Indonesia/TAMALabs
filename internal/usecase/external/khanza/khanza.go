@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -47,6 +48,44 @@ func NewUsecase(
 		barcodeUC:           barcodeUC,
 		resultUC:            resultUC,
 	}
+}
+
+// formatNumberWithThousandSeparator formats a number with dot as thousand separator
+func formatNumberWithThousandSeparator(value float64, decimals int) string {
+	// For values that might cause issues, return simple format
+	if value == 0 {
+		return "0"
+	}
+
+	// Format the number with specified decimals
+	formatted := fmt.Sprintf(fmt.Sprintf("%%.%df", decimals), value)
+
+	// For very large numbers or edge cases, return the simple format
+	if len(formatted) > 15 {
+		return fmt.Sprintf(fmt.Sprintf("%%.%df", decimals), value)
+	}
+
+	// Split into integer and decimal parts
+	parts := strings.Split(formatted, ".")
+	integerPart := parts[0]
+
+	// Add thousand separators to integer part
+	if len(integerPart) > 3 {
+		var result strings.Builder
+		for i, digit := range integerPart {
+			if i > 0 && (len(integerPart)-i)%3 == 0 {
+				result.WriteString(".")
+			}
+			result.WriteRune(digit)
+		}
+		integerPart = result.String()
+	}
+
+	// Reconstruct the number
+	if decimals > 0 && len(parts) > 1 {
+		return integerPart + "," + parts[1] // Use comma for decimal separator
+	}
+	return integerPart
 }
 
 func (u *Usecase) SyncAllResult(ctx context.Context, orderIDs []int64) error {
@@ -96,6 +135,12 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 	var reqs []entity.KhanzaResDT
 	for _, testResult := range tests {
 		slog.Info("testResult", "testResult", testResult)
+		
+		alias := testResult.TestType.AliasCode
+		if alias == "" && len(testResult.History) > 0 {
+			alias = testResult.History[0].TestType.AliasCode
+		}
+
 		barcode := workOrder.BarcodeSIMRS // visit no
 		if barcode == "" {
 			continue
@@ -108,9 +153,83 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 		}
 		barcode = order.ONO
 
-		code := testResult.TestType.AliasCode
+		code := alias
 		if code == "" {
 			code = testResult.TestType.Code
+		}
+
+		// Convert result and unit for specific tests
+		resultValue := testResult.GetResult()
+		unit := testResult.Unit
+		refRange := testResult.ReferenceRange
+
+		if alias == "Jumlah Trombosit" || alias == "Jumlah Leukosit" {
+			resultValue = resultValue * 1000
+			unit = "/µL"
+
+			// Convert reference range by multiplying by 1000
+			if testResult.ReferenceRange != "" {
+				refRangeConverted := util.ConvertReferenceRange(testResult.ReferenceRange, 1000)
+				if refRangeConverted != "" {
+					refRange = refRangeConverted
+				}
+			}
+		}
+
+		// Round the result value (e.g., 8.4 -> 8, 8.6 -> 9)
+		// Exception: Don't round Hemoglobin and Eritrosit
+		var resultValueStr string
+		if alias == "Hemoglobin" || alias == "Eritrosit" {
+			// Keep decimal for Hemoglobin and Eritrosit with thousand separator
+			resultValueStr = formatNumberWithThousandSeparator(resultValue, 1)
+		} else {
+			// Round other tests to whole numbers with thousand separator
+			roundedValue := math.Round(resultValue)
+			resultValueStr = formatNumberWithThousandSeparator(roundedValue, 0)
+		}
+
+		// Log the values for debugging
+		flag := entity.NewKhanzaFlag(testResult)
+
+		// Ensure FLAG field is compatible with database constraints
+		// Convert flag to single character or empty string
+		var flagStr string
+		switch flag {
+		case entity.FlagHigh:
+			flagStr = "H"
+		case entity.FlagLow:
+			flagStr = "L"
+		case entity.FlagLowLow:
+			flagStr = "L" // Use single L for compatibility
+		case entity.FlagHighHigh:
+			flagStr = "H" // Use single H for compatibility
+		default:
+			flagStr = "" // Empty for normal or no data
+		}
+
+		slog.Info("khanza sync debug",
+			"test_code", code,
+			"alias_code", alias,
+			"original_value", resultValue,
+			"formatted_value", resultValueStr,
+			"formatted_length", len(resultValueStr),
+			"flag", flag,
+			"flag_str", flagStr,
+			"flag_length", len(flagStr),
+		)
+
+		// Validate field lengths to prevent database truncation errors
+		if len(resultValueStr) > 50 {
+			resultValueStr = resultValueStr[:50] // Truncate if too long
+		}
+		if len(code) > 20 {
+			code = code[:20] // Truncate test code if too long
+		}
+		if len(unit) > 10 {
+			unit = unit[:10] // Truncate unit if too long
+		}
+		if len(refRange) > 100 {
+			refRange = refRange[:100] // Truncate reference range if too long
 		}
 
 		khanzaDT := entity.KhanzaResDT{
@@ -118,16 +237,39 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 			TESTCD:      code,
 			TestNM:      code,
 			DataTyp:     entity.DataTypNumeric,
-			ResultValue: fmt.Sprintf("%.2f", testResult.GetResult()),
-			Unit:        testResult.Unit,
-			Flag:        entity.NewKhanzaFlag(testResult),
-			RefRange:    testResult.ReferenceRange,
+			ResultValue: resultValueStr,
+			Unit:        unit,
+			Flag:        entity.Flag(flagStr), // Use converted flag string
+			RefRange:    refRange,
 		}
 		reqs = append(reqs, khanzaDT)
 	}
 
 	err = u.repo.BatchUpsertRESDTO(ctx, reqs)
 	if err != nil {
+		slog.Error("batch upsert failed",
+			"error", err,
+			"total_records", len(reqs),
+			"work_order_id", workOrderID,
+		)
+
+		// Log sample of records for debugging
+		for i, req := range reqs {
+			if i < 3 { // Log first 3 records for debugging
+				slog.Error("sample record",
+					"index", i,
+					"ono", req.ONO,
+					"test_cd", req.TESTCD,
+					"result_value", req.ResultValue,
+					"result_value_len", len(req.ResultValue),
+					"flag", req.Flag,
+					"flag_len", len(string(req.Flag)),
+					"unit", req.Unit,
+					"unit_len", len(req.Unit),
+				)
+			}
+		}
+
 		return fmt.Errorf("error batch upsert: %w", err)
 	}
 

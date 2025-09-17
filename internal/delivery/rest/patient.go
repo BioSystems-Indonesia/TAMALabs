@@ -95,3 +95,22 @@ func (h *PatientHandler) CreatePatient(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, req)
 }
+
+func (h *PatientHandler) GetPatientResultHistory(c echo.Context) error {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	var req entity.GetPatientRecordHistoryRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return handleError(c, err)
+	}
+
+	result, err := h.patientUsecase.GetPatientResultHistory(c.Request().Context(), id, req)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, result)
+}

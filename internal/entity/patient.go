@@ -58,3 +58,13 @@ type GetManyRequestPatient struct {
 
 	BirthDate time.Time `query:"birthdate"`
 }
+
+type GetPatientRecordHistoryRequest struct {
+	StartDate time.Time `query:"start_date"`
+	EndDate   time.Time `query:"end_date"`
+}
+
+type GetPatientResultHistoryResponse struct {
+	Patient    Patient      `json:"patient"`
+	TestResult []TestResult `json:"test_result"`
+}

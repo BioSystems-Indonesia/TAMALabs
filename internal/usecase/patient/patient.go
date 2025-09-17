@@ -8,20 +8,28 @@ import (
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
+	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 )
 
 type PatientUseCase struct {
-	cfg         *config.Schema
-	patientRepo *patientrepo.PatientRepository
-	validate    *validator.Validate
+	cfg           *config.Schema
+	patientRepo   *patientrepo.PatientRepository
+	workOrderRepo *workOrderrepo.WorkOrderRepository
+	validate      *validator.Validate
 }
 
 func NewPatientUseCase(
 	cfg *config.Schema,
 	patientRepo *patientrepo.PatientRepository,
+	workOrderRepo *workOrderrepo.WorkOrderRepository,
 	validate *validator.Validate,
 ) *PatientUseCase {
-	return &PatientUseCase{cfg: cfg, patientRepo: patientRepo, validate: validate}
+	return &PatientUseCase{
+		cfg:           cfg,
+		patientRepo:   patientRepo,
+		workOrderRepo: workOrderRepo,
+		validate:      validate,
+	}
 }
 
 func (p PatientUseCase) FindAll(
@@ -64,4 +72,58 @@ func (p PatientUseCase) Update(req *entity.Patient) error {
 
 func (p PatientUseCase) Delete(id int64) error {
 	return p.patientRepo.Delete(id)
+}
+
+// GetPatientResultHistory returns the result history of a patient
+func (p *PatientUseCase) GetPatientResultHistory(
+	ctx context.Context,
+	id int64,
+	req entity.GetPatientRecordHistoryRequest,
+) (entity.GetPatientResultHistoryResponse, error) {
+	patient, err := p.patientRepo.FindOne(id)
+	if err != nil {
+		return entity.GetPatientResultHistoryResponse{}, err
+	}
+
+	workOrders, err := p.workOrderRepo.FindAllForResult(ctx, &entity.ResultGetManyRequest{
+		PatientIDs: []int64{id},
+		GetManyRequest: entity.GetManyRequest{
+			CreatedAtStart: req.StartDate,
+			CreatedAtEnd:   req.EndDate,
+		},
+	})
+	if err != nil {
+		return entity.GetPatientResultHistoryResponse{}, fmt.Errorf("failed to find work orders for patient %d: %w", id, err)
+	}
+
+	workOrders.Data = p.fillResultDetail(workOrders.Data)
+	workOrders.Data = p.fillCalculatedResult(ctx, workOrders.Data)
+
+	allTestResults := make([]entity.TestResult, 0)
+	for i := range workOrders.Data {
+		allTestResults = append(allTestResults, workOrders.Data[i].TestResult...)
+	}
+
+	return entity.GetPatientResultHistoryResponse{
+		Patient:    patient,
+		TestResult: allTestResults,
+	}, nil
+}
+
+func (*PatientUseCase) fillResultDetail(workOrders []entity.WorkOrder) []entity.WorkOrder {
+	for i := range workOrders {
+		workOrders[i].FillResultDetail(entity.ResultDetailOption{
+			HideEmpty:   true,
+			HideHistory: true,
+		})
+	}
+
+	return workOrders
+}
+
+func (p *PatientUseCase) fillCalculatedResult(ctx context.Context, workOrders []entity.WorkOrder) []entity.WorkOrder {
+	for i := range workOrders {
+		workOrders[i].CalculateEGFRForResults(ctx)
+	}
+	return workOrders
 }

@@ -6,6 +6,7 @@ import BuildIcon from '@mui/icons-material/Build';
 import LanIcon from '@mui/icons-material/Lan';
 import UserIcon from '@mui/icons-material/Person';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
 import TableViewIcon from '@mui/icons-material/TableView';
 import InfoIcon from '@mui/icons-material/Info';
 import jsonServerProvider from "ra-data-json-server";
@@ -16,6 +17,7 @@ import { ConfigEdit, ConfigList } from "./config/config.tsx";
 import { DeviceCreate, DeviceEdit, DeviceList, DeviceShow } from "./device/index.tsx";
 import { DefaultLayout } from "./layout.tsx";
 import { PatientCreate, PatientEdit, PatientList, PatientShow } from "./patient";
+import PatientResultHistory from './patient/PatientResultHistory.tsx';
 import { ResultList } from "./result";
 import { ResultShow } from './result/show.tsx';
 import Settings from "./settings/index.tsx";
@@ -141,8 +143,20 @@ const App = () => {
                 hasEdit={true}
                 hasShow={true}
                 icon={UserIcon}
-                recordRepresentation={record => `#${record.id} - ${record.first_name} ${record.last_name}`}
-            />
+                recordRepresentation={record => `#${record.id} - ${record.first_name} ${record.last_name}`} >
+                <Route path="/:id/result/history" element={<PatientResultHistory />} />
+            </Resource>
+            <Resource name="patient-history"
+                list={PatientResultHistory}
+                hasCreate={false}
+                hasEdit={false}
+                hasShow={false}
+                icon={HistoryEduIcon}
+                options={{
+                    label: "Patient History"
+                }}
+            >
+            </Resource>
             <Resource name="test-type" list={TestTypeList} show={TestTypeShow}
                 {...(permissions !== "Analyzer" ? {
                     create: TestTypeCreate,
@@ -180,8 +194,8 @@ const App = () => {
                     icon={LanIcon}
                     recordRepresentation={record => `#${record.id} - ${record.name}`}
                 />
-             )}
-            
+            )}
+
             <Resource name="user" list={UserList} show={UserShow}
                 {...(permissions === "Admin" ? {
                     create: UserCreate,
@@ -195,7 +209,7 @@ const App = () => {
                 icon={AdminPanelSettingsIcon}
                 recordRepresentation={record => `#${record.id} - ${record.fullname}`}
             />
-            
+
             {permissions === "Admin" && (
                 <Resource name="config" list={ConfigList} edit={ConfigEdit}
                     hasCreate={false}
@@ -204,9 +218,9 @@ const App = () => {
                     recordRepresentation={record => `#${record.id} - ${record.type}`}
                 />
             )}
-            
-            <Resource 
-                name="about" 
+
+            <Resource
+                name="about"
                 list={() => <AboutPage />}
                 hasCreate={false}
                 hasEdit={false}

@@ -1,9 +1,9 @@
-import { Stack, useTheme, Card, CardContent, Chip } from '@mui/material';
+import { Card, CardContent, Chip, Stack, useTheme } from '@mui/material';
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import {
     Create,
-    Datagrid,
+    DataTable,
     DateField,
     DateTimeInput,
     Edit,
@@ -15,8 +15,7 @@ import {
     SelectInput,
     Show,
     SimpleForm,
-    TextField,
-    TextInput
+    TextInput,
 } from "react-admin";
 import CustomDateInput from "../../component/CustomDateInput.tsx";
 import FeatureList from "../../component/FeatureList.tsx";
@@ -32,11 +31,11 @@ export type PatientFormProps = {
 
 function ReferenceSection() {
     const theme = useTheme();
-    
+
     return (
-        <Card 
-            elevation={0} 
-            sx={{ 
+        <Card
+            elevation={0}
+            sx={{
                 margin: 'auto',
                 width: '100%',
                 border: `1px solid ${theme.palette.divider}`,
@@ -45,10 +44,10 @@ function ReferenceSection() {
                 mb: 4
             }}
         >
-            <CardContent sx={{ p: 3 }}>            
-                <Typography 
-                    variant="h6" 
-                    sx={{ 
+            <CardContent sx={{ p: 3 }}>
+                <Typography
+                    variant="h6"
+                    sx={{
                         fontWeight: 600,
                         color: theme.palette.text.primary,
                         mb: 3
@@ -66,30 +65,30 @@ function ReferenceSection() {
 
 export function PatientFormField(props: PatientFormProps) {
     const theme = useTheme();
-    
+
     return (
-        <Stack spacing={3} sx={{ width: '100%'}}>
+        <Stack spacing={3} sx={{ width: '100%' }}>
             {props.mode !== Action.CREATE && (
-                <Card 
-                    elevation={0} 
-                    sx={{ 
+                <Card
+                    elevation={0}
+                    sx={{
                         border: `1px solid ${theme.palette.divider}`,
                         borderRadius: 2,
                     }}
                 >
                     <CardContent sx={{ p: 3 }}>
-                        <Typography 
-                            variant="subtitle1" 
-                            sx={{ 
+                        <Typography
+                            variant="subtitle1"
+                            sx={{
                                 fontWeight: 600,
                                 color: theme.palette.text.primary
                             }}
                         >
                             ℹ️ System Information
                         </Typography>
-                        
-                        <TextInput 
-                            source={"id"} 
+
+                        <TextInput
+                            source={"id"}
                             readOnly={true}
                             sx={{
                                 mt: 3,
@@ -100,8 +99,8 @@ export function PatientFormField(props: PatientFormProps) {
                             }}
                         />
                         <Stack direction={"row"} gap={3} width={"100%"}>
-                            <DateTimeInput 
-                                source={"created_at"} 
+                            <DateTimeInput
+                                source={"created_at"}
                                 readOnly={true}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
@@ -110,8 +109,8 @@ export function PatientFormField(props: PatientFormProps) {
                                     }
                                 }}
                             />
-                            <DateTimeInput 
-                                source={"updated_at"} 
+                            <DateTimeInput
+                                source={"updated_at"}
                                 readOnly={true}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
@@ -125,43 +124,43 @@ export function PatientFormField(props: PatientFormProps) {
                 </Card>
             )}
 
-            <Card 
-                elevation={0} 
-                sx={{ 
+            <Card
+                elevation={0}
+                sx={{
                     border: `1px solid ${theme.palette.divider}`,
                     borderRadius: 2
                 }}
             >
                 <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 1.5, 
-                        mb: 3 
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        mb: 3
                     }}>
-                        
-                        <Typography 
-                            variant="subtitle1" 
-                            sx={{ 
+
+                        <Typography
+                            variant="subtitle1"
+                            sx={{
                                 fontWeight: 600,
                                 color: theme.palette.text.primary
                             }}
                         >
                             ❗Required Information
                         </Typography>
-                        <Chip 
-                            label="Required" 
-                            size="small" 
-                            color="error" 
+                        <Chip
+                            label="Required"
+                            size="small"
+                            color="error"
                             variant="outlined"
                             sx={{ ml: 'auto', fontSize: '0.75rem' }}
                         />
                     </Box>
                     <Stack>
                         <Stack direction={"row"} gap={3} width={"100%"}>
-                            <TextInput 
-                                source="first_name" 
-                                validate={[required()]} 
+                            <TextInput
+                                source="first_name"
+                                validate={[required()]}
                                 readOnly={props.readonly}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
@@ -175,8 +174,8 @@ export function PatientFormField(props: PatientFormProps) {
                                     }
                                 }}
                             />
-                            <TextInput 
-                                source="last_name" 
+                            <TextInput
+                                source="last_name"
                                 readOnly={props.readonly}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
@@ -191,12 +190,12 @@ export function PatientFormField(props: PatientFormProps) {
                                 }}
                             />
                         </Stack>
-                        
+
                         <Stack direction={"row"} gap={1.9} width={"100%"}>
-                            <CustomDateInput 
-                                source={"birthdate"} 
-                                label={"Birth Date"} 
-                                required 
+                            <CustomDateInput
+                                source={"birthdate"}
+                                label={"Birth Date"}
+                                required
                                 sx={{
                                     maxWidth: null,
                                     '& .MuiOutlinedInput-root': {
@@ -208,12 +207,12 @@ export function PatientFormField(props: PatientFormProps) {
                                             }
                                         })
                                     }
-                                }} 
+                                }}
                             />
                             <FeatureList source={"sex"} types={"sex"}>
-                                <SelectInput 
-                                    source="sex" 
-                                    validate={[required()]} 
+                                <SelectInput
+                                    source="sex"
+                                    validate={[required()]}
                                     readOnly={props.readonly}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
@@ -233,42 +232,42 @@ export function PatientFormField(props: PatientFormProps) {
                 </CardContent>
             </Card>
 
-            <Card 
-                elevation={0} 
-                sx={{ 
+            <Card
+                elevation={0}
+                sx={{
                     border: `1px solid ${theme.palette.divider}`,
                     borderRadius: 2
                 }}
             >
                 <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 1.5, 
-                        mb: 3 
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        mb: 3
                     }}>
-                        <Typography 
-                            variant="subtitle1" 
-                            sx={{ 
+                        <Typography
+                            variant="subtitle1"
+                            sx={{
                                 fontWeight: 600,
                                 color: theme.palette.text.primary
                             }}
                         >
                             📋 Additional Information
                         </Typography>
-                        <Chip 
-                            label="Optional" 
-                            size="small" 
-                            color="default" 
+                        <Chip
+                            label="Optional"
+                            size="small"
+                            color="default"
                             variant="outlined"
                             sx={{ ml: 'auto', fontSize: '0.75rem' }}
                         />
                     </Box>
-                    
+
                     <Stack>
                         <Stack direction={"row"} gap={3} width={"100%"}>
-                            <TextInput 
-                                source="phone_number" 
+                            <TextInput
+                                source="phone_number"
                                 readOnly={props.readonly}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
@@ -282,8 +281,8 @@ export function PatientFormField(props: PatientFormProps) {
                                     }
                                 }}
                             />
-                            <TextInput 
-                                source="location" 
+                            <TextInput
+                                source="location"
                                 readOnly={props.readonly}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
@@ -298,9 +297,9 @@ export function PatientFormField(props: PatientFormProps) {
                                 }}
                             />
                         </Stack>
-                        
-                        <TextInput 
-                            source="address" 
+
+                        <TextInput
+                            source="address"
                             readOnly={props.readonly}
                             multiline
                             rows={3}
@@ -326,7 +325,7 @@ export function PatientFormField(props: PatientFormProps) {
 export function PatientForm(props: PatientFormProps) {
     return (
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
-            <SimpleForm 
+            <SimpleForm
                 disabled={props.readonly}
                 toolbar={props.readonly === true ? false : undefined}
                 warnWhenUnsavedChanges
@@ -349,8 +348,8 @@ export function PatientCreate() {
     const theme = useTheme();
 
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
@@ -363,10 +362,10 @@ export function PatientCreate() {
 
 export function PatientShow() {
     const theme = useTheme();
-    
+
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
@@ -382,10 +381,10 @@ export function PatientShow() {
 
 export function PatientEdit() {
     const theme = useTheme();
-    
+
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
@@ -399,17 +398,17 @@ export function PatientEdit() {
 const PatientFilterSidebar = () => {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
-    
+
     return (
         <SideFilter sx={{
-            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
+            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
         }}>
             <FilterLiveForm debounce={1500}>
                 <Stack spacing={0}>
                     <Box>
-                        <Typography variant="h6" sx={{ 
-                            color: theme.palette.text.primary, 
-                            marginBottom: 2, 
+                        <Typography variant="h6" sx={{
+                            color: theme.palette.text.primary,
+                            marginBottom: 2,
                             fontWeight: 600,
                             fontSize: '1.1rem',
                             textAlign: 'center'
@@ -417,9 +416,9 @@ const PatientFilterSidebar = () => {
                             👤 Filter Patients
                         </Typography>
                     </Box>
-                    <SearchInput 
-                        source="q" 
-                        alwaysOn 
+                    <SearchInput
+                        source="q"
+                        alwaysOn
                         sx={{
                             '& .MuiOutlinedInput-root': {
                                 backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
@@ -437,11 +436,11 @@ const PatientFilterSidebar = () => {
                                 color: theme.palette.text.secondary,
                                 fontWeight: 500,
                             }
-                        }} 
+                        }}
                     />
                     <Box>
-                        <Typography variant="body2" sx={{ 
-                            color: theme.palette.text.secondary, 
+                        <Typography variant="body2" sx={{
+                            color: theme.palette.text.secondary,
                             marginBottom: 1.5,
                             fontSize: '0.85rem',
                             fontWeight: 500
@@ -449,11 +448,11 @@ const PatientFilterSidebar = () => {
                             📅 Birth Date Filter
                         </Typography>
                         <Stack>
-                            <CustomDateInput 
-                                source={"birthdate"} 
-                                label={"Birth Date"} 
-                                clearable 
-                                size="small" 
+                            <CustomDateInput
+                                source={"birthdate"}
+                                label={"Birth Date"}
+                                clearable
+                                size="small"
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         backgroundColor: isDarkMode ? theme.palette.action.hover : '#f9fafb',
@@ -463,8 +462,8 @@ const PatientFilterSidebar = () => {
                                         '&:hover': {
                                             backgroundColor: isDarkMode ? theme.palette.action.selected : '#f3f4f6',
                                             borderColor: isDarkMode ? theme.palette.primary.main : '#9ca3af',
-                                            boxShadow: isDarkMode 
-                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)' 
+                                            boxShadow: isDarkMode
+                                                ? '0 4px 12px rgba(255, 255, 255, 0.1)'
                                                 : '0 4px 12px rgba(0, 0, 0, 0.1)',
                                         },
                                         '&.Mui-focused': {
@@ -478,7 +477,7 @@ const PatientFilterSidebar = () => {
                                         fontWeight: 500,
                                         fontSize: '0.85rem',
                                     }
-                                }} 
+                                }}
                             />
                         </Stack>
                     </Box>
@@ -488,13 +487,13 @@ const PatientFilterSidebar = () => {
     )
 };
 
-
-export const PatientList = () => (
-    <List aside={<PatientFilterSidebar />} sort={{
-        field: "id",
-        order: "DESC"
-    }}
-        storeKey={false} exporter={false}
+export const PatientList = () => {
+    return (
+        <List aside={<PatientFilterSidebar />} sort={{
+            field: "id",
+            order: "DESC"
+        }}
+            storeKey={false} exporter={false}
         sx={{
             '& .RaList-content': {
                 backgroundColor: 'background.paper',
@@ -502,15 +501,25 @@ export const PatientList = () => (
                 borderRadius: 1,
             },
         }}>
-        <Datagrid>
-            <TextField source="id" />
-            <TextField source="first_name" />
-            <TextField source="last_name" />
-            <DateField source="birthdate" locales={["id-ID"]} />
-            <TextField source="sex" />
-            <TextField source="location" />
-            <DateField source="created_at" showTime />
-            <DateField source="updated_at" showTime />
-        </Datagrid>
+        <DataTable>
+            <DataTable.Col source="id" />
+            <DataTable.Col source="first_name" />
+            <DataTable.Col source="last_name" />
+            <DataTable.Col source="birthdate">
+                <DateField source="birthdate" locales={["id-ID"]} />
+            </DataTable.Col>
+            <DataTable.Col source="sex" />
+            <DataTable.Col source="location" />
+            <DataTable.Col source="created_at">
+                <DateField source="created_at" showTime />
+            </DataTable.Col>
+            <DataTable.Col source="updated_at">
+                <DateField source="updated_at" showTime />
+            </DataTable.Col>
+        </DataTable>
     </List>
-);
+)};
+
+// Export PatientInfoCard component
+export { default as PatientInfoCard } from './PatientInfoCard';
+

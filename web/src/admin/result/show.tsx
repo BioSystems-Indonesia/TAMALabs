@@ -306,7 +306,7 @@ const HeaderInfo = (props: any) => (
         </Grid>
         <Grid item xs={12} md={4} >
             <Labeled>
-                <WithRecord label="Analyzers" render={(record: WorkOrder) => {
+                <WithRecord label="Analysts" render={(record: WorkOrder) => {
                     return (
                         <Stack direction={"row"} gap={1}>
                             {record?.analyst?.map((user: User) => {
@@ -383,22 +383,16 @@ const TestResultTable = (props: TestResultTableProps) => {
     // TODO find better hack than this
     const [rows, setRows] = useState<any>([])
     useEffect(() => {
-        if (!props?.rows) {
-            return
-        }
-
-        // Check if rows is array
-        if (!Array.isArray(props.rows)) {
-            return
-        }
+        if (!props?.rows) return;
+        if (!Array.isArray(props.rows)) return;
 
         setRows(props.rows.map((r: any) => ({
             ...r,
             id: r.id || negID--,
             name: r?.test_type?.name || r?.history?.[0]?.test_type?.name || r.test,
             alias: r?.test_type?.alias_code || r?.history?.[0]?.test_type?.alias_code || r.alias || r.test,
-        })))
-    }, [props?.rows])
+        })));
+    }, [props?.rows]);
 
     return (
         <MuiDatagrid rows={rows}
@@ -413,7 +407,6 @@ const TestResultTable = (props: TestResultTableProps) => {
                     field: 'name',
                     headerName: 'Parameter Name',
                     flex: 1,
-
                 },
                 {
                     field: 'specimen_type',
@@ -421,16 +414,24 @@ const TestResultTable = (props: TestResultTableProps) => {
                     flex: 1,
                 },
                 {
+                    field: 'alias',
+                    headerName: 'Alias',
+                    flex: 1,
+                },
+
+                {
                     field: 'result',
                     headerName: 'Result',
                     type: 'number',
                     editable: true,
                     flex: 1,
+                    
                 },
                 {
                     field: 'unit',
                     headerName: 'Unit',
                     flex: 1,
+                    
                 },
                 {
                     field: 'reference_range',
