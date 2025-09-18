@@ -1,5 +1,4 @@
 import RefreshIcon from '@mui/icons-material/Refresh';
-import SyncIcon from '@mui/icons-material/Sync';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ScienceIcon from '@mui/icons-material/Science';
 import { Box, Chip, Button as MUIButton, Stack, Typography, useTheme, CircularProgress, } from "@mui/material";
@@ -17,7 +16,6 @@ import {
     ReferenceInput,
     TopToolbar,
     useNotify,
-    useRefresh,
     WithRecord,
     useListContext
 } from "react-admin";
@@ -57,7 +55,6 @@ export const ResultList = () => (
 function ResultActions() {
     const axios = useAxios()
     const notify = useNotify()
-    const refresh = useRefresh()
     return (
         <TopToolbar>
             <Button label={"Refresh"} onClick={() => {
@@ -72,16 +69,6 @@ function ResultActions() {
                 })
             }}>
                 <RefreshIcon />
-            </Button>
-            <Button label={"Sync Result to SIMRS"} onClick={async () => {
-                const response = await axios.post("/external/sync-all-results", {})
-
-                refresh()
-                notify("Sync Success " + response.statusText, {
-                    type: "success"
-                })
-            }}>
-                <SyncIcon />
             </Button>
         </TopToolbar>
     )

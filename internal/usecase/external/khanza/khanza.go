@@ -462,7 +462,11 @@ func (u *Usecase) GetResult(ctx context.Context, ono string) (Response, error) {
 	if err != nil {
 		return Response{}, err
 	}
+	slog.InfoContext(ctx, "work order before filled", "workOrder", workOrder)
+
 	workOrder.FillTestResultDetail(false)
+	slog.InfoContext(ctx, "work order after filled", "workOrder", workOrder)
+
 
 	testNameOrderMap, err := u.groupedByTestName(ctx, orders)
 	if err != nil {

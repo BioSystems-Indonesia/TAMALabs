@@ -24,7 +24,7 @@ import {
 } from '@mui/icons-material';
 import { useLogin, useNotify } from 'react-admin';
 import { useForm, Controller } from 'react-hook-form';
-import logo from '../../assets/alinda-husada-logo.png'
+import logo from '../../assets/elgatama-logo.png'
 import { radiantLightTheme } from '../theme.tsx';
 
 interface LoginFormData {

@@ -318,5 +318,11 @@ func (k *Repository) GetLabRequestByNoOrder(ctx context.Context, noorder string)
 		return nil, fmt.Errorf("error iterating lab request rows: %w", err)
 	}
 
+	if len(labRequests) < 1 {
+		return nil, fmt.Errorf("error get data lab %s", noorder)
+	}
+
+	slog.Info("lab request from khanza", "labRequest", labRequests)
+
 	return labRequests, nil
 }

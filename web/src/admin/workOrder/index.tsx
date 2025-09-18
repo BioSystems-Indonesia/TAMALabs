@@ -1,6 +1,5 @@
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import { Box, CircularProgress, Dialog, DialogContent, DialogTitle, Divider, useTheme } from "@mui/material";
-import SyncIcon from "@mui/icons-material/Sync";
 import ScienceIcon from '@mui/icons-material/Science';
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
@@ -113,10 +112,6 @@ function WorkOrderSideFilters() {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
     
-    const axios = useAxios()
-    const notify = useNotify()
-    const refresh = useRefresh()
-
     return (
         <SideFilter sx={{
             backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
@@ -271,17 +266,6 @@ function WorkOrderSideFilters() {
                             />
                         </Stack>
                     <Divider sx={{ marginBottom: 2 }} />
-
-                        <Button fullWidth label={"Sync request from SIMRS"} onClick={async () => {
-                            const response = await axios.post("/external/sync-all-requests", {})
-
-                            refresh()
-                            notify("Sync Success " + response.statusText, {
-                                type: "success"
-                            })
-                        }}>
-                            <SyncIcon />
-                        </Button>
                     </Box>
                 </Stack>
             </FilterLiveForm>
@@ -441,21 +425,8 @@ const WorkOrderListBulkActionButtons = (props: RunWorkOrderProps) => (
 
 
 function WorkOrderListActions() {
-    const axios = useAxios()
-    const notify = useNotify()
-    const refresh = useRefresh()
     return (
         <TopToolbar>
-            <Button label={"Sync request from SIMRS"} onClick={async () => {
-                const response = await axios.post("/external/sync-all-requests", {})
-
-                refresh()
-                notify("Sync Success " + response.statusText, {
-                    type: "success"
-                })
-            }}>
-                <SyncIcon />
-            </Button>
             <CreateButton />
         </TopToolbar>
     )

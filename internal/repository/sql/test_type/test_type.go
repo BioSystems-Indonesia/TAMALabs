@@ -91,6 +91,7 @@ func (r *Repository) FindOneByAliasCode(ctx context.Context, aliasCode string) (
 	if aliasCode == "" {
 		return entity.TestType{}, gorm.ErrRecordNotFound
 	}
+
 	if err := r.DB.Where("alias_code = ? AND alias_code != ''", aliasCode).First(&data).Error; err != nil {
 		return entity.TestType{}, err
 	}
