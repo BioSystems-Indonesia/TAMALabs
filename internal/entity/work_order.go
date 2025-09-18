@@ -258,8 +258,8 @@ func (wo *WorkOrder) pickDefaultResult(
 					break
 				}
 			}
+			newTest = newTest.FromObservationResult(pickedTest, test.SpecimenType)
 
-			newTest = newTest.FromObservationResult(pickedTest)
 		}
 		newTest = wo.fillTestHistory(newTest, history, opt)
 
@@ -283,7 +283,13 @@ func (wo *WorkOrder) fillTestHistory(
 		return test
 	}
 
-	return test.FillHistory(history)
+	specimenTypes := make(map[int64]string)
+
+	for _, specimen := range wo.Specimen {
+		specimenTypes[int64(specimen.ID)] = specimen.Type
+	}
+
+	return test.FillHistory(history, specimenTypes)
 }
 
 func (wo *WorkOrder) FillData() {
@@ -325,14 +331,14 @@ func (w *WorkOrder) FillTestResultDetail(hideEmpty bool) {
 	// create the placeholder first
 	for i, request := range allObservationRequests {
 		// Find the corresponding specimen for this request
-		var correspondingSpecimen Specimen
-		for _, specimen := range w.Specimen {
-			if int64(specimen.ID) == request.SpecimenID {
-				correspondingSpecimen = specimen
-				break
-			}
-		}
-		allTests[i] = TestResult{}.CreateEmpty(request, correspondingSpecimen)
+		// var correspondingSpecimen Specimen
+		// for _, specimen := range w.Specimen {
+		// 	if int64(specimen.ID) == request.SpecimenID {
+		// 		correspondingSpecimen = specimen
+		// 		break
+		// 	}
+		// }
+		allTests[i] = TestResult{}.CreateEmpty(request)
 	}
 
 	// sort by test code

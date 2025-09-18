@@ -386,10 +386,13 @@ const TestResultTable = (props: TestResultTableProps) => {
         if (!props?.rows) return;
         if (!Array.isArray(props.rows)) return;
 
+        console.log(props.rows)
+
         setRows(props.rows.map((r: any) => ({
             ...r,
             id: r.id || negID--,
             name: r?.test_type?.name || r?.history?.[0]?.test_type?.name || r.test,
+            specimen_type : r?.test_type?.types[0].type,
             alias: r?.test_type?.alias_code || r?.history?.[0]?.test_type?.alias_code || r.alias || r.test,
         })));
     }, [props?.rows]);

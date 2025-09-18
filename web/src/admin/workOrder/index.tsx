@@ -543,25 +543,8 @@ const WorkOrderDataGrid = () => {
         );
     }
 
-export const WorkOrderList = () => {
-    const [open, setOpen] = useState(false)
-
     return (
-        <List sort={{
-            field: "id",
-            order: "DESC"
-        }} aside={<WorkOrderSideFilters />} 
-        actions={<WorkOrderListActions/>}
-        title="Lab Request" exporter={false}
-            storeKey={false}
-            sx={{
-                '& .RaList-content': {
-                    backgroundColor: 'background.paper',
-                    padding: 2,
-                    borderRadius: 1,
-                },
-            }}
-        >
+        <>
             <Datagrid
                 rowClick={(id, resource, record) => {
                     return false
@@ -602,8 +585,28 @@ export const WorkOrderList = () => {
                 </WrapperField>
             </Datagrid>
             <RunWorkOrderDialog open={open} onClose={() => setOpen(false)} setOpen={setOpen} />
-        </List>
+        </>
     );
 };
 
-
+export const WorkOrderList = () => {
+    return (
+        <List sort={{
+            field: "id",
+            order: "DESC"
+        }} aside={<WorkOrderSideFilters />} 
+        actions={<WorkOrderListActions/>}
+        title="Lab Request" exporter={false}
+            storeKey={false}
+            sx={{
+                '& .RaList-content': {
+                    backgroundColor: 'background.paper',
+                    padding: 2,
+                    borderRadius: 1,
+                },
+            }}
+        >
+             <WorkOrderDataGrid />
+        </List>
+    );
+}

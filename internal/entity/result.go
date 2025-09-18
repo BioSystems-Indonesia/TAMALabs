@@ -196,6 +196,7 @@ func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[i
 			CreatedAt:      h.CreatedAt.Format(time.RFC3339),
 			Picked:         h.Picked,
 			TestType:       h.TestType,
+			SpecimenType:   specimenType,
 		}
 	}
 
