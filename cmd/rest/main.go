@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"slices"
 	"time"
+	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/energye/systray"
 	"github.com/oibacidem/lims-hl-seven/internal/app"
@@ -46,6 +48,10 @@ func main() {
 	os.Setenv(constant.ENVVersion, version)
 
 	provideGlobalLog()
+
+	go func() {
+		http.ListenAndServe("localhost:6060", nil)
+	}()
 
 	server := app.InitRestApp()
 	go func() {

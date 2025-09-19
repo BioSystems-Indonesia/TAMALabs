@@ -445,7 +445,6 @@ func (u *Usecase) ProcessRequest(ctx context.Context, rawRequest []byte) error {
 }
 
 func (u *Usecase) GetResult(ctx context.Context, ono string) (Response, error) {
-
 	slog.InfoContext(ctx, "debug khanza get result", "ono", ono)
 
 	orders, err := u.repo.GetLabRequestByNoOrder(ctx, ono)
@@ -464,45 +463,36 @@ func (u *Usecase) GetResult(ctx context.Context, ono string) (Response, error) {
 	}
 
 	workOrder.FillTestResultDetail(false)
-	fmt.Println(workOrder.TestResult[0].Result)
+	resultTestMap := u.groupTestResultByAliasCode(workOrder.TestResult)
+	resultTest := make([]ResponseResultTest, len(orders))
 
-	testNameOrderMap, err := u.groupedByTestName(ctx, orders)
-	if err != nil {
-		return Response{}, fmt.Errorf("error grouping by template id: %w", err)
-	}
+	for i, o := range orders {
+		t, ok := resultTestMap[o.Pemeriksaan]
+		if !ok {
+			resultTest[i] = ResponseResultTest{
+				TestID:      o.IDTemplate,
+				NamaTest:    o.Pemeriksaan,
+				Hasil:       "",
+				NilaiNormal: o.NilaiRujukanPA,
+				Satuan:      o.Satuan,
+				Flag:        "",
+			}
+			continue
+		}
 
-	resultTest := make([]ResponseResultTest, len(workOrder.TestResult))
-	for i, t := range workOrder.TestResult {
 		hasil := ""
 		if t.Result != nil {
 			hasil = strconv.FormatFloat(*t.Result, 'f', t.TestType.Decimal, 64)
 		}
 
-		testName := t.TestType.AliasCode
-		if testName == "" {
-			testName = t.TestType.Name
-		}
-
-		order := testNameOrderMap[testName]
-		if order.IDTemplate == "" {
-			slog.WarnContext(
-				ctx,
-				"Khanza: test name does not have template id",
-				"name", testName,
-				"reason", "probably does not have correct LIS mapping",
-			)
-			continue
-		}
-
 		resultTest[i] = u.resultConvert(ResponseResultTest{
-			TestID:      order.IDTemplate,
-			NamaTest:    testName,
+			TestID:      o.IDTemplate,
+			NamaTest:    o.Pemeriksaan,
 			Hasil:       hasil,
 			NilaiNormal: t.ReferenceRange,
 			Satuan:      t.Unit,
 			Flag:        string(entity.NewKhanzaFlag(t)),
 		})
-
 	}
 
 	res := Response{}
@@ -536,6 +526,18 @@ func (u *Usecase) groupedByTestName(ctx context.Context, orders []entity.KhanzaL
 		grouped[order.Pemeriksaan] = order
 	}
 	return grouped, nil
+}
+
+func (u *Usecase) groupTestResultByAliasCode(orders []entity.TestResult) map[string]entity.TestResult {
+	grouped := make(map[string]entity.TestResult)
+	for _, order := range orders {
+		testName := order.TestType.AliasCode
+		if testName == "" {
+			testName = order.TestType.Name
+		}
+		grouped[testName] = order
+	}
+	return grouped
 }
 
 func (u *Usecase) findOrCreatePatient(r Request) (entity.Patient, error) {
@@ -617,3 +619,4 @@ func (u *Usecase) getLocation(r Request) string {
 
 	return strings.Join(allLocation, "|")
 }
+
