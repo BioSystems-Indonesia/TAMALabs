@@ -176,10 +176,10 @@ func InitDatabase() (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	err = seedTestData(db)
-	if err != nil {
-		return nil, fmt.Errorf("failed to seed test data: %w", err)
-	}
+	// err = seedTestData(db)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to seed test data: %w", err)
+	// }
 
 	err = sql.Ping()
 	if err != nil {
