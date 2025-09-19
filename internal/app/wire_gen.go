@@ -21,6 +21,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/rest/a15rest"
 	server2 "github.com/oibacidem/lims-hl-seven/internal/repository/server"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
@@ -97,6 +98,7 @@ func InitRestApp() server.RestServer {
 	ba400Ba400 := ba400.NewBa400()
 	a15A15 := a15.NewA15()
 	strategy := runner.NewStrategy(runAction, cancelAction, postrunRunAction, postrunCancelAction, incompleteSendAction, ba400Ba400, a15A15)
+	a15restA15rest := a15rest.NewA15()
 	handler := a15_2.NewHandler()
 	coaxHandler := coax.NewHandler(usecase)
 	ncc3300Handler := ncc3300.NewHandler(usecase)
@@ -110,7 +112,7 @@ func InitRestApp() server.RestServer {
 	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, coaxHandler, ncc3300Handler, tcpHlSevenHandler, analyxtriasHandler, analyxpancaHandler, swelabalfaHandler, swelablumiHandler, alifaxHandler, ncc61Handler)
 	v := provideAllDevices(deviceRepository)
 	controllerRepository := server2.NewControllerRepository(deviceServerStrategy, v)
-	deviceUseCase := deviceuc.NewDeviceUseCase(schema, deviceRepository, strategy, ba400Ba400, a15A15, controllerRepository)
+	deviceUseCase := deviceuc.NewDeviceUseCase(schema, deviceRepository, strategy, ba400Ba400, a15restA15rest, controllerRepository)
 	workOrderUseCase := workOrderuc.NewWorkOrderUseCase(schema, workOrderRepository, validate, barcode_generatorUsecase, patientUseCase, deviceUseCase, strategy)
 	observationRequestUseCase := observation_requestuc.NewObservationRequestUseCase(schema, observation_requestRepository, validate)
 	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, gormDB, patientUseCase, deviceUseCase, specimenUseCase, observationRequestUseCase)

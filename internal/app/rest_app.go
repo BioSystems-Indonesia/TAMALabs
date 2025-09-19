@@ -17,6 +17,7 @@ import (
 	swelablumi "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
 	"github.com/oibacidem/lims-hl-seven/internal/repository"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/rest/a15rest"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/server"
 	smbA15 "github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
 	adminrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
@@ -100,6 +101,7 @@ var restRepositorySet = wire.NewSet(
 	rolerepo.NewRoleRepository,
 	hlsRepo.NewBa400,
 	smbA15.NewA15,
+	a15rest.NewA15,
 	server.NewControllerRepository,
 	provideKhanzaRepository,
 	provideAllDevices,

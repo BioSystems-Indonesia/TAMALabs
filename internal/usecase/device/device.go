@@ -11,7 +11,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	serverrepo "github.com/oibacidem/lims-hl-seven/internal/repository/server"
-	a15 "github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/rest/a15rest"
 	devicerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
@@ -24,7 +24,7 @@ type DeviceUseCase struct {
 	deviceRepo     *devicerepo.DeviceRepository
 	runnerStrategy *runner.Strategy
 	ba400          *ba400.Ba400
-	a15            *a15.A15
+	a15            *a15rest.A15rest
 	serverRepo     *serverrepo.ControllerRepository
 }
 
@@ -33,7 +33,7 @@ func NewDeviceUseCase(
 	deviceRepo *devicerepo.DeviceRepository,
 	runnerStrategy *runner.Strategy,
 	ba400 *ba400.Ba400,
-	a15 *a15.A15,
+	a15 *a15rest.A15rest,
 	serverRepo *serverrepo.ControllerRepository,
 ) *DeviceUseCase {
 	return &DeviceUseCase{cfg: cfg, deviceRepo: deviceRepo, runnerStrategy: runnerStrategy, ba400: ba400, a15: a15, serverRepo: serverRepo}
