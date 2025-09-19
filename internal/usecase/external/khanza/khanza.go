@@ -135,7 +135,7 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 	var reqs []entity.KhanzaResDT
 	for _, testResult := range tests {
 		slog.Info("testResult", "testResult", testResult)
-		
+
 		alias := testResult.TestType.AliasCode
 		if alias == "" && len(testResult.History) > 0 {
 			alias = testResult.History[0].TestType.AliasCode
@@ -462,11 +462,9 @@ func (u *Usecase) GetResult(ctx context.Context, ono string) (Response, error) {
 	if err != nil {
 		return Response{}, err
 	}
-	slog.InfoContext(ctx, "work order before filled", "workOrder", workOrder)
 
 	workOrder.FillTestResultDetail(false)
-	slog.InfoContext(ctx, "work order after filled", "workOrder", workOrder)
-
+	fmt.Println(workOrder.TestResult[0].Result)
 
 	testNameOrderMap, err := u.groupedByTestName(ctx, orders)
 	if err != nil {
@@ -496,14 +494,15 @@ func (u *Usecase) GetResult(ctx context.Context, ono string) (Response, error) {
 			continue
 		}
 
-		resultTest[i] = ResponseResultTest{
+		resultTest[i] = u.resultConvert(ResponseResultTest{
 			TestID:      order.IDTemplate,
 			NamaTest:    testName,
 			Hasil:       hasil,
 			NilaiNormal: t.ReferenceRange,
 			Satuan:      t.Unit,
 			Flag:        string(entity.NewKhanzaFlag(t)),
-		}
+		})
+
 	}
 
 	res := Response{}
@@ -512,6 +511,23 @@ func (u *Usecase) GetResult(ctx context.Context, ono string) (Response, error) {
 	slog.InfoContext(ctx, "debug khanza get result", "res", res)
 
 	return res, nil
+}
+
+func (*Usecase) resultConvert(result ResponseResultTest) ResponseResultTest {
+	if result.NamaTest == "Jumlah Trombosit " || result.NamaTest == "Jumlah Leukosit " {
+		result.Hasil = result.Hasil + ".000"
+
+		min := strings.Split(result.NilaiNormal, "-")[0] + ".000"
+		max := strings.Split(result.NilaiNormal, "-")[1] + ".000"
+
+		result.NilaiNormal = fmt.Sprintf("%s - %s", min, max)
+		result.Satuan = "µL"
+	}
+
+	if result.NamaTest == "Glukosa Sewaktu" {
+		result.NilaiNormal = "< 180"
+	}
+	return result
 }
 
 func (u *Usecase) groupedByTestName(ctx context.Context, orders []entity.KhanzaLabRequest) (map[string]entity.KhanzaLabRequest, error) {

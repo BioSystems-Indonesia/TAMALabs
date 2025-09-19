@@ -358,8 +358,8 @@ func (w *WorkOrder) FillTestResultDetail(hideEmpty bool) {
 	for _, observation := range allObservationResults {
 		// Create a composite key: testCode + specimenType for more precise matching
 		// Get specimen type for this observation
-		specimenType := specimenTypes[observation.SpecimenID]
-		compositeKey := fmt.Sprintf("%s:%s", observation.TestCode, specimenType)
+		// specimenType := specimenTypes[observation.SpecimenID]
+		compositeKey := fmt.Sprintf("%s:%s", observation.TestCode, "")
 
 		testResults[compositeKey] = append(testResults[compositeKey], observation)
 	}

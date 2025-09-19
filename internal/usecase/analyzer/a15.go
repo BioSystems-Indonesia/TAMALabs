@@ -283,16 +283,27 @@ func (u *Usecase) SaveFileResult(context context.Context, data string) error {
 				"test_code", result.TestName)
 		}
 
-		err = u.ObservationResultRepository.Create(context, &entity.ObservationResult{
-			SpecimenID:  int64(speciment.ID),
-			TestCode:    result.TestName,
-			Description: result.TestName,
-			Values:      []string{fmt.Sprintf("%.2f", result.Value)},
-			Unit:        result.Unit,
-			Date:        result.Timestamp,
-		})
+		firstValue := fmt.Sprintf("%.2f", result.Value)
+		exists, err := u.ObservationResultRepository.Exists(context, int64(speciment.ID), result.TestName, result.Timestamp, firstValue)
 		if err != nil {
-			errs = append(errs, err)
+			// if exists check fails, log and continue to try create to avoid silently skipping
+			slog.Error("failed to check existing observation result", "specimen_id", speciment.ID, "test_code", result.TestName, "error", err)
+		}
+
+		if exists {
+			slog.Info("observation result already exists, skipping insert", "specimen_id", speciment.ID, "test_code", result.TestName, "value", firstValue, "date", result.Timestamp)
+		} else {
+			err = u.ObservationResultRepository.Create(context, &entity.ObservationResult{
+				SpecimenID:  int64(speciment.ID),
+				TestCode:    result.TestName,
+				Description: result.TestName,
+				Values:      []string{firstValue},
+				Unit:        result.Unit,
+				Date:        result.Timestamp,
+			})
+			if err != nil {
+				errs = append(errs, err)
+			}
 		}
 
 		uniqueWorkOrderIDs[int64(speciment.WorkOrder.ID)] = struct{}{}

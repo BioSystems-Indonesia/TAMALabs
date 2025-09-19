@@ -3,6 +3,7 @@ package observation_result
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -24,6 +25,19 @@ func (r *Repository) Create(ctx context.Context, data *entity.ObservationResult)
 
 func (r *Repository) CreateMany(ctx context.Context, data []entity.ObservationResult) error {
 	return r.DB.Create(data).Error
+}
+
+func (r *Repository) Exists(ctx context.Context, specimenID int64, code string, date time.Time, firstValue string) (bool, error) {
+	var count int64
+
+	err := r.DB.WithContext(ctx).Raw(
+		"SELECT COUNT(*) FROM observation_results WHERE specimen_id = ? AND code = ? AND date = ? AND (json_extract(values, '$[0]') = ? OR values LIKE ?)",
+		specimenID, code, date, firstValue, "%\""+firstValue+"\"%",
+	).Scan(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 
 func (r *Repository) FindByID(ctx context.Context, id int64) (result entity.ObservationResult, err error) {
