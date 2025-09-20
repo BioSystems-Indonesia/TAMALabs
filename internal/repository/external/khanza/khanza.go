@@ -89,8 +89,8 @@ func (s *Repository) BatchUpsertRESDTO(ctx context.Context, reqs []entity.Khanza
 	return nil
 }
 
-// GetLisOrderByVisitNo retrieves a LisOrder record by VISITNO
-func (k *Repository) GetLisOrderByVisitNo(visitNo string) (*entity.KhanzaLisOrder, error) {
+// GetLisOrderByOnoOrVisitNo retrieves a LisOrder record by ONO or VISITNO
+func (k *Repository) GetLisOrderByOnoOrVisitNo(ono string, visitNo string) (*entity.KhanzaLisOrder, error) {
 	query := `SELECT 
 		ID,
 		MESSAGE_DT,
@@ -115,10 +115,10 @@ func (k *Repository) GetLisOrderByVisitNo(visitNo string) (*entity.KhanzaLisOrde
 		ORDER_TESTID,
 		FLAG
 	FROM LIS_ORDER 
-	WHERE VISITNO = ?`
+	WHERE ONO = ? OR VISITNO = ?`
 
 	conn := k.bridgeDB.GetConnection()
-	row := conn.QueryRow(query, visitNo)
+	row := conn.QueryRow(query, ono)
 
 	var order entity.KhanzaLisOrder
 	err := row.Scan(
