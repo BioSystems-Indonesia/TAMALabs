@@ -345,7 +345,9 @@ function RunWorkOrderDialog(props: RunWorkOrderProps) {
         }
 
         for (const id of selectedIds) {
-            if (workOrderStatusShowCancel.includes(dataMap[id].status)) {
+            const workOrder = dataMap[id]
+            if (!workOrder) continue
+            if (workOrderStatusShowCancel.includes(workOrder.status)) {
                 return true
             }
         }
@@ -359,7 +361,9 @@ function RunWorkOrderDialog(props: RunWorkOrderProps) {
         }
 
         for (const id of selectedIds) {
-            if (!workOrderStatusDontShowRun.includes(dataMap[id].status)) {
+            const workOrder = dataMap[id]
+            if (!workOrder) continue
+            if (!workOrderStatusDontShowRun.includes(workOrder.status)) {
                 return true
             }
         }
@@ -374,8 +378,9 @@ function RunWorkOrderDialog(props: RunWorkOrderProps) {
 
         for (const id of selectedIds) {
             const workOrder = dataMap[id]
-            if (workOrder.devices && workOrder?.devices?.length > 0) {
-                return workOrder?.devices[0].id
+            if (!workOrder) continue
+            if (workOrder.devices && workOrder.devices.length > 0) {
+                return workOrder.devices[0].id
             }
         }
 
@@ -525,6 +530,7 @@ const WorkOrderDataGrid = () => {
                     setOpen={setOpen}
                     onClose={() => setOpen(false)}
                 />}>
+                <TextField source="no" />
                 <TextField source="id" />
                 <WithRecord label="Status" render={(record: any) => (
                     <Chip label={`${record.status}`} color={WorkOrderChipColorMap(record.status)} />
