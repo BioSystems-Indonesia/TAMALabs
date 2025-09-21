@@ -141,13 +141,13 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 			alias = testResult.History[0].TestType.AliasCode
 		}
 
-		barcode := workOrder.BarcodeSIMRS // visit no
+		barcode := workOrder.BarcodeSIMRS // ono for new, visit no for old
 		if barcode == "" {
 			continue
 		}
 
 		// Translate visit no to ono
-		order, err := u.repo.GetLisOrderByVisitNo(barcode)
+		order, err := u.repo.GetLisOrderByOnoOrVisitNo(barcode, barcode)
 		if err != nil {
 			return fmt.Errorf("error getting lis order by visit no: %w", err)
 		}
@@ -390,12 +390,12 @@ func (u *Usecase) insertOrderToLIS(
 	createReq := entity.WorkOrderCreateRequest{
 		PatientID:    patient.ID,
 		Barcode:      barcode,
-		BarcodeSIMRS: visitNo,
+		BarcodeSIMRS: ono,
 		TestTypes:    tests,
 		CreatedBy:    -1,
 	}
 
-	existingWorkOrder, err := u.workOrderRepository.GetBySIMRSBarcode(ctx, visitNo)
+	existingWorkOrder, err := u.workOrderRepository.GetBySIMRSBarcode(ctx, ono)
 	if err != nil {
 		if errors.Is(err, entity.ErrNotFound) {
 			_, err = u.workOrderRepository.Create(&createReq)
@@ -457,7 +457,7 @@ func (u *Usecase) GetResult(ctx context.Context, ono string) (Response, error) {
 	}
 
 	firstOrders := orders[0]
-	workOrder, err := u.workOrderRepository.GetBySIMRSBarcode(ctx, firstOrders.NoRawat)
+	workOrder, err := u.getWorkOrderWithFallback(ctx, firstOrders.NoOrder, firstOrders.NoRawat)
 	if err != nil {
 		return Response{}, err
 	}
@@ -501,6 +501,24 @@ func (u *Usecase) GetResult(ctx context.Context, ono string) (Response, error) {
 	slog.InfoContext(ctx, "debug khanza get result", "res", res)
 
 	return res, nil
+}
+
+func (u *Usecase) getWorkOrderWithFallback(ctx context.Context, ono string, visitNo string) (entity.WorkOrder, error) {
+	workOrder, err := u.workOrderRepository.GetBySIMRSBarcode(ctx, ono)
+	if err != nil && !errors.Is(err, entity.ErrNotFound) {
+		return entity.WorkOrder{}, fmt.Errorf("error getting work order by ono: %w", err)
+	}
+
+	if workOrder.ID != 0 {
+		return workOrder, nil
+	}
+
+	workOrder, err = u.workOrderRepository.GetBySIMRSBarcode(ctx, visitNo)
+	if err != nil {
+		return entity.WorkOrder{}, fmt.Errorf("error getting work order by visit no: %w", err)
+	}
+
+	return workOrder, nil
 }
 
 func (*Usecase) resultConvert(result ResponseResultTest) ResponseResultTest {
@@ -619,4 +637,3 @@ func (u *Usecase) getLocation(r Request) string {
 
 	return strings.Join(allLocation, "|")
 }
-
