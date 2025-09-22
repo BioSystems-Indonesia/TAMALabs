@@ -30,6 +30,9 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	khanzauc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
+
+	licenserepo "github.com/oibacidem/lims-hl-seven/internal/repository/license"
+	licenseuc "github.com/oibacidem/lims-hl-seven/internal/usecase/license"
 	"github.com/oibacidem/lims-hl-seven/migrations"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 	gormSqlite "gorm.io/driver/sqlite"
@@ -361,6 +364,17 @@ func provideConfig(db *gorm.DB) *config.Schema {
 		panic(err)
 	}
 	return &cfg
+}
+
+// provideLicenseService wires the license usecase with filesystem loaders.
+func provideLicenseService() *licenseuc.License {
+	pubLoader := licenserepo.NewFSKeyLoader()
+	fileLoader := licenserepo.NewFSFileLoader()
+	// default paths (relative to working directory)
+	pubKeyPath := "server_public.pem"
+	licensePath := "license.json"
+
+	return licenseuc.NewLicense(pubLoader, fileLoader, pubKeyPath, licensePath)
 }
 
 func provideKhanzaRepository(cfg *config.Schema) *khanza.Repository {

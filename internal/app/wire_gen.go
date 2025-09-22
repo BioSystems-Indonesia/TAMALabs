@@ -46,6 +46,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/device"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/external"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/license"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
@@ -153,6 +154,11 @@ func InitRestApp() server.RestServer {
 	cronManager := cron.NewCronManager(cronHandler)
 	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, externalHandler, jwtMiddleware, cronManager)
 	return restServer
+}
+
+func InitService() *license.License {
+	licenseLicense := provideLicenseService()
+	return licenseLicense
 }
 
 // InitCanalHandler is a Wire provider function that returns a CanalHandler.

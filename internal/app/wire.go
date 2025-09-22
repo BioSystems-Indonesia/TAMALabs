@@ -8,6 +8,7 @@ package app
 import (
 	"github.com/google/wire"
 	khanzauc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
+	licenseuc "github.com/oibacidem/lims-hl-seven/internal/usecase/license"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
 
@@ -15,6 +16,11 @@ import (
 func InitRestApp() server.RestServer {
 	wire.Build(restAppSet)
 	return &server.Rest{}
+}
+
+func InitService() *licenseuc.License {
+	wire.Build(licenseSet)
+	return &licenseuc.License{}
 }
 
 // InitCanalHandler is a Wire provider function that returns a CanalHandler.
