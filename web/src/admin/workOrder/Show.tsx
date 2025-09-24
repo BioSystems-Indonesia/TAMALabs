@@ -69,7 +69,9 @@ const barcodePageStyle = (style: BarcodeStyle) => `
     @page {
         size: ${style.width} ${style.height};
         margin: 0;
+        padding-top: 10px;
         text-align: center;
+        display: flex;
     }
     
     .barcode-container {
@@ -84,7 +86,7 @@ const barcodePageStyle = (style: BarcodeStyle) => `
     .barcode-text {
         margin: 0;
         margin-top: ${detectBrowser() === 'Edge' ? 7.8 : 0}rem;
-        font-size: 8px;
+        font-size: 12px;
     }
 }`
 
@@ -203,10 +205,9 @@ export function WorkOrderShow() {
                             <WithRecord render={(record: WorkOrder) => {
                                 return (
                                     <Box>
-                                        
-                                    <RecordContextProvider value={record.patient}>
-                                        <PatientForm readonly mode={"SHOW"} />
-                                    </RecordContextProvider>
+                                        <RecordContextProvider value={record.patient}>
+                                            <PatientForm readonly mode={"SHOW"} />
+                                        </RecordContextProvider>
                                     </Box>
                                 )
                             }} />
