@@ -8,10 +8,10 @@ import {
     View,
 } from '@react-pdf/renderer';
 import useSettings from '../hooks/useSettings';
-import logo from '../assets/alinda-husada-logo.png'
-// import yt from '../assets/youtube.png'
-// import fb from '../assets/facebook.png'
-// import ig from '../assets/instagram.png'
+import logo from '../assets/elgatama-logo.png'
+import yt from '../assets/youtube.png'
+import fb from '../assets/facebook.png'
+import ig from '../assets/instagram.png'
 import type { ReportData } from '../types/observation_result';
 import { Patient } from "../types/patient.ts";
 import { WorkOrder } from '../types/work_order.ts';
@@ -19,8 +19,8 @@ import { WorkOrder } from '../types/work_order.ts';
 Font.register({
     family: 'Helvetica',
     fonts: [
-        { src: 'https://fonts.gstatic.com/s/crimsontext/v19/wlpigwHKFkZgtmSR3NB0oRJvaAJSA_JN3Q.ttf', fontWeight: 400 },
-        { src: 'https://fonts.gstatic.com/s/crimsontext/v19/wlp7gwHKFkZgtmSR3NB0oRJX6QJbBfJH3QkG.ttf', fontWeight: 700 },
+        { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxP.ttf', fontWeight: 400 },
+        { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmEU9fBBc9.ttf', fontWeight: 700 },
     ],
 });
 
@@ -32,25 +32,28 @@ const styles = StyleSheet.create({
         padding: 40,
     },
     header: {
-        marginBottom: 20,
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
     companyInfo: {
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-end',
-        justifyContent: 'center', 
+        justifyContent: 'center',
         fontSize: 7.5,
-        textAlign: 'right',  
+        textAlign: 'right',
     },
     logo: {
-        width: 60,
-        height: 60,
+        width: 64,
+        height: 64,
+        marginBottom: 10,
     },
     footer: {
-        marginTop: 20,
         position: 'absolute',
-        bottom: 10,
+        bottom: 30,
         padding: '0 40px',
         left: 0,
         right: 0,
@@ -108,34 +111,34 @@ const styles = StyleSheet.create({
         paddingHorizontal: 6,
     },
     rectangleContainer: {
-        width: '100%', 
+        width: '100%',
         borderWidth: 1,
         borderColor: '#cad5e2',
-        borderRadius: 2, 
-        padding:10,
+        borderRadius: 2,
+        padding: 10,
     },
     gridContainer: {
         flexDirection: 'column',
     },
     row: {
         flexDirection: 'row',
-        justifyContent: 'space-between',  
+        justifyContent: 'space-between',
         padding: 2,
     },
     leftColumn: {
-        flex: 1,  
-        paddingRight: 10,  
+        flex: 1,
+        paddingRight: 10,
     },
     rightColumn: {
-        flex: 1, 
+        flex: 1,
     },
     labelValue: {
-        flexDirection: 'row',  
-        alignItems: 'center', 
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     label: {
-        fontWeight: 'bold',  
-        width: 80, 
+        fontWeight: 'bold',
+        width: 80,
         display: 'flex',
     },
     value: {
@@ -188,16 +191,35 @@ const Header = () => {
 
     return (
         <View style={styles.header} fixed>
-            <View style={{display: 'flex', flexDirection:'row', justifyContent: 'center', alignItems: 'center',}}>
-                <Image style={styles.logo} src={logo}/>
-                <View style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: 5}}>
-                    <Text style={{textAlign: 'center', fontSize: '1.8rem', fontWeight: 'bold'}}>{settings.company_name}</Text>
-                    <Text style={{textAlign: 'center', fontSize: '1.1rem'}}>{settings.company_address}</Text>
-                    <Text style={{textAlign: 'center', fontSize: '1.1rem'}}>Telp: {settings.company_contact_phone} | HP. {settings.company_contact_hp}</Text>
-                    <Text style={{textAlign: 'center', fontSize: '1.1rem'}}>Email: {settings.company_contact_email}</Text>
+            <Image
+                style={styles.logo}
+                src={logo}
+            />
+            <View style={{ width: '85%' }}>
+                <Text style={{
+                    fontSize: 24
+                }}>{settings.company_name}</Text>
+                <View style={{
+                    width: '100%',
+                    height: '0.2rem',
+                    backgroundColor: 'rgb(74, 186, 171)'
+                }}>
+                </View>
+                <View style={styles.companyInfo}>
+                    <Text
+                        wrap={true}
+                        style={{ width: '45%' }}
+                    >{settings.company_address}</Text>
+                    <Text
+                        wrap={true}
+                        style={{ width: '45%' }}
+                    >{settings.company_contact_phone}</Text>
+                    <Text
+                        wrap={true}
+                        style={{ width: '45%' }}
+                    >{settings.company_contact_email}</Text>
                 </View>
             </View>
-            <View style={{height: 3, width: "100%", backgroundColor: "black", marginTop: 5}}></View>
         </View>
     )
 };
@@ -272,34 +294,35 @@ const PatientInfo = ({ patient, workOrder }: { patient: Patient, workOrder: Work
     </View>
 );
 
-// const Footer = () => (
-//     <View style={styles.footer} fixed>
-//         <View style={{
-//             height: 2,
-//             backgroundColor: 'rgb(74, 186, 171)'
-//         }}>
-//         </View>
-//         <View style={{ 
-//             marginTop: 4,
-//             display: 'flex',
-//             flexDirection: 'row',
-//             alignItems: 'center',
-//             justifyContent: 'space-between',}}>
-//             <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
-//                 <Image src={yt} style={{width: 10, height: 10}}/>
-//                 <Text>BioSystems Indonesia</Text>    
-//             </View>    
-//             <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
-//                 <Image src={ig} style={{width: 10, height: 10}}/>
-//                 <Text>@biosystems.ind</Text>    
-//             </View>    
-//             <View style={{display: 'flex', flexDirection:'row', alignItems:'center', gap: 4}}>
-//                 <Image src={fb} style={{width: 10, height: 10}}/>
-//                 <Text>BioSystems Indonesia</Text>    
-//             </View>    
-//         </View>        
-//     </View>
-// );
+const Footer = () => (
+    <View style={styles.footer}>
+        <View style={{
+            height: '0.2rem',
+            backgroundColor: 'rgb(74, 186, 171)'
+        }}>
+        </View>
+        <View style={{
+            marginTop: 4,
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+        }}>
+            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Image src={yt} style={{ width: 15, height: 15 }} />
+                <Text>BioSystems Indonesia</Text>
+            </View>
+            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Image src={ig} style={{ width: 15, height: 15 }} />
+                <Text>@biosystems.ind</Text>
+            </View>
+            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Image src={fb} style={{ width: 15, height: 15 }} />
+                <Text>BioSystems Indonesia</Text>
+            </View>
+        </View>
+    </View>
+);
 
 // Helper function to group data by category (if needed)
 const groupData = (data: ReportData[]) => {
@@ -320,17 +343,17 @@ export const ReportDocument = ({ data, patientData, workOrderData }: { data: Rep
         <Document>
             <Page size={"A4"} style={styles.page} wrap>
                 <Header />
-                {/* <Footer /> */}
                 <View style={{
+                    marginTop: 20,
                     marginBottom: 15,
                 }}>
                     <Text style={{
                         textAlign: 'center',
                         fontSize: 12,
                         fontWeight: 'bold',
-                    }}>LABORATORY TEST RESULT</Text>
+                    }}>TEST RESULT</Text>
                 </View>
-                <PatientInfo patient={patientData} workOrder={workOrderData}/>
+                <PatientInfo patient={patientData} workOrder={workOrderData} />
                 {Object.entries(groupedData).map(([category, items]) => (
                     <View key={category} wrap>
                         <Text style={styles.category}>{category}</Text>
@@ -354,20 +377,21 @@ export const ReportDocument = ({ data, patientData, workOrderData }: { data: Rep
                             };
                             return (
                                 <View key={index} style={styles.tableRow}>
-                                    <Text style={[styles.columnHeader, styles.cell, abnormalColor]}>{item.alias_code || item.parameter}</Text>
+                                    <Text style={[styles.columnHeader, styles.cell, abnormalColor]}>{item.parameter}</Text>
                                     <Text style={[styles.columnResult, styles.cell, abnormalColor]}>{item.result}</Text>
                                     <Text style={[styles.columnResult, styles.cell, abnormalColor]}>{item.unit}</Text>
                                     <Text style={[styles.columnReference, styles.cell, abnormalColor]}>
                                         {item.reference}
                                     </Text>
                                     <Text style={[styles.columnReference, styles.cell, abnormalColor]}>
-                                        {item.abnormality !== "Normal" ? item.abnormality : "-"}
+                                        {item.abnormality}
                                     </Text>
                                 </View>
                             );
                         })}
                     </View>
                 ))}
+                <Footer />
             </Page>
         </Document>
     );
