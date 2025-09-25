@@ -24,7 +24,7 @@ import AppIndicator from '../component/AppIndicator';
 import Breadcrumbs, { type BreadcrumbsLink } from '../component/Breadcrumbs';
 import { toTitleCase } from '../helper/format';
 import FileOpenIcon from '@mui/icons-material/FileOpen';
-import logo from '../assets/alinda-husada-logo.png';
+import logo from '../assets/elgatama-logo.png';
 import { useCurrentUser, useCurrentUserRole } from '../hooks/currentUser';
 
 
@@ -193,13 +193,13 @@ const CompanyLogo = () => (
     }}>
         <img
             src={logo}
-            alt="Alinda Husada Logo"
+            alt="TAMALabs Logo"
             style={{
                 height: '50px',
                 width: 'auto'
             }}
         />
-        <Typography variant="h6">RS Alinda Husada</Typography>
+        <Typography variant="h6">TAMALabs</Typography>
     </Box>
 );
 

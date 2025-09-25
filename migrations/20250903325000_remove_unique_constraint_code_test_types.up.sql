@@ -1,4 +1,0 @@
--- NOTE: Unique constraint on code column cannot be removed because there are foreign keys referencing it
--- This migration is intentionally left empty to maintain database integrity
--- Foreign keys from observation_requests and observation_results reference test_types(code)
--- The constraint will remain in place

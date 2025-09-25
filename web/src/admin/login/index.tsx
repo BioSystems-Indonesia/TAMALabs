@@ -57,7 +57,7 @@ const CustomLoginPage: React.FC = () => {
         } catch (error) {
             if (error instanceof Error) {
                 setError('Username or password wrong');
-                setValue('password', ''); 
+                setValue('password', '');
             }
             notify('Login failed', { type: 'error' });
         } finally {
@@ -286,20 +286,6 @@ const CustomLoginPage: React.FC = () => {
                                 </Stack>
                             </form>
                         </CardContent>
-
-                        {/* <Box
-                        sx={{
-                            textAlign: 'center',
-                            padding: 2,
-                            borderTop: '1px solid',
-                            borderColor: 'divider',
-                            background: 'rgba(0, 0, 0, 0.02)'
-                        }}
-                    >
-                        <Typography variant="body2" color="text.secondary">
-                            © 2025 RS Alinda Husada. All rights reserved.
-                        </Typography>
-                    </Box> */}
                     </Paper>
                 </Container>
             </Box>
