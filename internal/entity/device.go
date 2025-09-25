@@ -19,6 +19,7 @@ const (
 	DeviceTypeNeomedicaNCC61   DeviceType = "NEOMEDICA_NCC_61"
 	DeviceTypeAlifax           DeviceType = "ALIFAX"
 	DeviceTypeBTS              DeviceType = "BTS"
+	DeviceTypeDiestro          DeviceType = "DIESTRO"
 )
 
 func (d DeviceType) String() string {
@@ -35,10 +36,8 @@ var TableDeviceType = Tables{
 		CanReceive: true,
 	}},
 	{ID: string(DeviceTypeA15), Name: string(DeviceTypeA15), AdditionalInfo: DeviceCapability{
-		HavePath:   true,
 		CanReceive: true,
 		CanSend:    true,
-		HaveAuth:   true,
 	}},
 	{ID: string(DeviceTypeAnalyxTria), Name: string(DeviceTypeAnalyxTria), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
@@ -75,6 +74,10 @@ var TableDeviceType = Tables{
 		CanSend: true,
 	}},
 	{ID: string(DeviceTypeCoax), Name: string(DeviceTypeCoax), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+		UseSerial:  true,
+	}},
+	{ID: string(DeviceTypeDiestro), Name: string(DeviceTypeDiestro), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
 		UseSerial:  true,
 	}},

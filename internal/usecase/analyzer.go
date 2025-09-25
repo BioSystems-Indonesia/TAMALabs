@@ -13,4 +13,5 @@ type Analyzer interface {
 	ProcessORMO01(ctx context.Context, data entity.ORM_O01) ([]entity.Specimen, error)
 	ProcessORUR01(ctx context.Context, data entity.ORU_R01) error
 	ProcessCoax(ctx context.Context, data entity.CoaxTestResult) error
+	ProcessDiestro(ctx context.Context, data entity.DiestroResult) error
 }

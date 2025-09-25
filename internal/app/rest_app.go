@@ -7,6 +7,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/alifax"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/diestro"
 	ncc3300 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/a15"
@@ -110,6 +111,7 @@ var restRepositorySet = wire.NewSet(
 var tcpHandlerSet = wire.NewSet(
 	a15.NewHandler,
 	coax.NewHandler,
+	diestro.NewHandler,
 	ncc3300.NewHandler,
 	alifax.NewHandler,
 	tcp.NewHlSevenHandler,
