@@ -67,7 +67,8 @@ func (h *ResultHandler) AddTestResult(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	result, err := h.resultUsecase.PutTestResult(c.Request().Context(), req)
+	admin := entity.GetEchoContextUser(c).ToAdmin()
+	result, err := h.resultUsecase.PutTestResult(c.Request().Context(), req, admin)
 	if err != nil {
 		return handleError(c, err)
 	}

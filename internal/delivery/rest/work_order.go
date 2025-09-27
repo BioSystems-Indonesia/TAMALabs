@@ -16,7 +16,6 @@ import (
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	specimenuc "github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
 	workOrderuc "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
-	"gorm.io/gorm"
 )
 
 type WorkOrderHandler struct {
@@ -29,7 +28,7 @@ type WorkOrderHandler struct {
 }
 
 func NewWorkOrderHandler(
-	cfg *config.Schema, workOrderUsecase *workOrderuc.WorkOrderUseCase, db *gorm.DB,
+	cfg *config.Schema, workOrderUsecase *workOrderuc.WorkOrderUseCase,
 	patientUsecase *patientuc.PatientUseCase,
 	deviceUsecase *deviceuc.DeviceUseCase,
 	specimenUsecase *specimenuc.SpecimenUseCase,
