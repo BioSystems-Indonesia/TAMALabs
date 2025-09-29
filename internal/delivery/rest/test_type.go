@@ -147,3 +147,23 @@ func (h *TestTypeHandler) DeleteTestType(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, testType)
 }
+
+func (h *TestTypeHandler) UploadBulkTestType(c echo.Context) error {
+	mf, err := c.FormFile("file")
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	f, err := mf.Open()
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+	defer f.Close()
+
+	err = h.testTypeUsecase.BulkCreate(c.Request().Context(), f)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+}
