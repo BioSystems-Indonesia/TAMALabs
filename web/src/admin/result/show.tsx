@@ -30,7 +30,6 @@ import {
     DeleteButton,
     Labeled,
     Link,
-    ReferenceField,
     Show,
     SimpleShowLayout,
     TextField,
@@ -241,9 +240,9 @@ const HeaderInfo = (props: any) => (
                 <WithRecord label="Barcodes" render={(record: WorkOrder) => {
                     return (
                         <Stack direction={"row"} gap={1}>
-                            {record.specimen_list.map((specimen: Specimen) => {
+                            {(Array.isArray(record?.specimen_list) ? record.specimen_list : []).map((specimen: Specimen, idx: number) => {
                                 return (
-                                    <Chip label={specimen.barcode} />
+                                    <Chip key={specimen.barcode || idx} label={specimen.barcode} />
                                 )
                             })}
                         </Stack>
