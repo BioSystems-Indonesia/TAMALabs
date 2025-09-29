@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -424,7 +425,7 @@ func (u *Usecase) ProcessRequest(ctx context.Context, rawRequest []byte) error {
 	var err error
 
 	slog.Info("debug khanza process request", "rawRequest", string(rawRequest))
-
+	rawRequest = u.fixBrokenPName(rawRequest)
 	err = json.Unmarshal(rawRequest, &request)
 	if err != nil {
 		return fmt.Errorf("external.ProcessRequest json.Unmarshal failed: %w\nbody: %s", err, string(rawRequest))
@@ -636,4 +637,9 @@ func (u *Usecase) getLocation(r Request) string {
 	allLocation = append(allLocation, strings.Join(bedLocation, "-"))
 
 	return strings.Join(allLocation, "|")
+}
+
+func (u *Usecase) fixBrokenPName(raw []byte) []byte {
+	re := regexp.MustCompile(`"pname"\s*:\s*"([^"]*?)"([^",}]+)"`)
+	return re.ReplaceAll(raw, []byte(`"pname": "$1'$2"`))
 }
