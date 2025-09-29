@@ -117,7 +117,7 @@ func InitRestApp() server.RestServer {
 	deviceUseCase := deviceuc.NewDeviceUseCase(schema, deviceRepository, strategy, ba400Ba400, a15restA15rest, controllerRepository)
 	workOrderUseCase := workOrderuc.NewWorkOrderUseCase(schema, workOrderRepository, validate, barcode_generatorUsecase, patientUseCase, deviceUseCase, strategy)
 	observationRequestUseCase := observation_requestuc.NewObservationRequestUseCase(schema, observation_requestRepository, validate)
-	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, gormDB, patientUseCase, deviceUseCase, specimenUseCase, observationRequestUseCase)
+	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, patientUseCase, deviceUseCase, specimenUseCase, observationRequestUseCase)
 	featureListHandler := rest.NewFeatureListHandler()
 	observationRequestHandler := rest.NewObservationRequestHandler(schema, observationRequestUseCase)
 	test_typeUsecase := test_type2.NewUsecase(test_typeRepository)

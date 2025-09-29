@@ -52,6 +52,7 @@ type TestResult struct {
 	CreatedAt       string         `json:"created_at"`
 	Picked          bool           `json:"picked"`
 	TestType        TestType       `json:"test_type"`
+	CreatedBy       Admin          `json:"created_by" validate:"-"`
 
 	History []TestResult `json:"history"`
 
@@ -99,6 +100,7 @@ func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
 		Picked:         false,
 		History:        []TestResult{},
 		TestType:       request.TestType,
+		CreatedBy:      Admin{},
 	}
 }
 
@@ -114,6 +116,7 @@ func (r TestResult) FromObservationResult(observation ObservationResult, specime
 		CreatedAt:      observation.CreatedAt.Format(time.RFC3339),
 		Picked:         observation.Picked,
 		TestType:       observation.TestType,
+		CreatedBy:      observation.CreatedByAdmin,
 
 		// Result, Abnormal will be filled below
 		Result:   nil,
@@ -197,6 +200,7 @@ func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[i
 			Picked:         h.Picked,
 			TestType:       h.TestType,
 			SpecimenType:   specimenType,
+			CreatedBy:      h.CreatedByAdmin,
 		}
 	}
 

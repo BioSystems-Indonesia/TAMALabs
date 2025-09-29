@@ -28,8 +28,7 @@ func (r *Repository) FindAll(
 		ProcessSearch: func(db *gorm.DB, query string) *gorm.DB {
 			return db.Where("name like ?", "%"+query+"%").
 				Or("code like ?", "%"+query+"%").
-				Or("(alias_code like ? AND alias_code != '')", "%"+query+"%").
-				Or("description like ?", "%"+query+"%")
+				Or("(alias_code like ? AND alias_code != '')", "%"+query+"%")
 		},
 	})
 

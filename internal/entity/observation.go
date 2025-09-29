@@ -63,13 +63,31 @@ type ObservationResult struct {
 	AbnormalFlag   JSONStringArray `json:"abnormal_flag" gorm:"type:json"` // Using JSON for the slice
 	Comments       string          `json:"comments"`
 	Picked         bool            `json:"picked" gorm:"not null,default:false"`
+	CreatedBy      int64           `json:"created_by" gorm:"not null;default:-1"`
 	CreatedAt      time.Time       `json:"created_at" gorm:"not null"`
 	UpdatedAt      time.Time       `json:"updated_at" gorm:"not null"`
 
-	TestType TestType `json:"test_type" gorm:"foreignKey:TestCode;references:Code" validate:"required"`
+	TestType       TestType `json:"test_type" gorm:"foreignKey:TestCode;references:Code" validate:"required"`
+	CreatedByAdmin Admin    `json:"created_by_admin" gorm:"foreignKey:CreatedBy;references:ID"`
 
 	// Calculated fields (not stored in database)
 	EGFR *EGFRCalculation `json:"egfr,omitempty" gorm:"-"`
+}
+
+func (o *ObservationResult) AfterFind(tx *gorm.DB) error {
+	switch o.CreatedBy {
+	case int64(constant.CreatedByUnknown):
+		o.CreatedByAdmin = Admin{
+			ID:       int64(constant.CreatedByUnknown),
+			Fullname: "Unknown",
+		}
+	case int64(constant.CreatedBySystem):
+		o.CreatedByAdmin = Admin{
+			ID:       int64(constant.CreatedBySystem),
+			Fullname: "System",
+		}
+	}
+	return nil
 }
 
 // BeforeCreate is called before creating ObservationResult
