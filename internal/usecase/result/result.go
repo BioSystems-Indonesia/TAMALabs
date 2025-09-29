@@ -50,7 +50,7 @@ func (u *Usecase) Results(
 
 		// Calculate eGFR for each work order
 		resp.Data[i].CalculateEGFRForResults(ctx)
-		
+
 		// Maintain status management functionality
 		u.changeStatusIfNeeded(ctx, &resp.Data[i])
 	}
@@ -94,15 +94,21 @@ func (u *Usecase) ResultDetail(ctx context.Context, workOrderID int64) (entity.R
 // PutTestResult will create ObservationResult
 // set the value, unit and everyting else
 // and will prepend it in TestResult.History
-func (u *Usecase) PutTestResult(ctx context.Context, result entity.TestResult) (entity.TestResult, error) {
+func (u *Usecase) PutTestResult(
+	ctx context.Context,
+	result entity.TestResult,
+	createdByAdmin entity.Admin,
+) (entity.TestResult, error) {
 	oldResult := result
 
 	obs := entity.ObservationResult{
 		SpecimenID: result.SpecimenID,
 		TestCode:   result.Test,
 		Unit:       result.Unit,
+		CreatedBy:  createdByAdmin.ID,
 		// Don't use result.ReferenceRange from old data
 		// ReferenceRange will be generated from TestType
+		CreatedByAdmin: createdByAdmin,
 	}
 
 	if result.Result != nil {
@@ -127,6 +133,7 @@ func (u *Usecase) PutTestResult(ctx context.Context, result entity.TestResult) (
 			slog.Info("cannot fill test type for result", "id", obs.ID, "error", err)
 		}
 	}
+	obs.CreatedByAdmin = createdByAdmin
 
 	// Get specimen type for this observation result
 	specimen, err := u.specimenRepository.FindOne(ctx, obs.SpecimenID)

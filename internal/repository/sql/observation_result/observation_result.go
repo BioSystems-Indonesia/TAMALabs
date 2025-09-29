@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/config"
+	"github.com/oibacidem/lims-hl-seven/internal/constant"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"gorm.io/gorm"
 )
@@ -20,10 +21,20 @@ func NewRepository(db *gorm.DB, cfg *config.Schema) *Repository {
 }
 
 func (r *Repository) Create(ctx context.Context, data *entity.ObservationResult) error {
+	if data.CreatedBy == 0 {
+		data.CreatedBy = int64(constant.CreatedBySystem)
+	}
+
 	return r.DB.Create(data).Error
 }
 
 func (r *Repository) CreateMany(ctx context.Context, data []entity.ObservationResult) error {
+	for i := range data {
+		if data[i].CreatedBy == 0 {
+			data[i].CreatedBy = int64(constant.CreatedBySystem)
+		}
+	}
+
 	return r.DB.Create(data).Error
 }
 
@@ -46,7 +57,7 @@ func (r *Repository) FindByID(ctx context.Context, id int64) (result entity.Obse
 }
 
 func (r *Repository) FindHistory(ctx context.Context, input entity.ObservationResult) (results []entity.ObservationResult, err error) {
-	err = r.DB.
+	err = r.DB.Preload("CreatedByAdmin").Preload("TestType").
 		Where("specimen_id = ?", input.SpecimenID).
 		Where("code = ?", input.TestCode).
 		Order("created_at DESC").

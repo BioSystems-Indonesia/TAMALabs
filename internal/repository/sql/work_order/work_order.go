@@ -108,6 +108,7 @@ func (r WorkOrderRepository) FindOneForResult(id int64) (entity.WorkOrder, error
 		Preload("Specimen.ObservationRequest.TestType").
 		Preload("Specimen.ObservationResult").
 		Preload("Specimen.ObservationResult.TestType").
+		Preload("Specimen.ObservationResult.CreatedByAdmin").
 		Preload("Doctors").
 		Preload("Analyzers").
 		First(&workOrder).Error
