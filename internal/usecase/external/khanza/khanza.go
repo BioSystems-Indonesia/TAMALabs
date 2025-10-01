@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -164,7 +163,7 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 		unit := testResult.Unit
 		refRange := testResult.ReferenceRange
 
-		if alias == "Jumlah Trombosit" || alias == "Jumlah Leukosit" {
+		if strings.TrimSpace(alias) == "Jumlah Trombosit" || strings.TrimSpace(alias) == "Jumlah Leukosit" {
 			resultValue = resultValue * 1000
 			unit = "/µL"
 
@@ -180,14 +179,14 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 		// Round the result value (e.g., 8.4 -> 8, 8.6 -> 9)
 		// Exception: Don't round Hemoglobin and Eritrosit
 		var resultValueStr string
-		if alias == "Hemoglobin" || alias == "Eritrosit" {
-			// Keep decimal for Hemoglobin and Eritrosit with thousand separator
-			resultValueStr = formatNumberWithThousandSeparator(resultValue, 1)
-		} else {
-			// Round other tests to whole numbers with thousand separator
-			roundedValue := math.Round(resultValue)
-			resultValueStr = formatNumberWithThousandSeparator(roundedValue, 0)
-		}
+		// if strings.TrimSpace(alias) == "Hemoglobin" || strings.TrimSpace(alias) == "Eritrosit" {s
+		// Keep decimal for Hemoglobin and Eritrosit with thousand separator
+		resultValueStr = formatNumberWithThousandSeparator(resultValue, 1)
+		// } else {
+		// 	// Round other tests to whole numbers with thousand separator
+		// 	roundedValue := math.Round(resultValue)
+		// resultValueStr = formatNumberWithThousandSeparator(roundedValue, 0)
+		// }
 
 		// Log the values for debugging
 		flag := entity.NewKhanzaFlag(testResult)
@@ -523,19 +522,46 @@ func (u *Usecase) getWorkOrderWithFallback(ctx context.Context, ono string, visi
 }
 
 func (*Usecase) resultConvert(result ResponseResultTest) ResponseResultTest {
-	if result.NamaTest == "Jumlah Trombosit " || result.NamaTest == "Jumlah Leukosit " {
+	if strings.TrimSpace(result.NamaTest) == "Jumlah Trombosit" || strings.TrimSpace(result.NamaTest) == "Jumlah Leukosit" {
 		result.Hasil = result.Hasil + ".000"
 
 		min := strings.Split(result.NilaiNormal, "-")[0] + ".000"
 		max := strings.Split(result.NilaiNormal, "-")[1] + ".000"
 
 		result.NilaiNormal = fmt.Sprintf("%s - %s", min, max)
-		result.Satuan = "µL"
+		result.Satuan = "/uL"
 	}
 
-	if result.NamaTest == "Glukosa Sewaktu" {
+	if strings.TrimSpace(result.NamaTest) == "Glukosa Sewaktu" {
 		result.NilaiNormal = "< 180"
 	}
+
+	if strings.TrimSpace(result.NamaTest) == "HDL - Kolesterol" {
+		h, _ := strconv.Atoi(result.Hasil)
+		if h < 40 {
+			result.Flag = "H"
+		} else if h >= 40 {
+			result.Flag = ""
+		}
+		result.NilaiNormal = ">40"
+	}
+
+	if strings.TrimSpace(result.NamaTest) == "LDL - Kolesterol" {
+		result.NilaiNormal = "<100"
+	}
+
+	if strings.TrimSpace(result.NamaTest) == "Total - Kolesterol" {
+		result.NilaiNormal = "<200"
+	}
+
+	if strings.TrimSpace(result.NamaTest) == "Trigliserida" {
+		result.NilaiNormal = "<150"
+	}
+
+	if strings.TrimSpace(result.NamaTest) == "Eritrosit" {
+		result.Satuan = "10^6/uL"
+	}
+
 	return result
 }
 
