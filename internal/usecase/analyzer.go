@@ -14,4 +14,5 @@ type Analyzer interface {
 	ProcessORUR01(ctx context.Context, data entity.ORU_R01) error
 	ProcessCoax(ctx context.Context, data entity.CoaxTestResult) error
 	ProcessDiestro(ctx context.Context, data entity.DiestroResult) error
+	ProcessVerifyU120(ctx context.Context, data entity.VerifyResult) error
 }

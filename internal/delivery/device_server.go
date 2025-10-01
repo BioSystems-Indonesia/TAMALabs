@@ -5,9 +5,11 @@ import (
 	"slices"
 
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/alifax"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/cbs400"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/diestro"
 	ncc3300 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
+	verifyu120 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/verifyU120"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/a15"
 	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
@@ -15,6 +17,7 @@ import (
 	ncc61 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/neomedika_ncc61"
 	swelabalfa "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	swelablumi "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/wondfo"
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/repository"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
@@ -33,6 +36,10 @@ type DeviceServerStrategy struct {
 	swelabLumiHandler  *swelablumi.Handler
 	alifaxHandler      *alifax.Handler
 	ncc61Handler       *ncc61.Handler
+
+	wondfoHandler     *wondfo.Handler
+	cbs400Handler     *cbs400.Handler
+	verifyu120Handler *verifyu120.Handler
 }
 
 func NewDeviceServerStrategy(
@@ -47,6 +54,11 @@ func NewDeviceServerStrategy(
 	swelabLumiHandler *swelablumi.Handler,
 	alifaxHandler *alifax.Handler,
 	ncc61handler *ncc61.Handler,
+
+	wondfoHandler *wondfo.Handler,
+	cbs400Handler *cbs400.Handler,
+	verifyu120Handler *verifyu120.Handler,
+
 ) *DeviceServerStrategy {
 	return &DeviceServerStrategy{
 		a15Handler:         a15Handler,
@@ -61,6 +73,10 @@ func NewDeviceServerStrategy(
 		swelabLumiHandler:  swelabLumiHandler,
 		alifaxHandler:      alifaxHandler,
 		ncc61Handler:       ncc61handler,
+
+		wondfoHandler:     wondfoHandler,
+		cbs400Handler:     cbs400Handler,
+		verifyu120Handler: verifyu120Handler,
 	}
 }
 
@@ -87,6 +103,8 @@ var serialDeviceType = []entity.DeviceType{
 	entity.DeviceTypeDiestro,
 	entity.DeviceTypeNeomedicaNCC3300,
 	entity.DeviceTypeAlifax,
+	entity.DeviceTypeCBS400,
+	entity.DeviceTypeVerifyU120,
 }
 
 var tcpDeviceType = []entity.DeviceType{
@@ -100,6 +118,7 @@ var tcpDeviceType = []entity.DeviceType{
 	entity.DeviceTypeSwelabLumi,
 	entity.DeviceTypeNeomedicaNCC61,
 	entity.DeviceTypeOther,
+	entity.DeviceTypeWondfo,
 }
 
 var deviceTypeNotSupport = []entity.DeviceType{}
@@ -139,6 +158,10 @@ func (d *DeviceServerStrategy) ChooseDeviceSerialHandler(device entity.Device) (
 		return d.ncc3300, nil
 	case entity.DeviceTypeAlifax:
 		return d.alifaxHandler, nil
+	case entity.DeviceTypeVerifyU120:
+		return d.verifyu120Handler, nil
+	case entity.DeviceTypeCBS400:
+		return d.cbs400Handler, nil
 
 	default:
 		return nil, entity.ErrDeviceTypeNotSupport
@@ -166,6 +189,8 @@ func (d *DeviceServerStrategy) ChooseDeviceTCPHandler(device entity.Device) (ser
 		return d.a15Handler, nil
 	case entity.DeviceTypeNeomedicaNCC61:
 		return d.ncc61Handler, nil
+	case entity.DeviceTypeWondfo:
+		return d.wondfoHandler, nil
 	default:
 		return nil, nil
 	}
