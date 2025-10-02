@@ -525,11 +525,11 @@ func (*Usecase) resultConvert(result ResponseResultTest) ResponseResultTest {
 	if strings.TrimSpace(result.NamaTest) == "Jumlah Trombosit" || strings.TrimSpace(result.NamaTest) == "Jumlah Leukosit" {
 		result.Hasil = result.Hasil + ".000"
 
-		min := strings.Split(result.NilaiNormal, "-")[0] + ".000"
-		max := strings.Split(result.NilaiNormal, "-")[1] + ".000"
+		min := strings.TrimSpace(strings.Split(result.NilaiNormal, "-")[0]) + ".000"
+		max := strings.TrimSpace(strings.Split(result.NilaiNormal, "-")[1]) + ".000"
 
 		result.NilaiNormal = fmt.Sprintf("%s - %s", min, max)
-		result.Satuan = "/uL"
+		result.Satuan = "uL"
 	}
 
 	if strings.TrimSpace(result.NamaTest) == "Glukosa Sewaktu" {
@@ -560,6 +560,14 @@ func (*Usecase) resultConvert(result ResponseResultTest) ResponseResultTest {
 
 	if strings.TrimSpace(result.NamaTest) == "Eritrosit" {
 		result.Satuan = "10^6/uL"
+	}
+
+	if strings.TrimSpace(result.NamaTest) == "Bilirubin Direk" {
+		result.NilaiNormal = "< 0.5"
+	}
+
+	if strings.TrimSpace(result.NamaTest) == "Asam Urat" {
+		result.NilaiNormal = "< 5.7"
 	}
 
 	return result

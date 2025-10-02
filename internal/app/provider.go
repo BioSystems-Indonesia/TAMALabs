@@ -86,6 +86,7 @@ func provideRestServer(
 func provideRestHandler(
 	hlSevenHandler *rest.HlSevenHandler,
 	healthCheck *rest.HealthCheckHandler,
+	healthHandler *rest.HealthHandler,
 	patientHandler *rest.PatientHandler,
 	specimenHandler *rest.SpecimenHandler,
 	workOrder *rest.WorkOrderHandler,
@@ -100,6 +101,7 @@ func provideRestHandler(
 	return &rest.Handler{
 		HlSevenHandler:            hlSevenHandler,
 		HealthCheckHandler:        healthCheck,
+		HealthHandler:             healthHandler,
 		PatientHandler:            patientHandler,
 		SpecimenHandler:           specimenHandler,
 		WorkOrderHandler:          workOrder,
@@ -352,7 +354,13 @@ func provideValidator() *validator.Validate {
 }
 
 func provideCache() *cache.Cache {
-	return cache.New(time.Hour, 5*time.Minute)
+	c := cache.New(time.Hour, 5*time.Minute)
+
+	c.OnEvicted(func(key string, value interface{}) {
+		slog.Debug("Cache item evicted", "key", key, "value_type", fmt.Sprintf("%T", value))
+	})
+
+	return c
 }
 
 func provideConfig(db *gorm.DB) *config.Schema {

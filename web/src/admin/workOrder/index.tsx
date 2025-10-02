@@ -111,7 +111,7 @@ export function WorkOrderAddTest() {
 function WorkOrderSideFilters() {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
-    
+
     return (
         <SideFilter sx={{
             backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
@@ -265,7 +265,7 @@ function WorkOrderSideFilters() {
                                 }}
                             />
                         </Stack>
-                    <Divider sx={{ marginBottom: 2 }} />
+                        <Divider sx={{ marginBottom: 2 }} />
                     </Box>
                 </Stack>
             </FilterLiveForm>
@@ -530,7 +530,6 @@ const WorkOrderDataGrid = () => {
                     setOpen={setOpen}
                     onClose={() => setOpen(false)}
                 />}>
-                <TextField source="no" />
                 <TextField source="id" />
                 <WithRecord label="Status" render={(record: any) => (
                     <Chip label={`${record.status}`} color={WorkOrderChipColorMap(record.status)} />
@@ -557,7 +556,7 @@ const WorkOrderDataGrid = () => {
                 <WrapperField label="Actions" sortable={false} >
                     <Stack direction={"row"} spacing={2}>
                         <ShowButton variant="contained" />
-                        <DeleteButton variant="contained" mutationMode="pessimistic"/>
+                        <DeleteButton variant="contained" mutationMode="pessimistic" />
                     </Stack>
                 </WrapperField>
             </Datagrid>
@@ -571,9 +570,9 @@ export const WorkOrderList = () => {
         <List sort={{
             field: "id",
             order: "DESC"
-        }} aside={<WorkOrderSideFilters />} 
-        actions={<WorkOrderListActions/>}
-        title="Lab Request" exporter={false}
+        }} aside={<WorkOrderSideFilters />}
+            actions={<WorkOrderListActions />}
+            title="Lab Request" exporter={false}
             storeKey={false}
             sx={{
                 '& .RaList-content': {
@@ -583,7 +582,7 @@ export const WorkOrderList = () => {
                 },
             }}
         >
-             <WorkOrderDataGrid />
+            <WorkOrderDataGrid />
         </List>
     );
 }

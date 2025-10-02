@@ -16,6 +16,7 @@ import (
 type Handler struct {
 	*HlSevenHandler
 	*HealthCheckHandler
+	*HealthHandler
 	*PatientHandler
 	*SpecimenHandler
 	*WorkOrderHandler
@@ -110,6 +111,9 @@ func RegisterRoutes(
 	unauthenticatedV1 := api.Group("/v1")
 	unauthenticatedV1.GET("/ping", handler.Ping)
 	unauthenticatedV1.POST("/login", authHandler.Login)
+
+	// Add health endpoint (unauthenticated for monitoring)
+	handler.HealthHandler.RegisterRoutes(unauthenticatedV1)
 
 	authenticatedV1 := api.Group("/v1", authMiddleware.Middleware())
 	authenticatedV1.GET("/check-auth", handler.Ping)

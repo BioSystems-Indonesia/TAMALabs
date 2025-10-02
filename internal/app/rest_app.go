@@ -131,6 +131,7 @@ var restMiddlewareSet = wire.NewSet(
 var restHandlerSet = wire.NewSet(
 	rest.NewHlSevenHandler,
 	rest.NewHealthCheckHandler,
+	rest.NewHealthHandler,
 	rest.NewPatientHandler,
 	rest.NewSpecimenHandler,
 	rest.NewWorkOrderHandler,

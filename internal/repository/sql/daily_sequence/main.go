@@ -3,6 +3,7 @@ package daily_sequence
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
@@ -12,6 +13,7 @@ import (
 
 type Repository struct {
 	DB *gorm.DB
+	mu sync.RWMutex
 }
 
 func NewRepository(db *gorm.DB) *Repository {
@@ -19,10 +21,17 @@ func NewRepository(db *gorm.DB) *Repository {
 }
 
 func (r *Repository) GetOrReset(ctx context.Context, date time.Time, seqType entity.SequenceType) (int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	var sequence entity.SequenceDaily
 
-	err := r.DB.Transaction(func(tx *gorm.DB) error {
-		result := tx.Clauses(
+	err := r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Add timeout for the query to prevent hanging
+		queryCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		result := tx.WithContext(queryCtx).Clauses(
 			clause.Locking{Strength: "UPDATE"},
 		).First(&sequence, "sequence_type = ?", seqType)
 
@@ -33,7 +42,7 @@ func (r *Repository) GetOrReset(ctx context.Context, date time.Time, seqType ent
 				LastUpdated:  date,
 			}
 
-			if err := tx.Create(&sequence).Error; err != nil {
+			if err := tx.WithContext(queryCtx).Create(&sequence).Error; err != nil {
 				return fmt.Errorf("failed to create sequence: %w", err)
 			}
 			return nil
@@ -42,10 +51,12 @@ func (r *Repository) GetOrReset(ctx context.Context, date time.Time, seqType ent
 		if result.Error != nil {
 			return fmt.Errorf("failed to get sequence: %w", result.Error)
 		}
+
+		// Check if we need to reset for new day
 		if sequence.LastUpdated.Format("2006-01-02") != date.Format("2006-01-02") {
 			sequence.CurrentValue = 0
 			sequence.LastUpdated = date
-			if err := tx.Save(&sequence).Error; err != nil {
+			if err := tx.WithContext(queryCtx).Save(&sequence).Error; err != nil {
 				return fmt.Errorf("failed to reset sequence: %w", err)
 			}
 		}

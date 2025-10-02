@@ -33,18 +33,35 @@ func (h *CanalHandler) OnRow(e *canal.RowsEvent) error {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 
-			err := h.usecase.SyncAllRequest(ctx)
-			if err != nil {
-				slog.Error("Failed to sync all requests",
+			maxAttempts := 3
+			for attempt := 1; attempt <= maxAttempts; attempt++ {
+				err := h.usecase.SyncAllRequest(ctx)
+				if err == nil {
+					slog.Info("Successfully synced all requests",
+						"table", e.Table.Name,
+						"attempt", attempt)
+					return nil
+				}
+
+				if attempt < maxAttempts {
+					slog.Warn("Failed to sync requests, retrying",
+						"error", err,
+						"attempt", attempt,
+						"max_attempts", maxAttempts,
+					)
+					// Short delay before retry
+					time.Sleep(time.Duration(attempt) * time.Second)
+					continue
+				}
+
+				slog.Error("Failed to sync all requests after all attempts",
 					"error", err,
 					"table", e.Table.Name,
 					"action", e.Action,
+					"attempts", maxAttempts,
 					"note", "Canal Handler will continue monitoring despite this error",
 				)
-				return nil
 			}
-
-			slog.Info("Successfully synced all requests", "table", e.Table.Name)
 		}
 	}
 	return nil
@@ -204,15 +221,37 @@ func (h *CanalHandler) StartCanalHandler() {
 
 	slog.Info("Starting from current binlog position", "position", pos)
 
+	retryCount := 0
+	maxRetries := 10
+	baseDelay := 10 * time.Second
+	maxDelay := 5 * time.Minute
+
 	for {
 		err = c.RunFrom(pos)
 		if err != nil {
-			slog.Error("Canal Handler encountered error, will retry in 10 seconds",
+			retryCount++
+			if retryCount >= maxRetries {
+				slog.Error("Canal Handler max retries reached, giving up",
+					"error", err,
+					"retries", retryCount,
+					"position", pos,
+				)
+				return
+			}
+
+			delay := time.Duration(retryCount) * baseDelay
+			if delay > maxDelay {
+				delay = maxDelay
+			}
+
+			slog.Error("Canal Handler encountered error, will retry",
 				"error", err,
 				"position", pos,
+				"retry_count", retryCount,
+				"delay_seconds", delay.Seconds(),
 			)
 
-			time.Sleep(10 * time.Second)
+			time.Sleep(delay)
 
 			newPos, posErr := c.GetMasterPos()
 			if posErr == nil {
@@ -221,6 +260,7 @@ func (h *CanalHandler) StartCanalHandler() {
 			}
 			continue
 		}
+		retryCount = 0
 		break
 	}
 }

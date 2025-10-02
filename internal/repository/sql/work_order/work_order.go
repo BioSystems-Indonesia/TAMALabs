@@ -722,7 +722,7 @@ func (r WorkOrderRepository) SyncBarcodeSequence(ctx context.Context) error {
 	tomorrowMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.Local)
 
 	var count int64
-	err := r.db.Model(entity.WorkOrder{}).
+	err := r.db.WithContext(ctx).Model(entity.WorkOrder{}).
 		Where("created_at >= ? and created_at < ?", currentDayMidnight, tomorrowMidnight).
 		Count(&count).Error
 	if err != nil {
@@ -730,7 +730,20 @@ func (r WorkOrderRepository) SyncBarcodeSequence(ctx context.Context) error {
 	}
 
 	expire := tomorrowMidnight.Sub(now)
+
+	if expire < time.Minute {
+		expire = time.Minute
+	}
+
+	r.cache.Delete(constant.KeyWorkOrderBarcodeSequence)
+
 	r.cache.Set(constant.KeyWorkOrderBarcodeSequence, int64(count+1), expire)
+
+	slog.Debug("Barcode sequence synced",
+		"count", count+1,
+		"expire_in", expire.String(),
+		"current_day", currentDayMidnight.Format("2006-01-02"),
+	)
 
 	return nil
 }
