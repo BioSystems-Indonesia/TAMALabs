@@ -44,6 +44,7 @@ import (
 	deviceuc "github.com/oibacidem/lims-hl-seven/internal/usecase/device"
 	externaluc "github.com/oibacidem/lims-hl-seven/internal/usecase/external"
 	khanzauc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
+	simrsuc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/simrs"
 	observation_requestuc "github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	resultUC "github.com/oibacidem/lims-hl-seven/internal/usecase/result"
@@ -83,6 +84,7 @@ var restUsecaseSet = wire.NewSet(
 	analyzer.NewUsecase,
 	wire.Bind(new(usecase.Analyzer), new(*analyzer.Usecase)),
 	khanzauc.NewUsecase,
+	simrsuc.NewUsecase,
 	externaluc.NewUsecase,
 )
 
@@ -105,6 +107,7 @@ var restRepositorySet = wire.NewSet(
 	a15rest.NewA15,
 	server.NewControllerRepository,
 	provideKhanzaRepository,
+	provideSimrsRepository,
 	provideAllDevices,
 )
 

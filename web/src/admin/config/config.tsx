@@ -28,6 +28,7 @@ import PublicIcon from '@mui/icons-material/Public';
 import SettingsEthernetIcon from '@mui/icons-material/SettingsEthernet';
 import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { IntegrationInstructionsRounded } from "@mui/icons-material";
 
 export const ConfigList = () => {
@@ -86,9 +87,29 @@ export const ConfigList = () => {
         enabled: true,
     });
 
+    // SIMRS Configuration Queries
+    const { data: simrsEnabledEntry } = useQuery({
+        queryKey: ["config", "SimrsIntegrationEnabled"],
+        queryFn: async () => {
+            const { data } = await axios.get(`/config/SimrsIntegrationEnabled`);
+            return data;
+        },
+        enabled: true,
+    });
+
+    const { data: simrsDsnEntry } = useQuery({
+        queryKey: ["config", "SimrsDatabaseDSN"],
+        queryFn: async () => {
+            const { data } = await axios.get(`/config/SimrsDatabaseDSN`);
+            return data;
+        },
+        enabled: true,
+    });
+
     const [simrsBridgingActive, setSimrsBridgingActive] = useState<boolean>(false);
     const simrsList = [
         { id: "khanza", label: "Khanza" },
+        { id: "simrs", label: "SIMRS (Database Sharing)" },
         { id: "softmedix", label: "Softmedix" },
         { id: "simrs-local", label: "Local SIMRS" },
     ];
@@ -105,9 +126,11 @@ export const ConfigList = () => {
         khanzaMethod: string;
         bridge: { user: string; pass: string; host: string; port: string; db: string; params: string };
         main: { user: string; pass: string; host: string; port: string; db: string; params: string };
+        simrs: { dsn: string };
     }>(null);
     const [khanzaMethod, setKhanzaMethod] = useState<string>("api");
 
+    // Khanza states
     const [bridgeUser, setBridgeUser] = useState<string>("");
     const [bridgePassword, setBridgePassword] = useState<string>("");
     const [bridgeHost, setBridgeHost] = useState<string>("");
@@ -120,6 +143,9 @@ export const ConfigList = () => {
     const [mainPort, setMainPort] = useState<string>("");
     const [mainDb, setMainDb] = useState<string>("");
     const [mainParams, setMainParams] = useState<string>("");
+
+    // SIMRS states
+    const [simrsDsn, setSimrsDsn] = useState<string>("");
 
     const markDirty = () => setIsDirty(true);
 
@@ -191,62 +217,97 @@ export const ConfigList = () => {
     };
 
     useEffect(() => {
-        if (configEntry && (configEntry as any).value !== undefined) {
-            setSimrsBridgingActive((configEntry as any).value === "true");
-            if (selectedEntry && (selectedEntry as any).value !== undefined) {
-                setSelectedSimrs((selectedEntry as any).value);
-            }
-            if (khanzaBridgeEntry && (khanzaBridgeEntry as any).value !== undefined) {
-                const d = (khanzaBridgeEntry as any).value;
-                const parts = parseKhanzaDSN(d);
-                setBridgeUser(parts.user);
-                setBridgePassword(parts.pass);
-                setBridgeHost(parts.host);
-                setBridgePort(parts.port);
-                setBridgeDb(parts.db);
-                setBridgeParams(parts.params);
-            }
-            if (khanzaMainEntry && (khanzaMainEntry as any).value !== undefined) {
-                const dm = (khanzaMainEntry as any).value;
-                const mparts = parseKhanzaDSN(dm);
-                setMainUser(mparts.user);
-                setMainPassword(mparts.pass);
-                setMainHost(mparts.host);
-                setMainPort(mparts.port);
-                setMainDb(mparts.db);
-                setMainParams(mparts.params);
-            }
-            if (khanzaMethodEntry && (khanzaMethodEntry as any).value !== undefined) {
-                setKhanzaMethod((khanzaMethodEntry as any).value || "api");
-            }
-            setInitialSnapshot({
-                simrsBridgingActive: (configEntry as any).value === "true",
-                selectedSimrs: (selectedEntry as any)?.value || "",
-                khanzaMethod: (khanzaMethodEntry as any)?.value || "api",
-                bridge: {
-                    user: bridgeUser,
-                    pass: bridgePassword,
-                    host: bridgeHost,
-                    port: bridgePort,
-                    db: bridgeDb,
-                    params: bridgeParams,
-                },
-                main: {
-                    user: mainUser,
-                    pass: mainPassword,
-                    host: mainHost,
-                    port: mainPort,
-                    db: mainDb,
-                    params: mainParams,
-                },
-            });
-            return;
+        let bridgingEnabled = false;
+        let selectedSimrsType = "";
+
+        // Check if any integration is enabled
+        if (configEntry && (configEntry as any).value === "true") {
+            bridgingEnabled = true;
+            selectedSimrsType = "khanza"; // If KhanzaIntegrationEnabled is true, Khanza is selected
         }
-        if (!data) return;
-        if ((data as any).KhanzaIntegrationEnabled !== undefined) {
-            setSimrsBridgingActive((data as any).KhanzaIntegrationEnabled === "true");
+
+        if (simrsEnabledEntry && (simrsEnabledEntry as any).value === "true") {
+            bridgingEnabled = true;
+            selectedSimrsType = "simrs"; // If SimrsIntegrationEnabled is true, SIMRS is selected
         }
-    }, [configEntry, data]);
+
+        // Override with SelectedSimrs if available
+        if (selectedEntry && (selectedEntry as any).value !== undefined && (selectedEntry as any).value !== "" && (selectedEntry as any).value !== "none") {
+            selectedSimrsType = (selectedEntry as any).value;
+            bridgingEnabled = true;
+        } else if (selectedEntry && (selectedEntry as any).value === "none") {
+            // If SelectedSimrs is "none", bridging is disabled
+            bridgingEnabled = false;
+            selectedSimrsType = "";
+        }
+
+        // If no integration is enabled, ensure bridging is disabled
+        if (!configEntry || (configEntry as any).value !== "true") {
+            if (!simrsEnabledEntry || (simrsEnabledEntry as any).value !== "true") {
+                bridgingEnabled = false;
+                selectedSimrsType = "";
+            }
+        }
+
+        setSimrsBridgingActive(bridgingEnabled);
+        setSelectedSimrs(selectedSimrsType);
+
+        // Load Khanza configuration
+        if (khanzaBridgeEntry && (khanzaBridgeEntry as any).value !== undefined) {
+            const d = (khanzaBridgeEntry as any).value;
+            const parts = parseKhanzaDSN(d);
+            setBridgeUser(parts.user);
+            setBridgePassword(parts.pass);
+            setBridgeHost(parts.host);
+            setBridgePort(parts.port);
+            setBridgeDb(parts.db);
+            setBridgeParams(parts.params);
+        }
+        if (khanzaMainEntry && (khanzaMainEntry as any).value !== undefined) {
+            const dm = (khanzaMainEntry as any).value;
+            const mparts = parseKhanzaDSN(dm);
+            setMainUser(mparts.user);
+            setMainPassword(mparts.pass);
+            setMainHost(mparts.host);
+            setMainPort(mparts.port);
+            setMainDb(mparts.db);
+            setMainParams(mparts.params);
+        }
+        if (khanzaMethodEntry && (khanzaMethodEntry as any).value !== undefined) {
+            setKhanzaMethod((khanzaMethodEntry as any).value || "api");
+        }
+
+        // Load SIMRS config
+        const currentSimrsDsn = (simrsDsnEntry as any)?.value || "";
+        if (simrsDsnEntry && (simrsDsnEntry as any).value !== undefined) {
+            setSimrsDsn((simrsDsnEntry as any).value);
+        }
+
+        setInitialSnapshot({
+            simrsBridgingActive: bridgingEnabled,
+            selectedSimrs: selectedSimrsType,
+            khanzaMethod: (khanzaMethodEntry as any)?.value || "api",
+            bridge: {
+                user: bridgeUser,
+                pass: bridgePassword,
+                host: bridgeHost,
+                port: bridgePort,
+                db: bridgeDb,
+                params: bridgeParams,
+            },
+            main: {
+                user: mainUser,
+                pass: mainPassword,
+                host: mainHost,
+                port: mainPort,
+                db: mainDb,
+                params: mainParams,
+            },
+            simrs: {
+                dsn: currentSimrsDsn,
+            },
+        });
+    }, [configEntry, simrsEnabledEntry, selectedEntry, khanzaBridgeEntry, khanzaMainEntry, khanzaMethodEntry, simrsDsnEntry, bridgeUser, bridgePassword, bridgeHost, bridgePort, bridgeDb, bridgeParams, mainUser, mainPassword, mainHost, mainPort, mainDb, mainParams]);
 
     useEffect(() => {
         if (!initialSnapshot) return;
@@ -265,10 +326,11 @@ export const ConfigList = () => {
             initialSnapshot.main.host === mainHost &&
             initialSnapshot.main.port === mainPort &&
             initialSnapshot.main.db === mainDb &&
-            initialSnapshot.main.params === mainParams;
+            initialSnapshot.main.params === mainParams &&
+            initialSnapshot.simrs.dsn === simrsDsn;
 
         setIsDirty(!same);
-    }, [initialSnapshot, simrsBridgingActive, selectedSimrs, khanzaMethod, bridgeUser, bridgePassword, bridgeHost, bridgePort, bridgeDb, bridgeParams, mainUser, mainPassword, mainHost, mainPort, mainDb, mainParams]);
+    }, [initialSnapshot, simrsBridgingActive, selectedSimrs, khanzaMethod, bridgeUser, bridgePassword, bridgeHost, bridgePort, bridgeDb, bridgeParams, mainUser, mainPassword, mainHost, mainPort, mainDb, mainParams, simrsDsn]);
 
     const hasRequiredFilled = (() => {
         if (!simrsBridgingActive) return true;
@@ -279,6 +341,9 @@ export const ConfigList = () => {
             if (khanzaMethod === "db") {
                 if (!bridgeUser || !bridgePassword || !bridgeHost || !bridgePort || !bridgeDb) return false;
             }
+        }
+        if (selectedSimrs === "simrs") {
+            if (!simrsDsn) return false;
         }
         return true;
     })();
@@ -633,6 +698,59 @@ export const ConfigList = () => {
                         )
                     )}
 
+                    {/* SIMRS Configuration */}
+                    {simrsBridgingActive && selectedSimrs === "simrs" && (
+                        <Stack direction="column" gap={2} alignItems="flex-start" style={{ width: "100%" }}>
+                            <Typography variant="body1" color="primary">SIMRS Database Configuration</Typography>
+                            <MUITextField
+                                label="Database DSN"
+                                value={simrsDsn}
+                                size="small"
+                                fullWidth
+                                onChange={(e) => { setSimrsDsn(e.target.value); markDirty(); }}
+                                placeholder="username:password@tcp(hostname:port)/database?params"
+                                helperText="Format: username:password@tcp(hostname:port)/database"
+                                required
+                            />
+
+                            <Card sx={{ width: "100%", border: "1px solid #e6e6e6ff" }} elevation={0}>
+                                <Accordion>
+                                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                        <Typography variant="subtitle1">SIMRS Integration Documentation</Typography>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <CardContent>
+                                            <Typography variant="subtitle1" gutterBottom>SIMRS Database Integration</Typography>
+                                            <Divider sx={{ mb: 1 }} />
+                                            <Typography variant="body2" paragraph>
+                                                This integration uses database sharing to sync lab requests and results with SIMRS.
+                                            </Typography>
+
+                                            <Typography variant="subtitle2" gutterBottom>Required Tables:</Typography>
+                                            <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', mt: 1 }}>
+                                                {`• patients - Patient master data
+• lab_requests - Lab test requests from SIMRS
+• lab_results - Lab test results to SIMRS
+
+Database DSN Examples:
+• MySQL: root:password@tcp(localhost:3306)/simrs_db
+• With params: user:pass@tcp(host:3306)/db?charset=utf8mb4&parseTime=True&loc=Local`}
+                                            </Typography>
+
+                                            <Typography variant="subtitle2" sx={{ mt: 2 }} gutterBottom>Sync Process:</Typography>
+                                            <Typography variant="body2">
+                                                • Automatic sync runs every few minutes<br />
+                                                • Lab requests are pulled from SIMRS and converted to work orders<br />
+                                                • Lab results are pushed back to SIMRS when tests are completed<br />
+                                                • Manual sync is available for immediate synchronization
+                                            </Typography>
+                                        </CardContent>
+                                    </AccordionDetails>
+                                </Accordion>
+                            </Card>
+                        </Stack>
+                    )}
+
                     <Button
                         variant="contained"
                         color="primary"
@@ -640,9 +758,16 @@ export const ConfigList = () => {
                         onClick={async () => {
                             setIsSaving(true);
                             try {
+                                // Always save the main bridging status
                                 await axios.put(`/config/KhanzaIntegrationEnabled`, {
                                     id: "KhanzaIntegrationEnabled",
-                                    value: simrsBridgingActive ? "true" : "false",
+                                    value: (simrsBridgingActive && selectedSimrs === "khanza") ? "true" : "false",
+                                });
+
+                                // Always save SIMRS integration status
+                                await axios.put(`/config/SimrsIntegrationEnabled`, {
+                                    id: "SimrsIntegrationEnabled",
+                                    value: (simrsBridgingActive && selectedSimrs === "simrs") ? "true" : "false",
                                 });
 
                                 if (simrsBridgingActive) {
@@ -671,6 +796,20 @@ export const ConfigList = () => {
                                             value: composedMain,
                                         });
                                     }
+
+                                    // Save SIMRS configuration
+                                    if (selectedSimrs === "simrs") {
+                                        await axios.put(`/config/SimrsDatabaseDSN`, {
+                                            id: "SimrsDatabaseDSN",
+                                            value: simrsDsn,
+                                        });
+                                    }
+                                } else {
+                                    // When bridging is disabled, set SelectedSimrs to "none" instead of empty string
+                                    await axios.put(`/config/SelectedSimrs`, {
+                                        id: "SelectedSimrs",
+                                        value: "none",
+                                    });
                                 }
 
                                 queryClient.invalidateQueries({ queryKey: ["config", "KhanzaIntegrationEnabled"] });
@@ -678,10 +817,12 @@ export const ConfigList = () => {
                                 queryClient.invalidateQueries({ queryKey: ["config", "KhanzaConnectionMethod"] });
                                 queryClient.invalidateQueries({ queryKey: ["config", "KhanzaMainDatabaseDSN"] });
                                 queryClient.invalidateQueries({ queryKey: ["config", "KhanzaBridgeDatabaseDSN"] });
+                                queryClient.invalidateQueries({ queryKey: ["config", "SimrsIntegrationEnabled"] });
+                                queryClient.invalidateQueries({ queryKey: ["config", "SimrsDatabaseDSN"] });
 
                                 const newSnapshot = {
                                     simrsBridgingActive,
-                                    selectedSimrs,
+                                    selectedSimrs: simrsBridgingActive ? selectedSimrs : "",
                                     khanzaMethod,
                                     bridge: {
                                         user: bridgeUser,
@@ -698,6 +839,9 @@ export const ConfigList = () => {
                                         port: mainPort,
                                         db: mainDb,
                                         params: mainParams,
+                                    },
+                                    simrs: {
+                                        dsn: simrsDsn,
                                     },
                                 };
                                 setInitialSnapshot(newSnapshot);

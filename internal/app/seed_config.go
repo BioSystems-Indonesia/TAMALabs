@@ -32,6 +32,14 @@ var seedConfig = []entity.Config{
 		ID:    "KhanzaMainDatabaseDSN",
 		Value: "root:secret@tcp(localhost:3306)/khanza?parseTime=true",
 	},
+	{
+		ID:    "SimrsIntegrationEnabled",
+		Value: "false",
+	},
+	{
+		ID:    "SimrsDatabaseDSN",
+		Value: "root:secret@tcp(localhost:3306)/simrs_db?charset=utf8mb4&parseTime=True&loc=Local",
+	},
 }
 
 // GenerateRandomSigningKey creates a cryptographically secure random signing key.

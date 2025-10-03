@@ -1,4 +1,5 @@
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
+import SyncIcon from "@mui/icons-material/Sync";
 import { Box, CircularProgress, Dialog, DialogContent, DialogTitle, Divider, useTheme } from "@mui/material";
 import ScienceIcon from '@mui/icons-material/Science';
 import Chip from "@mui/material/Chip";
@@ -278,6 +279,71 @@ function getRequestLength(data: WorkOrder): number {
     return data.specimen_list?.reduce((acc, specimen) => acc + specimen.observation_requests.length, 0) || 0
 }
 
+function SyncAllRequestButton() {
+    const notify = useNotify();
+    const refresh = useRefresh();
+    const axios = useAxios();
+
+    const { mutate: syncAllRequest, isPending } = useMutation({
+        mutationFn: async () => {
+            try {
+                const response = await axios.post('/external/sync-all-requests');
+                if (!response || response.status !== 200) {
+                    throw new Error(response?.data?.error || 'Failed to sync requests');
+                }
+                return response.data;
+            } catch (error: any) {
+                // Handle axios errors or network errors
+                if (error.response) {
+                    // Server responded with error status
+                    throw new Error(error.response.data?.error || `Server error: ${error.response.status}`);
+                } else if (error.request) {
+                    // Network error
+                    throw new Error('Network error: Unable to connect to server');
+                } else {
+                    // Other error
+                    throw new Error(error.message || 'Unknown error occurred');
+                }
+            }
+        },
+        onSuccess: () => {
+            notify('Successfully synced all requests from external systems', {
+                type: 'success',
+            });
+            refresh();
+        },
+        onError: (error) => {
+            notify(`Sync failed: ${error.message}`, {
+                type: 'error',
+            });
+        },
+    });
+
+    return (
+        <Button
+            label="Sync All Request"
+            onClick={() => syncAllRequest()}
+            disabled={isPending}
+            sx={{
+                backgroundColor: 'primary.main',
+                color: 'white',
+                '&:hover': {
+                    backgroundColor: 'primary.dark',
+                },
+                '&:disabled': {
+                    backgroundColor: 'action.disabled',
+                },
+            }}
+        >
+            {isPending ? (
+                <CircularProgress size={16} sx={{ color: 'white' }} />
+            ) : (
+                <SyncIcon />
+            )}
+        </Button>
+    );
+}
+
 function RunWorkOrderButton(props: RunWorkOrderProps) {
     const notify = useNotify();
     const refresh = useRefresh();
@@ -432,6 +498,7 @@ const WorkOrderListBulkActionButtons = (props: RunWorkOrderProps) => (
 function WorkOrderListActions() {
     return (
         <TopToolbar>
+            <SyncAllRequestButton />
             <CreateButton />
         </TopToolbar>
     )

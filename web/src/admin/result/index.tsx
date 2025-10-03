@@ -1,4 +1,5 @@
 import RefreshIcon from '@mui/icons-material/Refresh';
+import SyncIcon from '@mui/icons-material/Sync';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ScienceIcon from '@mui/icons-material/Science';
 import { Box, Chip, Button as MUIButton, Stack, Typography, useTheme, CircularProgress, } from "@mui/material";
@@ -17,8 +18,10 @@ import {
     TopToolbar,
     useNotify,
     WithRecord,
-    useListContext
+    useListContext,
+    useRefresh
 } from "react-admin";
+import { useMutation } from "@tanstack/react-query";
 import CustomDateInput from "../../component/CustomDateInput";
 import GenerateReportButton from "../../component/GenerateReportButton";
 import SideFilter from "../../component/SideFilter";
@@ -52,11 +55,77 @@ export const ResultList = () => (
     </List>
 );
 
+function SyncAllResultButton() {
+    const notify = useNotify();
+    const refresh = useRefresh();
+    const axios = useAxios();
+
+    const { mutate: syncAllResult, isPending } = useMutation({
+        mutationFn: async () => {
+            try {
+                const response = await axios.post('/external/sync-all-results');
+                if (!response || response.status !== 200) {
+                    throw new Error(response?.data?.error || 'Failed to sync results');
+                }
+                return response.data;
+            } catch (error: any) {
+                // Handle axios errors or network errors
+                if (error.response) {
+                    // Server responded with error status
+                    throw new Error(error.response.data?.error || `Server error: ${error.response.status}`);
+                } else if (error.request) {
+                    // Network error
+                    throw new Error('Network error: Unable to connect to server');
+                } else {
+                    // Other error
+                    throw new Error(error.message || 'Unknown error occurred');
+                }
+            }
+        },
+        onSuccess: () => {
+            notify('Successfully synced all results to external systems', {
+                type: 'success',
+            });
+            refresh();
+        },
+        onError: (error) => {
+            notify(`Sync failed: ${error.message}`, {
+                type: 'error',
+            });
+        },
+    });
+
+    return (
+        <Button
+            label="Sync All Result"
+            onClick={() => syncAllResult()}
+            disabled={isPending}
+            sx={{
+                backgroundColor: 'primary.main',
+                color: 'white',
+                '&:hover': {
+                    backgroundColor: 'secondary.dark',
+                },
+                '&:disabled': {
+                    backgroundColor: 'action.disabled',
+                },
+            }}
+        >
+            {isPending ? (
+                <CircularProgress size={16} sx={{ color: 'white' }} />
+            ) : (
+                <SyncIcon />
+            )}
+        </Button>
+    );
+}
+
 function ResultActions() {
     const axios = useAxios()
     const notify = useNotify()
     return (
         <TopToolbar>
+            <SyncAllResultButton />
             <Button label={"Refresh"} onClick={() => {
                 axios.post("/result/refresh").then(() => {
                     notify("Refresh Result Success", {
