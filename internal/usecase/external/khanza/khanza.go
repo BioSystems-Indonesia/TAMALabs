@@ -179,9 +179,13 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 		// Round the result value (e.g., 8.4 -> 8, 8.6 -> 9)
 		// Exception: Don't round Hemoglobin and Eritrosit
 		var resultValueStr string
-		// if strings.TrimSpace(alias) == "Hemoglobin" || strings.TrimSpace(alias) == "Eritrosit" {s
-		// Keep decimal for Hemoglobin and Eritrosit with thousand separator
-		resultValueStr = formatNumberWithThousandSeparator(resultValue, 1)
+		// Special formatting for Trombosit and Leukosit (already converted by 1000 above)
+		if strings.TrimSpace(alias) == "Jumlah Trombosit" || strings.TrimSpace(alias) == "Jumlah Leukosit" {
+			resultValueStr = formatNumberWithThousandSeparator(resultValue, 0)
+		} else {
+			// Keep decimal for other tests with thousand separator
+			resultValueStr = formatNumberWithThousandSeparator(resultValue, 1)
+		}
 		// } else {
 		// 	// Round other tests to whole numbers with thousand separator
 		// 	roundedValue := math.Round(resultValue)
@@ -523,12 +527,36 @@ func (u *Usecase) getWorkOrderWithFallback(ctx context.Context, ono string, visi
 
 func (*Usecase) resultConvert(result ResponseResultTest) ResponseResultTest {
 	if strings.TrimSpace(result.NamaTest) == "Jumlah Trombosit" || strings.TrimSpace(result.NamaTest) == "Jumlah Leukosit" {
-		result.Hasil = result.Hasil + ".000"
+		// For GetResult method, we need to convert the display format
+		// The values here are already in base units (17.8), so convert for display
+		if result.Hasil != "" {
+			// Parse the number value
+			value, err := strconv.ParseFloat(result.Hasil, 64)
+			if err == nil {
+				// Multiply by 1000 and format with dot as thousand separator
+				convertedValue := value * 1000
+				result.Hasil = formatNumberWithThousandSeparator(convertedValue, 0)
+			}
+		}
 
-		min := strings.TrimSpace(strings.Split(result.NilaiNormal, "-")[0]) + ".000"
-		max := strings.TrimSpace(strings.Split(result.NilaiNormal, "-")[1]) + ".000"
+		// Convert reference range values
+		if strings.Contains(result.NilaiNormal, "-") {
+			parts := strings.Split(result.NilaiNormal, "-")
+			if len(parts) == 2 {
+				minStr := strings.TrimSpace(parts[0])
+				maxStr := strings.TrimSpace(parts[1])
 
-		result.NilaiNormal = fmt.Sprintf("%s - %s", min, max)
+				minVal, minErr := strconv.ParseFloat(minStr, 64)
+				maxVal, maxErr := strconv.ParseFloat(maxStr, 64)
+
+				if minErr == nil && maxErr == nil {
+					minConverted := formatNumberWithThousandSeparator(minVal*1000, 0)
+					maxConverted := formatNumberWithThousandSeparator(maxVal*1000, 0)
+					result.NilaiNormal = fmt.Sprintf("%s - %s", minConverted, maxConverted)
+				}
+			}
+		}
+
 		result.Satuan = "uL"
 	}
 
