@@ -563,11 +563,39 @@ func (*Usecase) resultConvert(result ResponseResultTest) ResponseResultTest {
 	}
 
 	if strings.TrimSpace(result.NamaTest) == "Bilirubin Direk" {
-		result.NilaiNormal = "< 0.5"
+		result.NilaiNormal = "< 0,5"
 	}
 
 	if strings.TrimSpace(result.NamaTest) == "Asam Urat" {
-		result.NilaiNormal = "< 5.7"
+		result.NilaiNormal = "< 5,7"
+	}
+
+	// Convert decimal separator from dot to comma for most tests, but keep dots for thousand separators in Trombosit/Leukosit
+	if strings.TrimSpace(result.NamaTest) == "Jumlah Trombosit" || strings.TrimSpace(result.NamaTest) == "Jumlah Leukosit" {
+		// Keep dots as thousand separators for these tests (250.000, not 250,000)
+	} else {
+		// Convert decimal separator from dot to comma for other tests (5.4 -> 5,4)
+		result.Hasil = strings.ReplaceAll(result.Hasil, ".", ",")
+	}
+
+	// Remove unnecessary zeros from NilaiNormal (exclude specific tests)
+	if strings.TrimSpace(result.NamaTest) == "Jumlah Trombosit" || strings.TrimSpace(result.NamaTest) == "Jumlah Leukosit" || strings.TrimSpace(result.NamaTest) == "Eritrosit" {
+		// Keep NilaiNormal as is for these tests
+	} else {
+		// Remove unnecessary zeros from NilaiNormal throughout the string (2.00 - 4.00 -> 2 - 4)
+		result.NilaiNormal = strings.ReplaceAll(result.NilaiNormal, ".00", "")
+		result.NilaiNormal = strings.ReplaceAll(result.NilaiNormal, ".0", "")
+		result.NilaiNormal = strings.ReplaceAll(result.NilaiNormal, ",00", "")
+		result.NilaiNormal = strings.ReplaceAll(result.NilaiNormal, ",0", "")
+	}
+
+	// Remove unnecessary zeros from Hasil (exclude Trombosit/Leukosit to preserve thousand separators)
+	if strings.TrimSpace(result.NamaTest) == "Jumlah Trombosit" || strings.TrimSpace(result.NamaTest) == "Jumlah Leukosit" {
+		// Keep thousand separators for these tests (250.000, not 250)
+	} else {
+		// Remove unnecessary zeros for other tests (12.0 -> 12, but keep 12.05 as 12,05)
+		result.Hasil = strings.TrimSuffix(result.Hasil, ".0")
+		result.Hasil = strings.TrimSuffix(result.Hasil, ",0")
 	}
 
 	return result
