@@ -10,28 +10,23 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
-// Repository is a repository for SIMRS external applications using database sharing
 type Repository struct {
 	simrsDB *DB
 }
 
-// NewRepository creates a new SIMRS repository instance
 func NewRepository(simrsDB *DB) *Repository {
 	return &Repository{
 		simrsDB: simrsDB,
 	}
 }
 
-// RollbackTransaction rolls back a transaction
 func (s *Repository) RollbackTransaction(ctx context.Context, tx *sql.Tx) {
 	if err := tx.Rollback(); err != nil {
 		slog.Error("failed to rollback transaction", "error", err)
 	}
 }
 
-// GetAllPatients retrieves all patients from SIMRS database
 func (s *Repository) GetAllPatients(ctx context.Context) ([]entity.SimrsPatient, error) {
-	// Check if SIMRS DB is properly initialized
 	if s.simrsDB == nil {
 		return nil, fmt.Errorf("SIMRS database not initialized")
 	}
@@ -90,9 +85,7 @@ func (s *Repository) GetAllPatients(ctx context.Context) ([]entity.SimrsPatient,
 	return patients, nil
 }
 
-// GetPatientByID retrieves a patient by patient_id
 func (s *Repository) GetPatientByID(ctx context.Context, patientID string) (*entity.SimrsPatient, error) {
-	// Check if SIMRS DB is properly initialized
 	if s.simrsDB == nil {
 		return nil, fmt.Errorf("SIMRS database not initialized")
 	}
@@ -142,9 +135,7 @@ func (s *Repository) GetPatientByID(ctx context.Context, patientID string) (*ent
 	return &patient, nil
 }
 
-// GetAllLabRequests retrieves all lab requests from SIMRS database
 func (s *Repository) GetAllLabRequests(ctx context.Context) ([]entity.SimrsLabRequest, error) {
-	// Check if SIMRS DB is properly initialized
 	if s.simrsDB == nil {
 		return nil, fmt.Errorf("SIMRS database not initialized")
 	}
@@ -197,9 +188,7 @@ func (s *Repository) GetAllLabRequests(ctx context.Context) ([]entity.SimrsLabRe
 	return labRequests, nil
 }
 
-// GetLabRequestByNoOrder retrieves a lab request by no_order
 func (s *Repository) GetLabRequestByNoOrder(ctx context.Context, noOrder string) (*entity.SimrsLabRequest, error) {
-	// Check if SIMRS DB is properly initialized
 	if s.simrsDB == nil {
 		return nil, fmt.Errorf("SIMRS database not initialized")
 	}
@@ -243,13 +232,11 @@ func (s *Repository) GetLabRequestByNoOrder(ctx context.Context, noOrder string)
 	return &labRequest, nil
 }
 
-// BatchInsertLabResults performs batch insert operations for multiple lab results in a single transaction
 func (s *Repository) BatchInsertLabResults(ctx context.Context, results []entity.SimrsLabResult) error {
 	if len(results) == 0 {
 		return nil // No records to process
 	}
 
-	// Check if SIMRS DB is properly initialized
 	if s.simrsDB == nil {
 		return fmt.Errorf("SIMRS database not initialized")
 	}
@@ -272,7 +259,6 @@ func (s *Repository) BatchInsertLabResults(ctx context.Context, results []entity
 		}
 	}()
 
-	// Use INSERT ... ON DUPLICATE KEY UPDATE for better compatibility
 	insertQuery := `
 INSERT IGNORE INTO lab_results (
 	no_order, param_code, result_value, unit, ref_range, flag, created_at
@@ -281,14 +267,12 @@ INSERT IGNORE INTO lab_results (
 
 	now := time.Now()
 
-	// Prepare statement for better performance
 	stmt, err := tx.PrepareContext(ctx, insertQuery)
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 	defer stmt.Close()
 
-	// Execute for each record
 	for _, result := range results {
 		_, err = stmt.ExecContext(ctx,
 			result.NoOrder,
@@ -304,7 +288,6 @@ INSERT IGNORE INTO lab_results (
 		}
 	}
 
-	// Commit transaction
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
@@ -312,9 +295,7 @@ INSERT IGNORE INTO lab_results (
 	return nil
 }
 
-// GetLabResultsByNoOrder retrieves lab results by no_order
 func (s *Repository) GetLabResultsByNoOrder(ctx context.Context, noOrder string) ([]entity.SimrsLabResult, error) {
-	// Check if SIMRS DB is properly initialized
 	if s.simrsDB == nil {
 		return nil, fmt.Errorf("SIMRS database not initialized")
 	}
@@ -402,13 +383,11 @@ func (s *Repository) DeleteLabRequestByNoOrder(ctx context.Context, noOrder stri
 	return nil
 }
 
-// DeleteProcessedLabRequests deletes multiple lab requests by their no_order values
 func (s *Repository) DeleteProcessedLabRequests(ctx context.Context, noOrders []string) error {
 	if len(noOrders) == 0 {
-		return nil // No records to delete
+		return nil
 	}
 
-	// Check if SIMRS DB is properly initialized
 	if s.simrsDB == nil {
 		return fmt.Errorf("SIMRS database not initialized")
 	}
@@ -431,7 +410,6 @@ func (s *Repository) DeleteProcessedLabRequests(ctx context.Context, noOrders []
 		}
 	}()
 
-	// Delete each lab request
 	deleteQuery := `DELETE FROM lab_requests WHERE no_order = ?`
 	stmt, err := tx.PrepareContext(ctx, deleteQuery)
 	if err != nil {
@@ -454,7 +432,6 @@ func (s *Repository) DeleteProcessedLabRequests(ctx context.Context, noOrders []
 		deletedCount += rowsAffected
 	}
 
-	// Commit transaction
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit delete transaction: %w", err)
 	}
@@ -463,9 +440,7 @@ func (s *Repository) DeleteProcessedLabRequests(ctx context.Context, noOrders []
 	return nil
 }
 
-// DeletePatientByID deletes a patient by patient_id after processing
 func (s *Repository) DeletePatientByID(ctx context.Context, patientID string) error {
-	// Check if SIMRS DB is properly initialized
 	if s.simrsDB == nil {
 		return fmt.Errorf("SIMRS database not initialized")
 	}
@@ -496,13 +471,11 @@ func (s *Repository) DeletePatientByID(ctx context.Context, patientID string) er
 	return nil
 }
 
-// DeleteProcessedPatients deletes multiple patients by their patient_id values
 func (s *Repository) DeleteProcessedPatients(ctx context.Context, patientIDs []string) error {
 	if len(patientIDs) == 0 {
 		return nil // No records to delete
 	}
 
-	// Check if SIMRS DB is properly initialized
 	if s.simrsDB == nil {
 		return fmt.Errorf("SIMRS database not initialized")
 	}
@@ -525,7 +498,6 @@ func (s *Repository) DeleteProcessedPatients(ctx context.Context, patientIDs []s
 		}
 	}()
 
-	// Delete each patient
 	deleteQuery := `DELETE FROM patients WHERE patient_id = ?`
 	stmt, err := tx.PrepareContext(ctx, deleteQuery)
 	if err != nil {
@@ -548,7 +520,6 @@ func (s *Repository) DeleteProcessedPatients(ctx context.Context, patientIDs []s
 		deletedCount += rowsAffected
 	}
 
-	// Commit transaction
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit delete transaction: %w", err)
 	}
