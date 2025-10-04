@@ -6,9 +6,11 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/cron"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/alifax"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/cbs400"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/diestro"
 	ncc3300 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
+	verifyu120 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/verifyU120"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
 	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/a15"
 	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
@@ -16,6 +18,7 @@ import (
 	ncc61 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/neomedika_ncc61"
 	swelabalfa "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
 	swelablumi "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/wondfo"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
 	"github.com/oibacidem/lims-hl-seven/internal/repository"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/rest/a15rest"
@@ -121,6 +124,9 @@ var tcpHandlerSet = wire.NewSet(
 	swelablumi.NewHandler,
 	ncc61.NewHandler,
 	delivery.NewDeviceServerStrategy,
+	wondfo.NewHandler,
+	cbs400.NewHandler,
+	verifyu120.NewHandler,
 	wire.Bind(new(repository.DeviceServerStrategy), new(*delivery.DeviceServerStrategy)),
 )
 

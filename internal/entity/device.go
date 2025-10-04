@@ -5,6 +5,7 @@ import "fmt"
 type DeviceType string
 
 const (
+	// Multisera Group
 	DeviceTypeBA400            DeviceType = "BA400"
 	DeviceTypeBA200            DeviceType = "BA200"
 	DeviceTypeA15              DeviceType = "A15"
@@ -20,6 +21,11 @@ const (
 	DeviceTypeAlifax           DeviceType = "ALIFAX"
 	DeviceTypeBTS              DeviceType = "BTS"
 	DeviceTypeDiestro          DeviceType = "DIESTRO"
+
+	// Others
+	DeviceTypeWondfo     DeviceType = "Wondfo"
+	DeviceTypeCBS400     DeviceType = "CBS400"
+	DeviceTypeVerifyU120 DeviceType = "VerifyU120"
 )
 
 func (d DeviceType) String() string {
@@ -78,6 +84,17 @@ var TableDeviceType = Tables{
 		UseSerial:  true,
 	}},
 	{ID: string(DeviceTypeDiestro), Name: string(DeviceTypeDiestro), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+		UseSerial:  true,
+	}},
+	{ID: string(DeviceTypeWondfo), Name: string(DeviceTypeWondfo), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+	}},
+	{ID: string(DeviceTypeCBS400), Name: string(DeviceTypeCBS400), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+		UseSerial:  true,
+	}},
+	{ID: string(DeviceTypeVerifyU120), Name: string(DeviceTypeVerifyU120), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
 		UseSerial:  true,
 	}},

@@ -249,11 +249,31 @@ func (u *Usecase) ProcessDiestro(ctx context.Context, data entity.DiestroResult)
 		Date:       data.Timestamp,
 	}
 
-	fmt.Println(observation)
-
 	err = u.ObservationResultRepository.Create(ctx, &observation)
 	if err != nil {
 		slog.Error("failed to create observation result", "specimen_id", speciment.ID, "test_code", data.TestName, "error", err)
+	}
+	return nil
+}
+
+func (u *Usecase) ProcessVerifyU120(ctx context.Context, data entity.VerifyResult) error {
+	specimen, err := u.SpecimenRepository.FindByBarcode(ctx, fmt.Sprintf("%s%s", data.SampleType, data.PatientID))
+	if err != nil {
+		slog.Error("specimen not found", "barcode", data.PatientID, "error", err)
+		return err
+	}
+
+	observation := entity.ObservationResult{
+		SpecimenID: int64(specimen.ID),
+		TestCode:   data.TestName,
+		Values:     []string{fmt.Sprintf("%.2f", data.Value)},
+		Unit:       data.Unit,
+		Date:       data.Timestamp,
+	}
+
+	err = u.ObservationResultRepository.Create(ctx, &observation)
+	if err != nil {
+		slog.Error("failed to create observation result", "specimen_id", specimen.ID, "test_code", data.TestName, "error", err)
 	}
 	return nil
 }
