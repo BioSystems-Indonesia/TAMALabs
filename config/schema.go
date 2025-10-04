@@ -11,6 +11,10 @@ type Schema struct {
 	KhanzaBridgeDatabaseDSN  string `validate:"-"`
 	KhanzaMainDatabaseDSN    string `validate:"-"`
 
+	// SIMRS Configuration
+	SimrsIntegrationEnabled string `validate:"-"`
+	SimrsDatabaseDSN        string `validate:"-"`
+
 	// Runtime
 	Version  string `validate:"required"`
 	Revision string

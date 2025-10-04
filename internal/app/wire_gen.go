@@ -50,6 +50,7 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/device"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/external"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/external/simrs"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
@@ -155,7 +156,9 @@ func InitRestApp() server.RestServer {
 	khanzaRepository := provideKhanzaRepository(schema)
 	khanzaucUsecase := khanzauc.NewUsecase(khanzaRepository, workOrderRepository, patientRepository, test_typeRepository, barcode_generatorUsecase, resultUsecase)
 	khanzaExternalHandler := rest.NewKhanzaExternalHandler(khanzaucUsecase)
-	externalucUsecase := externaluc.NewUsecase(khanzaucUsecase, schema)
+	simrsRepository := provideSimrsRepository(schema)
+	simrsucUsecase := simrsuc.NewUsecase(simrsRepository, workOrderRepository, workOrderUseCase, patientRepository, test_typeRepository, schema, resultUsecase)
+	externalucUsecase := externaluc.NewUsecase(khanzaucUsecase, simrsucUsecase, workOrderRepository, schema)
 	externalHandler := rest.NewExternalHandler(externalucUsecase)
 	jwtMiddleware := middleware.NewJWTMiddleware(schema)
 	cronHandler := cron.NewCronHandler(khanzaucUsecase)

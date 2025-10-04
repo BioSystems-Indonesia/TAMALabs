@@ -23,13 +23,16 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/oibacidem/lims-hl-seven/internal/middleware"
 	khanza "github.com/oibacidem/lims-hl-seven/internal/repository/external/khanza"
+	simrs "github.com/oibacidem/lims-hl-seven/internal/repository/external/simrs"
 	devicerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
 	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
 	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
 	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	khanzauc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
+	simrsuc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/simrs"
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
+	workOrderuc "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
 	"github.com/oibacidem/lims-hl-seven/migrations"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 	gormSqlite "gorm.io/driver/sqlite"
@@ -389,6 +392,51 @@ func provideKhanzaRepository(cfg *config.Schema) *khanza.Repository {
 	}
 
 	return khanza.NewRepository(bridgeDB, mainDB)
+}
+
+func provideSimrsRepository(cfg *config.Schema) *simrs.Repository {
+	if cfg.SimrsIntegrationEnabled != "true" {
+		return nil
+	}
+
+	simrsDB, err := simrs.NewDB(cfg.SimrsDatabaseDSN)
+	if err != nil {
+		slog.Error("Error on create SIMRS db connection. If you want to disable SIMRS integration, set SimrsIntegrationEnabled to false on config", "error", err)
+		slog.Info("failed to create SIMRS db connection, SIMRS integration will be disabled", "error", err)
+		return nil
+	}
+
+	return simrs.NewRepository(simrsDB)
+}
+
+func provideSimrsUsecase(
+	cfg *config.Schema,
+	simrsRepo *simrs.Repository,
+	workOrderRepo *workOrderrepo.WorkOrderRepository,
+	workOrderUC *workOrderuc.WorkOrderUseCase,
+	patientRepo *patientrepo.PatientRepository,
+	testTypeRepo *test_type.Repository,
+	resultUC *result.Usecase,
+) *simrsuc.Usecase {
+	if cfg.SimrsIntegrationEnabled != "true" {
+		slog.Info("SIMRS integration is disabled, SIMRS Usecase will not be created")
+		return nil
+	}
+
+	if simrsRepo == nil {
+		slog.Info("SIMRS repository is nil (connection failed), SIMRS Usecase will not be created")
+		return nil
+	}
+
+	return simrsuc.NewUsecase(
+		simrsRepo,
+		workOrderRepo,
+		workOrderUC,
+		patientRepo,
+		testTypeRepo,
+		cfg,
+		resultUC,
+	)
 }
 
 func provideCanalHandler(
