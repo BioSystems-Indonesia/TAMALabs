@@ -29,6 +29,7 @@ type GenerateReportButtonProps = {
 
 const GenerateReportButton = (prop: GenerateReportButtonProps) => {
     const [data, setData] = useState<ReportData[]>([])
+    // const [groupedData, setGroupedData] = useState<{ [category: string]: ReportData[] }>({})
     const [isGenerating, setIsGenerating] = useState(false)
 
     const buttonId = prop.uniqueId || `${prop.workOrder.id}-${prop.patient.id}`
@@ -36,6 +37,8 @@ const GenerateReportButton = (prop: GenerateReportButtonProps) => {
     const isGenerated = prop.currentGeneratedId === buttonId
 
     const reportDocument = useMemo(() =>
+        // <ReportDocument data={data} groupedData={groupedData} patientData={prop.patient} workOrderData={prop.workOrder} />,
+        // [data, groupedData, prop.patient, prop.workOrder]
         <ReportDocument data={data} patientData={prop.patient} workOrderData={prop.workOrder} />,
         [data, prop.patient, prop.workOrder]
     )
@@ -65,6 +68,12 @@ const GenerateReportButton = (prop: GenerateReportButtonProps) => {
                 case 3:
                     abnormality = "No Data"
                     break
+                case 4:
+                    abnormality = "Positive"
+                    break
+                case 5:
+                    abnormality = "Negative"
+                    break
                 default:
                     abnormality = "Normal"
                     break
@@ -72,16 +81,76 @@ const GenerateReportButton = (prop: GenerateReportButtonProps) => {
 
             const reportData: ReportData = {
                 category: v.category || '',
-                parameter: v.test || '',
-                reference: v.reference_range || '',
+                parameter: v.test_type?.name || v.test || '',
+                alias_code: v.test_type?.alias_code,
+                reference: v.computed_reference_range || v.reference_range || '',
                 unit: v.unit || '',
-                result: v.formatted_result || 0, // Keep as number, use 0 as fallback
+                result: v.result || '', // Keep as string to support non-numeric values like "3+"
                 abnormality: abnormality,
                 subCategory: v.category || '',
             }
 
             return reportData
         }).filter(Boolean) as ReportData[]); // Filter out null values
+
+        // Group data by category - same logic as PrintReport.tsx
+        const reportData = prop.results.map(v => {
+            if (!v) return null;
+
+            let abnormality = "Normal" as ReportDataAbnormality
+            switch (v.abnormal) {
+                case 0:
+                    abnormality = "Normal"
+                    break
+                case 1:
+                    abnormality = "High"
+                    break
+                case 2:
+                    abnormality = "Low"
+                    break
+                case 3:
+                    abnormality = "No Data"
+                    break
+                case 4:
+                    abnormality = "Positive"
+                    break
+                case 5:
+                    abnormality = "Negative"
+                    break
+                default:
+                    abnormality = "Normal"
+                    break
+            }
+
+            const reportData: ReportData = {
+                category: v.category || '',
+                parameter: v.test_type?.name || v.test || '',
+                alias_code: v.test_type?.alias_code,
+                reference: v.computed_reference_range || v.reference_range || '',
+                unit: v.unit || '',
+                result: v.result || '',
+                abnormality: abnormality,
+                subCategory: v.category || '',
+            }
+
+            return reportData
+        }).filter(Boolean) as ReportData[];
+
+        setData(reportData);
+
+        // Group data by category
+        const grouped = reportData.reduce((acc, item) => {
+            const category = item.category || 'Other';
+            if (!acc[category]) {
+                acc[category] = [];
+            }
+            acc[category].push(item);
+            return acc;
+        }, {} as { [category: string]: ReportData[] });
+
+        console.log('GenerateReportButton - reportData:', reportData);
+        console.log('GenerateReportButton - grouped data:', grouped);
+        // setGroupedData(grouped);
     }, [prop.results]);
 
     useEffect(() => {

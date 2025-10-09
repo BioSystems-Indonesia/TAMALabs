@@ -29,5 +29,17 @@ func GetAllJob(h *CronHandler) []CronJob {
 		// 	Schedule:    "0 */5 * * * *",
 		// 	Execute:     h.SyncAllResult,
 		// },
+		{
+			Name:        "sync_all_request_simrs",
+			Description: "Synchronizes all requests to SIMRS",
+			Schedule:    "*/8 * * * * *", // Run every 8 seconds
+			Execute:     h.SyncAllRequestSIMRS,
+		},
+		{
+			Name:        "sync_all_result_simrs",
+			Description: "Synchronizes all results to SIMRS",
+			Schedule:    "*/10 * * * * *", // Run every 10 seconds
+			Execute:     h.SyncAllResultSIMRS,
+		},
 	}
 }

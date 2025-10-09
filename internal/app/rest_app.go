@@ -88,6 +88,7 @@ var restUsecaseSet = wire.NewSet(
 	wire.Bind(new(usecase.Analyzer), new(*analyzer.Usecase)),
 	khanzauc.NewUsecase,
 	simrsuc.NewUsecase,
+	wire.Bind(new(cron.SIMRSUsecase), new(*simrsuc.Usecase)),
 	externaluc.NewUsecase,
 )
 

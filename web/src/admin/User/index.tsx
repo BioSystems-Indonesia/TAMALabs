@@ -66,41 +66,41 @@ export function UserFormField(props: UserFormProps) {
         <Box sx={{ p: { xs: 2, sm: 3, width: '100%' } }}>
             <Stack spacing={3} sx={{ width: '100%' }}>
                 {props.mode !== Action.CREATE && (
-                    <Card 
-                        elevation={0} 
-                        sx={{ 
+                    <Card
+                        elevation={0}
+                        sx={{
                             border: `1px solid ${theme.palette.divider}`,
                             borderRadius: 2
                         }}
                     >
                         <CardContent sx={{ p: 3 }}>
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 1.5, 
-                                mb: 3 
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1.5,
+                                mb: 3
                             }}>
-                                <Typography 
-                                    variant="subtitle1" 
-                                    sx={{ 
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
                                         fontWeight: 600,
                                         color: theme.palette.text.primary
                                     }}
                                 >
                                     ℹ️ System Information
                                 </Typography>
-                                <Chip 
-                                    label="Read Only" 
-                                    size="small" 
-                                    color="default" 
+                                <Chip
+                                    label="Read Only"
+                                    size="small"
+                                    color="default"
                                     variant="outlined"
                                     sx={{ ml: 'auto', fontSize: '0.75rem' }}
                                 />
                             </Box>
-                            
+
                             <Stack>
-                                <TextInput 
-                                    source={"id"} 
+                                <TextInput
+                                    source={"id"}
                                     readOnly={true}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
@@ -110,8 +110,8 @@ export function UserFormField(props: UserFormProps) {
                                     }}
                                 />
                                 <Stack direction={"row"} gap={2} width={"100%"}>
-                                    <DateTimeInput 
-                                        source={"created_at"} 
+                                    <DateTimeInput
+                                        source={"created_at"}
                                         readOnly={true}
                                         sx={{
                                             flex: 1,
@@ -121,8 +121,8 @@ export function UserFormField(props: UserFormProps) {
                                             }
                                         }}
                                     />
-                                    <DateTimeInput 
-                                        source={"updated_at"} 
+                                    <DateTimeInput
+                                        source={"updated_at"}
                                         readOnly={true}
                                         sx={{
                                             flex: 1,
@@ -138,42 +138,42 @@ export function UserFormField(props: UserFormProps) {
                     </Card>
                 )}
 
-                <Card 
-                    elevation={0} 
-                    sx={{ 
+                <Card
+                    elevation={0}
+                    sx={{
                         border: `1px solid ${theme.palette.divider}`,
                         borderRadius: 2
                     }}
                 >
                     <CardContent sx={{ p: 3 }}>
-                        <Box sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: 1.5, 
-                            mb: 3 
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            mb: 3
                         }}>
-                            <Typography 
-                                variant="subtitle1" 
-                                sx={{ 
+                            <Typography
+                                variant="subtitle1"
+                                sx={{
                                     fontWeight: 600,
                                     color: theme.palette.text.primary
                                 }}
                             >
                                 👤 Basic Information
                             </Typography>
-                            <Chip 
-                                label="Required" 
-                                size="small" 
-                                color="error" 
+                            <Chip
+                                label="Required"
+                                size="small"
+                                color="error"
                                 variant="outlined"
                                 sx={{ ml: 'auto', fontSize: '0.75rem' }}
                             />
                         </Box>
-                        
+
                         <Stack>
-                            <TextInput 
-                                source="username" 
-                                validate={[required()]} 
+                            <TextInput
+                                source="username"
+                                validate={[required()]}
                                 readOnly={props.readonly}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
@@ -187,9 +187,9 @@ export function UserFormField(props: UserFormProps) {
                                     }
                                 }}
                             />
-                            <TextInput 
-                                source="fullname" 
-                                validate={[required()]} 
+                            <TextInput
+                                source="fullname"
+                                validate={[required()]}
                                 readOnly={props.readonly}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
@@ -203,8 +203,8 @@ export function UserFormField(props: UserFormProps) {
                                     }
                                 }}
                             />
-                            <TextInput 
-                                source="email" 
+                            <TextInput
+                                source="email"
                                 readOnly={props.readonly}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
@@ -222,43 +222,43 @@ export function UserFormField(props: UserFormProps) {
                     </CardContent>
                 </Card>
 
-                <Card 
-                    elevation={0} 
-                    sx={{ 
+                <Card
+                    elevation={0}
+                    sx={{
                         border: `1px solid ${theme.palette.divider}`,
                         borderRadius: 2
                     }}
                 >
                     <CardContent sx={{ p: 3 }}>
-                        <Box sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: 1.5, 
-                            mb: 3 
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            mb: 3
                         }}>
-                            <Typography 
-                                variant="subtitle1" 
-                                sx={{ 
+                            <Typography
+                                variant="subtitle1"
+                                sx={{
                                     fontWeight: 600,
                                     color: theme.palette.text.primary
                                 }}
                             >
                                 🔐 Security & Access
                             </Typography>
-                            <Chip 
-                                label={props.mode === Action.EDIT ? "Optional" : "Required"} 
-                                size="small" 
-                                color={props.mode === Action.EDIT ? "default" : "error"} 
+                            <Chip
+                                label={props.mode === Action.EDIT ? "Optional" : "Required"}
+                                size="small"
+                                color={props.mode === Action.EDIT ? "default" : "error"}
                                 variant="outlined"
                                 sx={{ ml: 'auto', fontSize: '0.75rem' }}
                             />
                         </Box>
-                        
+
                         <Stack>
                             {props.mode !== Action.SHOW && (
-                                <PasswordInput 
-                                    source="password" 
-                                    validate={props.mode === Action.EDIT ? [] : [required()]} 
+                                <PasswordInput
+                                    source="password"
+                                    validate={props.mode === Action.EDIT ? [] : [required()]}
                                     readOnly={props.readonly}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
@@ -273,9 +273,9 @@ export function UserFormField(props: UserFormProps) {
                                     }}
                                 />
                             )}
-                            <BooleanInput 
-                                source="is_active" 
-                                defaultValue={true} 
+                            <BooleanInput
+                                source="is_active"
+                                defaultValue={true}
                                 readOnly={props.readonly}
                                 sx={{
                                     '& .MuiFormControlLabel-root': {
@@ -290,44 +290,44 @@ export function UserFormField(props: UserFormProps) {
                     </CardContent>
                 </Card>
 
-                <Card 
-                    elevation={0} 
-                    sx={{ 
+                <Card
+                    elevation={0}
+                    sx={{
                         border: `1px solid ${theme.palette.divider}`,
                         borderRadius: 2
                     }}
                 >
                     <CardContent sx={{ p: 3 }}>
-                        <Box sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: 1.5, 
-                            mb: 3 
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            mb: 3
                         }}>
-                            <Typography 
-                                variant="subtitle1" 
-                                sx={{ 
+                            <Typography
+                                variant="subtitle1"
+                                sx={{
                                     fontWeight: 600,
                                     color: theme.palette.text.primary
                                 }}
                             >
                                 🎭 Role Management
                             </Typography>
-                            <Chip 
-                                label="Required" 
-                                size="small" 
-                                color="error" 
+                            <Chip
+                                label="Required"
+                                size="small"
+                                color="error"
                                 variant="outlined"
                                 sx={{ ml: 'auto', fontSize: '0.75rem' }}
                             />
                         </Box>
-                        
+
                         <Grid sx={{ width: '100%' }} >
                             <Grid size={8}>
                                 <ReferenceArrayInput source="roles_id" reference="role">
-                                    <SelectArrayInput 
-                                        optionText="name" 
-                                        readOnly={props.readonly} 
+                                    <SelectArrayInput
+                                        optionText={(choice) => (choice.name as string) === 'Analyzer' ? 'Analyst' : choice.name}
+                                        readOnly={props.readonly}
                                         validate={[required()]}
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
@@ -344,16 +344,16 @@ export function UserFormField(props: UserFormProps) {
                                 </ReferenceArrayInput>
                             </Grid>
                             <Grid >
-                                <Button 
-                                    variant="outlined" 
-                                    onClick={handleOpenModal} 
-                                    sx={{ 
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleOpenModal}
+                                    sx={{
                                         borderRadius: 2,
                                         textTransform: 'none',
                                         fontWeight: 500
-                                    }} 
+                                    }}
                                     size="small"
-                                    
+
                                 >
                                     View Roles
                                 </Button>
@@ -407,7 +407,7 @@ const getRoleIcon = (roleName: RoleName) => {
     switch (roleName) {
         case RoleNameValue.ADMIN:
             return <AdminPanelSettingsIcon fontSize="medium" />;
-        case RoleNameValue.ANALYZER:
+        case RoleNameValue.ANALYZER: // This maps to "Analyst"
             return <ScienceIcon fontSize="medium" />;
         case RoleNameValue.DOCTOR:
             return <MedicalServicesIcon fontSize="medium" />;
@@ -443,12 +443,15 @@ const RolePresentationList: React.FC<RolePresentationListProps> = ({ roles }) =>
             // boxShadow: '0 2px 10px rgba(0,0,0,0.05)', // Shadow is now on the Modal's Paper
         }}>
             {roles.map((role) => {
-                const isPrivilegedRole = ['Admin', 'Doctor'].includes(role.name);
+                // Map role names consistently - handle both "Analyzer" and "Analyst" 
+                // since API might return "Analyzer" but types expect "Analyst"
+                const displayName = (role.name as string) === 'Analyzer' ? 'Analyst' : role.name;
+                const isPrivilegedRole = ['Admin', 'Doctor'].includes(displayName);
                 const backgroundColor = {
                     Admin: 'primary.main',
                     Doctor: 'warning.main',
                     Analyst: 'info.main',
-                }[role.name] || 'grey.100';
+                }[displayName] || 'grey.100';
                 const textColor = isPrivilegedRole ? 'primary.contrastText' : 'text.primary';
                 const iconColor = isPrivilegedRole ? 'primary.contrastText' : 'action.active';
 
@@ -476,7 +479,7 @@ const RolePresentationList: React.FC<RolePresentationListProps> = ({ roles }) =>
                                 {getRoleIcon(role.name)}
                             </ListItemIcon>
                             <ListItemText
-                                primary={role.name}
+                                primary={displayName}
                                 secondary={role.description}
                                 primaryTypographyProps={{
                                     fontWeight: 'bold',
@@ -486,7 +489,7 @@ const RolePresentationList: React.FC<RolePresentationListProps> = ({ roles }) =>
                                 }}
                                 secondaryTypographyProps={{
                                     color: 'inherit',
-                                    // @ts-ignore
+                                    // @ts-expect-error - opacity prop is valid but not in types
                                     opacity: isPrivilegedRole ? 0.85 : 0.75,
                                     variant: 'body2',
                                     lineHeight: 1.4
@@ -502,7 +505,7 @@ const RolePresentationList: React.FC<RolePresentationListProps> = ({ roles }) =>
 
 export function UserForm(props: UserFormProps) {
     return (
-        <SimpleForm 
+        <SimpleForm
             disabled={props.readonly}
             toolbar={props.readonly === true ? false : undefined}
             warnWhenUnsavedChanges
@@ -524,8 +527,8 @@ export function UserCreate() {
     const redirect = useRefererRedirect("show");
 
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
@@ -538,10 +541,10 @@ export function UserCreate() {
 
 export function UserShow() {
     const theme = useTheme();
-    
+
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
@@ -554,10 +557,10 @@ export function UserShow() {
 
 export function UserEdit() {
     const theme = useTheme();
-    
+
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
@@ -654,7 +657,11 @@ export type UserRolesChipFieldProps = Partial<ChipFieldProps> & {
 }
 
 export function UserRolesChipColorMap(value: string) {
-    switch (value) {
+    // Map role names consistently - handle both "Analyzer" and "Analyst"
+    // since API might return "Analyzer" but types expect "Analyst"
+    const normalizedValue = value === 'Analyzer' ? 'Analyst' : value;
+
+    switch (normalizedValue) {
         case 'Admin':
             return 'primary';
         case 'Doctor':
@@ -668,7 +675,9 @@ export function UserRolesChipColorMap(value: string) {
 
 export const UserRolesChipField = (props: UserRolesChipFieldProps) => {
     const [color, setColor] = useState<'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' | undefined>(undefined);
-    const record = props.record ?? useRecordContext();
+    const [displayValue, setDisplayValue] = useState<string>('');
+    const contextRecord = useRecordContext();
+    const record = props.record ?? contextRecord;
 
     useEffect(() => {
         if (record === undefined) {
@@ -676,12 +685,15 @@ export const UserRolesChipField = (props: UserRolesChipFieldProps) => {
         }
 
         const value = getNestedValue(record, props.source);
-        const color = UserRolesChipColorMap(value);
+        // Map role names consistently - if role is "Analyzer" display as "Analyst"
+        const mappedValue = value === 'Analyzer' ? 'Analyst' : value;
+        setDisplayValue(mappedValue);
+        const color = UserRolesChipColorMap(mappedValue);
         setColor(color);
     }, [record, props.source]);
 
 
     return (
-        <ChipField {...props} sx={{}} textAlign="center" color={color} source={props.source} />
+        <ChipField {...props} sx={{}} textAlign="center" color={color} record={{ [props.source]: displayValue }} source={props.source} />
     )
 }

@@ -7,7 +7,7 @@ export type EGFRCalculation = {
   formula: string;
   unit: string;
   category: string;
-}
+};
 
 export type ObservationResult = {
   id: number;
@@ -19,6 +19,7 @@ export type ObservationResult = {
   type: string;
   unit: string;
   reference_range: string;
+  computed_reference_range: string; // New field that uses TestType.GetReferenceRange()
   date: string;
   abnormal_flag: string[];
   comments: string;
@@ -26,7 +27,7 @@ export type ObservationResult = {
   updated_at: string;
   test_type: TestType;
   egfr?: EGFRCalculation;
-}
+};
 
 export type TestResult = {
   id: number;
@@ -34,20 +35,21 @@ export type TestResult = {
   alias_code: string;
   specimen_id: number;
   test: string;
-  result: number;
+  result: string;
   formatted_result: number;
   unit: string;
   category: string;
   specimen_type: string;
   abnormal: number;
   reference_range: string;
+  computed_reference_range?: string; // New field for computed reference range from TestType
   created_at: string;
   history: TestResult[] | null;
   test_type: TestType;
   egfr?: EGFRCalculation;
-}
+};
 
-export type TestType ={
+export type TestType = {
   id: number;
   name: string;
   code: string;
@@ -58,19 +60,25 @@ export type TestType ={
   category: string;
   sub_category: string;
   description: string;
-}
+};
 
-export type ReportDataAbnormality = "High" | "Low" | "Normal" | "No Data";
+export type ReportDataAbnormality =
+  | "High"
+  | "Low"
+  | "Normal"
+  | "Positive"
+  | "Negative"
+  | "No Data";
 export type ReportData = {
   category: string;
   subCategory: string;
   parameter: string;
   alias_code?: string;
-  result: number;
+  result: string; // Changed from number to string to support non-numeric values like "3+"
   reference: string;
   unit: string;
   abnormality: ReportDataAbnormality;
-}
+};
 
 export type Result = {
   id: number;
@@ -90,5 +98,5 @@ export type Result = {
 
   test_result: Record<string, TestResult[]>;
   prev_id: number;
-  next_id: number
-} ;
+  next_id: number;
+};

@@ -64,25 +64,34 @@ func (h *Handler) handleMessage(ctx context.Context, message string) (string, er
 		return "", nil
 	}
 
-	// Clean up the message for Wondfo - convert literal \n to actual newlines
-	message = strings.ReplaceAll(message, "\\n", "\n")
-	// Remove any trailing null characters or extra whitespace
-	message = strings.TrimRight(message, "\x00\r\n ")
+	// Clean up the message for Wondfo
+	// Remove leading/trailing control characters including VT (\v or \u000b) and FS (\u001c)
+	message = strings.Trim(message, "\u000b\u001c\x00\r\n ")
 
+	// Convert literal \n to actual newlines
+	message = strings.ReplaceAll(message, "\\n", "\n")
+
+	// Remove any remaining null characters
+	message = strings.ReplaceAll(message, "\x00", "")
+
+	// Log the cleaned message
 	logMsg := strings.ReplaceAll(message, "\r", "\n")
-	slog.Info("received message", "message", logMsg)
+	slog.Info("Wondfo: Cleaned message received", "message", logMsg)
 
 	msgByte := []byte(message)
 	headerDecoder := hl7.NewDecoder(h251.Registry, &hl7.DecodeOption{HeaderOnly: true})
 	header, err := headerDecoder.Decode(msgByte)
 	if err != nil {
+		slog.Error("Wondfo: Header decode failed", "error", err, "message_length", len(message))
 		return "", fmt.Errorf("decode header failed: %w", err)
 	}
 
 	switch m := header.(type) {
 	case h251.ORU_R01:
+		slog.Info("Wondfo: Processing ORU_R01 message")
 		return h.ORUR01(ctx, m, msgByte)
 	}
 
+	slog.Error("Wondfo: Unknown message type", "type", fmt.Sprintf("%T", header))
 	return "", fmt.Errorf("unknown message type %T", header)
 }

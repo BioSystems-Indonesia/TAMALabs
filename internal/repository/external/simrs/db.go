@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/microsoft/go-mssqldb"
 )
 
 // DB is a database connection wrapper
@@ -14,7 +14,7 @@ type DB struct {
 
 // NewDB creates a new DB instance
 func NewDB(dsn string) (*DB, error) {
-	conn, err := sql.Open("mysql", dsn)
+	conn, err := sql.Open("sqlserver", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}

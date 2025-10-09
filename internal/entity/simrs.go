@@ -67,6 +67,10 @@ func NewSimrsFlag(result TestResult) SimrsFlag {
 		return SimrsFlagNormal
 	case NoDataResult:
 		return SimrsFlagNormal
+	case PositiveResult:
+		return SimrsFlagHigh // Positive could be considered as abnormal/high
+	case NegativeResult:
+		return SimrsFlagNormal // Negative could be considered as normal
 	default:
 		return SimrsFlagNormal
 	}

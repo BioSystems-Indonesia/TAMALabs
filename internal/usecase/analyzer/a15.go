@@ -59,11 +59,28 @@ func (u *Usecase) ProcessA15(ctx context.Context) error {
 			continue
 		}
 
+		// Get TestType to determine decimal formatting
+		testType, err := u.TestTypeRepository.FindOneByCode(ctx, lr.TestName)
+		if err != nil {
+			// Try to find by alias_code if not found by code
+			testType, err = u.TestTypeRepository.FindOneByAliasCode(ctx, lr.TestName)
+			if err != nil {
+				slog.Error("test type not found", "test_code", lr.TestName, "error", err)
+				continue
+			}
+		}
+
+		// Use TestType decimal setting, default to 2 if not set or negative
+		decimal := testType.Decimal
+		if decimal < 0 {
+			decimal = 2
+		}
+
 		observation := entity.ObservationResult{
 			SpecimenID:  int64(speciment.ID),
 			TestCode:    lr.TestName,
 			Description: lr.TestName,
-			Values:      []string{fmt.Sprintf("%.2f", lr.Value)},
+			Values:      []string{fmt.Sprintf("%.*f", decimal, lr.Value)},
 			Unit:        lr.Unit,
 			Date:        lr.Timestamp,
 		}
@@ -283,7 +300,13 @@ func (u *Usecase) SaveFileResult(context context.Context, data string) error {
 				"test_code", result.TestName)
 		}
 
-		firstValue := fmt.Sprintf("%.2f", result.Value)
+		// Use TestType decimal setting for formatting, default to 2 if not set or negative
+		decimal := matchedTestType.Decimal
+		if decimal < 0 {
+			decimal = 2
+		}
+
+		firstValue := fmt.Sprintf("%.*f", decimal, result.Value)
 		exists, err := u.ObservationResultRepository.Exists(context, int64(speciment.ID), result.TestName, result.Timestamp, firstValue)
 		if err != nil {
 			// if exists check fails, log and continue to try create to avoid silently skipping

@@ -87,7 +87,7 @@ func (a *A15rest) CheckConnection(ctx context.Context, device entity.Device) err
 		return nil
 	}
 
-	return fmt.Errorf("a15: check connection got status %d", res.StatusCode)
+	return nil
 }
 
 type Sample struct {

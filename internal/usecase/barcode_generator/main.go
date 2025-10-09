@@ -19,15 +19,12 @@ func NewUsecase(dailySequence *daily_sequence.Repository) *Usecase {
 
 func (u *Usecase) NextOrderBarcode(ctx context.Context) (string, error) {
 	now := time.Now()
-	seq, err := u.dailySequenceRepo.GetOrReset(ctx, now, entity.OrderBarcodeSequence)
+
+	// Use atomic GetNextSequence instead of separate GetOrReset + Incr
+	nextSeq, err := u.dailySequenceRepo.GetNextSequence(ctx, now, entity.OrderBarcodeSequence)
 	if err != nil {
-		return "", fmt.Errorf("failed to u.dailySequenceRepo.GetOrReset: %w", err)
+		return "", fmt.Errorf("failed to get next sequence: %w", err)
 	}
 
-	nextSeq, err := u.dailySequenceRepo.Incr(ctx, entity.OrderBarcodeSequence, seq)
-	if err != nil {
-		return "", fmt.Errorf("failed to u.dailySequenceRepo.Incr: %w", err)
-	}
-
-	return fmt.Sprintf("%s%s", now.Format("060102"), fmt.Sprintf("%03d", nextSeq)), nil
+	return fmt.Sprintf("%s%03d", now.Format("060102"), nextSeq), nil
 }

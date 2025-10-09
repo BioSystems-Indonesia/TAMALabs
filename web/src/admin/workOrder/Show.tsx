@@ -27,7 +27,7 @@ import {
 } from "react-admin";
 import { useReactToPrint } from "react-to-print";
 import LIMSBarcode from '../../component/Barcode';
-import { trimName } from '../../helper/format';
+// import { trimName } from '../../helper/format';
 import useSettings from '../../hooks/useSettings';
 import type { BarcodeStyle } from '../../types/general';
 import { User } from '../../types/user';
@@ -35,17 +35,6 @@ import { workOrderStatusDontShowRun, workOrderStatusShowCancel, type WorkOrder }
 import { PatientForm } from '../patient';
 import { WorkOrderStatusChipField } from "./ChipFieldStatus";
 import RunWorkOrderForm from './RunWorkOrderForm';
-
-const detectBrowser = () => {
-    const userAgent = navigator.userAgent;
-
-    if (userAgent.includes("Edg/")) {
-        return "Edge";
-    } else {
-        return "Other";
-    }
-};
-
 
 const barcodePageStyle = (style: BarcodeStyle) => `
 @media all {
@@ -55,39 +44,60 @@ const barcodePageStyle = (style: BarcodeStyle) => `
 }
 
 @media print {
+  * {
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+  
   html, body {
     -webkit-print-color-adjust: exact;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
   }
-}
+  
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
 
-@media print {
-    body {
-        margin: 0;
-        padding: 0;
-    }
-
-    @page {
-        size: ${style.width} ${style.height};
-        margin: 0;
-        padding-top: 10px;
-        text-align: center;
-        display: flex;
-    }
-    
-    .barcode-container {
-        display: flex;
-        page-break-before: always;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        transform: rotate(${style.rotate});
-    }
-    
-    .barcode-text {
-        margin: 0;
-        margin-top: ${detectBrowser() === 'Edge' ? 7.8 : 0}rem;
-        font-size: 12px;
-    }
+  @page {
+    size: ${style.width} ${style.height};
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .barcode-container {
+    display: flex !important;
+    page-break-before: always;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    transform: rotate(${style.rotate});
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    box-sizing: border-box !important;
+  }
+  
+  .barcode-container:first-child {
+    page-break-before: auto;
+  }
+  
+  .barcode-container p:first-child {
+    font-size: 14px !important;
+    line-height: 1.1 !important;
+  }
+  
+  .barcode-text {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 12px !important;
+    margin-top: 2px !important;
+  }
 }`
 
 const PrintBarcodeButton = ({ barcodeRef }: { barcodeRef: React.RefObject<any> }) => {
@@ -175,6 +185,8 @@ export function WorkOrderShow() {
                                                             <LIMSBarcode
                                                                 barcode={specimen.barcode}
                                                                 name={workOrder.patient.first_name + " " + workOrder.patient.last_name}
+                                                                birthDt={workOrder.patient.birthdate}
+                                                                sex={workOrder.patient.sex}
                                                             />
                                                         )
                                                     }} />
@@ -237,8 +249,8 @@ export function WorkOrderShow() {
                                             <Stack gap={1}>
                                                 <Typography variant='subtitle1' sx={{
                                                     textAlign: "center",
-                                                }}>Analyzer</Typography>
-                                                <RecordContextProvider value={record.analyzers}>
+                                                }}>Analyts</Typography>
+                                                <RecordContextProvider value={record.analyst}>
                                                     <AdminShow icon={<ScienceIcon />} />
                                                 </RecordContextProvider>
                                             </Stack>
@@ -272,9 +284,11 @@ export function WorkOrderShow() {
                                 return (
                                     <LIMSBarcode
                                         barcode={specimen.barcode}
-                                        name={trimName(`${record.patient.first_name} ${record.patient.last_name}`, 14)}
+                                        name={`${record.patient.first_name} ${record.patient.last_name}`}
                                         height={settings.barcode_height}
                                         width={settings.barcode_width}
+                                        birthDt={record.patient.birthdate}
+                                        sex={record.patient.sex}
                                     />
                                     // <Stack gap={0} justifyContent={"center"} alignItems={"center"}
                                     //     className={"barcode-container"}>

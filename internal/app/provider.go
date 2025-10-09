@@ -181,10 +181,10 @@ func InitDatabase() (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	err = seedTestData(db)
-	if err != nil {
-		return nil, fmt.Errorf("failed to seed test data: %w", err)
-	}
+	// err = seedTestData(db)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to seed test data: %w", err)
+	// }
 
 	err = sql.Ping()
 	if err != nil {
@@ -269,14 +269,14 @@ func seedTestData(db *gorm.DB) error {
 		}
 	}
 
-	for _, device := range seedDevice {
-		err := db.Clauses(clause.OnConflict{
-			DoNothing: true,
-		}).Create(&device).Error
-		if err != nil {
-			return err
-		}
-	}
+	// for _, device := range seedDevice {
+	// 	err := db.Clauses(clause.OnConflict{
+	// 		DoNothing: true,
+	// 	}).Create(&device).Error
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	for _, role := range seedRole {
 		err := db.Clauses(clause.OnConflict{UpdateAll: true}).

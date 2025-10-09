@@ -15,9 +15,9 @@ import (
 )
 
 var (
-	reID     = regexp.MustCompile(`ID\s*:\s*(\d+)`)
-	reDate   = regexp.MustCompile(`Date\s*:\s*(.+)`)
-	reResult = regexp.MustCompile(`^\s*\*?([A-Z]{2,4}|pH)\s+(.+)$`) // Allow leading spaces, matches parameter lines with optional *
+	reID     = regexp.MustCompile(`ID\s*:\s*(\d+)`)                    // Matches " ID:251005004"
+	reDate   = regexp.MustCompile(`Date\s*:\s*(.+)`)                   // Matches " Date:05-10-2025 15:01"
+	reResult = regexp.MustCompile(`^\s*\*?\s*([A-Z]{2,4}|pH)\s+(.+)$`) // Even more flexible pattern
 )
 
 type Handler struct {
@@ -38,17 +38,74 @@ func (h *Handler) Handle(port serial.Port) {
 	}
 
 	data := string(buf[:n])
-	slog.Debug("Read serial data", "n", n)
+	slog.Info("Read serial data",
+		"bytesRead", n,
+		"data", data,
+		"currentBufferLength", len(h.buffer))
+
 	h.buffer += data
 
+	slog.Info("Buffer after append",
+		"newBufferLength", len(h.buffer),
+		"bufferContent", h.buffer)
+
+	// Parse immediately but use deduplication logic to prevent duplicates
 	h.parseUrineResult()
 }
 
 func (h *Handler) parseUrineResult() {
-	scanner := bufio.NewScanner(strings.NewReader(h.buffer))
+	// Check if we have received the complete message (ending with ETX)
+	if !strings.Contains(h.buffer, "\u0003") {
+		slog.Debug("Waiting for complete message (ETX not found)")
+		return
+	}
+
+	// Clean buffer from control characters
+	cleanBuffer := strings.ReplaceAll(h.buffer, "\u0002", "")   // Remove STX
+	cleanBuffer = strings.ReplaceAll(cleanBuffer, "\u0003", "") // Remove ETX
+	cleanBuffer = strings.ReplaceAll(cleanBuffer, "\r", "")     // Remove CR, keep LF
+
+	// Check if buffer contains a complete result by scanning lines
+	hasID := false
+	hasResult := false
+
+	scanner := bufio.NewScanner(strings.NewReader(cleanBuffer))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		if reID.MatchString(line) {
+			hasID = true
+		}
+		if reResult.MatchString(line) {
+			hasResult = true
+		}
+
+		// Early exit if we found both
+		if hasID && hasResult {
+			break
+		}
+	}
+
+	slog.Info("parseUrineResult called",
+		"bufferLength", len(h.buffer),
+		"cleanBufferLength", len(cleanBuffer),
+		"hasID", hasID,
+		"hasResult", hasResult)
+
+	// Only proceed if we have both ID and at least one result
+	if !hasID || !hasResult {
+		slog.Debug("Buffer incomplete, waiting for more data")
+		return
+	}
+
+	scanner = bufio.NewScanner(strings.NewReader(cleanBuffer))
 
 	var patientID string
 	var ts time.Time
+	var results []entity.VerifyResult // Collect all results for batch processing
 
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -56,9 +113,12 @@ func (h *Handler) parseUrineResult() {
 			continue
 		}
 
+		slog.Debug("Processing line", "line", line)
+
 		// Parse patient ID
 		if m := reID.FindStringSubmatch(line); len(m) > 1 {
 			patientID = m[1]
+			slog.Info("Found patient ID", "patientID", patientID)
 			continue
 		}
 
@@ -67,14 +127,15 @@ func (h *Handler) parseUrineResult() {
 			dateStr := strings.TrimSpace(m[1])
 			// Try different date formats
 			layouts := []string{
-				"02-01-2006 15:04 pm",
 				"02-01-2006 15:04",
-				"01-02-2006 15:04 pm",
+				"02-01-2006 15:04 pm",
 				"01-02-2006 15:04",
+				"01-02-2006 15:04 pm",
 			}
 			for _, layout := range layouts {
 				if parsed, err := time.Parse(layout, dateStr); err == nil {
 					ts = parsed
+					slog.Info("Found timestamp", "timestamp", ts, "dateStr", dateStr)
 					break
 				}
 			}
@@ -86,6 +147,7 @@ func (h *Handler) parseUrineResult() {
 			strings.HasPrefix(line, "No.") ||
 			strings.Contains(line, "param |") ||
 			strings.Contains(line, "hasil |") {
+			slog.Debug("Skipping non-result line", "line", line)
 			continue
 		}
 
@@ -94,109 +156,95 @@ func (h *Handler) parseUrineResult() {
 			testName := m[1]
 			resultPart := strings.TrimSpace(m[2])
 
-			value, valueStr, unit := h.parseResultValue(resultPart)
+			value, valueStr := h.parseResultValueOnly(resultPart)
 
-			slog.Debug("Parsed urine result",
+			slog.Info("Processing urine result",
 				"testName", testName,
-				"valueStr", valueStr,
-				"value", value,
-				"unit", unit,
+				"patientID", patientID,
+				"originalResultPart", resultPart,
+				"extractedValueStr", valueStr,
+				"extractedValue", value,
 				"originalLine", line)
 
-			h.analyzerUseCase.ProcessVerifyU120(context.Background(), entity.VerifyResult{
+			// Add to results collection instead of processing immediately
+			if valueStr == "-" {
+				valueStr = "NEGATIF"
+			} else if valueStr == "+" {
+				valueStr = "NORMAL (+)"
+			}
+			results = append(results, entity.VerifyResult{
 				PatientID:  patientID,
 				TestName:   testName,
 				SampleType: "URI",
 				Value:      value,
-				ValueStr:   valueStr, // Store original string value
-				Unit:       unit,
+				ValueStr:   valueStr,
+				Unit:       "",
 				Timestamp:  ts,
 			})
+		} else {
+			slog.Debug("Line did not match result regex", "line", line)
 		}
 	}
+
+	// Process all results as a batch
+	if len(results) > 0 {
+		err := h.analyzerUseCase.ProcessVerifyU120Batch(context.Background(), results)
+		if err != nil {
+			slog.Error("Failed to process VerifyU120 batch", "error", err, "resultCount", len(results))
+		}
+	}
+
+	// Clear buffer after processing to prevent reprocessing
+	h.buffer = ""
+	slog.Info("Finished processing urine results",
+		"patientID", patientID,
+		"processedCount", len(results),
+		"timestamp", ts)
 }
 
-// parseResultValue parses the result part and extracts value, original string, and unit
-func (h *Handler) parseResultValue(resultPart string) (float64, string, string) {
+// parseResultValueOnly parses the result part and extracts only the value (no unit)
+func (h *Handler) parseResultValueOnly(resultPart string) (float64, string) {
 	// Clean up the result part
 	resultPart = strings.TrimSpace(resultPart)
 
 	// Split by whitespace to analyze components
 	parts := strings.Fields(resultPart)
 	if len(parts) == 0 {
-		return 0, "", ""
+		return 0, ""
 	}
 
-	// Handle cases where first part is "-" but there are numeric values after
-	if parts[0] == "-" && len(parts) > 1 {
-		// Look for numeric value after the "-"
-		for i := 1; i < len(parts); i++ {
-			if val, err := strconv.ParseFloat(parts[i], 64); err == nil {
-				unit := ""
-				if i+1 < len(parts) && parts[i+1] != "neg" {
-					unit = parts[i+1]
-				}
-				return val, parts[i], unit
-			}
-		}
+	// Case 1: Single "-" means negative
+	if len(parts) == 1 && parts[0] == "-" {
+		return 0, "-"
 	}
 
-	// Handle purely negative results
-	if parts[0] == "-" && (len(parts) == 1 || (len(parts) > 1 && parts[len(parts)-1] == "neg")) {
-		return 0, "neg", ""
-	}
-
-	// Case 1: Single value (e.g., "6.0" for pH)
+	// Case 2: Single value (e.g., "6.0" for pH, "1.030" for SG)
 	if len(parts) == 1 {
 		if val, err := strconv.ParseFloat(parts[0], 64); err == nil {
-			return val, parts[0], ""
+			return val, parts[0]
 		}
-		// Non-numeric single value
-		return 0, parts[0], ""
+		// Non-numeric single value (like qualitative results)
+		return 0, parts[0]
 	}
 
-	// Case 2: Two parts - could be "1+" "0.3" or "3.5" "umol/L"
-	if len(parts) == 2 {
-		// Check if first part is qualitative (contains +, -, etc.)
-		if strings.Contains(parts[0], "+") || strings.Contains(parts[0], "-") {
-			// Qualitative result like "1+", try to parse second part as numeric
-			if val, err := strconv.ParseFloat(parts[1], 64); err == nil {
-				return val, parts[0], "" // Use qualitative as string value
-			}
-			return 0, parts[0], ""
-		}
-
-		// Check if second part is unit
-		if val, err := strconv.ParseFloat(parts[0], 64); err == nil {
-			return val, parts[0], parts[1]
-		}
-
-		// Both non-numeric
-		return 0, strings.Join(parts, " "), ""
+	// Case 3: First part is qualitative with + (like "+", "+-")
+	if strings.Contains(parts[0], "+") {
+		// For qualitative results like "+", "+-", use the qualitative value as the main value
+		return 0, parts[0]
 	}
 
-	// Case 3: Three or more parts (e.g., "1+" "0.3" "g/L" or "3.5" "umol/L")
-	if len(parts) >= 3 {
-		// Try to find numeric value and unit
-		for i, part := range parts {
-			if val, err := strconv.ParseFloat(part, 64); err == nil {
-				// Found numeric value, check for unit
-				unit := ""
-				if i+1 < len(parts) && parts[i+1] != "neg" {
-					unit = parts[i+1]
-				}
-				// Use first part as string representation if it's qualitative
-				valueStr := part
-				if i > 0 && (strings.Contains(parts[0], "+") || strings.Contains(parts[0], "-")) {
-					valueStr = parts[0]
-				}
-				return val, valueStr, unit
-			}
-		}
-
-		// No numeric value found, treat as qualitative
-		return 0, parts[0], ""
+	// Case 4: First part is "-" followed by anything (like "- 3.5 umol/L" or "- neg")
+	// This means the result is NEGATIVE regardless of the numeric value that follows
+	if parts[0] == "-" {
+		// Always return "-" as the value for negative results
+		return 0, "-"
 	}
 
-	return 0, resultPart, ""
+	// Case 5: Numeric value first (like "3.5 umol/L") - but only if not preceded by "-"
+	if val, err := strconv.ParseFloat(parts[0], 64); err == nil {
+		return val, parts[0]
+	}
+
+	// Case 6: Return first part as string value
+	return 0, parts[0]
 }

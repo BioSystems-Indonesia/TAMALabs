@@ -31,10 +31,12 @@ type WorkOrderRepository struct {
 func NewWorkOrderRepository(db *gorm.DB, cfg *config.Schema, specimentRepo *specimen.Repository, cache *cache.Cache) *WorkOrderRepository {
 	r := &WorkOrderRepository{db: db, cfg: cfg, specimentRepo: specimentRepo, cache: cache}
 
-	err := r.SyncBarcodeSequence(context.Background())
-	if err != nil {
-		panic(err)
-	}
+	// DISABLED: Cache-based barcode sequence system
+	// Now using database-based daily_sequence for proper daily reset
+	// err := r.SyncBarcodeSequence(context.Background())
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	return r
 }
@@ -243,10 +245,12 @@ func (r WorkOrderRepository) Create(req *entity.WorkOrderCreateRequest) (entity.
 			return fmt.Errorf("error upserting relation: %w", err)
 		}
 
-		err = r.IncrementBarcodeSequence(tx.Statement.Context)
-		if err != nil {
-			return fmt.Errorf("error incrementing barcode sequence: %w", err)
-		}
+		// REMOVED: Cache-based barcode sequence system to prevent conflict with database-based system
+		// Now using daily_sequence table with atomic GetNextSequence for proper daily reset
+		// err = r.IncrementBarcodeSequence(tx.Statement.Context)
+		// if err != nil {
+		// 	return fmt.Errorf("error incrementing barcode sequence: %w", err)
+		// }
 
 		return nil
 	})
