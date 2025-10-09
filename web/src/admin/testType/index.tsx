@@ -52,6 +52,7 @@ export const TestTypeDatagrid = (props: any) => {
       <TextField source="sub_category" />
       <TextField source="low_ref_range" label="low" />
       <TextField source="high_ref_range" label="high" />
+      <TextField source="normal_ref_string" label="Normal String" />
       <BooleanField source="is_calculated_test" label="Calc Test" sortable />
       <TextField source="unit" />
       <FunctionField
@@ -418,6 +419,24 @@ function TestTypeInput(props: TestTypeFormProps) {
                 }}
               />
             </Stack>
+            <TextInput
+              source="normal_ref_string"
+              label="Normal Reference String"
+              readOnly={props.readonly}
+              fullWidth
+              helperText="Use this for qualitative reference values like 'negative', 'positive', '1+', etc. Leave empty if using numeric low/high ranges."
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  transition: "all 0.2s ease",
+                  ...(!props.readonly && {
+                    "&:hover": {
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    },
+                  }),
+                },
+              }}
+            />
           </Stack>
         </CardContent>
       </Card>

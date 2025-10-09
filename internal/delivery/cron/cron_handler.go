@@ -8,14 +8,47 @@ import (
 	khanzauc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
 )
 
-type CronHandler struct {
-	khanzaUC *khanzauc.Usecase
+// SIMRSUsecase interface to avoid import cycle
+type SIMRSUsecase interface {
+	SyncAllRequest(ctx context.Context) error
+	SyncAllResult(ctx context.Context, workOrderIDs []int64) error
 }
 
-func NewCronHandler(khanzaUC *khanzauc.Usecase) *CronHandler {
+type CronHandler struct {
+	khanzaUC *khanzauc.Usecase
+	simrsUC  SIMRSUsecase
+}
+
+func NewCronHandler(khanzaUC *khanzauc.Usecase, simrsUC SIMRSUsecase) *CronHandler {
 	return &CronHandler{
 		khanzaUC: khanzaUC,
+		simrsUC:  simrsUC,
 	}
+}
+
+func (c *CronHandler) SyncAllRequestSIMRS(ctx context.Context) error {
+	slog.Info("Starting SIMRS sync all request cron job")
+
+	err := c.simrsUC.SyncAllRequest(ctx)
+	if err != nil {
+		slog.Error("Failed to sync all requests to SIMRS", "error", err)
+		return err
+	}
+
+	slog.Info("Successfully completed SIMRS sync all request cron job")
+	return nil
+}
+func (c *CronHandler) SyncAllResultSIMRS(ctx context.Context) error {
+	slog.Info("Starting SIMRS sync all result cron job")
+
+	err := c.simrsUC.SyncAllResult(ctx, []int64{})
+	if err != nil {
+		slog.Error("Failed to sync all results to SIMRS", "error", err)
+		return err
+	}
+
+	slog.Info("Successfully completed SIMRS sync all result cron job")
+	return nil
 }
 
 func (c *CronHandler) SyncAllRequest(ctx context.Context) error {

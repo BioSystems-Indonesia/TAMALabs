@@ -33,7 +33,7 @@ const obj: RawTestResult = {
     id: 99,
     picked: true,
     reference_range: "14 - 18",
-    result: 2,
+    result: "2.0", // Changed to string to match actual API response
     specimen_id: 11,
     test: "HGB",
     test_type_id: 2,
@@ -195,7 +195,7 @@ const ResultHistory = () => {
                                 <DataTable.Col source="reference_range">
                                     <WithRecord render={(record: ProcessedTestResult) => (
                                         <Typography sx={{ opacity: record.isCategory ? 0 : 1 }}>
-                                            {record.isCategory ? '' : record.reference_range}
+                                            {record.isCategory ? '' : (record.computed_reference_range || record.reference_range)}
                                         </Typography>
                                     )} />
                                 </DataTable.Col>
@@ -282,6 +282,7 @@ function transformTestResultsForDataTable(ar: RawTestResult[][]): ProcessedTestR
         const result: ProcessedTestResult = {
             test: li[0].test,
             reference_range: li[0].reference_range,
+            computed_reference_range: li[0].computed_reference_range,
             unit: li[0].unit,
             category: li[0].category,
         }

@@ -6,7 +6,7 @@ import {
     TextField,
     RecordContextProvider
 } from 'react-admin';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography,  Table, TableBody, TableRow, TableCell } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Table, TableBody, TableRow, TableCell } from '@mui/material';
 
 interface CustomShowDialogProps {
     resource: string;
@@ -47,7 +47,7 @@ const CustomShowDialog: React.FC<CustomShowDialogProps> = ({ resource, recordId 
                                                     <TableCell>{test.test}</TableCell>
                                                     <TableCell>{test.result}</TableCell>
                                                     <TableCell>{test.unit}</TableCell>
-                                                    <TableCell>{test.reference_range}</TableCell>
+                                                    <TableCell>{test.computed_reference_range || test.reference_range}</TableCell>
                                                     <TableCell>
                                                         {test.abnormal === 1 ? (
                                                             <Typography color="error">Abnormal</Typography>
@@ -73,7 +73,7 @@ const CustomShowDialog: React.FC<CustomShowDialogProps> = ({ resource, recordId 
                                                     <TableCell>{test.test}</TableCell>
                                                     <TableCell>{test.result}</TableCell>
                                                     <TableCell>{test.unit}</TableCell>
-                                                    <TableCell>{test.reference_range}</TableCell>
+                                                    <TableCell>{test.computed_reference_range || test.reference_range}</TableCell>
                                                     <TableCell>
                                                         {test.abnormal === 1 ? (
                                                             <Typography color="error">Abnormal</Typography>

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -101,7 +102,7 @@ func (wo *WorkOrder) CalculateEGFRForResults(ctx context.Context) {
 		testResult := &wo.TestResult[i]
 
 		// Check if this is a creatinine test
-		if wo.isCreatinineTest(testResult.Test) && testResult.Result != nil {
+		if wo.isCreatinineTest(testResult.Test) && testResult.Result != "" {
 			// Get patient information
 			if wo.Patient.ID == 0 {
 				continue // Skip if no patient data
@@ -111,9 +112,11 @@ func (wo *WorkOrder) CalculateEGFRForResults(ctx context.Context) {
 			age := util.CalculateAge(wo.Patient.Birthdate)
 
 			// Convert creatinine to mg/dL if needed
-			creatinineValue := *testResult.Result
+			creatinineValue := testResult.Result
+
 			if testResult.Unit != "mg/dL" {
-				convertedValue, err := util.ConvertCreatinineUnit(creatinineValue, testResult.Unit, "mg/dL")
+				creatinineValueFloat, _ := strconv.ParseFloat(creatinineValue, 64)
+				convertedValue, err := util.ConvertCreatinineUnit(creatinineValueFloat, testResult.Unit, "mg/dL")
 				if err != nil {
 					slog.WarnContext(ctx, "Failed to convert creatinine unit for eGFR calculation",
 						"test_result_id", testResult.ID,
@@ -121,7 +124,7 @@ func (wo *WorkOrder) CalculateEGFRForResults(ctx context.Context) {
 						"error", err)
 					continue
 				}
-				creatinineValue = convertedValue
+				creatinineValue = strconv.FormatFloat(convertedValue, 'f', 2, 64)
 			}
 
 			// Calculate eGFR using CKD-EPI formula
@@ -131,8 +134,8 @@ func (wo *WorkOrder) CalculateEGFRForResults(ctx context.Context) {
 			} else {
 				sex = util.PatientSexFemale
 			}
-
-			egfrResult := util.CalculateEGFRCKDEPI(creatinineValue, age, sex)
+			creatinineValueFloat, _ := strconv.ParseFloat(creatinineValue, 64)
+			egfrResult := util.CalculateEGFRCKDEPI(creatinineValueFloat, age, sex)
 
 			// Add eGFR to the test result
 			testResult.EGFR = &EGFRCalculation{
@@ -144,17 +147,21 @@ func (wo *WorkOrder) CalculateEGFRForResults(ctx context.Context) {
 
 			// Also add eGFR to history results if they exist
 			for j := range testResult.History {
-				if testResult.History[j].Result != nil {
-					historyCreatinine := *testResult.History[j].Result
+				if testResult.History[j].Result != "" {
+					historyCreatinine := testResult.History[j].Result
 					if testResult.History[j].Unit != "mg/dL" {
-						convertedValue, err := util.ConvertCreatinineUnit(historyCreatinine, testResult.History[j].Unit, "mg/dL")
+						historyCreatinineFloat, _ := strconv.ParseFloat(historyCreatinine, 64)
+
+						convertedValue, err := util.ConvertCreatinineUnit(historyCreatinineFloat, testResult.History[j].Unit, "mg/dL")
 						if err != nil {
 							continue
 						}
-						historyCreatinine = convertedValue
+						historyCreatinine = strconv.FormatFloat(convertedValue, 'f', 2, 64)
 					}
 
-					historyEGFR := util.CalculateEGFRCKDEPI(historyCreatinine, age, sex)
+					historyCreatinineFloat, _ := strconv.ParseFloat(historyCreatinine, 64)
+
+					historyEGFR := util.CalculateEGFRCKDEPI(historyCreatinineFloat, age, sex)
 					testResult.History[j].EGFR = &EGFRCalculation{
 						Value:    historyEGFR.Value,
 						Formula:  historyEGFR.Formula,
@@ -229,7 +236,7 @@ func (wo *WorkOrder) FillResultDetail(opt ResultDetailOption) {
 	if opt.HideEmpty {
 		var filteredTests []TestResult
 		for _, test := range allTests {
-			if test.Result == nil || *test.Result == 0 {
+			if test.Result == "" {
 				continue
 			}
 			filteredTests = append(filteredTests, test)
@@ -267,7 +274,7 @@ func (wo *WorkOrder) pickDefaultResult(
 		allTests[i] = newTest
 
 		// count the filled result
-		if newTest.Result != nil {
+		if newTest.Result != "" {
 			totalResultFilled++
 		}
 	}
@@ -392,7 +399,7 @@ func (w *WorkOrder) FillTestResultDetail(hideEmpty bool) {
 		allTests[i] = newTest
 
 		// count the filled result
-		if newTest.Result != nil {
+		if newTest.Result != "" {
 			totalResultFilled++
 		}
 	}
@@ -407,7 +414,7 @@ func (w *WorkOrder) FillTestResultDetail(hideEmpty bool) {
 	if hideEmpty {
 		var filteredTests []TestResult
 		for _, test := range allTests {
-			if test.Result == nil || *test.Result == 0 {
+			if test.Result == "" {
 				continue
 			}
 			filteredTests = append(filteredTests, test)

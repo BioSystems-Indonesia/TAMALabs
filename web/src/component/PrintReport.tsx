@@ -26,8 +26,10 @@ type PrintReportButtonProps = {
 
 const PrintReportButton = (prop: PrintReportButtonProps) => {
     const [data, setData] = useState<ReportData[]>([])
+    // const [groupedData, setGroupedData] = useState<{ [category: string]: ReportData[] }>({})
+
     useEffect(() => {
-        setData(prop.results?.map(v => {
+        const reportData = prop.results?.map(v => {
             let abnormality = "Normal" as ReportDataAbnormality
             switch (v.abnormal) {
                 case 0:
@@ -42,24 +44,32 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                 case 3:
                     abnormality = "No Data"
                     break
+                case 4:
+                    abnormality = "Positive"
+                    break
+                case 5:
+                    abnormality = "Negative"
+                    break
                 default:
                     abnormality = "Normal"
                     break
             }
 
             const aliasCode = v.test_type?.alias_code;
-            let displayResult = v.formatted_result;
+            let displayResult: string = v.result || ""; // Use string result instead of formatted_result
             let displayUnit = v.unit;
-            let displayReference = v.reference_range;
-            
+            let displayReference = v.computed_reference_range || v.reference_range;
+
             // Convert specific test results to /µL
             if (aliasCode === "Jumlah Trombosit" || aliasCode === "Jumlah Leukosit") {
-                displayResult = v.formatted_result ? v.formatted_result * 1000 : 0;
+                // Parse the string result and multiply by 1000
+                const numericResult = parseFloat(v.result || "0");
+                displayResult = (numericResult * 1000).toLocaleString();
                 displayUnit = '/µL';
-                
+
                 // Convert reference range by multiplying by 1000
-                if (v.reference_range) {
-                    const rangeMatch = v.reference_range.match(/(\d+\.?\d*)\s*-\s*(\d+\.?\d*)/);
+                if (displayReference) {
+                    const rangeMatch = displayReference.match(/(\d+\.?\d*)\s*-\s*(\d+\.?\d*)/);
                     if (rangeMatch) {
                         const lowRef = parseFloat(rangeMatch[1]) * 1000;
                         const highRef = parseFloat(rangeMatch[2]) * 1000;
@@ -70,7 +80,7 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
 
             const reportData: ReportData = {
                 category: v.category,
-                parameter: v.test,
+                parameter: v.test_type?.name || v.test,
                 alias_code: aliasCode,
                 reference: displayReference,
                 unit: displayUnit,
@@ -80,7 +90,23 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
             }
 
             return reportData
-        }))
+        }) || []
+
+        setData(reportData)
+
+        // Group data by category
+        const grouped = reportData.reduce((acc, item) => {
+            const category = item.category || 'Other';
+            if (!acc[category]) {
+                acc[category] = [];
+            }
+            acc[category].push(item);
+            return acc;
+        }, {} as { [category: string]: ReportData[] });
+
+        console.log('PrintReport - reportData:', reportData);
+        console.log('PrintReport - grouped data:', grouped);
+        // setGroupedData(grouped);
 
     }, [prop.results]);
 
@@ -89,6 +115,7 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
     //     setPatientData(prop.patient)
     // }, [prop.patient]);
 
+    // groupedData={groupedData}
     return (
         <BlobProvider document={<ReportDocument data={data} patientData={prop.patient} workOrderData={prop.workOrder} />}>
             {({ url, loading, error }) => {
@@ -100,9 +127,9 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                     <Stack gap={1} direction={"row"}>
                         {/* Download PDF Button */}
                         <Tooltip title={
-                            loading ? "Loading..." : 
-                            // !prop.workOrder.have_complete_data ? `Hasil belum lengkap. Unduh akan tersedia ketika semua tes selesai.` :
-                            "Download PDF"
+                            loading ? "Loading..." :
+                                // !prop.workOrder.have_complete_data ? `Hasil belum lengkap. Unduh akan tersedia ketika semua tes selesai.` :
+                                "Download PDF"
                         }>
                             <span>
                                 <IconButton
@@ -110,7 +137,7 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                                     color='primary'
                                     download={`LAB_Test_Result_${dayjs(prop.workOrder.created_at).format("YYYYMMDD")}_${prop.patient.id}_${prop.patient.first_name}_${prop.patient.last_name}.pdf`}
                                     href={url || ''}
-                                    disabled={loading 
+                                    disabled={loading
                                         // || !prop.workOrder.have_complete_data
                                     }
                                 >
@@ -121,22 +148,22 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
 
                         {/* Print PDF Button */}
                         <Tooltip title={
-                            loading ? "Loading..." : 
-                            // !prop.workOrder.have_complete_data ? `Hasil belum lengkap. Unduh akan tersedia ketika semua tes selesai.` :
-                            "Print PDF"
+                            loading ? "Loading..." :
+                                // !prop.workOrder.have_complete_data ? `Hasil belum lengkap. Unduh akan tersedia ketika semua tes selesai.` :
+                                "Print PDF"
                         }>
                             <span>
                                 <IconButton
                                     color='secondary'
                                     onClick={(e) => {
                                         e.stopPropagation()
-                                        if (url 
+                                        if (url
                                             // && prop.workOrder.have_complete_data
                                         ) {
                                             window.open(url, '_blank')?.focus();
                                         }
                                     }}
-                                    disabled={loading 
+                                    disabled={loading
                                         // || !prop.workOrder.have_complete_data
                                     }
                                 >

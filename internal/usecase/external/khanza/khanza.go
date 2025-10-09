@@ -163,8 +163,15 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 		unit := testResult.Unit
 		refRange := testResult.ReferenceRange
 
+		// Parse the string result to float64 for calculations
+		resultFloat, err := strconv.ParseFloat(resultValue, 64)
+		if err != nil {
+			slog.Error("failed to parse result value", "error", err, "resultValue", resultValue)
+			resultFloat = 0 // Default to 0 if parsing fails
+		}
+
 		if strings.TrimSpace(alias) == "Jumlah Trombosit" || strings.TrimSpace(alias) == "Jumlah Leukosit" {
-			resultValue = resultValue * 1000
+			resultFloat = resultFloat * 1000
 			unit = "/µL"
 
 			// Convert reference range by multiplying by 1000
@@ -181,10 +188,10 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 		var resultValueStr string
 		// Special formatting for Trombosit and Leukosit (already converted by 1000 above)
 		if strings.TrimSpace(alias) == "Jumlah Trombosit" || strings.TrimSpace(alias) == "Jumlah Leukosit" {
-			resultValueStr = formatNumberWithThousandSeparator(resultValue, 0)
+			resultValueStr = formatNumberWithThousandSeparator(resultFloat, 0)
 		} else {
 			// Keep decimal for other tests with thousand separator
-			resultValueStr = formatNumberWithThousandSeparator(resultValue, 1)
+			resultValueStr = formatNumberWithThousandSeparator(resultFloat, 1)
 		}
 		// } else {
 		// 	// Round other tests to whole numbers with thousand separator
@@ -485,8 +492,14 @@ func (u *Usecase) GetResult(ctx context.Context, ono string) (Response, error) {
 		}
 
 		hasil := ""
-		if t.Result != nil {
-			hasil = strconv.FormatFloat(*t.Result, 'f', t.TestType.Decimal, 64)
+		if t.Result != "" {
+			// Parse the string result to float64, then format it
+			if resultFloat, err := strconv.ParseFloat(t.Result, 64); err == nil {
+				hasil = strconv.FormatFloat(resultFloat, 'f', t.TestType.Decimal, 64)
+			} else {
+				// If parsing fails, use the string value as is
+				hasil = t.Result
+			}
 		}
 
 		resultTest[i] = u.resultConvert(ResponseResultTest{

@@ -310,7 +310,7 @@ const HeaderInfo = (props: any) => (
                 <WithRecord label="Analysts" render={(record: WorkOrder) => {
                     return (
                         <Stack direction={"row"} gap={1}>
-                            {record?.analyst?.map((user: User) => {
+                            {record?.analyzers?.map((user: User) => {
                                 return (
                                     <Chip label={`${user.id} - ${user.fullname}`} />
                                 )
@@ -426,7 +426,7 @@ const TestResultTable = (props: TestResultTableProps) => {
                 {
                     field: 'result',
                     headerName: 'Result',
-                    type: 'number',
+                    type: 'string',
                     editable: true,
                     flex: 1,
 
@@ -453,6 +453,8 @@ const TestResultTable = (props: TestResultTableProps) => {
                             case 1: return <Chip color="error" label="High" />
                             case 2: return <Chip color="secondary" label="Low" />
                             case 3: return <Chip color="default" label="No Data" />
+                            case 4: return <Chip color="warning" label="Positive" />
+                            case 5: return <Chip color="info" label="Negative" />
                             default: return <Chip color="success" label="Normal" />
                         }
                     },
@@ -594,7 +596,7 @@ const HistoryDialog = (props: HistoryDialogProps) => {
                         {
                             field: 'result',
                             headerName: 'Result',
-                            type: 'number',
+                            type: 'string',
                             flex: 1,
                         },
                         {

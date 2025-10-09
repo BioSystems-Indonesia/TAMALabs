@@ -236,7 +236,6 @@ func (u *Usecase) SyncAllResult(ctx context.Context, orderIDs []int64) error {
 		GetManyRequest: entity.GetManyRequest{
 			CreatedAtStart: time.Now().Add(14 * -24 * time.Hour),
 			CreatedAtEnd:   time.Now(),
-			ID:             orderIDStrings,
 		},
 	})
 	if err != nil {
@@ -245,7 +244,6 @@ func (u *Usecase) SyncAllResult(ctx context.Context, orderIDs []int64) error {
 
 	var errs []error
 	for _, workOrder := range workOrders.Data {
-		fmt.Println(workOrder.ID)
 		err := u.syncResultByOrderID(ctx, workOrder.ID)
 		if err != nil {
 			slog.Error("error syncing result", "error", err)
@@ -281,7 +279,13 @@ func (u *Usecase) syncResultByOrderID(ctx context.Context, orderID int64) error 
 	var simrsLabResults []entity.SimrsLabResult
 	for _, testResultGroup := range workOrder.TestResult {
 		for _, testResult := range testResultGroup {
-			if testResult.Result == nil {
+			if testResult.Result == "" {
+				continue
+			}
+
+			// Skip if TestTypeID is 0 (invalid)
+			if testResult.TestTypeID == 0 {
+				slog.Warn("Skipping test result with invalid TestTypeID", "test_type_id", testResult.TestTypeID)
 				continue
 			}
 
@@ -294,7 +298,7 @@ func (u *Usecase) syncResultByOrderID(ctx context.Context, orderID int64) error 
 			simrsLabResult := entity.SimrsLabResult{
 				NoOrder:     workOrder.BarcodeSIMRS,
 				ParamCode:   testType.Code,
-				ResultValue: fmt.Sprintf("%.2f", *testResult.Result),
+				ResultValue: testResult.Result,
 				Unit:        testResult.Unit,
 				RefRange:    testResult.ReferenceRange,
 				Flag:        string(entity.NewSimrsFlag(testResult)),

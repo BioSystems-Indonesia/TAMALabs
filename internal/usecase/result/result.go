@@ -111,8 +111,8 @@ func (u *Usecase) PutTestResult(
 		CreatedByAdmin: createdByAdmin,
 	}
 
-	if result.Result != nil {
-		obs.Values = append(obs.Values, fmt.Sprintf("%f", *result.Result))
+	if result.Result != "" {
+		obs.Values = append(obs.Values, result.Result)
 	}
 
 	err := u.resultRepository.Create(ctx, &obs)

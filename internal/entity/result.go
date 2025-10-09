@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/oibacidem/lims-hl-seven/internal/util"
@@ -42,8 +43,8 @@ type TestResult struct {
 	AliasCode       string         `json:"alias_code"`
 	TestTypeID      int64          `json:"test_type_id"`
 	Test            string         `json:"test"`
-	Result          *float64       `json:"result"`
-	FormattedResult *float64       `json:"formatted_result"`
+	Result          string         `json:"result"`
+	FormattedResult *string        `json:"formatted_result"`
 	Unit            string         `json:"unit"`
 	Category        string         `json:"category"`
 	SpecimenType    string         `json:"specimen_type"`
@@ -60,17 +61,17 @@ type TestResult struct {
 	EGFR *EGFRCalculation `json:"egfr,omitempty"`
 }
 
-func (r TestResult) GetResult() float64 {
-	if r.Result == nil {
-		return 0
+func (r TestResult) GetResult() string {
+	if r.Result == "" {
+		return ""
 	}
 
-	return *r.Result
+	return r.Result
 }
 
-func (r TestResult) GetFormattedResult() float64 {
+func (r TestResult) GetFormattedResult() string {
 	if r.FormattedResult == nil {
-		return 0
+		return ""
 	}
 
 	return *r.FormattedResult
@@ -90,11 +91,11 @@ func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
 		ID:             0,
 		SpecimenID:     request.SpecimenID,
 		Test:           request.TestCode,
-		Result:         nil,
+		Result:         "",
 		TestTypeID:     int64(request.TestType.ID),
 		Unit:           request.TestType.Unit,
 		Category:       request.TestType.Category,
-		ReferenceRange: fmt.Sprintf("%.*f - %.*f", decimal, request.TestType.LowRefRange, decimal, request.TestType.HighRefRange),
+		ReferenceRange: request.TestType.GetReferenceRange(),
 		CreatedAt:      request.UpdatedAt.Format(time.RFC3339),
 		Abnormal:       NoDataResult,
 		Picked:         false,
@@ -105,6 +106,17 @@ func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
 }
 
 func (r TestResult) FromObservationResult(observation ObservationResult, specimenType string) TestResult {
+	// Use existing reference range if available, otherwise generate from TestType
+	var referenceRange string
+	if observation.ReferenceRange != "" {
+		referenceRange = observation.ReferenceRange
+	} else if observation.TestType.ID != 0 {
+		// Use TestType's GetReferenceRange method to determine appropriate reference range
+		referenceRange = observation.TestType.GetReferenceRange()
+	} else {
+		referenceRange = "" // Empty reference range for invalid/missing TestType
+	}
+
 	resultTest := TestResult{
 		ID:             observation.ID,
 		SpecimenID:     observation.SpecimenID,
@@ -112,14 +124,14 @@ func (r TestResult) FromObservationResult(observation ObservationResult, specime
 		TestTypeID:     int64(observation.TestType.ID),
 		Unit:           observation.TestType.Unit,
 		Category:       observation.TestType.Category,
-		ReferenceRange: fmt.Sprintf("%.*f - %.*f", observation.TestType.Decimal, observation.TestType.LowRefRange, observation.TestType.Decimal, observation.TestType.HighRefRange),
+		ReferenceRange: referenceRange,
 		CreatedAt:      observation.CreatedAt.Format(time.RFC3339),
 		Picked:         observation.Picked,
 		TestType:       observation.TestType,
 		CreatedBy:      observation.CreatedByAdmin,
 
 		// Result, Abnormal will be filled below
-		Result:   nil,
+		Result:   "",
 		Abnormal: NoDataResult,
 		// History will be filled by FillHistory,
 	}
@@ -130,14 +142,31 @@ func (r TestResult) FromObservationResult(observation ObservationResult, specime
 		return resultTest
 	}
 
-	// only process the first value, if the observation have multiple values we need to handle it later
-	result, err := strconv.ParseFloat(observation.Values[0], 64)
+	// Get the first value as string directly
+	valueStr := observation.Values[0]
+	resultTest.Result = valueStr
+
+	// Try to parse as float for unit conversion and abnormal checking
+	result, err := strconv.ParseFloat(valueStr, 64)
 	if err != nil {
-		slog.Info("parse observation.Values from observation failed", "id", observation.ID, "error", err)
+		// If it's not a number (like "3+", "positive", etc), check for specific patterns
+		slog.Info("observation value is not numeric, checking for patterns", "id", observation.ID, "value", valueStr)
+		resultTest.FormattedResult = &valueStr
+
+		// Check for positive/negative patterns
+		if strings.Contains(strings.ToLower(valueStr), "+") {
+			resultTest.Abnormal = PositiveResult
+		} else if strings.Contains(strings.ToLower(valueStr), "-") ||
+			strings.Contains(strings.ToLower(valueStr), "negatif") ||
+			strings.Contains(strings.ToLower(valueStr), "negative") {
+			resultTest.Abnormal = NegativeResult
+		} else {
+			resultTest.Abnormal = NoDataResult // Can't determine abnormal status
+		}
 		return resultTest
 	}
 
-	// convert result into configuration units
+	// convert result into configuration units (only for numeric values)
 	resultOrig := result
 	if resultTest.Unit != "%" {
 		// TODO make the ConvertCompount return resultOrig if err
@@ -155,16 +184,20 @@ func (r TestResult) FromObservationResult(observation ObservationResult, specime
 		}
 	}
 
-	resultTest.Result = &result
+	resultStr := strconv.FormatFloat(result, 'f', 2, 64)
+	resultTest.Result = resultStr
+
 	if observation.TestType.Decimal < 1 {
 		observation.TestType.Decimal = 2
 	}
 
 	formattedResult, err := strconv.ParseFloat(fmt.Sprintf("%.*f", observation.TestType.Decimal, result), 64)
 	if err != nil {
-		resultTest.FormattedResult = resultTest.Result
+		resultTest.FormattedResult = &resultTest.Result
+	} else {
+		formattedResultStr := strconv.FormatFloat(formattedResult, 'f', 2, 64)
+		resultTest.FormattedResult = &formattedResultStr
 	}
-	resultTest.FormattedResult = &formattedResult
 
 	resultTest.Abnormal = NormalResult
 	if result <= observation.TestType.LowRefRange {
@@ -179,7 +212,8 @@ func (r TestResult) FromObservationResult(observation ObservationResult, specime
 func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[int64]string) TestResult {
 	histories := make([]TestResult, len(history))
 	for i, h := range history {
-		result := h.GetFirstValue()
+		// Use string value to preserve qualitative results like "negative", "1+", etc.
+		resultStr := h.GetFirstValueAsString()
 		specimenType := specimenTypes[h.SpecimenID]
 
 		decimal := h.TestType.Decimal
@@ -191,11 +225,11 @@ func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[i
 			ID:             h.ID,
 			SpecimenID:     h.SpecimenID,
 			Test:           h.TestCode,
-			Result:         &result,
+			Result:         resultStr, // Use string value directly
 			TestTypeID:     int64(h.TestType.ID),
 			Unit:           h.Unit,
 			Category:       h.TestType.Category,
-			ReferenceRange: fmt.Sprintf("%.*f - %.*f", decimal, h.TestType.LowRefRange, decimal, h.TestType.HighRefRange),
+			ReferenceRange: h.TestType.GetReferenceRange(),
 			CreatedAt:      h.CreatedAt.Format(time.RFC3339),
 			Picked:         h.Picked,
 			TestType:       h.TestType,
@@ -212,10 +246,12 @@ func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[i
 type AbnormalResult int32
 
 const (
-	NormalResult AbnormalResult = 0
-	HighResult   AbnormalResult = 1
-	LowResult    AbnormalResult = 2
-	NoDataResult AbnormalResult = 3
+	NormalResult   AbnormalResult = 0
+	HighResult     AbnormalResult = 1
+	LowResult      AbnormalResult = 2
+	NoDataResult   AbnormalResult = 3
+	PositiveResult AbnormalResult = 4
+	NegativeResult AbnormalResult = 5
 )
 
 type ResultGetManyRequest struct {

@@ -113,7 +113,7 @@ const PickedTest = ({ selectedData }: { selectedData: Record<number, Observation
     }
 
     return (
-        <Paper elevation={2} sx={{ p: 2, backgroundColor: 'background.paper', maxWidth: "250px"}}>
+        <Paper elevation={2} sx={{ p: 2, backgroundColor: 'background.paper', maxWidth: "250px" }}>
             <Stack spacing={2}>
                 {/* Enhanced Title Section */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -272,7 +272,7 @@ function TestTable({
     const lastClickedRowIdRef = React.useRef<GridRowId | null>(null); // To track for shift-click
     // Main handler for checkbox changes (click, shift+click, keyboard)
     const handleCheckboxInteraction = (rowId: GridRowId, newCheckedState: boolean, isShiftKey: boolean) => {
-        let newRows = [...rows];
+        const newRows = [...rows];
 
         if (isShiftKey && lastClickedRowIdRef.current !== null && lastClickedRowIdRef.current !== rowId) {
             const lastIdx = newRows.findIndex(r => r.id === lastClickedRowIdRef.current);
@@ -373,7 +373,7 @@ function TestTable({
                                 <Box
                                     tabIndex={0} // Make it focusable
                                     onKeyDown={handleKeyDown}
-                                    sx={{   
+                                    sx={{
                                         width: '100%',
                                         height: '100%',
                                         display: 'flex',
@@ -690,7 +690,7 @@ function BarcodeInput(props: InputProps) {
                     mb: "0.5rem",
                 }}>Barcode Configuration</Typography>
                 <Stack gap={1}>
-                    <TextInput source="barcode_simrs" label="SIMRS Barcode" helperText="Barcode for SIMRS integration" fullWidth required/>
+                    <TextInput source="barcode_simrs" label="SIMRS Barcode" helperText="Barcode for SIMRS integration" fullWidth required />
                 </Stack>
             </Stack>
         </>
@@ -723,6 +723,7 @@ function AdditionalInput(props: InputProps) {
                     </ReferenceInput>
                     <ReferenceInput source={analystIDField} reference="user" target="id" label="Analyst">
                         <AutocompleteArrayInput
+                            label="Analyst"
                             suggestionLimit={10}
                             defaultValue={[currentUser?.id]}
                             helperText="Default to current user"
