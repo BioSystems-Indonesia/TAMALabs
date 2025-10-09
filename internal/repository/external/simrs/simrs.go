@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 )
 
 type Repository struct {

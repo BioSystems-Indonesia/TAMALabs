@@ -3,7 +3,7 @@ package server
 import (
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
 )
 
 // Controller is a common interface for both TCP and Serial servers

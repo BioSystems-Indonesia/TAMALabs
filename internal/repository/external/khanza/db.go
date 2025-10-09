@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/oibacidem/lims-hl-seven/config"
 )
 
 // DB represents a MySQL database connection wrapper

@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	adminrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/admin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	adminrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
 	"golang.org/x/crypto/bcrypt"
 )
 

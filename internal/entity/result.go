@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/util"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
 )
 
 type Result struct {

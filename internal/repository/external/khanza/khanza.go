@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 )
 
 // Repository is a repository for external applications using SIM RS Repository

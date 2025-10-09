@@ -3,9 +3,9 @@ package rest
 import (
 	"net/http"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	auth_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/auth"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	auth_uc "github.com/oibacidem/lims-hl-seven/internal/usecase/auth"
 )
 
 type AuthHandler struct {

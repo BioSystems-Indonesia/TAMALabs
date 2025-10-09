@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	serverrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/server"
+	configrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/config"
+	deviceuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/device"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	serverrepo "github.com/oibacidem/lims-hl-seven/internal/repository/server"
-	configrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
-	deviceuc "github.com/oibacidem/lims-hl-seven/internal/usecase/device"
 )
 
 type (

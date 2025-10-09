@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
+	workOrderrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
 	"github.com/go-playground/validator/v10"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
-	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
 )
 
 type PatientUseCase struct {

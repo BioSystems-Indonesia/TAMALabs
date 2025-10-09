@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 )
 
 type DeviceSender interface {

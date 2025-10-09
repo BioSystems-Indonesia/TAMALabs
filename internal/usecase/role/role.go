@@ -3,8 +3,8 @@ package role_uc
 import (
 	"context"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	rolerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/role"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	rolerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/role"
 )
 
 type RoleUsecase struct {

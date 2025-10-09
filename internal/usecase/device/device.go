@@ -7,16 +7,16 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	serverrepo "github.com/oibacidem/lims-hl-seven/internal/repository/server"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/rest/a15rest"
-	devicerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner"
-	"github.com/oibacidem/lims-hl-seven/internal/util"
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/rest/a15rest"
+	serverrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/server"
+	devicerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/device"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/tcp/ba400"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order/runner"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
 )
 
 type DeviceUseCase struct {

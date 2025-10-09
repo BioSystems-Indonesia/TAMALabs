@@ -5,6 +5,7 @@ This package provides server abstractions for both TCP and Serial communication,
 ## Overview
 
 The server package includes:
+
 - `TCP` server for TCP/IP communication
 - `Serial` server for serial port communication
 - Common `ServerController` interface
@@ -29,7 +30,7 @@ type ServerController interface {
 ### Basic Usage
 
 ```go
-import "github.com/oibacidem/lims-hl-seven/pkg/server"
+import "github.com/BioSystems-Indonesia/TAMALabs/pkg/server"
 
 // Create a new serial server
 serialServer := server.NewSerial("COM3", 115200)
@@ -102,6 +103,7 @@ go tcpServer.Serve()
 ## Server States
 
 The servers can be in the following states:
+
 - `ServerStateServing`: Server is running and waiting for connections
 - `ServerStateConnect`: Server is handling a connection
 - `ServerStateStopped`: Server has been stopped
@@ -124,6 +126,7 @@ The servers can be in the following states:
 ## Error Handling
 
 Both servers provide proper error handling:
+
 - Connection errors are logged
 - Graceful shutdown is supported
 - State management for monitoring server status
@@ -149,4 +152,4 @@ if useSerial {
 server.SetHandler(handler)
 server.Start()
 go server.Serve()
-``` 
+```

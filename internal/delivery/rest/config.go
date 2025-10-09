@@ -3,11 +3,11 @@ package rest
 import (
 	"net/http"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	configuc "github.com/oibacidem/lims-hl-seven/internal/usecase/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	configuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/config"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/config"
 )
 
 type ConfigHandler struct {

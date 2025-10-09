@@ -3,7 +3,7 @@ package app
 import (
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"golang.org/x/crypto/bcrypt"
 )
 

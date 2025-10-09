@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"runtime"
 
-	khanzauc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
+	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
 )
 
 // SIMRSUsecase interface to avoid import cycle

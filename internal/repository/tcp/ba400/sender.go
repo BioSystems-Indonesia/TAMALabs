@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/pkg/mllp"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/mllp"
 )
 
 type Sender struct {

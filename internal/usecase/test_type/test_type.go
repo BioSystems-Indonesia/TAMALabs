@@ -3,8 +3,8 @@ package test_type
 import (
 	"context"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
 )
 
 type Usecase struct {

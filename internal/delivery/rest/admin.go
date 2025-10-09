@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	adminuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/admin"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	adminuc "github.com/oibacidem/lims-hl-seven/internal/usecase/admin"
 )
 
 type AdminHandler struct {

@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/hirochachacha/go-smb2"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
 // A15Result represents a single lab result entry.

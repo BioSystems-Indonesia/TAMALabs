@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/config"
 	"github.com/patrickmn/go-cache"
 )
 

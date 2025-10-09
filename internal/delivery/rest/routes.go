@@ -4,11 +4,11 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/web"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/oibacidem/lims-hl-seven/web"
 
-	appMiddleware "github.com/oibacidem/lims-hl-seven/internal/middleware"
+	appMiddleware "github.com/BioSystems-Indonesia/TAMALabs/internal/middleware"
 	"golang.org/x/exp/slices"
 )
 

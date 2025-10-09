@@ -1,4 +1,4 @@
-module github.com/oibacidem/lims-hl-seven
+module github.com/BioSystems-Indonesia/TAMALabs
 
 go 1.24
 

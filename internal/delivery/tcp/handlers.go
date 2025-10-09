@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h251"
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
 )
 
 // OULR22 handles the OULR22 message.

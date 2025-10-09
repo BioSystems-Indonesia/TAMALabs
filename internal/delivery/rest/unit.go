@@ -1,10 +1,10 @@
 package rest
 
 import (
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	unitUC "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/unit"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	unitUC "github.com/oibacidem/lims-hl-seven/internal/usecase/unit"
 )
 
 type UnitHandler struct {

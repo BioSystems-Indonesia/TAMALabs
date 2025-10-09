@@ -9,9 +9,9 @@ import (
 
 	"log/slog"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
-	"github.com/oibacidem/lims-hl-seven/internal/util"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/tcp/ba400"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
 )
 
 // ProcessOULR22 processes the OUL_R22 message.

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
 	"gorm.io/gorm"
 )
 

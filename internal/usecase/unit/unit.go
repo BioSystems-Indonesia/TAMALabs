@@ -3,10 +3,10 @@ package unit
 import (
 	"context"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	unitRepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/unit"
 	"github.com/go-playground/validator/v10"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	unitRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/unit"
 )
 
 type UnitUseCase struct {

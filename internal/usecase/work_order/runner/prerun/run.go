@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/observation_request"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/specimen"
 )
 
 type RunAction struct {

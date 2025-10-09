@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	adminrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
-	rolerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/role"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	adminrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/admin"
+	rolerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/role"
 	"golang.org/x/crypto/bcrypt"
 )
 

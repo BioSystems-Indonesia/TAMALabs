@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
 type FeatureListHandler struct {

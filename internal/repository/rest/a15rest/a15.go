@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 )
 
 type A15rest struct {

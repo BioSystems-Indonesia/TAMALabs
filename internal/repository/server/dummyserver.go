@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	"github.com/oibacidem/lims-hl-seven/pkg/server"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/server"
 )
 
 type DummyServer struct {

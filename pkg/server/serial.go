@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
 	"go.bug.st/serial"
 )
 

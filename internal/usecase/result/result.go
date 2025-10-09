@@ -6,11 +6,11 @@ import (
 	"log/slog"
 	"slices"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
-	specimenRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
-	workOrderRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/observation_result"
+	specimenRepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/specimen"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
+	workOrderRepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
 )
 
 type Usecase struct {

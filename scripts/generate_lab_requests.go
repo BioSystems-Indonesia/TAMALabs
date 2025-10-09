@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
@@ -116,10 +116,10 @@ func generateLabRequests(db *gorm.DB, count int) error {
 			// Generate specimens (1-3 specimens per work order)
 			specimenCount := randSource.Intn(3) + 1
 			specimens := make([]entity.Specimen, 0, specimenCount)
-			
+
 			// Keep track of used specimen types to avoid UNIQUE constraint violation
 			usedSpecimenTypes := make(map[string]bool)
-			
+
 			for j := 0; j < specimenCount && len(usedSpecimenTypes) < len(specimenTypes); j++ {
 				// Get a specimen type that hasn't been used for this work order
 				var specimenType string
@@ -130,7 +130,7 @@ func generateLabRequests(db *gorm.DB, count int) error {
 						break
 					}
 				}
-				
+
 				specimen := generateSpecimen(patient.ID, workOrder.ID, j+1, specimenType, randSource)
 				specimens = append(specimens, specimen)
 			}

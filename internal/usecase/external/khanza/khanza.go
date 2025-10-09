@@ -12,14 +12,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/external/khanza"
-	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
-	workOrderRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
-	"github.com/oibacidem/lims-hl-seven/internal/util"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/external/khanza"
+	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
+	workOrderRepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
 	"gorm.io/gorm"
 )
 

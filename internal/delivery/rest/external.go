@@ -3,9 +3,9 @@ package rest
 import (
 	"net/http"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	externaluc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	externaluc "github.com/oibacidem/lims-hl-seven/internal/usecase/external"
 )
 
 // ExternalHandler handles HTTP requests for external integration

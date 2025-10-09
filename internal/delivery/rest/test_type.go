@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/test_type"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
 type TestTypeHandler struct {

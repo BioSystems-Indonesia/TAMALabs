@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/mllp/common"
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h231"
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/pkg/mllp/common"
 )
 
 // ORMO01 handles the ORM_O01 message.

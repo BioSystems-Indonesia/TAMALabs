@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/daily_sequence"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/daily_sequence"
 )
 
 type Usecase struct {

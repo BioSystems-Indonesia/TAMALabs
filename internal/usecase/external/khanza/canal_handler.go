@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
 	"github.com/go-mysql-org/go-mysql/canal"
 	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/replication"
-	"github.com/oibacidem/lims-hl-seven/config"
 )
 
 type CanalHandler struct {

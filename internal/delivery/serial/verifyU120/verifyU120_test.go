@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 )
 
 func TestHandler_parseResultValue(t *testing.T) {

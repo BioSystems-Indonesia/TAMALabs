@@ -10,14 +10,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	simrsrepo "github.com/oibacidem/lims-hl-seven/internal/repository/external/simrs"
-	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
-	testType "github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
-	workOrder "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
-	workOrderUC "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	simrsrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/external/simrs"
+	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
+	testType "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
+	workOrder "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
+	workOrderUC "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order"
 )
 
 type Usecase struct {

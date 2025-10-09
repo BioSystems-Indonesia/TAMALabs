@@ -9,8 +9,8 @@ import (
 	"net"
 	"regexp"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/hirochachacha/go-smb2"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
 type A15 struct{}

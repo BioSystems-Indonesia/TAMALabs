@@ -4,8 +4,8 @@ import (
 	"io"
 	"net/http"
 
+	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
 	"github.com/labstack/echo/v4"
-	khanzauc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
 )
 
 type KhanzaExternalHandler struct {

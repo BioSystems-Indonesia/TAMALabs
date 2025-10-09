@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/oibacidem/lims-hl-seven/config"
-	simrs "github.com/oibacidem/lims-hl-seven/internal/repository/external/simrs"
-	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
-	testType "github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
-	workOrder "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
-	khanzauc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
-	simrsuc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/simrs"
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	simrs "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/external/simrs"
+	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
+	testType "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
+	workOrder "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
+	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
+	simrsuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simrs"
 )
 
 type Usecase struct {
