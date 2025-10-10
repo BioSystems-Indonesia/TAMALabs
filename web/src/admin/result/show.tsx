@@ -48,6 +48,7 @@ import { User } from '../../types/user';
 import type { WorkOrder } from '../../types/work_order';
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
 import { FilledPercentChip, VerifiedChip } from './component';
+import { CreatedBy } from '../../types/constant';
 
 export const ResultShow = (props: any) => {
     const [openHistory, setOpenHistory] = useState(false);
@@ -239,9 +240,9 @@ const HeaderInfo = (props: any) => (
                 <WithRecord label="Barcodes" render={(record: WorkOrder) => {
                     return (
                         <Stack direction={"row"} gap={1}>
-                            {record.specimen_list.map((specimen: Specimen) => {
+                            {(Array.isArray(record?.specimen_list) ? record.specimen_list : []).map((specimen: Specimen, idx: number) => {
                                 return (
-                                    <Chip label={specimen.barcode} />
+                                    <Chip key={specimen.barcode || idx} label={specimen.barcode} />
                                 )
                             })}
                         </Stack>
@@ -309,7 +310,7 @@ const HeaderInfo = (props: any) => (
                 <WithRecord label="Analysts" render={(record: WorkOrder) => {
                     return (
                         <Stack direction={"row"} gap={1}>
-                            {record?.analyst?.map((user: User) => {
+                            {record?.analyzers?.map((user: User) => {
                                 return (
                                     <Chip label={`${user.id} - ${user.fullname}`} />
                                 )
@@ -392,7 +393,7 @@ const TestResultTable = (props: TestResultTableProps) => {
             ...r,
             id: r.id || negID--,
             name: r?.test_type?.name || r?.history?.[0]?.test_type?.name || r.test,
-            specimen_type : r?.test_type?.types[0].type,
+            specimen_type: r?.test_type?.types[0].type,
             alias: r?.test_type?.alias_code || r?.history?.[0]?.test_type?.alias_code || r.alias || r.test,
         })));
     }, [props?.rows]);
@@ -418,23 +419,23 @@ const TestResultTable = (props: TestResultTableProps) => {
                 },
                 {
                     field: 'alias',
-                    headerName: 'Alias',
+                    headerName: 'Alias/Code',
                     flex: 1,
                 },
 
                 {
                     field: 'result',
                     headerName: 'Result',
-                    type: 'number',
+                    type: 'string',
                     editable: true,
                     flex: 1,
-                    
+
                 },
                 {
                     field: 'unit',
                     headerName: 'Unit',
                     flex: 1,
-                    
+
                 },
                 {
                     field: 'reference_range',
@@ -452,7 +453,22 @@ const TestResultTable = (props: TestResultTableProps) => {
                             case 1: return <Chip color="error" label="High" />
                             case 2: return <Chip color="secondary" label="Low" />
                             case 3: return <Chip color="default" label="No Data" />
+                            case 4: return <Chip color="warning" label="Positive" />
+                            case 5: return <Chip color="info" label="Negative" />
                             default: return <Chip color="success" label="Normal" />
+                        }
+                    },
+                },
+                {
+                    field: 'created_by',
+                    headerName: 'Input By',
+                    flex: 2,
+                    renderCell: (params: GridRenderCellParams) => {
+                        switch (params.value?.id) {
+                            case 0: return ""
+                            case CreatedBy.Unknown: return <Chip label="Unknown" />
+                            case CreatedBy.System: return <Chip color='primary' label="System" />
+                            default: return <Chip color='info' label={`${params.value?.fullname}`} />
                         }
                     },
                 },
@@ -580,7 +596,7 @@ const HistoryDialog = (props: HistoryDialogProps) => {
                         {
                             field: 'result',
                             headerName: 'Result',
-                            type: 'number',
+                            type: 'string',
                             flex: 1,
                         },
                         {
@@ -609,6 +625,19 @@ const HistoryDialog = (props: HistoryDialogProps) => {
                                 return <Checkbox checked={params.value} readOnly onClick={() => {
                                     pickTestResult(params.row.id)
                                 }} />
+                            },
+                        },
+                        {
+                            field: 'created_by',
+                            headerName: 'Input By',
+                            flex: 1,
+                            renderCell: (params: GridRenderCellParams) => {
+                                switch (params.value?.id) {
+                                    case 0: return ""
+                                    case CreatedBy.Unknown: return <Chip label="Unknown" />
+                                    case CreatedBy.System: return <Chip color='primary' label="System" />
+                                    default: return <Chip color='info' label={`${params.value?.fullname}`} />
+                                }
                             },
                         },
                         {

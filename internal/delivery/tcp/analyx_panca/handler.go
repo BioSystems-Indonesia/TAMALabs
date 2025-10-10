@@ -9,11 +9,11 @@ import (
 	"net"
 	"strings"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/mllp"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/panics"
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h231"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase"
-	"github.com/oibacidem/lims-hl-seven/pkg/mllp"
-	"github.com/oibacidem/lims-hl-seven/pkg/panics"
 )
 
 type Handler struct {

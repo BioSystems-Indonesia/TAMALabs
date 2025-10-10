@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	patientuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/patient"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
 )
 
 type PatientHandler struct {

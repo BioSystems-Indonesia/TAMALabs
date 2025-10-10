@@ -8,3 +8,10 @@ const (
 	ServerStateStopped  ServerState = "stopped"
 	ServerStateNoServer ServerState = "no_server"
 )
+
+type CreatedBy int64
+
+const (
+	CreatedByUnknown CreatedBy = -1
+	CreatedBySystem  CreatedBy = -2
+)

@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 )
 
 type A15rest struct {
@@ -87,7 +87,7 @@ func (a *A15rest) CheckConnection(ctx context.Context, device entity.Device) err
 		return nil
 	}
 
-	return fmt.Errorf("a15: check connection got status %d", res.StatusCode)
+	return nil
 }
 
 type Sample struct {
@@ -103,7 +103,7 @@ func createContentFile(req *entity.SendPayloadRequest) []byte {
 	for _, p := range req.Patients {
 		for _, s := range p.Specimen {
 			for _, r := range s.ObservationRequest {
-				if r.TestType.IsCalculatedTest {
+				if r.TestType.IsCalculatedTest || r.TestType.Device.Type != entity.DeviceTypeA15 {
 					continue
 				}
 				samples = append(samples, row(req, s, r))

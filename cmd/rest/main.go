@@ -13,12 +13,12 @@ import (
 	"slices"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/app"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/logger"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/server"
 	"github.com/energye/systray"
-	"github.com/oibacidem/lims-hl-seven/internal/app"
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	"github.com/oibacidem/lims-hl-seven/internal/util"
-	"github.com/oibacidem/lims-hl-seven/pkg/logger"
-	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
 
 var (

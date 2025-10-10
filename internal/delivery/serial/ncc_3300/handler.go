@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h251"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	"go.bug.st/serial"
 )
 
@@ -26,12 +26,15 @@ func NewHandler(analyzerUsecase usecase.Analyzer) *Handler {
 var rawHl7 string
 
 func (h *Handler) Handle(port serial.Port) {
-	// raw := `MSH|^~\&|2|3|LIS|PC|20250711113400||ORU^R01|4|P|2.3.1||||||UNICODEPID|7||10||||1|OBR|5||000000000000|2^3|||20250711113300||||||||3|||OBX|1|NM|WBC||0.0|x10^9/L|3.5-10.0|L|||F||||||OBX|1|NM|LY%||**.*|%|20.0-40.0||||F||||||OBX|1|NM|MO%||**.*|%|1.0-15.0||||F||||||OBX|1|NM|GR%||**.*|%|50.0-70.0||||F||||||OBX|1|NM|LY#||**.*|x10^9/L|0.6-4.1||||F||||||OBX|1|NM|MO#||**.*|x10^9/L|0.1-1.8||||F||||||OBX|1|NM|GR#||**.*|x10^9/L|2.0-7.8||||F||||||OBX|1|NM|RBC||0.00|x10^12/L|3.50-6.00|L|||F||||||OBX|1|NM|HGB||0.0|g/dL|11.0-17.5|L|||F||||||OBX|1|NM|HCT||0.0|%|35.0-54.0|L|||F||||||OBX|1|NM|MCV||**.*|fL|80.0-100.0||||F||||||OBX|1|NM|MCH||**.*|Pg|26.0-34.0||||F||||||OBX|1|NM|MCHC||**.*|g/dL|31.5-36.0||||F||||||OBX|1|NM|RDW_CV||**.*|%|11.0-16.0||||F||||||OBX|1|NM|RDW_SD||**.*|fL|35.0-56.0||||F||||||OBX|1|NM|PLT||0|x10^9/L|100-350|L|||F||||||OBX|1|NM|MPV||**.*|fL|6.5-12.0||||F||||||OBX|1|NM|PDW||**.*|fL|9.0-17.0||||F||||||OBX|1|NM|PCT||0.00|%|0.10-0.28|L|||F||||||OBX|1|NM|P_LCR||0.0|%|11.0-45.0|L|||F||||||OBX|1|NM|P_LCC||0|x10^9/L|11-135|L|||F||||||OBX|1|NM|WBCHistogram^LeftLine||17||||||F||||||OBX|1|NM|WBCHistogram^RightLine||39||||||F||||||OBX|1|NM|WBCHistogram^MiddleLine||70||||||F||||||OBX|1|ED|WBCHistogram||3^Histogram^32Byte^HEX^00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000||||||F||||||OBX|1|NM|RBCHistogram^LeftLine||5||||||F||||||OBX|1|NM|RBCHistogram^RightLine||15||||||F||||||OBX|1|ED|RBCHistogram||3^Histogram^32Byte^HEX^00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000||||||F||||||OBX|1|NM|PLTHistogram^LeftLine||4||||||F||||||OBX|1|NM|PLTHistogram^RightLine||148||||||F||||||OBX|1|ED|PLTHistogram||3^Histogram^32Byte^HEX^0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000||||||F||||||exit status 0xc000013a`
-
-	// h.handleMessage(context.Background(), raw)
-
 	buf := make([]byte, 1024)
 	var timer *time.Timer
+
+	defer func() {
+		if timer != nil {
+			timer.Stop()
+		}
+	}()
+
 	for {
 		n, err := port.Read(buf)
 		if err != nil || n == 0 {
@@ -46,10 +49,17 @@ func (h *Handler) Handle(port serial.Port) {
 			}
 		}
 
-		// Reset timer setiap ada data baru
+		// Reset timer setiap ada data baru dengan proper cleanup
 		if timer != nil {
-			timer.Stop()
+			if !timer.Stop() {
+				// Drain the channel if timer already fired
+				select {
+				case <-timer.C:
+				default:
+				}
+			}
 		}
+
 		timer = time.AfterFunc(300*time.Millisecond, func() {
 			if rawHl7 != "" {
 				h.handleMessage(context.Background(), rawHl7)

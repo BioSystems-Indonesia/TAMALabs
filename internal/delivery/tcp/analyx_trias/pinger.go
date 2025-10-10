@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
 )
 
 type Pinger struct {

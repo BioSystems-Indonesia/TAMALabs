@@ -1,4 +1,5 @@
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
+import SyncIcon from "@mui/icons-material/Sync";
 import { Box, CircularProgress, Dialog, DialogContent, DialogTitle, Divider, useTheme } from "@mui/material";
 import ScienceIcon from '@mui/icons-material/Science';
 import Chip from "@mui/material/Chip";
@@ -111,7 +112,7 @@ export function WorkOrderAddTest() {
 function WorkOrderSideFilters() {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
-    
+
     return (
         <SideFilter sx={{
             backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
@@ -265,7 +266,7 @@ function WorkOrderSideFilters() {
                                 }}
                             />
                         </Stack>
-                    <Divider sx={{ marginBottom: 2 }} />
+                        <Divider sx={{ marginBottom: 2 }} />
                     </Box>
                 </Stack>
             </FilterLiveForm>
@@ -276,6 +277,71 @@ function WorkOrderSideFilters() {
 
 function getRequestLength(data: WorkOrder): number {
     return data.specimen_list?.reduce((acc, specimen) => acc + specimen.observation_requests.length, 0) || 0
+}
+
+function SyncAllRequestButton() {
+    const notify = useNotify();
+    const refresh = useRefresh();
+    const axios = useAxios();
+
+    const { mutate: syncAllRequest, isPending } = useMutation({
+        mutationFn: async () => {
+            try {
+                const response = await axios.post('/external/sync-all-requests');
+                if (!response || response.status !== 200) {
+                    throw new Error(response?.data?.error || 'Failed to sync requests');
+                }
+                return response.data;
+            } catch (error: any) {
+                // Handle axios errors or network errors
+                if (error.response) {
+                    // Server responded with error status
+                    throw new Error(error.response.data?.error || `Server error: ${error.response.status}`);
+                } else if (error.request) {
+                    // Network error
+                    throw new Error('Network error: Unable to connect to server');
+                } else {
+                    // Other error
+                    throw new Error(error.message || 'Unknown error occurred');
+                }
+            }
+        },
+        onSuccess: () => {
+            notify('Successfully synced all requests from external systems', {
+                type: 'success',
+            });
+            refresh();
+        },
+        onError: (error) => {
+            notify(`Sync failed: ${error.message}`, {
+                type: 'error',
+            });
+        },
+    });
+
+    return (
+        <Button
+            label="Sync All Request"
+            onClick={() => syncAllRequest()}
+            disabled={isPending}
+            sx={{
+                backgroundColor: 'primary.main',
+                color: 'white',
+                '&:hover': {
+                    backgroundColor: 'primary.dark',
+                },
+                '&:disabled': {
+                    backgroundColor: 'action.disabled',
+                },
+            }}
+        >
+            {isPending ? (
+                <CircularProgress size={16} sx={{ color: 'white' }} />
+            ) : (
+                <SyncIcon />
+            )}
+        </Button>
+    );
 }
 
 function RunWorkOrderButton(props: RunWorkOrderProps) {
@@ -432,6 +498,7 @@ const WorkOrderListBulkActionButtons = (props: RunWorkOrderProps) => (
 function WorkOrderListActions() {
     return (
         <TopToolbar>
+            <SyncAllRequestButton />
             <CreateButton />
         </TopToolbar>
     )
@@ -530,7 +597,6 @@ const WorkOrderDataGrid = () => {
                     setOpen={setOpen}
                     onClose={() => setOpen(false)}
                 />}>
-                <TextField source="no" />
                 <TextField source="id" />
                 <WithRecord label="Status" render={(record: any) => (
                     <Chip label={`${record.status}`} color={WorkOrderChipColorMap(record.status)} />
@@ -552,12 +618,12 @@ const WorkOrderDataGrid = () => {
                     </Typography>
                 )} />
                 <ReferenceArrayField source="doctor_ids" reference="user" />
-                <ReferenceArrayField source="analyzer_ids" reference="user" />
+                <ReferenceArrayField source="analyzer_ids" label="Analyts" reference="user" />
                 <DateField source="created_at" />
                 <WrapperField label="Actions" sortable={false} >
                     <Stack direction={"row"} spacing={2}>
                         <ShowButton variant="contained" />
-                        <DeleteButton variant="contained" mutationMode="pessimistic"/>
+                        <DeleteButton variant="contained" mutationMode="pessimistic" />
                     </Stack>
                 </WrapperField>
             </Datagrid>
@@ -571,9 +637,9 @@ export const WorkOrderList = () => {
         <List sort={{
             field: "id",
             order: "DESC"
-        }} aside={<WorkOrderSideFilters />} 
-        actions={<WorkOrderListActions/>}
-        title="Lab Request" exporter={false}
+        }} aside={<WorkOrderSideFilters />}
+            actions={<WorkOrderListActions />}
+            title="Lab Request" exporter={false}
             storeKey={false}
             sx={{
                 '& .RaList-content': {
@@ -583,7 +649,7 @@ export const WorkOrderList = () => {
                 },
             }}
         >
-             <WorkOrderDataGrid />
+            <WorkOrderDataGrid />
         </List>
     );
 }

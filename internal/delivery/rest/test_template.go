@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"strconv"
 
-	test_template_uc "github.com/oibacidem/lims-hl-seven/internal/usecase/test_template"
+	test_template_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/test_template"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
 type TestTemplateHandler struct {

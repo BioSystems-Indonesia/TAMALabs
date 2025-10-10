@@ -1,7 +1,4 @@
-import type {
-  AuthProvider,
-  UserIdentity
-} from "react-admin";
+import type { AuthProvider, UserIdentity } from "react-admin";
 import type { User } from "../types/user";
 import {
   LOCAL_STORAGE_ACCESS_TOKEN,
@@ -10,6 +7,17 @@ import {
 import { createAxiosInstance } from "./useAxios";
 import { AxiosError } from "axios";
 import { jwtDecode } from "jwt-decode";
+
+function redirectToLogin(): never {
+  try {
+    localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN);
+    localStorage.removeItem(LOCAL_STORAGE_ADMIN);
+  } catch (e) {
+    // ignore
+  }
+  window.location.href = "/#/login";
+  throw new Error("Not authenticated");
+}
 
 const authProvider: AuthProvider = {
   async login({ username, password }) {
@@ -27,43 +35,42 @@ const authProvider: AuthProvider = {
         LOCAL_STORAGE_ADMIN,
         JSON.stringify(response.data.admin)
       );
-
     } catch (error) {
       if (error instanceof AxiosError) {
         if (error.response) {
           if (error.response.status >= 400 && error.response.status < 500) {
-            throw new Error(error.response.data.error ?? "Invalid username or password");
+            throw new Error(
+              error.response.data.error ?? "Invalid username or password"
+            );
           } else if (error.response.status >= 500) {
             throw new Error("Server error");
           }
         }
-        throw new Error('Network error');
+        throw new Error("Network error");
       }
-      throw new Error('An unexpected error occurred');
+      throw new Error("An unexpected error occurred");
     }
-
-
   },
   async checkError(error) {
     const status = error.status;
     if (status === 401) {
-      localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN);
-      localStorage.removeItem(LOCAL_STORAGE_ADMIN);
-      throw new Error("Session expired");
+      return redirectToLogin();
     }
   },
   async checkAuth() {
+    const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN);
+    if (!token) {
+      return redirectToLogin();
+    }
+
     try {
       const axios = createAxiosInstance();
       await axios.get("/check-auth");
     } catch (error) {
-      if (error instanceof AxiosError) {
-        if (error.response) {
-          if (error.response.status === 401) {
-            throw new Error("Session expired");
-          }
-        }
+      if (error instanceof AxiosError && error.response?.status === 401) {
+        return redirectToLogin();
       }
+      throw error;
     }
   },
   async logout() {
@@ -73,7 +80,7 @@ const authProvider: AuthProvider = {
   async getIdentity(): Promise<UserIdentity> {
     const adminStorage = localStorage.getItem(LOCAL_STORAGE_ADMIN);
     if (!adminStorage) {
-      throw new Error("Not authenticated");
+      return redirectToLogin();
     }
 
     const admin: User = JSON.parse(adminStorage);
@@ -85,7 +92,7 @@ const authProvider: AuthProvider = {
   async getPermissions(): Promise<string> {
     const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN);
     if (!token) {
-      throw new Error("No token");
+      return redirectToLogin();
     }
 
     try {
@@ -97,8 +104,6 @@ const authProvider: AuthProvider = {
   },
 };
 
-
 export const useAuthProvider = () => {
   return authProvider;
-}
-
+};

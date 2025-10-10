@@ -50,6 +50,30 @@ func (a Admin) GetFirstName() string {
 	return ""
 }
 
+func (a Admin) ToAdminClaim(expirationTime time.Time) AdminClaims {
+	// Safe handling of Email pointer
+	var email string
+	if a.Email != nil {
+		email = *a.Email
+	}
+
+	claims := AdminClaims{
+		ID:        a.ID,
+		Fullname:  a.Fullname,
+		Email:     email,
+		IsActive:  a.IsActive,
+		Role:      a.Roles[0].Name,
+		CreatedAt: a.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: a.UpdatedAt.Format(time.RFC3339),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    "lims-hl-seven",
+		},
+	}
+	return claims
+}
+
 // Role represents a user role within the system.
 type Role struct {
 	ID          uint      `json:"id" gorm:"primaryKey"`
@@ -71,6 +95,25 @@ type AdminClaims struct {
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 	jwt.RegisteredClaims
+}
+
+func (ac AdminClaims) ToAdmin() Admin {
+	createdAtParse, _ := time.Parse(time.RFC3339, ac.CreatedAt)
+	updatedAtParse, _ := time.Parse(time.RFC3339, ac.UpdatedAt)
+
+	email := &ac.Email
+	if ac.Email == "" {
+		email = nil
+	}
+
+	return Admin{
+		ID:        ac.ID,
+		Fullname:  ac.Fullname,
+		Email:     email,
+		IsActive:  ac.IsActive,
+		CreatedAt: createdAtParse,
+		UpdatedAt: updatedAtParse,
+	}
 }
 
 type GetManyRequestAdmin struct {

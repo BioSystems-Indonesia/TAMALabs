@@ -10,10 +10,10 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/mllp"
 	"github.com/kardianos/hl7"
 	"github.com/kardianos/hl7/h251"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase"
-	"github.com/oibacidem/lims-hl-seven/pkg/mllp"
 )
 
 // HlSevenHandler is a struct that contains the handler of the REST server.

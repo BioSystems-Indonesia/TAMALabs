@@ -6,10 +6,13 @@
 package app
 
 import (
+	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/server"
 	"github.com/google/wire"
 	khanzauc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
 	licenseuc "github.com/oibacidem/lims-hl-seven/internal/usecase/license"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
+
 )
 
 // InitRestApp is a Wire provider function that returns a RestServer.

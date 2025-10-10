@@ -247,7 +247,7 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
             setStatus(finalResult.status);
             setPercentage(finalResult.percentage);
             if (finalResult.status === 'INCOMPLETE') {
-                setError(`Gagal melakukan request, pesan: '${finalResult.errorCause?.split("data: ")[1]}'`);
+                setError(`Failed to send request, message: '${finalResult.errorCause?.split("data: ")[1]}'`);
                 refresh();
             } else {
                 notify("Work order sent successfully", {
@@ -324,7 +324,7 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
         <Form disabled={props.isProcessing} onSubmit={onSubmit}>
             {error && (
                 <Alert severity="error" sx={{ mb: 2 }}>
-                   {error}
+                    {error}
                 </Alert>)}
             <Grid direction={"row"} sx={{
                 width: "100%",

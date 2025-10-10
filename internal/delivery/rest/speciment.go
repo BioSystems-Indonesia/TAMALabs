@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	specimenuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/specimen"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	specimenuc "github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
 )
 
 type SpecimenHandler struct {

@@ -61,7 +61,6 @@ func main() {
 			data := string(buf[:n])
 			buffer += data
 
-			fmt.Println(data)
 			// Process complete lines
 			for {
 				newlineIndex := strings.Index(buffer, "\n")
@@ -81,7 +80,6 @@ func main() {
 					log.Printf("Parse error: %v | Raw: %s", err, line)
 					continue
 				}
-				fmt.Println(buffer)
 
 				jsonData, err := json.MarshalIndent(result, "", "  ")
 				if err != nil {

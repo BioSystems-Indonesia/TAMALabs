@@ -4,11 +4,11 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/web"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/oibacidem/lims-hl-seven/web"
 
-	appMiddleware "github.com/oibacidem/lims-hl-seven/internal/middleware"
+	appMiddleware "github.com/BioSystems-Indonesia/TAMALabs/internal/middleware"
 	"golang.org/x/exp/slices"
 )
 
@@ -16,6 +16,7 @@ import (
 type Handler struct {
 	*HlSevenHandler
 	*HealthCheckHandler
+	*HealthHandler
 	*PatientHandler
 	*SpecimenHandler
 	*WorkOrderHandler
@@ -111,6 +112,9 @@ func RegisterRoutes(
 	unauthenticatedV1.GET("/ping", handler.Ping)
 	unauthenticatedV1.POST("/login", authHandler.Login)
 
+	// Add health endpoint (unauthenticated for monitoring)
+	handler.HealthHandler.RegisterRoutes(unauthenticatedV1)
+
 	authenticatedV1 := api.Group("/v1", authMiddleware.Middleware())
 	authenticatedV1.GET("/check-auth", handler.Ping)
 	patient := authenticatedV1.Group("/patient")
@@ -158,6 +162,7 @@ func RegisterRoutes(
 		testType.GET("/:id", handler.GetOneTestType)
 		testType.GET("/code/:code", handler.GetOneTestTypeByCode)
 		testType.GET("/alias-code/:alias_code", handler.GetOneTestTypeByAliasCode)
+		testType.POST("/upload", handler.UploadBulkTestType)
 		testType.POST("", handler.CreateTestType)
 		testType.PUT("/:id", handler.UpdateTestType)
 		testType.DELETE("/:id", handler.DeleteTestType)

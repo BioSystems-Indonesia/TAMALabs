@@ -1,12 +1,12 @@
 package analyzer
 
 import (
-	devicerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
-	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
+	devicerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/device"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/observation_request"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/observation_result"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/specimen"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
+	workOrderrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
 )
 
 // Usecase is a struct handle HLSeven

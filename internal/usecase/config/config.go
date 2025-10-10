@@ -3,10 +3,10 @@ package configuc
 import (
 	"context"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	configrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/config"
 	"github.com/go-playground/validator/v10"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	configrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
 )
 
 type ConfigUseCase struct {

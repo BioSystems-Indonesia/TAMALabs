@@ -7,16 +7,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	deviceuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/device"
+	observation_requestuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/observation_request"
+	patientuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/patient"
+	specimenuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/specimen"
+	workOrderuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	deviceuc "github.com/oibacidem/lims-hl-seven/internal/usecase/device"
-	observation_requestuc "github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
-	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
-	specimenuc "github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
-	workOrderuc "github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
-	"gorm.io/gorm"
 )
 
 type WorkOrderHandler struct {
@@ -29,7 +28,7 @@ type WorkOrderHandler struct {
 }
 
 func NewWorkOrderHandler(
-	cfg *config.Schema, workOrderUsecase *workOrderuc.WorkOrderUseCase, db *gorm.DB,
+	cfg *config.Schema, workOrderUsecase *workOrderuc.WorkOrderUseCase,
 	patientUsecase *patientuc.PatientUseCase,
 	deviceUsecase *deviceuc.DeviceUseCase,
 	specimenUsecase *specimenuc.SpecimenUseCase,

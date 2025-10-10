@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/go-playground/validator/v10"
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )

@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/kardianos/hl7/h231"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
 func encodeToPID(in entity.Patient) *h231.PID {

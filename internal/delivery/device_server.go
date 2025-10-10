@@ -4,24 +4,29 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/alifax"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
-	ncc3300 "github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/a15"
-	analyxpanca "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
-	analyxtrias "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
-	ncc61 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/neomedika_ncc61"
-	swelabalfa "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
-	swelablumi "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository"
-	"github.com/oibacidem/lims-hl-seven/pkg/server"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/alifax"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/cbs400"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/coax"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/diestro"
+	ncc3300 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/ncc_3300"
+	verifyu120 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/verifyU120"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/a15"
+	analyxpanca "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/analyx_panca"
+	analyxtrias "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/analyx_trias"
+	ncc61 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/neomedika_ncc61"
+	swelabalfa "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/swelab_alfa"
+	swelablumi "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/swelab_lumi"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/wondfo"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/server"
 )
 
 type DeviceServerStrategy struct {
 	a15Handler         *a15.Handler
 	coaxHandler        *coax.Handler
+	diestroHandler     *diestro.Handler
 	ncc3300            *ncc3300.Handler
 	defaultHandler     *tcp.HlSevenHandler
 	analyxTriaHandler  *analyxtrias.Handler
@@ -31,11 +36,16 @@ type DeviceServerStrategy struct {
 	swelabLumiHandler  *swelablumi.Handler
 	alifaxHandler      *alifax.Handler
 	ncc61Handler       *ncc61.Handler
+
+	wondfoHandler     *wondfo.Handler
+	cbs400Handler     *cbs400.Handler
+	verifyu120Handler *verifyu120.Handler
 }
 
 func NewDeviceServerStrategy(
 	a15Handler *a15.Handler,
 	coaxHandler *coax.Handler,
+	diestroHandler *diestro.Handler,
 	ncc3300 *ncc3300.Handler,
 	defaultHandler *tcp.HlSevenHandler,
 	analyxTriaHandler *analyxtrias.Handler,
@@ -44,10 +54,16 @@ func NewDeviceServerStrategy(
 	swelabLumiHandler *swelablumi.Handler,
 	alifaxHandler *alifax.Handler,
 	ncc61handler *ncc61.Handler,
+
+	wondfoHandler *wondfo.Handler,
+	cbs400Handler *cbs400.Handler,
+	verifyu120Handler *verifyu120.Handler,
+
 ) *DeviceServerStrategy {
 	return &DeviceServerStrategy{
 		a15Handler:         a15Handler,
 		coaxHandler:        coaxHandler,
+		diestroHandler:     diestroHandler,
 		ncc3300:            ncc3300,
 		defaultHandler:     defaultHandler,
 		analyxTriaHandler:  analyxTriaHandler,
@@ -57,6 +73,10 @@ func NewDeviceServerStrategy(
 		swelabLumiHandler:  swelabLumiHandler,
 		alifaxHandler:      alifaxHandler,
 		ncc61Handler:       ncc61handler,
+
+		wondfoHandler:     wondfoHandler,
+		cbs400Handler:     cbs400Handler,
+		verifyu120Handler: verifyu120Handler,
 	}
 }
 
@@ -80,8 +100,11 @@ func init() {
 
 var serialDeviceType = []entity.DeviceType{
 	entity.DeviceTypeCoax,
+	entity.DeviceTypeDiestro,
 	entity.DeviceTypeNeomedicaNCC3300,
 	entity.DeviceTypeAlifax,
+	entity.DeviceTypeCBS400,
+	entity.DeviceTypeVerifyU120,
 }
 
 var tcpDeviceType = []entity.DeviceType{
@@ -95,6 +118,7 @@ var tcpDeviceType = []entity.DeviceType{
 	entity.DeviceTypeSwelabLumi,
 	entity.DeviceTypeNeomedicaNCC61,
 	entity.DeviceTypeOther,
+	entity.DeviceTypeWondfo,
 }
 
 var deviceTypeNotSupport = []entity.DeviceType{}
@@ -126,12 +150,18 @@ func (d *DeviceServerStrategy) ChooseDeviceServer(device entity.Device) (server.
 
 func (d *DeviceServerStrategy) ChooseDeviceSerialHandler(device entity.Device) (server.SerialHandler, error) {
 	switch device.Type {
+	case entity.DeviceTypeDiestro:
+		return d.diestroHandler, nil
 	case entity.DeviceTypeCoax:
 		return d.coaxHandler, nil
 	case entity.DeviceTypeNeomedicaNCC3300:
 		return d.ncc3300, nil
 	case entity.DeviceTypeAlifax:
 		return d.alifaxHandler, nil
+	case entity.DeviceTypeVerifyU120:
+		return d.verifyu120Handler, nil
+	case entity.DeviceTypeCBS400:
+		return d.cbs400Handler, nil
 
 	default:
 		return nil, entity.ErrDeviceTypeNotSupport
@@ -159,6 +189,8 @@ func (d *DeviceServerStrategy) ChooseDeviceTCPHandler(device entity.Device) (ser
 		return d.a15Handler, nil
 	case entity.DeviceTypeNeomedicaNCC61:
 		return d.ncc61Handler, nil
+	case entity.DeviceTypeWondfo:
+		return d.wondfoHandler, nil
 	default:
 		return nil, nil
 	}

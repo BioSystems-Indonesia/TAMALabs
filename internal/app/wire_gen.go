@@ -61,9 +61,66 @@ import (
 	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner/prerun"
 	"github.com/oibacidem/lims-hl-seven/pkg/server"
 )
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/cron"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/rest"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/alifax"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/cbs400"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/coax"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/diestro"
+	ncc3300 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/ncc_3300"
+	verifyu120 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/verifyU120"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp"
+	a15_2 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/a15"
+	analyxpanca "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/analyx_panca"
+	analyxtrias "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/analyx_trias"
+	ncc61 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/neomedika_ncc61"
+	swelabalfa "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/swelab_alfa"
+	swelablumi "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/swelab_lumi"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/wondfo"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/middleware"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/rest/a15rest"
+	server2 "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/server"
+	a15 "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/smb/A15"
+	adminrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/admin"
+	configrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/daily_sequence"
+	devicerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/device"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/observation_request"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/observation_result"
+	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
+	rolerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/role"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/specimen"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_template"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/unit"
+	workOrderrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/tcp/ba400"
+	admin_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/admin"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/analyzer"
+	auth_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/auth"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/barcode_generator"
+	configuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/config"
+	deviceuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/device"
+	externaluc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external"
+	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
+	simrsuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simrs"
+	observation_requestuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/observation_request"
+	patientuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/patient"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
+	role_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/role"
+	specimenuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/specimen"
+	test_template_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/test_template"
+	test_type2 "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/test_type"
+	unit2 "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/unit"
+	workOrderuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order/runner"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order/runner/postrun"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order/runner/prerun"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/server"
 
-import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+
 	_ "modernc.org/sqlite"
 )
 
@@ -83,6 +140,7 @@ func InitRestApp() server.RestServer {
 	usecase := analyzer.NewUsecase(repository, observation_requestRepository, specimenRepository, workOrderRepository, deviceRepository, test_typeRepository)
 	hlSevenHandler := rest.NewHlSevenHandler(usecase)
 	healthCheckHandler := rest.NewHealthCheckHandler(schema)
+	healthHandler := rest.NewHealthHandler(schema, cache)
 	patientRepository := patientrepo.NewPatientRepository(gormDB, schema)
 	validate := provideValidator()
 	patientUseCase := patientuc.NewPatientUseCase(schema, patientRepository, workOrderRepository, validate)
@@ -102,6 +160,7 @@ func InitRestApp() server.RestServer {
 	a15restA15rest := a15rest.NewA15()
 	handler := a15_2.NewHandler()
 	coaxHandler := coax.NewHandler(usecase)
+	diestroHandler := diestro.NewHandler(usecase)
 	ncc3300Handler := ncc3300.NewHandler(usecase)
 	tcpHlSevenHandler := tcp.NewHlSevenHandler(usecase)
 	analyxtriasHandler := analyxtrias.NewHandler(usecase)
@@ -110,13 +169,16 @@ func InitRestApp() server.RestServer {
 	swelablumiHandler := swelablumi.NewHandler(usecase)
 	alifaxHandler := alifax.NewHandler(usecase)
 	ncc61Handler := ncc61.NewHandler(usecase)
-	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, coaxHandler, ncc3300Handler, tcpHlSevenHandler, analyxtriasHandler, analyxpancaHandler, swelabalfaHandler, swelablumiHandler, alifaxHandler, ncc61Handler)
+	wondfoHandler := wondfo.NewHandler(usecase)
+	cbs400Handler := cbs400.NewHandler(usecase)
+	verifyu120Handler := verifyu120.NewHandler(usecase)
+	deviceServerStrategy := delivery.NewDeviceServerStrategy(handler, coaxHandler, diestroHandler, ncc3300Handler, tcpHlSevenHandler, analyxtriasHandler, analyxpancaHandler, swelabalfaHandler, swelablumiHandler, alifaxHandler, ncc61Handler, wondfoHandler, cbs400Handler, verifyu120Handler)
 	v := provideAllDevices(deviceRepository)
 	controllerRepository := server2.NewControllerRepository(deviceServerStrategy, v)
 	deviceUseCase := deviceuc.NewDeviceUseCase(schema, deviceRepository, strategy, ba400Ba400, a15restA15rest, controllerRepository)
 	workOrderUseCase := workOrderuc.NewWorkOrderUseCase(schema, workOrderRepository, validate, barcode_generatorUsecase, patientUseCase, deviceUseCase, strategy)
 	observationRequestUseCase := observation_requestuc.NewObservationRequestUseCase(schema, observation_requestRepository, validate)
-	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, gormDB, patientUseCase, deviceUseCase, specimenUseCase, observationRequestUseCase)
+	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, patientUseCase, deviceUseCase, specimenUseCase, observationRequestUseCase)
 	featureListHandler := rest.NewFeatureListHandler()
 	observationRequestHandler := rest.NewObservationRequestHandler(schema, observationRequestUseCase)
 	test_typeUsecase := test_type2.NewUsecase(test_typeRepository)
@@ -130,7 +192,7 @@ func InitRestApp() server.RestServer {
 	unitUseCase := unit2.NewUnitUseCase(schema, unitRepository, validate)
 	unitHandler := rest.NewUnitHandler(schema, unitUseCase)
 	logHandler := rest.NewLogHandler(schema)
-	restHandler := provideRestHandler(hlSevenHandler, healthCheckHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler, unitHandler, logHandler)
+	restHandler := provideRestHandler(hlSevenHandler, healthCheckHandler, healthHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler, unitHandler, logHandler)
 	deviceHandler := rest.NewDeviceHandler(deviceUseCase)
 	serverControllerHandler := rest.NewServerControllerHandler(configrepoRepository, controllerRepository)
 	test_templateRepository := test_template.NewRepository(gormDB, schema)
@@ -147,10 +209,12 @@ func InitRestApp() server.RestServer {
 	khanzaRepository := provideKhanzaRepository(schema)
 	khanzaucUsecase := khanzauc.NewUsecase(khanzaRepository, workOrderRepository, patientRepository, test_typeRepository, barcode_generatorUsecase, resultUsecase)
 	khanzaExternalHandler := rest.NewKhanzaExternalHandler(khanzaucUsecase)
-	externalucUsecase := externaluc.NewUsecase(khanzaucUsecase, schema)
+	simrsRepository := provideSimrsRepository(schema)
+	simrsucUsecase := simrsuc.NewUsecase(simrsRepository, workOrderRepository, workOrderUseCase, patientRepository, test_typeRepository, schema, resultUsecase)
+	externalucUsecase := externaluc.NewUsecase(khanzaucUsecase, simrsucUsecase, workOrderRepository, schema)
 	externalHandler := rest.NewExternalHandler(externalucUsecase)
 	jwtMiddleware := middleware.NewJWTMiddleware(schema)
-	cronHandler := cron.NewCronHandler(khanzaucUsecase)
+	cronHandler := cron.NewCronHandler(khanzaucUsecase, simrsucUsecase)
 	cronManager := cron.NewCronManager(cronHandler)
 	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, externalHandler, jwtMiddleware, cronManager)
 	return restServer

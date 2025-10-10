@@ -34,6 +34,10 @@ func NewKhanzaFlag(result TestResult) Flag {
 		return FlagLow
 	case NoDataResult:
 		return ""
+	case PositiveResult:
+		return FlagHigh // Positive could be considered as abnormal/high
+	case NegativeResult:
+		return "" // Negative could be considered as normal
 	}
 
 	return ""

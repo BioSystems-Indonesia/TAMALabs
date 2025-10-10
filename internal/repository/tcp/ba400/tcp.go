@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/pkg/tcp"
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/tcp"
 )
 
 // TCP is a struct handle TCP connection

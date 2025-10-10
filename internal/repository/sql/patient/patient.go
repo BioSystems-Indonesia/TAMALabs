@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql"
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -124,7 +124,6 @@ func (r PatientRepository) IsExists(patient *entity.Patient) (bool, error) {
 
 	return c > 0, err
 }
-
 
 func (r PatientRepository) FirstOrCreate(patient *entity.Patient) (entity.Patient, error) {
 	err := r.db.

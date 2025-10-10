@@ -7,19 +7,19 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/external/khanza"
-	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
-	workOrderRepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
-	"github.com/oibacidem/lims-hl-seven/internal/util"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/external/khanza"
+	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
+	workOrderRepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -163,8 +163,15 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 		unit := testResult.Unit
 		refRange := testResult.ReferenceRange
 
-		if alias == "Jumlah Trombosit" || alias == "Jumlah Leukosit" {
-			resultValue = resultValue * 1000
+		// Parse the string result to float64 for calculations
+		resultFloat, err := strconv.ParseFloat(resultValue, 64)
+		if err != nil {
+			slog.Error("failed to parse result value", "error", err, "resultValue", resultValue)
+			resultFloat = 0 // Default to 0 if parsing fails
+		}
+
+		if strings.TrimSpace(alias) == "Jumlah Trombosit" || strings.TrimSpace(alias) == "Jumlah Leukosit" {
+			resultFloat = resultFloat * 1000
 			unit = "/µL"
 
 			// Convert reference range by multiplying by 1000
@@ -179,14 +186,18 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 		// Round the result value (e.g., 8.4 -> 8, 8.6 -> 9)
 		// Exception: Don't round Hemoglobin and Eritrosit
 		var resultValueStr string
-		if alias == "Hemoglobin" || alias == "Eritrosit" {
-			// Keep decimal for Hemoglobin and Eritrosit with thousand separator
-			resultValueStr = formatNumberWithThousandSeparator(resultValue, 1)
+		// Special formatting for Trombosit and Leukosit (already converted by 1000 above)
+		if strings.TrimSpace(alias) == "Jumlah Trombosit" || strings.TrimSpace(alias) == "Jumlah Leukosit" {
+			resultValueStr = formatNumberWithThousandSeparator(resultFloat, 0)
 		} else {
-			// Round other tests to whole numbers with thousand separator
-			roundedValue := math.Round(resultValue)
-			resultValueStr = formatNumberWithThousandSeparator(roundedValue, 0)
+			// Keep decimal for other tests with thousand separator
+			resultValueStr = formatNumberWithThousandSeparator(resultFloat, 1)
 		}
+		// } else {
+		// 	// Round other tests to whole numbers with thousand separator
+		// 	roundedValue := math.Round(resultValue)
+		// resultValueStr = formatNumberWithThousandSeparator(roundedValue, 0)
+		// }
 
 		// Log the values for debugging
 		flag := entity.NewKhanzaFlag(testResult)
@@ -424,7 +435,7 @@ func (u *Usecase) ProcessRequest(ctx context.Context, rawRequest []byte) error {
 	var err error
 
 	slog.Info("debug khanza process request", "rawRequest", string(rawRequest))
-
+	rawRequest = u.fixBrokenPName(rawRequest)
 	err = json.Unmarshal(rawRequest, &request)
 	if err != nil {
 		return fmt.Errorf("external.ProcessRequest json.Unmarshal failed: %w\nbody: %s", err, string(rawRequest))
@@ -481,8 +492,14 @@ func (u *Usecase) GetResult(ctx context.Context, ono string) (Response, error) {
 		}
 
 		hasil := ""
-		if t.Result != nil {
-			hasil = strconv.FormatFloat(*t.Result, 'f', t.TestType.Decimal, 64)
+		if t.Result != "" {
+			// Parse the string result to float64, then format it
+			if resultFloat, err := strconv.ParseFloat(t.Result, 64); err == nil {
+				hasil = strconv.FormatFloat(resultFloat, 'f', t.TestType.Decimal, 64)
+			} else {
+				// If parsing fails, use the string value as is
+				hasil = t.Result
+			}
 		}
 
 		resultTest[i] = u.resultConvert(ResponseResultTest{
@@ -522,19 +539,106 @@ func (u *Usecase) getWorkOrderWithFallback(ctx context.Context, ono string, visi
 }
 
 func (*Usecase) resultConvert(result ResponseResultTest) ResponseResultTest {
-	if result.NamaTest == "Jumlah Trombosit " || result.NamaTest == "Jumlah Leukosit " {
-		result.Hasil = result.Hasil + ".000"
+	if strings.TrimSpace(result.NamaTest) == "Jumlah Trombosit" || strings.TrimSpace(result.NamaTest) == "Jumlah Leukosit" {
+		// For GetResult method, we need to convert the display format
+		// The values here are already in base units (17.8), so convert for display
+		if result.Hasil != "" {
+			// Parse the number value
+			value, err := strconv.ParseFloat(result.Hasil, 64)
+			if err == nil {
+				// Multiply by 1000 and format with dot as thousand separator
+				convertedValue := value * 1000
+				result.Hasil = formatNumberWithThousandSeparator(convertedValue, 0)
+			}
+		}
 
-		min := strings.Split(result.NilaiNormal, "-")[0] + ".000"
-		max := strings.Split(result.NilaiNormal, "-")[1] + ".000"
+		// Convert reference range values
+		if strings.Contains(result.NilaiNormal, "-") {
+			parts := strings.Split(result.NilaiNormal, "-")
+			if len(parts) == 2 {
+				minStr := strings.TrimSpace(parts[0])
+				maxStr := strings.TrimSpace(parts[1])
 
-		result.NilaiNormal = fmt.Sprintf("%s - %s", min, max)
-		result.Satuan = "µL"
+				minVal, minErr := strconv.ParseFloat(minStr, 64)
+				maxVal, maxErr := strconv.ParseFloat(maxStr, 64)
+
+				if minErr == nil && maxErr == nil {
+					minConverted := formatNumberWithThousandSeparator(minVal*1000, 0)
+					maxConverted := formatNumberWithThousandSeparator(maxVal*1000, 0)
+					result.NilaiNormal = fmt.Sprintf("%s - %s", minConverted, maxConverted)
+				}
+			}
+		}
+
+		result.Satuan = "uL"
 	}
 
-	if result.NamaTest == "Glukosa Sewaktu" {
+	if strings.TrimSpace(result.NamaTest) == "Glukosa Sewaktu" {
 		result.NilaiNormal = "< 180"
 	}
+
+	if strings.TrimSpace(result.NamaTest) == "HDL - Kolesterol" {
+		h, _ := strconv.Atoi(result.Hasil)
+		if h < 40 {
+			result.Flag = "H"
+		} else if h >= 40 {
+			result.Flag = ""
+		}
+		result.NilaiNormal = ">40"
+	}
+
+	if strings.TrimSpace(result.NamaTest) == "LDL - Kolesterol" {
+		result.NilaiNormal = "<100"
+	}
+
+	if strings.TrimSpace(result.NamaTest) == "Total - Kolesterol" {
+		result.NilaiNormal = "<200"
+	}
+
+	if strings.TrimSpace(result.NamaTest) == "Trigliserida" {
+		result.NilaiNormal = "<150"
+	}
+
+	if strings.TrimSpace(result.NamaTest) == "Eritrosit" {
+		result.Satuan = "10^6/uL"
+	}
+
+	if strings.TrimSpace(result.NamaTest) == "Bilirubin Direk" {
+		result.NilaiNormal = "< 0,5"
+	}
+
+	if strings.TrimSpace(result.NamaTest) == "Asam Urat" {
+		result.NilaiNormal = "< 5,7"
+	}
+
+	// Convert decimal separator from dot to comma for most tests, but keep dots for thousand separators in Trombosit/Leukosit
+	if strings.TrimSpace(result.NamaTest) == "Jumlah Trombosit" || strings.TrimSpace(result.NamaTest) == "Jumlah Leukosit" {
+		// Keep dots as thousand separators for these tests (250.000, not 250,000)
+	} else {
+		// Convert decimal separator from dot to comma for other tests (5.4 -> 5,4)
+		result.Hasil = strings.ReplaceAll(result.Hasil, ".", ",")
+	}
+
+	// Remove unnecessary zeros from NilaiNormal (exclude specific tests)
+	if strings.TrimSpace(result.NamaTest) == "Jumlah Trombosit" || strings.TrimSpace(result.NamaTest) == "Jumlah Leukosit" || strings.TrimSpace(result.NamaTest) == "Eritrosit" {
+		// Keep NilaiNormal as is for these tests
+	} else {
+		// Remove unnecessary zeros from NilaiNormal throughout the string (2.00 - 4.00 -> 2 - 4)
+		result.NilaiNormal = strings.ReplaceAll(result.NilaiNormal, ".00", "")
+		result.NilaiNormal = strings.ReplaceAll(result.NilaiNormal, ".0", "")
+		result.NilaiNormal = strings.ReplaceAll(result.NilaiNormal, ",00", "")
+		result.NilaiNormal = strings.ReplaceAll(result.NilaiNormal, ",0", "")
+	}
+
+	// Remove unnecessary zeros from Hasil (exclude Trombosit/Leukosit to preserve thousand separators)
+	if strings.TrimSpace(result.NamaTest) == "Jumlah Trombosit" || strings.TrimSpace(result.NamaTest) == "Jumlah Leukosit" {
+		// Keep thousand separators for these tests (250.000, not 250)
+	} else {
+		// Remove unnecessary zeros for other tests (12.0 -> 12, but keep 12.05 as 12,05)
+		result.Hasil = strings.TrimSuffix(result.Hasil, ".0")
+		result.Hasil = strings.TrimSuffix(result.Hasil, ",0")
+	}
+
 	return result
 }
 
@@ -636,4 +740,9 @@ func (u *Usecase) getLocation(r Request) string {
 	allLocation = append(allLocation, strings.Join(bedLocation, "-"))
 
 	return strings.Join(allLocation, "|")
+}
+
+func (u *Usecase) fixBrokenPName(raw []byte) []byte {
+	re := regexp.MustCompile(`"pname"\s*:\s*"([^"]*?)"([^",}]+)"`)
+	return re.ReplaceAll(raw, []byte(`"pname": "$1'$2"`))
 }

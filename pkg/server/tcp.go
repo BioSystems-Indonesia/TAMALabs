@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
 )
 
 // TCPHandler is an interface for TCP handler

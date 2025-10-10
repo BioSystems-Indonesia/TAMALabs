@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/oibacidem/lims-hl-seven/pkg/mllp"
-	"github.com/oibacidem/lims-hl-seven/pkg/panics"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/mllp"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/panics"
 )
 
 type Handler struct{}

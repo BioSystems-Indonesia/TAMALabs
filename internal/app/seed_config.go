@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 )
 
 var seedConfig = []entity.Config{
@@ -31,6 +31,14 @@ var seedConfig = []entity.Config{
 	{
 		ID:    "KhanzaMainDatabaseDSN",
 		Value: "root:secret@tcp(localhost:3306)/khanza?parseTime=true",
+	},
+	{
+		ID:    "SimrsIntegrationEnabled",
+		Value: "false",
+	},
+	{
+		ID:    "SimrsDatabaseDSN",
+		Value: "root:secret@tcp(localhost:3306)/simrs_db?charset=utf8mb4&parseTime=True&loc=Local",
 	},
 }
 

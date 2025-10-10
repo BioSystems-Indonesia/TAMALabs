@@ -8,7 +8,7 @@ import (
 	"log/slog"
 
 	"ariga.io/atlas-provider-gorm/gormschema"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 )
 
 func main() {

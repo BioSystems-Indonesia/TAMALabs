@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/mock"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
 	"github.com/glebarez/sqlite"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/mock"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"gorm.io/gorm"

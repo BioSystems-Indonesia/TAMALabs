@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	adminrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/admin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	adminrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -75,26 +75,7 @@ func (u *AuthUseCase) Login(ctx context.Context, req *entity.LoginRequest) (enti
 func (u *AuthUseCase) createAccessToken(ctx context.Context, admin entity.Admin) (string, error) {
 	expirationTime := time.Now().Add(u.tokenExpirationTime)
 
-	// Safe handling of Email pointer
-	var email string
-	if admin.Email != nil {
-		email = *admin.Email
-	}
-
-	claims := entity.AdminClaims{
-		ID:        admin.ID,
-		Fullname:  admin.Fullname,
-		Email:     email,
-		IsActive:  admin.IsActive,
-		Role:      admin.Roles[0].Name,
-		CreatedAt: admin.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: admin.UpdatedAt.Format(time.RFC3339),
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "lims-hl-seven",
-		},
-	}
+	claims := admin.ToAdminClaim(expirationTime)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 

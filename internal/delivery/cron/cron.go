@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/oibacidem/lims-hl-seven/pkg/panics"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/panics"
 	"github.com/robfig/cron/v3"
 )
 

@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	deviceuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/device"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/panics"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	deviceuc "github.com/oibacidem/lims-hl-seven/internal/usecase/device"
-	"github.com/oibacidem/lims-hl-seven/pkg/panics"
 )
 
 const defaultTimeout = 5 * time.Second

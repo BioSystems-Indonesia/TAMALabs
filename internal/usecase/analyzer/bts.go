@@ -18,8 +18,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/google/uuid"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
 func (u *Usecase) ProcessBTS(ctx context.Context) error {

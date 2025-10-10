@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	a15 "github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner/postrun"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner/prerun"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
+	a15 "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/smb/A15"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/tcp/ba400"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order/runner/postrun"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order/runner/prerun"
 )
 
 type Strategy struct {

@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"log/slog"
 
 	"database/sql/driver"
 	"encoding/json"
@@ -16,9 +17,17 @@ func (j *JSONStringArray) Scan(value interface{}) error {
 		return nil
 	}
 
-	// Convert value to a byte slice
-	bytes, ok := value.([]byte)
-	if !ok {
+	var bytes []byte
+
+	// Handle both []byte and string types
+	switch v := value.(type) {
+	case []byte:
+		bytes = v
+	case string:
+		bytes = []byte(v)
+		// Log when we receive string type (for monitoring)
+		slog.Debug("JSONStringArray received string type from database", "value", v)
+	default:
 		return fmt.Errorf("unsupported data type: %T", value)
 	}
 

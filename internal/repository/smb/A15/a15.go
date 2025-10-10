@@ -9,8 +9,8 @@ import (
 	"net"
 	"regexp"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/hirochachacha/go-smb2"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
 type A15 struct{}
@@ -155,7 +155,7 @@ func createContentFile(req *entity.SendPayloadRequest) []byte {
 	for _, p := range req.Patients {
 		for _, s := range p.Specimen {
 			for _, r := range s.ObservationRequest {
-				if r.TestType.IsCalculatedTest {
+				if r.TestType.IsCalculatedTest || r.TestType.Device.Type != entity.DeviceTypeA15 {
 					continue
 				}
 				samples = append(samples, row(req, p, s, r))

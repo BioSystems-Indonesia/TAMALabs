@@ -9,9 +9,9 @@ import (
 
 	"log/slog"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
-	"github.com/oibacidem/lims-hl-seven/internal/util"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/tcp/ba400"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
 )
 
 // ProcessOULR22 processes the OUL_R22 message.
@@ -232,4 +232,141 @@ func (u *Usecase) parseCoaxDate(date string) time.Time {
 		return time.Time{}
 	}
 	return parsed
+}
+
+func (u *Usecase) ProcessDiestro(ctx context.Context, data entity.DiestroResult) error {
+	speciment, err := u.SpecimenRepository.FindByBarcode(ctx, data.PatientID)
+	if err != nil {
+		slog.Error("specimen not found", "barcode", data.PatientID, "error", err)
+		return err
+	}
+
+	observation := entity.ObservationResult{
+		SpecimenID: int64(speciment.ID),
+		TestCode:   data.TestName,
+		Values:     []string{fmt.Sprintf("%.2f", data.Value)},
+		Unit:       data.Unit,
+		Date:       data.Timestamp,
+	}
+
+	err = u.ObservationResultRepository.Create(ctx, &observation)
+	if err != nil {
+		slog.Error("failed to create observation result", "specimen_id", speciment.ID, "test_code", data.TestName, "error", err)
+	}
+	return nil
+}
+
+func (u *Usecase) ProcessCBS400(ctx context.Context, data entity.CBS400Result) error {
+	specimen, err := u.SpecimenRepository.FindByBarcode(ctx, data.PatientID)
+	if err != nil {
+		slog.Error("specimen not found", "barcode", data.PatientID, "error", err)
+		return err
+	}
+
+	observation := entity.ObservationResult{
+		SpecimenID: int64(specimen.ID),
+		TestCode:   data.TestName,
+		Values:     []string{fmt.Sprintf("%.2f", data.Value)},
+		Unit:       data.Unit,
+		Date:       data.Timestamp,
+	}
+
+	err = u.ObservationResultRepository.Create(ctx, &observation)
+	if err != nil {
+		slog.Error("failed to create observation result", "specimen_id", specimen.ID, "test_code", data.TestName, "error", err)
+	}
+	return nil
+}
+
+func (u *Usecase) ProcessVerifyU120(ctx context.Context, data entity.VerifyResult) error {
+	specimen, err := u.SpecimenRepository.FindByBarcode(ctx, fmt.Sprintf("%s%s", data.SampleType, data.PatientID))
+	if err != nil {
+		slog.Error("specimen not found", "barcode", data.PatientID, "error", err)
+		return err
+	}
+
+	// Use ValueStr if available, otherwise format the numeric Value
+	var valueString string
+	if data.ValueStr != "" {
+		valueString = data.ValueStr
+		slog.Debug("Using ValueStr for VerifyU120", "testName", data.TestName, "valueStr", data.ValueStr)
+	} else {
+		valueString = fmt.Sprintf("%.2f", data.Value)
+		slog.Debug("Using numeric Value for VerifyU120", "testName", data.TestName, "value", data.Value, "formatted", valueString)
+	}
+
+	observation := entity.ObservationResult{
+		SpecimenID:     int64(specimen.ID),
+		TestCode:       data.TestName,
+		Values:         []string{valueString},
+		Unit:           "", // Don't store unit
+		ReferenceRange: "", // Don't store reference range for VerifyU120
+		Date:           data.Timestamp,
+	}
+
+	err = u.ObservationResultRepository.Create(ctx, &observation)
+	if err != nil {
+		slog.Error("failed to create observation result", "specimen_id", specimen.ID, "test_code", data.TestName, "error", err)
+	}
+	return nil
+}
+
+func (u *Usecase) ProcessVerifyU120Batch(ctx context.Context, data []entity.VerifyResult) error {
+	if len(data) == 0 {
+		return nil
+	}
+
+	// Get specimen info from first result (all should have same patient)
+	firstResult := data[0]
+	specimen, err := u.SpecimenRepository.FindByBarcode(ctx, fmt.Sprintf("%s%s", firstResult.SampleType, firstResult.PatientID))
+	if err != nil {
+		slog.Error("specimen not found", "barcode", firstResult.PatientID, "error", err)
+		return err
+	}
+
+	// Prepare all observation results
+	var observations []entity.ObservationResult
+	for _, result := range data {
+		// Use ValueStr if available, otherwise format the numeric Value
+		var valueString string
+		if result.ValueStr != "" {
+			valueString = result.ValueStr
+		} else {
+			valueString = fmt.Sprintf("%.2f", result.Value)
+		}
+
+		observation := entity.ObservationResult{
+			SpecimenID:     int64(specimen.ID),
+			TestCode:       result.TestName,
+			Values:         []string{valueString},
+			Unit:           "", // Don't store unit
+			ReferenceRange: "", // Don't store reference range for VerifyU120
+			Date:           result.Timestamp,
+		}
+		observations = append(observations, observation)
+	}
+
+	// Create all observations at once
+	err = u.ObservationResultRepository.CreateMany(ctx, observations)
+	if err != nil {
+		slog.Error("failed to create observation results", "specimen_id", specimen.ID, "count", len(observations), "error", err)
+		return err
+	}
+
+	// Update work order status to completed
+	workOrder := specimen.WorkOrder
+	workOrder.Status = entity.WorkOrderStatusCompleted
+	err = u.WorkOrderRepository.Update(&workOrder)
+	if err != nil {
+		slog.Error("failed to update work order status", "work_order_id", workOrder.ID, "error", err)
+		return err
+	}
+
+	slog.Info("Successfully processed VerifyU120 batch",
+		"patientID", firstResult.PatientID,
+		"specimenID", specimen.ID,
+		"workOrderID", workOrder.ID,
+		"resultCount", len(observations))
+
+	return nil
 }

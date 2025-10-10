@@ -11,13 +11,14 @@ export interface RawTestResult {
   id: number;
   picked: boolean;
   reference_range: string;
-  result: number;
+  computed_reference_range?: string; // New field for computed reference range from TestType
+  result: string; // Changed from number to string to support qualitative values like "negative", "1+", etc.
   specimen_id: number;
   test: string;
   test_type_id: number;
   unit: string;
 
-  egfr: EGFRCalculation
+  egfr: EGFRCalculation;
 }
 
 export type EGFRCalculation = {
@@ -37,6 +38,7 @@ export interface PatientResultHistoryResponse {
 export interface ProcessedTestResult {
   test: string;
   reference_range: string;
+  computed_reference_range?: string; // New field for computed reference range from TestType
   unit: string;
   category: string;
   isCategory?: boolean; // Flag to identify category header rows
@@ -51,7 +53,7 @@ export enum AbnormalFlag {
   Normal = 0,
   High = 1,
   Low = 2,
-  Critical = 3
+  Critical = 3,
 }
 
 // Utility types for grouping functions

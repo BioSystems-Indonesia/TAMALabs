@@ -4,10 +4,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/google/uuid"
 	"github.com/kardianos/hl7/h251"
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
 func NewOML_O33(patient entity.Patient, device entity.Device, urgent bool) h251.OML_O33 {

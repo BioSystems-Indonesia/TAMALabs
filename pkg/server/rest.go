@@ -11,10 +11,10 @@ import (
 
 	"log/slog"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/cron"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/panics"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/internal/delivery/cron"
-	"github.com/oibacidem/lims-hl-seven/pkg/panics"
 )
 
 // RestServer is an interface for rest server

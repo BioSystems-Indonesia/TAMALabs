@@ -11,6 +11,24 @@ import (
 	"sync"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/cron"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/rest"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/middleware"
+	khanza "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/external/khanza"
+	simrs "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/external/simrs"
+	devicerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/device"
+	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
+	workOrderrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
+	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
+	simrsuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simrs"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
+	workOrderuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/migrations"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/server"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
@@ -89,6 +107,7 @@ func provideRestServer(
 func provideRestHandler(
 	hlSevenHandler *rest.HlSevenHandler,
 	healthCheck *rest.HealthCheckHandler,
+	healthHandler *rest.HealthHandler,
 	patientHandler *rest.PatientHandler,
 	specimenHandler *rest.SpecimenHandler,
 	workOrder *rest.WorkOrderHandler,
@@ -103,6 +122,7 @@ func provideRestHandler(
 	return &rest.Handler{
 		HlSevenHandler:            hlSevenHandler,
 		HealthCheckHandler:        healthCheck,
+		HealthHandler:             healthHandler,
 		PatientHandler:            patientHandler,
 		SpecimenHandler:           specimenHandler,
 		WorkOrderHandler:          workOrder,
@@ -267,14 +287,14 @@ func seedTestData(db *gorm.DB) error {
 		}
 	}
 
-	for _, device := range seedDevice {
-		err := db.Clauses(clause.OnConflict{
-			DoNothing: true,
-		}).Create(&device).Error
-		if err != nil {
-			return err
-		}
-	}
+	// for _, device := range seedDevice {
+	// 	err := db.Clauses(clause.OnConflict{
+	// 		DoNothing: true,
+	// 	}).Create(&device).Error
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	for _, role := range seedRole {
 		err := db.Clauses(clause.OnConflict{UpdateAll: true}).
@@ -355,7 +375,13 @@ func provideValidator() *validator.Validate {
 }
 
 func provideCache() *cache.Cache {
-	return cache.New(time.Hour, 5*time.Minute)
+	c := cache.New(time.Hour, 5*time.Minute)
+
+	c.OnEvicted(func(key string, value interface{}) {
+		slog.Debug("Cache item evicted", "key", key, "value_type", fmt.Sprintf("%T", value))
+	})
+
+	return c
 }
 
 func provideConfig(db *gorm.DB) *config.Schema {
@@ -395,6 +421,51 @@ func provideKhanzaRepository(cfg *config.Schema) *khanza.Repository {
 	}
 
 	return khanza.NewRepository(bridgeDB, mainDB)
+}
+
+func provideSimrsRepository(cfg *config.Schema) *simrs.Repository {
+	if cfg.SimrsIntegrationEnabled != "true" {
+		return nil
+	}
+
+	simrsDB, err := simrs.NewDB(cfg.SimrsDatabaseDSN)
+	if err != nil {
+		slog.Error("Error on create SIMRS db connection. If you want to disable SIMRS integration, set SimrsIntegrationEnabled to false on config", "error", err)
+		slog.Info("failed to create SIMRS db connection, SIMRS integration will be disabled", "error", err)
+		return nil
+	}
+
+	return simrs.NewRepository(simrsDB)
+}
+
+func provideSimrsUsecase(
+	cfg *config.Schema,
+	simrsRepo *simrs.Repository,
+	workOrderRepo *workOrderrepo.WorkOrderRepository,
+	workOrderUC *workOrderuc.WorkOrderUseCase,
+	patientRepo *patientrepo.PatientRepository,
+	testTypeRepo *test_type.Repository,
+	resultUC *result.Usecase,
+) *simrsuc.Usecase {
+	if cfg.SimrsIntegrationEnabled != "true" {
+		slog.Info("SIMRS integration is disabled, SIMRS Usecase will not be created")
+		return nil
+	}
+
+	if simrsRepo == nil {
+		slog.Info("SIMRS repository is nil (connection failed), SIMRS Usecase will not be created")
+		return nil
+	}
+
+	return simrsuc.NewUsecase(
+		simrsRepo,
+		workOrderRepo,
+		workOrderUC,
+		patientRepo,
+		testTypeRepo,
+		cfg,
+		resultUC,
+	)
 }
 
 func provideCanalHandler(

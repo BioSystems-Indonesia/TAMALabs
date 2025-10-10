@@ -8,15 +8,15 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
-	"github.com/oibacidem/lims-hl-seven/pkg/panics"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/analyzer"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/panics"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
-	"github.com/oibacidem/lims-hl-seven/internal/util"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/config"
 )
 
 type ResultHandler struct {
@@ -67,7 +67,8 @@ func (h *ResultHandler) AddTestResult(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	result, err := h.resultUsecase.PutTestResult(c.Request().Context(), req)
+	admin := entity.GetEchoContextUser(c).ToAdmin()
+	result, err := h.resultUsecase.PutTestResult(c.Request().Context(), req, admin)
 	if err != nil {
 		return handleError(c, err)
 	}

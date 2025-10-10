@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/test_type"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/labstack/echo/v4"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
 type TestTypeHandler struct {
@@ -146,4 +146,24 @@ func (h *TestTypeHandler) DeleteTestType(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, testType)
+}
+
+func (h *TestTypeHandler) UploadBulkTestType(c echo.Context) error {
+	mf, err := c.FormFile("file")
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	f, err := mf.Open()
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+	defer f.Close()
+
+	err = h.testTypeUsecase.BulkCreate(c.Request().Context(), f)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 }

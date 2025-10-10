@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	workOrderrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
 )
 
 type RunAction struct {

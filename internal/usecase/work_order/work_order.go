@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	workOrderrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
+	deviceuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/device"
+	patientuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/patient"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order/runner"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/panics"
 	"github.com/go-playground/validator/v10"
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase"
-	deviceuc "github.com/oibacidem/lims-hl-seven/internal/usecase/device"
-	patientuc "github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
-	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner"
-	"github.com/oibacidem/lims-hl-seven/pkg/panics"
 )
 
 type WorkOrderUseCase struct {

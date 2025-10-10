@@ -1,8 +1,8 @@
 package tcp
 
 import (
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/kardianos/hl7/h251"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
 )
 
 func MapOULR22ToEntity(msg *h251.OUL_R22) (entity.OUL_R22, error) {

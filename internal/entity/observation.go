@@ -1,12 +1,11 @@
 package entity
 
 import (
-	"fmt"
 	"log/slog"
 	"strconv"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
 	"gorm.io/gorm"
 )
 
@@ -63,13 +62,41 @@ type ObservationResult struct {
 	AbnormalFlag   JSONStringArray `json:"abnormal_flag" gorm:"type:json"` // Using JSON for the slice
 	Comments       string          `json:"comments"`
 	Picked         bool            `json:"picked" gorm:"not null,default:false"`
+	CreatedBy      int64           `json:"created_by" gorm:"not null;default:-1"`
 	CreatedAt      time.Time       `json:"created_at" gorm:"not null"`
 	UpdatedAt      time.Time       `json:"updated_at" gorm:"not null"`
 
-	TestType TestType `json:"test_type" gorm:"foreignKey:TestCode;references:Code" validate:"required"`
+	TestType       TestType `json:"test_type" gorm:"foreignKey:TestCode;references:Code" validate:"required"`
+	CreatedByAdmin Admin    `json:"created_by_admin" gorm:"foreignKey:CreatedBy;references:ID"`
 
 	// Calculated fields (not stored in database)
 	EGFR *EGFRCalculation `json:"egfr,omitempty" gorm:"-"`
+	// ComputedReferenceRange always uses TestType.GetReferenceRange() instead of stored ReferenceRange
+	ComputedReferenceRange string `json:"computed_reference_range" gorm:"-"`
+}
+
+func (o *ObservationResult) AfterFind(tx *gorm.DB) error {
+	switch o.CreatedBy {
+	case int64(constant.CreatedByUnknown):
+		o.CreatedByAdmin = Admin{
+			ID:       int64(constant.CreatedByUnknown),
+			Fullname: "Unknown",
+		}
+	case int64(constant.CreatedBySystem):
+		o.CreatedByAdmin = Admin{
+			ID:       int64(constant.CreatedBySystem),
+			Fullname: "System",
+		}
+	}
+
+	// Set computed reference range from TestType
+	if o.TestType.ID != 0 {
+		o.ComputedReferenceRange = o.TestType.GetReferenceRange()
+	} else {
+		o.ComputedReferenceRange = o.ReferenceRange // fallback to stored value
+	}
+
+	return nil
 }
 
 // BeforeCreate is called before creating ObservationResult
@@ -103,7 +130,7 @@ func (o *ObservationResult) generateReferenceRange(tx *gorm.DB) error {
 		decimal = 0
 	}
 
-	o.ReferenceRange = fmt.Sprintf("%.*f - %.*f", decimal, testType.LowRefRange, decimal, testType.HighRefRange)
+	o.ReferenceRange = testType.GetReferenceRange()
 	return nil
 }
 
@@ -119,10 +146,19 @@ func (o ObservationResult) GetFirstValue() float64 {
 	v, err := strconv.ParseFloat(o.Values[0], 64)
 	if err != nil {
 		slog.Warn("failed to parse observation.Values from observation", "id", o.ID, "error", err)
-		return v
+		return 0 // Return 0 instead of v (which would be 0 anyway when err != nil)
 	}
 
 	return v
+}
+
+// GetFirstValueAsString get the first value as string (preserves qualitative values)
+func (o ObservationResult) GetFirstValueAsString() string {
+	if len(o.Values) < 1 {
+		slog.Info("failed to get first values: is empty", "id", o.ID)
+		return ""
+	}
+	return o.Values[0]
 }
 
 type ObservationRequestGetManyRequest struct {

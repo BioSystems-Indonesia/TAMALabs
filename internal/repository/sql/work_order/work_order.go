@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oibacidem/lims-hl-seven/config"
-	"github.com/oibacidem/lims-hl-seven/internal/constant"
-	"github.com/oibacidem/lims-hl-seven/internal/entity"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql"
-	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
-	"github.com/oibacidem/lims-hl-seven/internal/util"
+	"github.com/BioSystems-Indonesia/TAMALabs/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/specimen"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
 	"github.com/patrickmn/go-cache"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -31,10 +31,12 @@ type WorkOrderRepository struct {
 func NewWorkOrderRepository(db *gorm.DB, cfg *config.Schema, specimentRepo *specimen.Repository, cache *cache.Cache) *WorkOrderRepository {
 	r := &WorkOrderRepository{db: db, cfg: cfg, specimentRepo: specimentRepo, cache: cache}
 
-	err := r.SyncBarcodeSequence(context.Background())
-	if err != nil {
-		panic(err)
-	}
+	// DISABLED: Cache-based barcode sequence system
+	// Now using database-based daily_sequence for proper daily reset
+	// err := r.SyncBarcodeSequence(context.Background())
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	return r
 }
@@ -108,6 +110,7 @@ func (r WorkOrderRepository) FindOneForResult(id int64) (entity.WorkOrder, error
 		Preload("Specimen.ObservationRequest.TestType").
 		Preload("Specimen.ObservationResult").
 		Preload("Specimen.ObservationResult.TestType").
+		Preload("Specimen.ObservationResult.CreatedByAdmin").
 		Preload("Doctors").
 		Preload("Analyzers").
 		First(&workOrder).Error
@@ -242,10 +245,12 @@ func (r WorkOrderRepository) Create(req *entity.WorkOrderCreateRequest) (entity.
 			return fmt.Errorf("error upserting relation: %w", err)
 		}
 
-		err = r.IncrementBarcodeSequence(tx.Statement.Context)
-		if err != nil {
-			return fmt.Errorf("error incrementing barcode sequence: %w", err)
-		}
+		// REMOVED: Cache-based barcode sequence system to prevent conflict with database-based system
+		// Now using daily_sequence table with atomic GetNextSequence for proper daily reset
+		// err = r.IncrementBarcodeSequence(tx.Statement.Context)
+		// if err != nil {
+		// 	return fmt.Errorf("error incrementing barcode sequence: %w", err)
+		// }
 
 		return nil
 	})
@@ -721,7 +726,7 @@ func (r WorkOrderRepository) SyncBarcodeSequence(ctx context.Context) error {
 	tomorrowMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.Local)
 
 	var count int64
-	err := r.db.Model(entity.WorkOrder{}).
+	err := r.db.WithContext(ctx).Model(entity.WorkOrder{}).
 		Where("created_at >= ? and created_at < ?", currentDayMidnight, tomorrowMidnight).
 		Count(&count).Error
 	if err != nil {
@@ -729,7 +734,20 @@ func (r WorkOrderRepository) SyncBarcodeSequence(ctx context.Context) error {
 	}
 
 	expire := tomorrowMidnight.Sub(now)
+
+	if expire < time.Minute {
+		expire = time.Minute
+	}
+
+	r.cache.Delete(constant.KeyWorkOrderBarcodeSequence)
+
 	r.cache.Set(constant.KeyWorkOrderBarcodeSequence, int64(count+1), expire)
+
+	slog.Debug("Barcode sequence synced",
+		"count", count+1,
+		"expire_in", expire.String(),
+		"current_day", currentDayMidnight.Format("2006-01-02"),
+	)
 
 	return nil
 }

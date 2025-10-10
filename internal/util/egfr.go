@@ -57,10 +57,25 @@ func CalculateEGFRCKDEPI(creatinine float64, age float64, sex PatientSex) EGFRRe
 		kappa = 0.9
 	}
 
+	// Guard against invalid inputs that would produce Inf/NaN (e.g., creatinine <= 0 or age <= 0)
+	if creatinine <= 0 || age <= 0 {
+		return EGFRResult{
+			Value:    0,
+			Formula:  "CKD-EPI 2021",
+			Unit:     "mL/min/1.73m²",
+			Category: "Invalid input",
+		}
+	}
+
 	minRatio := math.Min(creatinine/kappa, 1.0)
 	maxRatio := math.Max(creatinine/kappa, 1.0)
 
 	egfr = 142 * math.Pow(minRatio, alpha) * math.Pow(maxRatio, -1.200) * math.Pow(0.9938, age) * sexFactor
+
+	// sanitize result: encoding/json does not support NaN/Inf
+	if math.IsNaN(egfr) || math.IsInf(egfr, 0) {
+		egfr = 0
+	}
 
 	category := categorizeEGFR(egfr)
 
@@ -83,8 +98,23 @@ func CalculateEGFRMDRD(creatinine float64, age float64, sex PatientSex) EGFRResu
 		sexFactor = 1.0
 	}
 
+	// Guard against invalid inputs that would produce Inf/NaN (e.g., creatinine <= 0 or age <= 0)
+	if creatinine <= 0 || age <= 0 {
+		return EGFRResult{
+			Value:    0,
+			Formula:  "MDRD",
+			Unit:     "mL/min/1.73m²",
+			Category: "Invalid input",
+		}
+	}
+
 	// MDRD formula: 175 × (Scr)^-1.154 × (Age)^-0.203 × (0.742 if female)
 	egfr = 175 * math.Pow(creatinine, -1.154) * math.Pow(age, -0.203) * sexFactor
+
+	// sanitize result: encoding/json does not support NaN/Inf
+	if math.IsNaN(egfr) || math.IsInf(egfr, 0) {
+		egfr = 0
+	}
 
 	category := categorizeEGFR(egfr)
 

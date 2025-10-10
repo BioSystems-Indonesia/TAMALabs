@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"strings"
 
 	"gorm.io/gorm"
@@ -14,13 +15,16 @@ type TestType struct {
 	Unit             string  `json:"unit"`
 	LowRefRange      float64 `json:"low_ref_range"`
 	HighRefRange     float64 `json:"high_ref_range"`
+	NormalRefString  string  `json:"normal_ref_string" gorm:"column:normal_ref_string"` // New field for string reference values
 	Decimal          int     `json:"decimal"`
 	Category         string  `json:"category"`
 	SubCategory      string  `json:"sub_category"`
 	Description      string  `json:"description"`
 	IsCalculatedTest bool    `json:"is_calculated_test" gorm:"column:is_calculated_test;default:false"`
+	DeviceID         *int    `json:"device_id" gorm:"index:test_type_device_id"`
 
-	Type []TestTypeSpecimenType `json:"types" gorm:"-"`
+	Type   []TestTypeSpecimenType `json:"types" gorm:"-"`
+	Device *Device                `json:"device,omitempty" gorm:"foreignKey:DeviceID"`
 	// TypeDB is a specimen type separated by comma
 	TypeDB string `json:"-" gorm:"column:type"`
 }
@@ -80,6 +84,33 @@ func (t *TestType) AfterFind(tx *gorm.DB) error {
 	return nil
 }
 
+// IsNumericReference checks if this test type uses numeric reference ranges
+// Returns true if low_ref_range and high_ref_range are not both zero
+func (t *TestType) IsNumericReference() bool {
+	return t.LowRefRange != 0 || t.HighRefRange != 0
+}
+
+// IsStringReference checks if this test type uses string reference values
+// Returns true if normal_ref_string is not empty and numeric ranges are both zero
+func (t *TestType) IsStringReference() bool {
+	return t.NormalRefString != "" && !t.IsNumericReference()
+}
+
+// GetReferenceRange returns the appropriate reference range based on type
+func (t *TestType) GetReferenceRange() string {
+	// Debug logging
+
+	if t.IsNumericReference() {
+		decimal := t.Decimal
+		if decimal < 0 {
+			decimal = 2
+		}
+		result := fmt.Sprintf("%.*f - %.*f", decimal, t.LowRefRange, decimal, t.HighRefRange)
+		return result
+	}
+	return t.NormalRefString
+}
+
 type TestTypeFilter struct {
 	Categories    []string `json:"categories"`
 	SubCategories []string `json:"sub_categories"`
@@ -91,4 +122,5 @@ type TestTypeGetManyRequest struct {
 	Code          string   `query:"code"`
 	Categories    []string `query:"categories"`
 	SubCategories []string `query:"subCategories"`
+	DeviceID      *int     `query:"device_id"`
 }
