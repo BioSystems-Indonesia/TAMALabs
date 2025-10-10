@@ -7,6 +7,60 @@
 package app
 
 import (
+	"github.com/oibacidem/lims-hl-seven/internal/delivery"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/cron"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/alifax"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/coax"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/serial/ncc_3300"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp"
+	a15_2 "github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/a15"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_panca"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/analyx_trias"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/neomedika_ncc61"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_alfa"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/tcp/swelab_lumi"
+	"github.com/oibacidem/lims-hl-seven/internal/middleware"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/rest/a15rest"
+	server2 "github.com/oibacidem/lims-hl-seven/internal/repository/server"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/smb/A15"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/admin"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/config"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/daily_sequence"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_request"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/observation_result"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/role"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/specimen"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_template"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/unit"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/tcp/ba400"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/admin"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/analyzer"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/auth"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/barcode_generator"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/config"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/device"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/external"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/license"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/observation_request"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/patient"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/role"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/specimen"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/test_template"
+	test_type2 "github.com/oibacidem/lims-hl-seven/internal/usecase/test_type"
+	unit2 "github.com/oibacidem/lims-hl-seven/internal/usecase/unit"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner/postrun"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/work_order/runner/prerun"
+	"github.com/oibacidem/lims-hl-seven/pkg/server"
+)
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/cron"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/rest"
@@ -164,6 +218,11 @@ func InitRestApp() server.RestServer {
 	cronManager := cron.NewCronManager(cronHandler)
 	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, externalHandler, jwtMiddleware, cronManager)
 	return restServer
+}
+
+func InitService() *license.License {
+	licenseLicense := provideLicenseService()
+	return licenseLicense
 }
 
 // InitCanalHandler is a Wire provider function that returns a CanalHandler.

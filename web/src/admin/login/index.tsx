@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Avatar,
     Box,
@@ -26,6 +26,8 @@ import { useLogin, useNotify } from 'react-admin';
 import { useForm, Controller } from 'react-hook-form';
 import logo from '../../assets/elgatama-logo.png'
 import { radiantLightTheme } from '../theme.tsx';
+import axios from 'axios';
+import { useNavigate } from "react-router-dom";
 
 interface LoginFormData {
     username: string;
@@ -46,6 +48,18 @@ const CustomLoginPage: React.FC = () => {
             password: ''
         }
     });
+
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        axios
+            .get("/api/v1/license/check", {
+                baseURL: import.meta.env.VITE_BACKEND_BASE_URL,
+            })
+            .catch(() => {
+                navigate("/license");
+            });
+    }, [navigate]);
 
     const handleLogin = async (data: LoginFormData) => {
         setLoading(true);

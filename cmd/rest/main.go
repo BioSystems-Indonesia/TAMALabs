@@ -97,7 +97,15 @@ func openb() {
 	}
 
 	time.Sleep(3 * time.Second)
+
+	service := app.InitService()
+	err := service.Check()
+	if err != nil {
+		openbrowser("http://127.0.0.1:8322/license")
+	}
+
 	openbrowser("http://127.0.0.1:8322")
+
 }
 
 func openbrowser(url string) {

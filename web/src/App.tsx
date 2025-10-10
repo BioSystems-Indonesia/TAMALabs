@@ -1,14 +1,28 @@
-import dayjs from "dayjs";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import MyAdmin from "./admin";
-import './App.css'
-import utc from "dayjs/plugin/utc"; 
-import customParseFormat from "dayjs/plugin/customParseFormat";
+import { useEffect } from "react";
+import axios from "axios";
+import LicensePage from "./license";
 
+const App = () => {
+    const navigate = useNavigate();
 
-dayjs.extend(utc);
-dayjs.extend(customParseFormat);
+    useEffect(() => {
+        axios
+            .get("/api/v1/license/check", {
+                baseURL: import.meta.env.VITE_BACKEND_BASE_URL,
+            })
+            .catch(() => {
+                navigate("/license");
+            });
+    }, [navigate]);
 
-
-const App = () => <MyAdmin />;
+    return (
+        <Routes>
+            <Route path="/" element={<MyAdmin />} />
+            <Route path="/license" element={<LicensePage />} />
+        </Routes>
+    );
+};
 
 export default App;

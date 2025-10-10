@@ -35,6 +35,24 @@ import (
 	sqliteMigrate "github.com/golang-migrate/migrate/v4/database/sqlite"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/oibacidem/lims-hl-seven/config"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/cron"
+	"github.com/oibacidem/lims-hl-seven/internal/delivery/rest"
+	"github.com/oibacidem/lims-hl-seven/internal/entity"
+	"github.com/oibacidem/lims-hl-seven/internal/middleware"
+	khanza "github.com/oibacidem/lims-hl-seven/internal/repository/external/khanza"
+	devicerepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/device"
+	patientrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/patient"
+	"github.com/oibacidem/lims-hl-seven/internal/repository/sql/test_type"
+	workOrderrepo "github.com/oibacidem/lims-hl-seven/internal/repository/sql/work_order"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase"
+	khanzauc "github.com/oibacidem/lims-hl-seven/internal/usecase/external/khanza"
+	"github.com/oibacidem/lims-hl-seven/internal/usecase/result"
+
+	licenserepo "github.com/oibacidem/lims-hl-seven/internal/repository/license"
+	licenseuc "github.com/oibacidem/lims-hl-seven/internal/usecase/license"
+	"github.com/oibacidem/lims-hl-seven/migrations"
+	"github.com/oibacidem/lims-hl-seven/pkg/server"
 	gormSqlite "gorm.io/driver/sqlite"
 
 	"github.com/patrickmn/go-cache"
@@ -372,6 +390,17 @@ func provideConfig(db *gorm.DB) *config.Schema {
 		panic(err)
 	}
 	return &cfg
+}
+
+// provideLicenseService wires the license usecase with filesystem loaders.
+func provideLicenseService() *licenseuc.License {
+	pubLoader := licenserepo.NewFSKeyLoader()
+	fileLoader := licenserepo.NewFSFileLoader()
+	// default paths (relative to working directory)
+	pubKeyPath := "server_public.pem"
+	licensePath := "license.json"
+
+	return licenseuc.NewLicense(pubLoader, fileLoader, pubKeyPath, licensePath)
 }
 
 func provideKhanzaRepository(cfg *config.Schema) *khanza.Repository {
