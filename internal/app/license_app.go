@@ -1,9 +1,9 @@
 package app
 
 import (
+	licenserepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/license"
+	licenseuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/license"
 	"github.com/google/wire"
-	licenserepo "github.com/oibacidem/lims-hl-seven/internal/repository/license"
-	licenseuc "github.com/oibacidem/lims-hl-seven/internal/usecase/license"
 )
 
 // licenseSet provides constructors for the license service and its filesystem adapters.
