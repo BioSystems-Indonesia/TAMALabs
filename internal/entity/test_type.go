@@ -21,8 +21,10 @@ type TestType struct {
 	SubCategory      string  `json:"sub_category"`
 	Description      string  `json:"description"`
 	IsCalculatedTest bool    `json:"is_calculated_test" gorm:"column:is_calculated_test;default:false"`
+	DeviceID         *int    `json:"device_id" gorm:"index:test_type_device_id"`
 
-	Type []TestTypeSpecimenType `json:"types" gorm:"-"`
+	Type   []TestTypeSpecimenType `json:"types" gorm:"-"`
+	Device *Device                `json:"device,omitempty" gorm:"foreignKey:DeviceID"`
 	// TypeDB is a specimen type separated by comma
 	TypeDB string `json:"-" gorm:"column:type"`
 }
@@ -120,4 +122,5 @@ type TestTypeGetManyRequest struct {
 	Code          string   `query:"code"`
 	Categories    []string `query:"categories"`
 	SubCategories []string `query:"subCategories"`
+	DeviceID      *int     `query:"device_id"`
 }

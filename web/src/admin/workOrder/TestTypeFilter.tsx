@@ -1,6 +1,7 @@
 import CategoryIcon from '@mui/icons-material/Category';
 import PagesIcon from '@mui/icons-material/Pages';
 import SegmentIcon from '@mui/icons-material/Segment';
+import DeviceHubIcon from '@mui/icons-material/DeviceHub';
 import Divider from "@mui/material/Divider";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
@@ -8,6 +9,7 @@ import { FilterList, FilterListItem, FilterLiveSearch, useGetList, useListContex
 import { stopEnterPropagation } from '../../helper/component';
 import { FieldValues, UseFormGetValues, UseFormSetValue } from 'react-hook-form'
 import type { ObservationRequestCreateRequest } from '../../types/observation_requests';
+import type { Device } from '../../types/device';
 import SideFilter from '../../component/SideFilter';
 import useAxios from '../../hooks/useAxios';
 import { Typography, useTheme } from '@mui/material';
@@ -126,7 +128,7 @@ export const TestFilterSidebar = ({
             if (setValue && getValues) {
                 const testTemplateIDs = getValues('test_template_ids')
                 if (testTemplateIDs?.includes(value.template.id)) {
-                    setValue('test_template_ids', testTemplateIDs.filter((v: number) => v!== value.template.id))
+                    setValue('test_template_ids', testTemplateIDs.filter((v: number) => v !== value.template.id))
                 }
             }
 
@@ -151,7 +153,7 @@ export const TestFilterSidebar = ({
 
             if (setValue && getValues) {
                 const testTemplateIDs = getValues('test_template_ids')
-                if (!testTemplateIDs){
+                if (!testTemplateIDs) {
                     setValue('test_template_ids', [value.template.id])
                 } else if (!testTemplateIDs.includes(value.template.id)) {
                     setValue('test_template_ids', [...testTemplateIDs, value.template.id])
@@ -174,6 +176,34 @@ export const TestFilterSidebar = ({
         queryKey: ['filterTestType'],
         queryFn: () => axios.get('/test-type/filter').then(res => res.data),
     });
+
+    // Fetch devices for device filter
+    const { data: devices } = useQuery({
+        queryKey: ['devices'],
+        queryFn: () => axios.get('/device').then(res => res.data),
+    });
+
+    // Device filter functions
+    const isDeviceSelected = (value: any, filters: any) => {
+        const deviceIds = filters.device_id || [];
+        // Handle null device (General tests)
+        if (value.id === null) {
+            return deviceIds.includes(null);
+        }
+        return deviceIds.includes(value.id);
+    };
+
+    const toggleDeviceFilter = (value: any, filters: any) => {
+        const deviceIds = filters.device_id || [];
+        const targetId = value.id;
+
+        return {
+            ...filters,
+            device_id: deviceIds.includes(targetId)
+                ? deviceIds.filter((v: any) => v !== targetId)
+                : [...deviceIds, targetId],
+        };
+    };
 
     return (
         <SideFilter
@@ -200,13 +230,13 @@ export const TestFilterSidebar = ({
                 },
             }}
         >
-            <Typography variant="h6" sx={{ 
-                            color: theme.palette.text.primary, 
-                            fontWeight: 600,
-                            fontSize: '1rem',
-                            textAlign: 'center'
-                        }}>
-                🧪 Filter Type Test 
+            <Typography variant="h6" sx={{
+                color: theme.palette.text.primary,
+                fontWeight: 600,
+                fontSize: '1rem',
+                textAlign: 'center'
+            }}>
+                🧪 Filter Type Test
             </Typography>
             <FilterLiveSearch
                 placeholder="Search..."
@@ -233,7 +263,7 @@ export const TestFilterSidebar = ({
                     <FilterListItem
                         key={i}
                         label={val.name}
-                        value={{ template: val}}
+                        value={{ template: val }}
                         isSelected={isTemplateSelected}
                         toggleFilter={toggleTemplateFilter}
                     />
@@ -276,6 +306,27 @@ export const TestFilterSidebar = ({
                         value={{ sub_category: val }}
                         isSelected={isSubCategorySelected}
                         toggleFilter={toggleSubCategoryFilter}
+                    />
+                ))}
+            </FilterList>
+            <Divider />
+            <FilterList
+                label="Device"
+                icon={<DeviceHubIcon color="primary" />}
+                sx={{
+                    '& .MuiListItemIcon-root': {
+                        minWidth: 36,
+                    },
+                }}
+            >
+                {/* Add "All Devices" option */}
+                {devices?.map((device: Device, i: number) => (
+                    <FilterListItem
+                        key={i}
+                        label={`${device.name}`}
+                        value={device}
+                        isSelected={isDeviceSelected}
+                        toggleFilter={toggleDeviceFilter}
                     />
                 ))}
             </FilterList>

@@ -419,7 +419,7 @@ const TestResultTable = (props: TestResultTableProps) => {
                 },
                 {
                     field: 'alias',
-                    headerName: 'Alias',
+                    headerName: 'Alias/Code',
                     flex: 1,
                 },
 

@@ -1,4 +1,4 @@
-h1:RtOh9FhThKNUaRfTAnlVeZ348dG/KEFW9GcuydO08Y8=
+h1:C5KLMlMhpc+oFBk9OZin4nxjnwPEO9y09pbVEbfFLxU=
 20250411034650_init_db.up.sql h1:EReF3L6fqcGpsrhX88FIkkJLrEIafrlLWUyF3nvt6LU=
 20250513065507_adding_device_config_samba.up.sql h1:Ze7RvUC8tI/IZGCI25r36NduIV68iWtKbJ783LObevU=
 20250518160510_adding_admin.up.sql h1:cArZR74zZH3o6VuMGVhoQdPZGHpZ292VNo118YiygP8=
@@ -21,4 +21,5 @@ h1:RtOh9FhThKNUaRfTAnlVeZ348dG/KEFW9GcuydO08Y8=
 20250916003000_add_khanza_connection_method.up.sql h1:YmkOfGBFA6QGFO4PyVUqTjBoYSVn7k3l3On24rHs1zQ=
 20250927071049_adding_created_by_on_result.up.sql h1:AQVeJF/8qWjGKFAshWkf6+S7aH7F/rOVQPLfPb+qTug=
 20251003120000_add_simrs_config.up.sql h1:vBt85AhEpt1hyrj9jLnMNsuoTGWLgYJgdqpllq6fHzM=
-20251006004359_add_normal_ref_string.up.sql h1:L2U0qvvCLNoISE39izl6YTA0oWMXOsDgTTt3qXxWSLs=
+20251006004359_add_normal_ref_string.up.sql h1:/O3hQZj5CUjxg5SYE86HWhyCwoR6pdYFKPtVkjRbFh8=
+20251010071353_add_device_id_to_test_type.up.sql h1:GXMmheOdkcjDyowBkdlwcJZrScwAchDMQW8FePj5QOU=

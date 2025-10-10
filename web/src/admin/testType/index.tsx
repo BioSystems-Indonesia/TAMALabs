@@ -40,21 +40,66 @@ import type { Unit } from "../../types/unit";
 import { TestFilterSidebar } from "../workOrder/TestTypeFilter";
 import useAxios from "../../hooks/useAxios";
 import { TestType } from "../../types/test_type";
+import { Device } from "../../types/device";
+import type { ObservationRequestCreateRequest } from "../../types/observation_requests";
 
-export const TestTypeDatagrid = (props: any) => {
+export const TestTypeDatagrid = () => {
   return (
     <Datagrid bulkActionButtons={false}>
       <TextField source="id" />
       <TextField source="name" />
       <TextField source="code" />
-      <TextField source="alias_code" label="Alias Code" />
+      <FunctionField
+        label="Alias Code"
+        render={(record: TestType) => (
+          <span style={{
+            color: !record.alias_code || record.alias_code === '' ? '#888' : 'inherit',
+            fontStyle: !record.alias_code || record.alias_code === '' ? 'italic' : 'normal',
+            opacity: !record.alias_code || record.alias_code === '' ? 0.6 : 1,
+            fontSize: !record.alias_code || record.alias_code === '' ? '0.875rem' : 'inherit'
+          }}>
+            {record.alias_code || 'null'}
+          </span>
+        )}
+      />
+
       <TextField source="category" />
       <TextField source="sub_category" />
       <TextField source="low_ref_range" label="low" />
       <TextField source="high_ref_range" label="high" />
-      <TextField source="normal_ref_string" label="Normal String" />
+      <FunctionField
+        label="Normal String"
+        render={(record: TestType) => (
+          <span style={{
+            color: !record.normal_ref_string || record.normal_ref_string === '' ? '#888' : 'inherit',
+            fontStyle: !record.normal_ref_string || record.normal_ref_string === '' ? 'italic' : 'normal',
+            opacity: !record.normal_ref_string || record.normal_ref_string === '' ? 0.6 : 1,
+            fontSize: !record.normal_ref_string || record.normal_ref_string === '' ? '0.875rem' : 'inherit'
+          }}>
+            {record.normal_ref_string || 'null'}
+          </span>
+        )}
+      />
       <BooleanField source="is_calculated_test" label="Calc Test" sortable />
-      <TextField source="unit" />
+      <FunctionField
+        label="Unit"
+        render={(record: TestType) => (
+          <span style={{
+            color: !record.unit || record.unit === '' ? '#888' : 'inherit',
+            fontStyle: !record.unit || record.unit === '' ? 'italic' : 'normal',
+            opacity: !record.unit || record.unit === '' ? 0.6 : 1,
+            fontSize: !record.unit || record.unit === '' ? '0.875rem' : 'inherit'
+          }}>
+            {record.unit || 'null'}
+          </span>
+        )}
+      />
+      <FunctionField
+        label="Device"
+        render={(record: TestType) =>
+          record.device ? record.device.name : "General"
+        }
+      />
       <FunctionField
         label="Types"
         render={(record: TestType) =>
@@ -87,7 +132,7 @@ export function TestTypeShow() {
 }
 
 export const TestTypeList = () => {
-  const [selectedData, setSelectedData] = useState<any>([]);
+  const [selectedData, setSelectedData] = useState<Record<number, ObservationRequestCreateRequest>>({});
 
   return (
     <List
@@ -152,6 +197,11 @@ function TestTypeInput(props: TestTypeFormProps) {
     queryFn: () => axios.get("/unit").then((res) => res.data),
   });
 
+  const { data: devices, isLoading: isDeviceLoading } = useQuery({
+    queryKey: ["devices"],
+    queryFn: () => axios.get("/device").then((res) => res.data),
+  });
+
   const [unit, setUnit] = useState<string[]>([]);
   useEffect(() => {
     if (units && Array.isArray(units)) {
@@ -164,12 +214,13 @@ function TestTypeInput(props: TestTypeFormProps) {
   const { setValue } = useFormContext();
   const [params] = useSearchParams();
   useEffect(() => {
-    if (params.has("code")) {
+    const hasCodeParam = params.has("code");
+    if (hasCodeParam) {
       const code = params.get("code");
       setValue("code", code);
       setValue("name", code);
     }
-  }, [params.has("code")]);
+  }, [params, setValue]);
 
   return (
     <Stack spacing={3} sx={{ width: "100%" }}>
@@ -315,6 +366,76 @@ function TestTypeInput(props: TestTypeFormProps) {
                 }}
               />
             </Stack>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {/* Device Selection Card */}
+      <Card
+        elevation={0}
+        sx={{
+          border: `1px solid ${theme.palette.divider}`,
+          borderRadius: 2,
+        }}
+      >
+        <CardContent sx={{ p: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              mb: 3,
+            }}
+          >
+            <Typography
+              variant="subtitle1"
+              sx={{
+                fontWeight: 600,
+                color: theme.palette.text.primary,
+              }}
+            >
+              🔬 Device Assignment
+            </Typography>
+            <Chip
+              label="Optional"
+              size="small"
+              color="primary"
+              variant="outlined"
+              sx={{ ml: "auto", fontSize: "0.75rem" }}
+            />
+          </Box>
+
+          <Stack spacing={3}>
+            <AutocompleteInput
+              source="device_id"
+              label="Assigned Device"
+              helperText="Select the device that performs this test. Leave empty for general tests."
+              readOnly={props.readonly}
+              loading={isDeviceLoading}
+              choices={
+                devices && Array.isArray(devices)
+                  ? [
+                    { id: null, name: "No Device (General Test)" },
+                    ...devices.map((device: Device) => ({
+                      id: device.id,
+                      name: `${device.name} (${device.type})`,
+                    })),
+                  ]
+                  : [{ id: null, name: "No Device (General Test)" }]
+              }
+              fullWidth
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  transition: "all 0.2s ease",
+                  ...(!props.readonly && {
+                    "&:hover": {
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    },
+                  }),
+                },
+              }}
+            />
           </Stack>
         </CardContent>
       </Card>
@@ -611,8 +732,8 @@ function TestTypeListActions() {
   const [uploading, setUploading] = useState(false);
   const axios = useAxios();
 
-  const handleUpload = async (event: any) => {
-    const file = event.target.files[0];
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     setUploading(true);

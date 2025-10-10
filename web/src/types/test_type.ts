@@ -1,4 +1,5 @@
 import { WorkOrder } from "./work_order";
+import { Device } from "./device";
 
 export interface TestType {
   id: number;
@@ -13,6 +14,8 @@ export interface TestType {
   sub_category: string;
   description: string;
   is_calculated_test: boolean;
+  device_id?: number;
+  device?: Device;
   types: TestTypeSpecimenType[];
   decimal: number;
   work_order: WorkOrder;

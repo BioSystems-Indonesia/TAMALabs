@@ -15,17 +15,17 @@ build-fe:
 	cd web && npm run build
 
 build-be: 
-	go build -ldflags "-X 'main.version=$(shell git rev-parse --short HEAD)' -H windowsgui" -v -o bin/winapp.exe ./cmd/rest
+	go build -ldflags "-X 'main.version=$(shell git rev-parse --short HEAD)' -H windowsgui" -v -o bin/TAMALabs.exe ./cmd/rest
 
 build-be-win:
 	@echo "Building for Windows..."
 	@go env -w GOOS=windows GOARCH=amd64
-	@go build -ldflags "-X 'main.version=$(shell git rev-parse --short HEAD)' -H windowsgui" -v -o bin/winapp.exe ./cmd/rest
+	@go build -ldflags "-X 'main.version=$(shell git rev-parse --short HEAD)' -H windowsgui" -v -o bin/TAMALabs.exe ./cmd/rest
 	@go env -u GOOS GOARCH
 
 build-be-win-ps:
 	@echo "Building for Windows using PowerShell..."
-	@powershell -Command "$$env:GOOS='windows'; $$env:GOARCH='amd64'; go build -ldflags \"-X 'main.version=$$(git rev-parse --short HEAD)' -H windowsgui\" -v -o bin/winapp.exe ./cmd/rest"
+	@powershell -Command "$$env:GOOS='windows'; $$env:GOARCH='amd64'; go build -ldflags \"-X 'main.version=$$(git rev-parse --short HEAD)' -H windowsgui\" -v -o bin/TAMALabs.exe ./cmd/rest"
 
 build-win:
 	$(MAKE) build-fe

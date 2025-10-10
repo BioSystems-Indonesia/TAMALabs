@@ -155,7 +155,7 @@ func createContentFile(req *entity.SendPayloadRequest) []byte {
 	for _, p := range req.Patients {
 		for _, s := range p.Specimen {
 			for _, r := range s.ObservationRequest {
-				if r.TestType.IsCalculatedTest {
+				if r.TestType.IsCalculatedTest || r.TestType.Device.Type != entity.DeviceTypeA15 {
 					continue
 				}
 				samples = append(samples, row(req, p, s, r))
