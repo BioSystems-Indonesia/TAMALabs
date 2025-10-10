@@ -34,7 +34,6 @@ import { ApprovalList } from './approval/index.tsx';
 import CustomLoginPage from './login/index.tsx';
 import LogViewer from './logView/index.tsx';
 import { AboutPage } from './about/index.tsx';
-import LicensePage from '../license/index.tsx';
 
 
 const httpClient = async (url: string, options?: fetchUtils.Options) => {
@@ -97,9 +96,6 @@ const App = () => {
         authProvider={useAuthProvider()}
         loginPage={CustomLoginPage}
     >
-        <CustomRoutes>
-            <Route path="/license" element={<LicensePage />} />
-        </CustomRoutes>
         {permissions => (<>
             {permissions === "Admin" && (
                 <>
