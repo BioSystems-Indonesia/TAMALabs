@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/BioSystems-Indonesia/TAMALabs/config"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
@@ -34,17 +33,15 @@ func NewJWTMiddleware(cfg *config.Schema) *JWTMiddleware {
 func (m *JWTMiddleware) Middleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			authHeader := c.Request().Header.Get("Authorization")
-			if authHeader == "" {
-				return echo.NewHTTPError(http.StatusUnauthorized, "Missing or malformed JWT")
+			cookie, err := c.Cookie("access_token")
+			if err != nil {
+				return echo.NewHTTPError(http.StatusUnauthorized, "Missing JWT cookie")
 			}
 
-			authHeaderParts := strings.Split(authHeader, " ")
-			if len(authHeaderParts) != 2 || strings.ToLower(authHeaderParts[0]) != "bearer" {
-				return echo.NewHTTPError(http.StatusUnauthorized, "Missing or malformed JWT")
+			tokenString := cookie.Value
+			if tokenString == "" {
+				return echo.NewHTTPError(http.StatusUnauthorized, "Empty JWT cookie")
 			}
-
-			tokenString := authHeaderParts[1]
 
 			var claims entity.AdminClaims
 			token, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {
@@ -58,12 +55,13 @@ func (m *JWTMiddleware) Middleware() echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, "Invalid JWT token")
 			}
 
-			if token.Valid {
-				entity.SetEchoContextUser(c, claims)
-				return next(c)
+			if !token.Valid {
+				return echo.NewHTTPError(http.StatusUnauthorized, "Invalid JWT token")
 			}
 
-			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid JWT token")
+			entity.SetEchoContextUser(c, claims)
+
+			return next(c)
 		}
 	}
 }

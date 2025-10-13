@@ -66,7 +66,6 @@ export default function LIMSBarcode(props: LIMSBarcodeProps) {
                     textAlign: 'center',
                     fontWeight: 400,
                     lineHeight: 1.1,
-                    marginBottom: 1,
                 }}>
                 {formatDate(props.birthDt)} | {formatSex(props.sex)}
             </Typography>

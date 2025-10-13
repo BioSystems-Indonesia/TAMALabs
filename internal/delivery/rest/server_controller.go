@@ -58,7 +58,7 @@ func (s *ServerControllerHandler) TCPStatus(c echo.Context) error {
 
 func (s *ServerControllerHandler) StartTCP(c echo.Context) error {
 	ctx := c.Request().Context()
-	deviceID, err := strconv.Atoi(c.Param("device_id"))
+	deviceID, _ := strconv.Atoi(c.Param("device_id"))
 
 	device, err := s.deviceUsecase.FindOneByID(ctx, int64(deviceID))
 	if err != nil {
@@ -75,9 +75,9 @@ func (s *ServerControllerHandler) StartTCP(c echo.Context) error {
 
 func (s *ServerControllerHandler) StopTCP(c echo.Context) error {
 	ctx := c.Request().Context()
-	deviceID, err := strconv.Atoi(c.Param("device_id"))
+	deviceID, _ := strconv.Atoi(c.Param("device_id"))
 
-	err = s.serverRepo.StopServerByDeviceID(ctx, deviceID)
+	err := s.serverRepo.StopServerByDeviceID(ctx, deviceID)
 	if err != nil {
 		return handleError(c, err)
 	}

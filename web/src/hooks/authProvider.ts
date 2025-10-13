@@ -1,16 +1,11 @@
 import type { AuthProvider, UserIdentity } from "react-admin";
 import type { User } from "../types/user";
-import {
-  LOCAL_STORAGE_ACCESS_TOKEN,
-  LOCAL_STORAGE_ADMIN,
-} from "../types/constant";
+import { LOCAL_STORAGE_ADMIN } from "../types/constant";
 import { createAxiosInstance } from "./useAxios";
 import { AxiosError } from "axios";
-import { jwtDecode } from "jwt-decode";
 
 function redirectToLogin(): never {
   try {
-    localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN);
     localStorage.removeItem(LOCAL_STORAGE_ADMIN);
   } catch (e) {
     // ignore
@@ -27,14 +22,12 @@ const authProvider: AuthProvider = {
         username: username,
         password: password,
       });
-      localStorage.setItem(
-        LOCAL_STORAGE_ACCESS_TOKEN,
-        response.data.access_token
-      );
+      // Simpan data admin di localStorage untuk getIdentity()
       localStorage.setItem(
         LOCAL_STORAGE_ADMIN,
         JSON.stringify(response.data.admin)
       );
+      return Promise.resolve();
     } catch (error) {
       if (error instanceof AxiosError) {
         if (error.response) {
@@ -58,11 +51,6 @@ const authProvider: AuthProvider = {
     }
   },
   async checkAuth() {
-    const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN);
-    if (!token) {
-      return redirectToLogin();
-    }
-
     try {
       const axios = createAxiosInstance();
       await axios.get("/check-auth");
@@ -74,8 +62,17 @@ const authProvider: AuthProvider = {
     }
   },
   async logout() {
-    localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN);
+    try {
+      const axios = createAxiosInstance();
+      await axios.post("/logout", {});
+    } catch (error) {
+      // Ignore logout errors, just redirect to login
+      console.warn("Logout error:", error);
+    }
+    // Hapus data admin dari localStorage
     localStorage.removeItem(LOCAL_STORAGE_ADMIN);
+    // Redirect to login page
+    window.location.href = "/#/login";
   },
   async getIdentity(): Promise<UserIdentity> {
     const adminStorage = localStorage.getItem(LOCAL_STORAGE_ADMIN);
@@ -83,23 +80,33 @@ const authProvider: AuthProvider = {
       return redirectToLogin();
     }
 
-    const admin: User = JSON.parse(adminStorage);
-    return {
-      id: admin.id,
-      fullName: admin.fullname,
-    };
-  },
-  async getPermissions(): Promise<string> {
-    const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN);
-    if (!token) {
+    try {
+      const admin: User = JSON.parse(adminStorage);
+      return {
+        id: admin.id,
+        fullName: admin.fullname,
+      };
+    } catch (error) {
+      // Jika data di localStorage rusak, redirect ke login
       return redirectToLogin();
     }
-
+  },
+  async getPermissions(): Promise<string> {
     try {
-      const decoded = jwtDecode(token) as { role: string };
-      return decoded.role;
+      const axios = createAxiosInstance();
+      const response = await axios.get("/permissions");
+      return response.data.role || response.data.permission || "user";
     } catch (error) {
-      throw new Error("Invalid token");
+      if (error instanceof AxiosError && error.response?.status === 401) {
+        return redirectToLogin();
+      }
+
+      // Fallback: return default role instead of throwing error
+      console.warn(
+        "Failed to get permissions from server, using default role:",
+        error
+      );
+      return "user";
     }
   },
 };

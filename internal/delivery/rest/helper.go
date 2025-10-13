@@ -88,7 +88,8 @@ func bindAndValidate(c echo.Context, v interface{}) error {
 }
 
 func successPaginationResponse[T any](c echo.Context, result entity.PaginationResponse[T]) error {
-	return successMany(c, result.Data)
+	c.Response().Header().Set(entity.HeaderXTotalCount, strconv.Itoa(int(result.Total)))
+	return c.JSON(http.StatusOK, result.Data)
 }
 
 func successMany[T any](c echo.Context, result []T) error {

@@ -3,6 +3,8 @@ package rest
 import (
 	"log/slog"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/BioSystems-Indonesia/TAMALabs/web"
 	"github.com/labstack/echo/v4"
@@ -32,6 +34,29 @@ type Handler struct {
 var blackListLoggingOnEndpoint = []string{
 	// This is healthcheck endpoint, so we don't need to log it.
 	"/api/v1/server/status",
+}
+
+// getCORSOrigins returns the allowed CORS origins
+func getCORSOrigins() []string {
+	// Default development origins
+	defaultOrigins := []string{
+		"http://localhost:5173",
+		"http://localhost:3000",
+		"http://127.0.0.1:5173",
+		"http://127.0.0.1:3000",
+	}
+
+	// Check for environment variable
+	if corsOrigins := os.Getenv("CORS_ALLOWED_ORIGINS"); corsOrigins != "" {
+		origins := strings.Split(corsOrigins, ",")
+		// Trim whitespace from each origin
+		for i, origin := range origins {
+			origins[i] = strings.TrimSpace(origin)
+		}
+		return origins
+	}
+
+	return defaultOrigins
 }
 
 func RegisterMiddleware(e *echo.Echo) {
@@ -78,11 +103,11 @@ func RegisterMiddleware(e *echo.Echo) {
 		},
 	}))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins:     getCORSOrigins(),
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
-		AllowHeaders:     []string{"*"},
-		ExposeHeaders:    []string{"*"},
-		AllowCredentials: false,
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Access-Control-Request-Method", "Access-Control-Request-Headers"},
+		ExposeHeaders:    []string{"X-Total-Count", "Content-Range", "Accept-Ranges", "Content-Length", "Cache-Control", "Content-Language", "Content-Type", "Expires", "Last-Modified", "Pragma"},
+		AllowCredentials: true,
 		MaxAge:           86400,
 	}))
 	e.Use(middleware.Recover())
@@ -111,12 +136,16 @@ func RegisterRoutes(
 	unauthenticatedV1 := api.Group("/v1")
 	unauthenticatedV1.GET("/ping", handler.Ping)
 	unauthenticatedV1.POST("/login", authHandler.Login)
+	unauthenticatedV1.POST("/logout", authHandler.Logout)
 
 	// Add health endpoint (unauthenticated for monitoring)
 	handler.HealthHandler.RegisterRoutes(unauthenticatedV1)
 
 	authenticatedV1 := api.Group("/v1", authMiddleware.Middleware())
 	authenticatedV1.GET("/check-auth", handler.Ping)
+	authenticatedV1.GET("/profile", authHandler.GetProfile)
+	authenticatedV1.GET("/permissions", authHandler.GetPermissions)
+	authenticatedV1.POST("/logout", authHandler.Logout)
 	patient := authenticatedV1.Group("/patient")
 	{
 		patient.GET("", handler.FindPatients)

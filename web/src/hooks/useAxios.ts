@@ -1,6 +1,5 @@
 import axios, { type CreateAxiosDefaults } from "axios";
 import { useMemo } from "react";
-import { LOCAL_STORAGE_ACCESS_TOKEN } from "../types/constant";
 import { useNotify } from "react-admin";
 import { ErrorPayload } from "../types/errors";
 
@@ -39,9 +38,12 @@ const useAxios = (config?: CreateAxiosDefaults) => {
             });
             break;
           default:
-            notify(`Error ${errorResponse.status_code}: ${errorResponse.error}`, {
-              type: "error",
-            });
+            notify(
+              `Error ${errorResponse.status_code}: ${errorResponse.error}`,
+              {
+                type: "error",
+              }
+            );
             break;
         }
       } else {
@@ -59,13 +61,12 @@ const useAxios = (config?: CreateAxiosDefaults) => {
  * @returns Configured Axios instance
  */
 export const createAxiosInstance = (config?: CreateAxiosDefaults) => {
-  const accessToken = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN);
   const conf = {
     baseURL: import.meta.env.VITE_BACKEND_BASE_URL,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
+    withCredentials: true,
     ...config,
   };
 

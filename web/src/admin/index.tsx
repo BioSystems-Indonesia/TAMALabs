@@ -27,7 +27,6 @@ import { WorkOrderCreate, WorkOrderEdit, WorkOrderList } from "./workOrder";
 import { WorkOrderShow } from "./workOrder/Show.tsx";
 import { radiantLightTheme, radiantDarkTheme } from './theme.tsx';
 import { useAuthProvider } from '../hooks/authProvider.ts';
-import { LOCAL_STORAGE_ACCESS_TOKEN } from '../types/constant.ts';
 import { UserCreate, UserEdit, UserList, UserShow } from './User/index.tsx';
 import { ErrorPayload } from '../types/errors.ts';
 import { ApprovalList } from './approval/index.tsx';
@@ -45,16 +44,16 @@ const httpClient = async (url: string, options?: fetchUtils.Options) => {
         options.headers = new Headers({ Accept: 'application/json' });
     }
 
-
-    const accessToken = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN)
-    if (accessToken) {
-        //@ts-ignore
-        options.headers.set('Authorization', `Bearer ${accessToken}`);
-    }
+    // Remove Authorization header logic since we're using cookies now
+    // Cookie will be sent automatically with credentials: 'include'
 
     const requestHeaders = fetchUtils.createHeadersFromOptions(options);
 
-    return fetch(url, { ...options, headers: requestHeaders })
+    return fetch(url, {
+        ...options,
+        headers: requestHeaders,
+        credentials: 'include' // This ensures cookies are sent with every request
+    })
         .then(response =>
             response.text().then(text => ({
                 status: response.status,
