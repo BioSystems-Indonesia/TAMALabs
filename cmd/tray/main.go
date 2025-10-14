@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 	"syscall"
+	"time"
 
 	"github.com/energye/systray"
 )
@@ -201,12 +201,12 @@ func getServiceStatus() string {
 		nssmPath = "nssm"
 	}
 
-       cmd := exec.Command(nssmPath, "status", "TAMALabs")
-       // Hide window on Windows
-       if runtime.GOOS == "windows" {
-	       cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-       }
-       output, err := cmd.CombinedOutput()
+	cmd := exec.Command(nssmPath, "status", "TAMALabs")
+	// Hide window on Windows
+	if runtime.GOOS == "windows" {
+		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	}
+	output, err := cmd.CombinedOutput()
 
 	if err != nil {
 		// If NSSM fails, service might not be installed yet
