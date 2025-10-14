@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AutocompleteInput, BooleanInput, Button, Form, InputHelperText, Link, RecordContextProvider, ReferenceInput, required, useNotify, useRefresh } from 'react-admin';
 import { SubmitHandler, useFormContext } from 'react-hook-form';
 import { getRefererParam } from '../../hooks/useReferer';
-import { LOCAL_STORAGE_ACCESS_TOKEN } from '../../types/constant';
+
 import { DeviceForm } from '../device';
 
 type WorkOrderStatus = 'IDLE' | 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'INCOMPLETE' | 'ERROR';
@@ -226,9 +226,9 @@ export default function RunWorkOrderForm(props: RunWorkOrderFormProps) {
                 method: 'POST',
                 headers: {
                     'Accept': 'text/event-stream',
-                    'Authorization': `Bearer ${localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN)}`,
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include', // Use cookies instead of Authorization header
                 body: JSON.stringify(data),
                 signal,
             });

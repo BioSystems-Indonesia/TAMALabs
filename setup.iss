@@ -1,64 +1,107 @@
-; -- Inno Setup Script for LIS Elgatama --
-; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
+; -- Inno Setup Script for TAMALabs with Windows Service Registration --
+; ==============================================
+; FEATURES:
+;  - Automatic service installation and startup
+;  - System tray auto-start with administrator privileges (via scheduled task)
+;  - No post-install dialog prompts
+;  - Clean uninstallation with service and task removal
+; ==============================================
 
 [Setup]
-; NOTE: The value of AppId uniquely identifies this application.
-; Do not use the same AppId value for other applications.
-; (To generate a new GUID, click Tools | Generate GUID in the IDE.)
 AppId={{F4A4A2A2-702D-4B1F-A88E-5E3A1A8E2E8A}}
-AppName=LIS Elgatama
+AppName=TAMALabs
 AppVersion=1.0
-ArchitecturesInstallIn64BitMode=x64compatible
-;AppVerName=LIS Elgatama 1.0
-AppPublisher=Elgatama
+AppPublisher=Elga Tama
 AppPublisherURL=https://www.elgatama.com/
 AppSupportURL=https://www.elgatama.com/support
 AppUpdatesURL=https://www.elgatama.com/updates
-DefaultDirName={autopf}\LIS Elgatama
-DefaultGroupName=LIS Elgatama
+DefaultDirName={autopf}\TAMALabs
+DefaultGroupName=TAMALabs
 AllowNoIcons=yes
-LicenseFile=
-InfoBeforeFile=
-InfoAfterFile=
-; "OutputBaseFilename" is the name of the generated Setup file.
-OutputBaseFilename=lis-elgatama-setup-v1.0
-; The output directory for the compiled setup file.
+OutputBaseFilename=TAMALabs-setup-v1.0
 OutputDir=.\installers
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
-
+ArchitecturesInstallIn64BitMode=x64compatible
+PrivilegesRequired=admin
+PrivilegesRequiredOverridesAllowed=dialog
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-; This creates a checkbox in the wizard allowing the user to create a desktop icon.
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Dirs]
-; This entry creates a 'tmp' folder inside the application's installation directory.
 Name: "{app}\tmp"; Permissions: users-modify
 
 [Files]
-; This is the main application binary.
-; Source: The path to your compiled Go application.
-; DestDir: "{app}" is the folder the user selects during installation (e.g., C:\Program Files\LIS Elgatama)
-; Flags: ignoreversion tells the installer to overwrite the file regardless of version numbers.
-Source: "bin\winapp.exe"; DestDir: "{app}"; Flags: ignoreversion
-
-; NOTE: If your application requires other files or directories (e.g., config files, assets),
-; you can add them here. For example, to include everything in a 'config' folder:
-; Source: "config\*"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Main app binary
+Source: "bin\TAMALabs.exe"; DestDir: "{app}"; Flags: ignoreversion
+; Include NSSM for service management
+Source: "bin\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
+; Include Tray for TAMALabs tray system
+Source: "bin\TAMALabsTray.exe"; DestDir: "{app}"; Flags: ignoreversion
+; Include Service Helper with admin privileges
+Source: "bin\service-helper.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-; Icon for the Start Menu programs list.
-Name: "{group}\LIS Elgatama"; Filename: "{app}\winapp.exe"
-; Optional: Icon for the Start Menu to uninstall the application.
-Name: "{group}\{cm:UninstallProgram,LIS Elgatama}"; Filename: "{uninstallexe}"
-; Desktop icon, created only if the "desktopicon" task was checked.
-Name: "{autodesktop}\LIS Elgatama"; Filename: "{app}\winapp.exe"; Tasks: desktopicon
+; Shortcut yang membuka browser default ke http://127.0.0.1:8322
+Name: "{autodesktop}\TAMALabs (Open Web)"; \
+    Filename: "rundll32.exe"; \
+    Parameters: "url.dll,FileProtocolHandler http://127.0.0.1:8322"; \
+    IconFilename: "{app}\TAMALabs.exe"; \
+    Tasks: desktopicon
+
+; Backup startup shortcut (fallback jika scheduled task gagal)
+Name: "{userstartup}\TAMALabs Tray"; \
+    Filename: "{app}\TAMALabsTray.exe"; \
+    WorkingDir: "{app}"
 
 [Run]
-; This gives the user an option to run the application right after installation is complete.
-Filename: "{app}\winapp.exe"; Description: "{cm:LaunchProgram,LIS Elgatama}"; Flags: nowait postinstall skipifsilent
+; --- Register TAMALabs as Windows Service ---
+; Install the service (if not already installed)
+Filename: "{app}\nssm.exe"; \
+    Parameters: "install TAMALabs ""{app}\TAMALabs.exe"""; \
+    Flags: runhidden waituntilterminated; \
+    StatusMsg: "Registering TAMALabs service..."
+
+; Set the service startup type to automatic
+Filename: "sc.exe"; \
+    Parameters: "config TAMALabs start= auto"; \
+    Flags: runhidden waituntilterminated; \
+    StatusMsg: "Configuring TAMALabs service startup..."
+
+; Start the service immediately
+Filename: "{app}\nssm.exe"; \
+    Parameters: "start TAMALabs"; \
+    Flags: runhidden waituntilterminated; \
+    StatusMsg: "Starting TAMALabs service..."
+
+; Create scheduled task for auto-start tray
+Filename: "schtasks.exe"; \
+    Parameters: "/create /tn ""TAMALabs Tray"" /tr ""{app}\TAMALabsTray.exe"" /sc onlogon /f"; \
+    Flags: runhidden waituntilterminated; \
+    StatusMsg: "Setting up TAMALabs tray auto-start..."
+
+; Start TAMALabsTray immediately (now safe with asInvoker manifest)
+Filename: "{app}\TAMALabsTray.exe"; \
+    Flags: runasoriginaluser nowait; \
+    StatusMsg: "Starting TAMALabs system tray..."
+
+; Start TAMALabsTray immediately as current user (now safe with asInvoker manifest)
+Filename: "{app}\TAMALabsTray.exe"; \
+    Flags: runasoriginaluser nowait; \
+    StatusMsg: "Starting TAMALabs system tray..."
+
+[UninstallRun]
+; --- Stop and remove service when uninstalling ---
+Filename: "{app}\nssm.exe"; Parameters: "stop TAMALabs"; Flags: runhidden waituntilterminated; RunOnceId: "StopService"
+Filename: "{app}\nssm.exe"; Parameters: "remove TAMALabs confirm"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveService"
+; Remove scheduled task for tray auto-start (ignore errors if not exists)
+Filename: "schtasks.exe"; Parameters: "/delete /tn ""TAMALabs Tray"" /f"; Flags: runhidden; RunOnceId: "RemoveScheduledTask"
+
+[UninstallDelete]
+; Clean up any startup shortcuts
+Type: files; Name: "{userstartup}\TAMALabs Tray.lnk"

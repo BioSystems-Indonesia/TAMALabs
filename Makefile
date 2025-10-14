@@ -9,19 +9,10 @@ ISCC="ISCC.exe"
 # The Inno Setup script file
 ISS_FILE=setup.iss
 
-build: build-fe build-be
+build: build-fe build-be build-tray build-service-helper
 
 build-fe:
 	cd web && npm run build
-
-build-be: 
-	go build -ldflags "-X 'main.version=$(shell git rev-parse --short HEAD)' -H windowsgui" -v -o bin/TAMALabs.exe ./cmd/rest
-
-build-be-win:
-	@echo "Building for Windows..."
-	@go env -w GOOS=windows GOARCH=amd64
-	@go build -ldflags "-X 'main.version=$(shell git rev-parse --short HEAD)' -H windowsgui" -v -o bin/TAMALabs.exe ./cmd/rest
-	@go env -u GOOS GOARCH
 
 build-be-win-ps:
 	@echo "Building for Windows using PowerShell..."
@@ -30,6 +21,37 @@ build-be-win-ps:
 build-win:
 	$(MAKE) build-fe
 	$(MAKE) build-be-win
+
+# Ensure rsrc installed and generate syso inside cmd/tray
+build-tray:
+	@echo "Building TAMALabsTray with administrator manifest..."
+	@powershell -Command "if (Test-Path 'cmd/tray/rsrc.syso') { Remove-Item 'cmd/tray/rsrc.syso' }"
+	rsrc -manifest TAMALabsTray.exe.manifest -o cmd/tray/rsrc.syso
+	@powershell -Command "$$env:GO111MODULE='on'; go build -ldflags \"-H windowsgui\" -v -o bin/TAMALabsTray.exe ./cmd/tray"
+	@echo "TAMALabsTray built (rsrc in cmd/tray/rsrc.syso)"
+
+# Use build-tray inside build-be and build-be-win
+build-be:
+	go build -ldflags "-X 'main.version=$(shell git rev-parse --short HEAD)' -H windowsgui" -v -o bin/TAMALabs.exe ./cmd/rest
+	$(MAKE) build-tray
+
+build-be-win:
+	@echo "Building backend service..."
+	@go env -w GOOS=windows GOARCH=amd64
+	@go build -ldflags "-X 'main.version=$(shell git rev-parse --short HEAD)' -H windowsgui" -v -o bin/TAMALabs.exe ./cmd/rest
+	@echo "Building tray application with manifest..."
+	$(MAKE) build-tray
+	@go env -u GOOS GOARCH
+
+build-service-helper:
+	@echo "Building service helper with administrator manifest..."
+	@powershell -Command "if (Test-Path 'cmd/service-helper/rsrc.syso') { Remove-Item 'cmd/service-helper/rsrc.syso' }"
+	rsrc -manifest cmd/service-helper/service-helper.exe.manifest -o cmd/service-helper/rsrc.syso
+	@powershell -Command "$$env:GO111MODULE='on'; go build -ldflags \"-H windowsgui\" -v -o bin/service-helper.exe ./cmd/service-helper"
+	@echo "Service helper built (rsrc in cmd/service-helper/rsrc.syso)"
+
+build-tray-simple:
+	go build -ldflags "-H windowsgui" -v -o bin/TAMALabsTray.exe ./cmd/tray
 
 installer: build	
 	@echo "Creating installer..."
@@ -60,8 +82,8 @@ migrate-diff:
 	@:
 
 icon:
-	rsrc -arch 386 -ico favicon.ico -manifest elgatama-lims.exe.manifest
-	rsrc -arch amd64 -ico favicon.ico -manifest elgatama-lims.exe.manifest
+	rsrc -arch 386 -ico favicon.ico -manifest TAMALabs.exe.manifest
+	rsrc -arch amd64 -ico favicon.ico -manifest TAMALabs.exe.manifest
 	mv rsrc_windows_amd64.syso cmd/rest
 	mv rsrc_windows_386.syso cmd/rest
 

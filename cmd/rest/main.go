@@ -8,17 +8,12 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"os/exec"
-	"runtime"
 	"slices"
 	"time"
 
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/app"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
-	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
 	"github.com/BioSystems-Indonesia/TAMALabs/pkg/logger"
-	"github.com/BioSystems-Indonesia/TAMALabs/pkg/server"
-	"github.com/energye/systray"
 )
 
 var (
@@ -29,9 +24,6 @@ var (
 // version is set at build time
 
 var version = ""
-
-//go:embed trayicon.ico
-var trayicon []byte
 
 func main() {
 	defer showErrorOnPanic()
@@ -59,9 +51,8 @@ func main() {
 		startCanalHandler()
 	}()
 
-	go openb()
-	go opensystray(server)
 	server.Serve()
+
 }
 
 func startCanalHandler() {
@@ -86,57 +77,9 @@ func showErrorOnPanic() {
 		default:
 			slog.Error("Error on startup", slog.String("error", fmt.Sprintf("%v", err)))
 		}
-		// showErrorMessage("Cannot open LIS", fmt.Sprintf("%v", err))
+		showErrorMessage("Cannot open LIS", fmt.Sprintf("%v", err))
 		os.Exit(1)
 	}
-}
-
-func openb() {
-	if version == "" || util.IsDevelopment() {
-		return
-	}
-
-	time.Sleep(3 * time.Second)
-	openbrowser("http://127.0.0.1:8322")
-}
-
-func openbrowser(url string) {
-	var err error
-
-	switch runtime.GOOS {
-	case "linux":
-		err = exec.Command("xdg-open", url).Start()
-	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-	case "darwin":
-		err = exec.Command("open", url).Start()
-	default:
-		err = fmt.Errorf("unsupported platform")
-	}
-	if err != nil {
-		slog.Error("error opening browser", "error", err)
-	}
-}
-
-func opensystray(server server.RestServer) {
-	systray.Run(func() {
-		systray.SetTitle("LIMS HL Seven")
-		systray.SetTooltip("LIMS HL Seven")
-		systray.SetIcon(trayicon)
-
-		systray.AddMenuItem("Open Browser", "Open Browser").Click(func() {
-			openbrowser("http://127.0.0.1:8322")
-		})
-
-		systray.AddMenuItem("Quit", "Stop Server").Click(func() {
-			if err := server.Stop(); err != nil {
-				slog.Error("Error stopping server:", "err", err)
-			} else {
-				slog.Info("Server stopped successfully")
-			}
-			systray.Quit()
-		})
-	}, func() {})
 }
 
 func validateLogLevel(logLevel string) constant.LogLevel {

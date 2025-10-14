@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
-import { LOCAL_STORAGE_ACCESS_TOKEN } from '../../types/constant';
+
 
 export interface DeviceConnectionManagerProps {
     deviceIds: number[];
@@ -28,8 +28,8 @@ export const DeviceConnectionManager: React.FC<DeviceConnectionManagerProps> = (
                 const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/device/connection?${params.toString()}`, {
                     headers: {
                         'Accept': 'text/event-stream',
-                        'Authorization': `Bearer ${localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN)}`
                     },
+                    credentials: 'include', // Use cookies instead of Authorization header
                 });
 
                 const reader = response.body?.getReader();
