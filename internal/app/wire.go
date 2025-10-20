@@ -7,6 +7,7 @@ package app
 
 import (
 	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
+	licenseuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/license"
 	"github.com/BioSystems-Indonesia/TAMALabs/pkg/server"
 	"github.com/google/wire"
 )
@@ -21,4 +22,9 @@ func InitRestApp() server.RestServer {
 func InitCanalHandler() *khanzauc.CanalHandler {
 	wire.Build(canalHandlerSet)
 	return &khanzauc.CanalHandler{}
+}
+
+func InitService() *licenseuc.License {
+	wire.Build(licenseSet)
+	return &licenseuc.License{}
 }

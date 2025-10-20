@@ -1,11 +1,20 @@
 package cron
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"log/slog"
+	"net/http"
+	"os"
 	"runtime"
+	"strings"
+	"time"
 
 	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
 )
 
 // SIMRSUsecase interface to avoid import cycle
@@ -14,15 +23,42 @@ type SIMRSUsecase interface {
 	SyncAllResult(ctx context.Context, workOrderIDs []int64) error
 }
 
-type CronHandler struct {
-	khanzaUC *khanzauc.Usecase
-	simrsUC  SIMRSUsecase
+// License heartbeat request/response structs
+type HeartbeatRequest struct {
+	MachineID   string `json:"machine_id"`
+	LicenseCode string `json:"license_code"`
 }
 
+type HeartbeatResponse struct {
+	Error string `json:"error"`
+}
+
+type CronHandler struct {
+	khanzaUC         *khanzauc.Usecase
+	simrsUC          SIMRSUsecase
+	licenseServerURL string
+	machineID        string
+}
+
+var API_KEY = "KJKDANCJSANIUWYR6243UJFOISJFJKVOMV72487YEHFHFHSDVOHF9AMDC9AN9SDN98YE98YEHDIU2Y897873YYY68686487WGDUDUAGYTE8QTEYADIUHADUYW8E8BWTNC8N8NAMDOAIMDAUDUWYAD87NYW7Y7CBT87EY8142164B36248732M87MCIFH8NYRWCM8MYCMUOIDOIADOIDOIUR83YR983Y98328N32C83NYC8732NYC8732Y87Y32NCNSAIHJAOJFOIJFOIQFIUIUNCNHCIUHWV8NRYNV8Y989N9198298YOIJOI090103021313JKJDHAHDJAJASHHAH"
+
 func NewCronHandler(khanzaUC *khanzauc.Usecase, simrsUC SIMRSUsecase) *CronHandler {
+	licenseServerURL := os.Getenv("LICENSE_SERVER_URL")
+	if licenseServerURL == "" {
+		licenseServerURL = "http://localhost:8080"
+	}
+
+	machineID, err := util.GenerateMachineID()
+	if err != nil {
+		slog.Error("Failed to generate machine ID for heartbeat", "error", err)
+		machineID = "unknown"
+	}
+
 	return &CronHandler{
-		khanzaUC: khanzaUC,
-		simrsUC:  simrsUC,
+		khanzaUC:         khanzaUC,
+		simrsUC:          simrsUC,
+		licenseServerURL: licenseServerURL,
+		machineID:        machineID,
 	}
 }
 
@@ -86,4 +122,173 @@ func (c *CronHandler) DailyCleanup(ctx context.Context) error {
 	)
 
 	return nil
+}
+
+// LicenseHeartbeat sends periodic heartbeat to license server
+func (c *CronHandler) LicenseHeartbeat(ctx context.Context) error {
+	client := &http.Client{Timeout: 30 * time.Second}
+	slog.Debug("Performing license heartbeat")
+
+	// Read license file content
+	licenseData, err := os.ReadFile("license/license.json")
+	if err != nil {
+		slog.Warn("License file not found, skipping heartbeat", "error", err)
+		return nil
+	}
+
+	var data map[string]interface{}
+	if err := json.Unmarshal(licenseData, &data); err != nil {
+		slog.Warn("Failed to decode license file", "error", err)
+		return nil
+	}
+
+	// Check if license_code exists
+	licenseCodeRaw, exists := data["license_code"]
+	if !exists {
+		slog.Warn("License code not found in license file")
+		return nil
+	}
+
+	licenseCode, ok := licenseCodeRaw.(string)
+	if !ok {
+		slog.Warn("License code is not a string")
+		return nil
+	}
+
+	slog.Debug("Sending heartbeat", "machine_id", c.machineID, "license_code", licenseCode)
+
+	// Prepare heartbeat request
+	heartbeatReq := HeartbeatRequest{
+		MachineID:   c.machineID,
+		LicenseCode: licenseCode,
+	}
+
+	// Send heartbeat
+	jsonData, err := json.Marshal(heartbeatReq)
+	if err != nil {
+		slog.Error("Failed to marshal heartbeat request", "error", err)
+		return err
+	}
+
+	request, err := http.NewRequest("POST", fmt.Sprintf("%s/heartbeat", c.licenseServerURL),
+		bytes.NewBuffer(jsonData),
+	)
+
+	if err != nil {
+		slog.Warn("License heartbeat failed - server unreachable",
+			"error", err,
+			"server", c.licenseServerURL,
+			"strategy", "continue_with_local_license")
+		return nil // Don't fail the cron job
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-API-Key", API_KEY)
+
+	resp, err := client.Do(request)
+	if err != nil {
+		slog.Warn("License heartbeat failed - server unreachable",
+			"error", err,
+			"server", c.licenseServerURL,
+			"strategy", "continue_with_local_license")
+		return nil
+	}
+
+	// Parse response - simple string response
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		slog.Error("Failed to read heartbeat response", "error", err)
+		return nil // Don't fail the cron job
+	}
+	defer resp.Body.Close()
+
+	// Clean the response string
+	bodyStr := strings.TrimSpace(string(bodyBytes))
+	// Remove quotes if present
+	bodyStr = strings.Trim(bodyStr, `"`)
+
+	slog.Info("Heartbeat response", "msg", bodyStr)
+
+	// Handle heartbeat response
+	switch bodyStr {
+	case "Missing required fields":
+		slog.Warn("License heartbeat failed - missing required fields", "response", bodyStr)
+	case "Device not found":
+		slog.Error("License heartbeat failed - device not found", "response", bodyStr)
+		c.handleLicenseRevoked()
+	case "License mismatch":
+		slog.Error("License heartbeat failed - license mismatch", "response", bodyStr)
+		c.handleLicenseRevoked()
+	case "Device revoked":
+		slog.Error("License heartbeat failed - device revoked", "response", bodyStr)
+		c.handleLicenseRevoked()
+	case "OK":
+		slog.Debug("License heartbeat successful", "status", bodyStr)
+	default:
+		slog.Debug("License heartbeat successful", "status", bodyStr)
+	}
+
+	return nil
+}
+
+// handleLicenseRevoked removes license files when license is revoked
+func (c *CronHandler) handleLicenseRevoked() {
+	slog.Error("CRITICAL: License has been REVOKED by server. Removing local license files.")
+
+	// Force garbage collection to close any open file handles
+	runtime.GC()
+	time.Sleep(100 * time.Millisecond) // Give a moment for GC
+
+	// Remove license files with retry mechanism
+	c.removeFileWithRetry("license/license.json")
+	c.removeFileWithRetry("license/server_public.pem")
+
+	// Create revocation marker file
+	revocationData := map[string]interface{}{
+		"revoked_at": time.Now().Unix(),
+		"reason":     "license_revoked_by_server",
+		"action":     "contact_support_or_reactivate",
+	}
+
+	if data, err := json.MarshalIndent(revocationData, "", "  "); err == nil {
+		if err := os.WriteFile("license/revoked.json", data, 0644); err != nil {
+			slog.Error("Failed to create revoked.json", "error", err)
+		} else {
+			slog.Info("Successfully created revoked.json")
+		}
+	}
+
+	slog.Error("Application will need license reactivation to continue")
+}
+
+// removeFileWithRetry attempts to remove a file with retry mechanism
+func (c *CronHandler) removeFileWithRetry(filePath string) {
+	maxRetries := 3
+	retryDelay := 200 * time.Millisecond
+
+	for i := 0; i < maxRetries; i++ {
+		err := os.Remove(filePath)
+		if err == nil {
+			slog.Info("Successfully removed file", "file", filePath, "attempt", i+1)
+			return
+		}
+
+		if os.IsNotExist(err) {
+			slog.Info("File already does not exist", "file", filePath)
+			return
+		}
+
+		slog.Warn("Failed to remove file, retrying...",
+			"file", filePath,
+			"attempt", i+1,
+			"max_retries", maxRetries,
+			"error", err.Error())
+
+		if i < maxRetries-1 {
+			time.Sleep(retryDelay)
+			retryDelay *= 2 // Exponential backoff
+		}
+	}
+
+	slog.Error("Failed to remove file after all retries", "file", filePath)
 }

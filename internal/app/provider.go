@@ -18,6 +18,7 @@ import (
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/middleware"
 	khanza "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/external/khanza"
 	simrs "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/external/simrs"
+	licenserepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/license"
 	devicerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/device"
 	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
@@ -25,6 +26,7 @@ import (
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
 	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
 	simrsuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simrs"
+	licenseuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/license"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
 	workOrderuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order"
 	"github.com/BioSystems-Indonesia/TAMALabs/migrations"
@@ -83,6 +85,7 @@ func provideRestServer(
 		khanzaHandler,
 		authMiddleware,
 	)
+
 	return serv
 }
 
@@ -100,6 +103,7 @@ func provideRestHandler(
 	configHandler *rest.ConfigHandler,
 	unitHandler *rest.UnitHandler,
 	logHandler *rest.LogHandler,
+	licenseHandler *rest.LicenseHandler,
 ) *rest.Handler {
 	return &rest.Handler{
 		HlSevenHandler:            hlSevenHandler,
@@ -115,6 +119,7 @@ func provideRestHandler(
 		ConfigHandler:             configHandler,
 		UnitHandler:               unitHandler,
 		LogHandler:                logHandler,
+		LicenseHandler:            licenseHandler,
 	}
 }
 
@@ -464,4 +469,21 @@ func provideCanalHandler(
 
 	slog.Info("Creating Canal Handler with fully configured dependencies")
 	return khanzauc.NewCanalHandler(khanzaUC, cfg)
+}
+
+func provideLicenseService() *licenseuc.License {
+	pubLoader := licenserepo.NewFSKeyLoader()
+	fileLoader := licenserepo.NewFSFileLoader()
+
+	// Ensure license directory exists
+	licenseDir := "license"
+	if err := os.MkdirAll(licenseDir, 0755); err != nil {
+		slog.Warn("Failed to create license directory", "error", err)
+	}
+
+	// default paths (relative to working directory)
+	pubKeyPath := "license/server_public.pem"
+	licensePath := "license/license.json"
+
+	return licenseuc.NewLicense(pubLoader, fileLoader, pubKeyPath, licensePath)
 }

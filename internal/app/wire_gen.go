@@ -14,59 +14,61 @@ import (
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/cbs400"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/coax"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/diestro"
-	ncc3300 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/ncc_3300"
-	verifyu120 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/verifyU120"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/ncc_3300"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/verifyU120"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp"
 	a15_2 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/a15"
-	analyxpanca "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/analyx_panca"
-	analyxtrias "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/analyx_trias"
-	ncc61 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/neomedika_ncc61"
-	swelabalfa "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/swelab_alfa"
-	swelablumi "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/swelab_lumi"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/analyx_panca"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/analyx_trias"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/neomedika_ncc61"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/swelab_alfa"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/swelab_lumi"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/wondfo"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/middleware"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/rest/a15rest"
 	server2 "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/server"
-	a15 "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/smb/A15"
-	adminrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/admin"
-	configrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/smb/A15"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/admin"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/config"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/daily_sequence"
-	devicerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/device"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/device"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/observation_request"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/observation_result"
-	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
-	rolerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/role"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/role"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/specimen"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_template"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/unit"
-	workOrderrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/tcp/ba400"
-	admin_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/admin"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/admin"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/analyzer"
-	auth_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/auth"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/auth"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/barcode_generator"
-	configuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/config"
-	deviceuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/device"
-	externaluc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external"
-	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
-	simrsuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simrs"
-	observation_requestuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/observation_request"
-	patientuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/patient"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/config"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/device"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simrs"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/license"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/observation_request"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/patient"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
-	role_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/role"
-	specimenuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/specimen"
-	test_template_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/test_template"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/role"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/specimen"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/test_template"
 	test_type2 "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/test_type"
 	unit2 "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/unit"
-	workOrderuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order/runner"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order/runner/postrun"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order/runner/prerun"
 	"github.com/BioSystems-Indonesia/TAMALabs/pkg/server"
+)
 
+import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-
 	_ "modernc.org/sqlite"
 )
 
@@ -138,7 +140,9 @@ func InitRestApp() server.RestServer {
 	unitUseCase := unit2.NewUnitUseCase(schema, unitRepository, validate)
 	unitHandler := rest.NewUnitHandler(schema, unitUseCase)
 	logHandler := rest.NewLogHandler(schema)
-	restHandler := provideRestHandler(hlSevenHandler, healthCheckHandler, healthHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler, unitHandler, logHandler)
+	license := provideLicenseService()
+	licenseHandler := rest.NewLicenseHandler(license)
+	restHandler := provideRestHandler(hlSevenHandler, healthCheckHandler, healthHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler, unitHandler, logHandler, licenseHandler)
 	deviceHandler := rest.NewDeviceHandler(deviceUseCase)
 	serverControllerHandler := rest.NewServerControllerHandler(configrepoRepository, controllerRepository)
 	test_templateRepository := test_template.NewRepository(gormDB, schema)
@@ -182,4 +186,9 @@ func InitCanalHandler() *khanzauc.CanalHandler {
 	resultUsecase := result.NewUsecase(observation_resultRepository, workOrderRepository, specimenRepository, test_typeRepository)
 	canalHandler := provideCanalHandler(schema, repository, workOrderRepository, patientRepository, test_typeRepository, usecase, resultUsecase)
 	return canalHandler
+}
+
+func InitService() *license.License {
+	licenseLicense := provideLicenseService()
+	return licenseLicense
 }
