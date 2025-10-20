@@ -90,6 +90,7 @@ var restUsecaseSet = wire.NewSet(
 	simrsuc.NewUsecase,
 	wire.Bind(new(cron.SIMRSUsecase), new(*simrsuc.Usecase)),
 	externaluc.NewUsecase,
+	provideLicenseService,
 )
 
 var restRepositorySet = wire.NewSet(
@@ -160,6 +161,7 @@ var restHandlerSet = wire.NewSet(
 	rest.NewLogHandler,
 	rest.NewExternalHandler,
 	rest.NewKhanzaExternalHandler,
+	rest.NewLicenseHandler,
 )
 
 var (

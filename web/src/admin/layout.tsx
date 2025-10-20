@@ -14,6 +14,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import TableViewIcon from '@mui/icons-material/TableView';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import InfoIcon from '@mui/icons-material/Info';
+import LicenseIcon from '@mui/icons-material/VerifiedUser';
 import { Box, Stack, Tooltip, Typography, Avatar, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -286,7 +287,8 @@ const PageTitle = () => {
             'config': { title: 'Configuration', icon: <BuildIcon /> },
             'settings': { title: 'Settings', icon: <SettingsIcon /> },
             'logs': { title: 'Logs', icon: <FileOpenIcon /> },
-            'about': { title: 'About Us', icon: <InfoIcon /> }
+            'about': { title: 'About Us', icon: <InfoIcon /> },
+            'license-status': { title: 'License Status', icon: <LicenseIcon /> }
         };
 
         const defaultData = { title: 'Dashboard', icon: <DashboardIcon /> };

@@ -29,6 +29,7 @@ type Handler struct {
 	*ConfigHandler
 	*UnitHandler
 	*LogHandler
+	*LicenseHandler
 }
 
 var blackListLoggingOnEndpoint = []string{
@@ -140,6 +141,9 @@ func RegisterRoutes(
 
 	// Add health endpoint (unauthenticated for monitoring)
 	handler.HealthHandler.RegisterRoutes(unauthenticatedV1)
+
+	// Add license endpoint (unauthenticated for license checking)
+	handler.LicenseHandler.RegisterRoutes(unauthenticatedV1)
 
 	authenticatedV1 := api.Group("/v1", authMiddleware.Middleware())
 	authenticatedV1.GET("/check-auth", handler.Ping)
