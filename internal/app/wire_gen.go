@@ -37,6 +37,7 @@ import (
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/role"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/specimen"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/summary"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_template"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/unit"
@@ -57,6 +58,7 @@ import (
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/role"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/specimen"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/summary"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/test_template"
 	test_type2 "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/test_type"
 	unit2 "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/unit"
@@ -166,7 +168,10 @@ func InitRestApp() server.RestServer {
 	jwtMiddleware := middleware.NewJWTMiddleware(schema)
 	cronHandler := cron.NewCronHandler(khanzaucUsecase, simrsucUsecase)
 	cronManager := cron.NewCronManager(cronHandler)
-	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, externalHandler, jwtMiddleware, cronManager)
+	summaryRepository := summaryrepo.NewSummaryRepository(gormDB)
+	summaryUseCase := summary_uc.NewSummaryUsecase(summaryRepository)
+	summaryHandler := rest.NewSummaryHandler(summaryUseCase)
+	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, externalHandler, jwtMiddleware, cronManager, summaryHandler)
 	return restServer
 }
 

@@ -8,6 +8,8 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
@@ -71,6 +73,7 @@ func provideRestServer(
 	khanzaHandler *rest.ExternalHandler,
 	authMiddleware *middleware.JWTMiddleware,
 	cronManager *cron.CronManager,
+	summaryHandler *rest.SummaryHandler,
 ) server.RestServer {
 	serv := server.NewRest(config.Port, validate, cronManager)
 	rest.RegisterMiddleware(serv.GetClient())
@@ -84,6 +87,7 @@ func provideRestServer(
 		hrisExternal,
 		khanzaHandler,
 		authMiddleware,
+		summaryHandler,
 	)
 
 	return serv
@@ -123,9 +127,21 @@ func provideRestHandler(
 	}
 }
 
-const dbFileName = "./tmp/biosystem-lims.db"
+// dbFileName holds the path to the SQLite database file. On some environments
+// (for example when running as a service) the ProgramData environment
+// variable may not be set. In that case we fall back to the conventional
+// Windows ProgramData location: C:\\ProgramData
+var dbFileName = filepath.Join(os.Getenv("ProgramData"), "TAMALabs", "database", "TAMALabs.db")
 
-// We init once here so it will not create DB twice
+func init() {
+	// If ProgramData is empty, attempt to use the default Windows location.
+	if os.Getenv("ProgramData") == "" && runtime.GOOS == "windows" {
+		fallback := `C:\\ProgramData`
+		dbFileName = filepath.Join(fallback, "TAMALabs", "database", "TAMALabs.db")
+		slog.Info("ProgramData env not set, using fallback path", "dbFile", dbFileName)
+	}
+}
+
 var initDBOnce sync.Once
 var db *gorm.DB
 
@@ -138,19 +154,18 @@ func fileExists(filename string) bool {
 }
 
 func InitSQLiteDB() (*gorm.DB, error) {
-	if fileExists(dbFileName) {
-		slog.Info("db is existed already")
+	// Ensure directory exists. Do not use initDBOnce here because
+	// provideDB is already guarding initialization with initDBOnce.Do.
+	// Calling initDBOnce.Do recursively would deadlock.
+	if !fileExists(dbFileName) {
+		slog.Info("DB not exists, creating folder...")
+		if err := os.MkdirAll(filepath.Dir(dbFileName), 0755); err != nil {
+			slog.Error("Failed to create folder", "error", err)
+			return nil, err
+		}
+		slog.Info("Folder created, DB will be created automatically by GORM")
 	} else {
-		slog.Info("db is not exists, start create and migrate db")
-		err := os.MkdirAll("./tmp", 0755)
-		if err != nil {
-			return nil, err
-		}
-
-		_, err = os.Create(dbFileName)
-		if err != nil {
-			return nil, err
-		}
+		slog.Info("DB already exists")
 	}
 
 	dialec, err := sql.Open("sqlite", dbFileName)
@@ -265,14 +280,14 @@ func seedTestData(db *gorm.DB) error {
 		}
 	}
 
-	// for _, testType := range seedDataTestType {
-	// 	err := db.Clauses(clause.OnConflict{
-	// 		DoNothing: true,
-	// 	}).Create(&testType).Error
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
+	for _, testType := range seedDataTestType {
+		err := db.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(&testType).Error
+		if err != nil {
+			return err
+		}
+	}
 
 	// for _, device := range seedDevice {
 	// 	err := db.Clauses(clause.OnConflict{

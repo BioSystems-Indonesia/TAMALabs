@@ -20,8 +20,14 @@ func GetAllJob(h *CronHandler) []CronJob {
 		{
 			Name:        "license_heartbeat",
 			Description: "Send periodic heartbeat to license server to check license status",
-			Schedule:    "*/5 * * * * *", // Run every 5 minutes
+			Schedule:    "0 */5 * * * *", // Run every 5 minutes
 			Execute:     h.LicenseHeartbeat,
+		},
+		{
+			Name:        "database_backup",
+			Description: "Backup database daily at 02:00",
+			Schedule:    "0 0 2 * * *", // Run at 2 AM every day
+			Execute:     h.BackupDB,
 		},
 		// {
 		// 	Name:        "sync_all_request",

@@ -3,15 +3,19 @@ package cron
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
+
+	// use modernc.org/sqlite (imported in app package) which does not require cgo
 
 	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
@@ -291,4 +295,36 @@ func (c *CronHandler) removeFileWithRetry(filePath string) {
 	}
 
 	slog.Error("Failed to remove file after all retries", "file", filePath)
+}
+
+func (c *CronHandler) BackupDB(ctx context.Context) error {
+	// Prefer ProgramData for system-wide DB; fallback to APPDATA when not set
+	programData := os.Getenv("ProgramData")
+	if programData == "" {
+		// fallback for non-windows or when ProgramData env not set
+		programData = filepath.Join("C:", "ProgramData")
+	}
+
+	srcDB := filepath.Join(programData, "TAMALabs", "database", "TAMALabs.db")
+	backupDir := filepath.Join(programData, "TAMALabs", "backup")
+
+	if err := os.MkdirAll(backupDir, 0755); err != nil {
+		return fmt.Errorf("failed to create backup folder: %w", err)
+	}
+
+	backupFile := filepath.Join(backupDir, fmt.Sprintf("TAMALabs-%s.db", time.Now().Format("20060102_150405")))
+
+	// use the "sqlite" driver provided by modernc.org/sqlite (no cgo required)
+	db, err := sql.Open("sqlite", srcDB)
+	if err != nil {
+		return fmt.Errorf("failed to open source DB: %w", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec(fmt.Sprintf("VACUUM INTO '%s';", backupFile))
+	if err != nil {
+		return fmt.Errorf("backup failed: %w", err)
+	}
+
+	return nil
 }

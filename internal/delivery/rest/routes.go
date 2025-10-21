@@ -128,6 +128,7 @@ func RegisterRoutes(
 	khanzaExternalHandler *KhanzaExternalHandler,
 	externalHandler *ExternalHandler,
 	authMiddleware *appMiddleware.JWTMiddleware,
+	summaryHandler *SummaryHandler,
 ) {
 	slog.Info("registering routes")
 
@@ -263,6 +264,11 @@ func RegisterRoutes(
 	log := authenticatedV1.Group("/log")
 	{
 		log.GET("/export", handler.LogHandler.ExportLog)
+	}
+
+	summary := authenticatedV1.Group("/summary")
+	{
+		summary.GET("/", summaryHandler.GetAllSummary)
 	}
 
 	khanzaExternalHandler.RegisterRoutes(unauthenticatedV1)
