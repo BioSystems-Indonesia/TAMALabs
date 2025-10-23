@@ -1,15 +1,20 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,6 +36,7 @@ import (
 	licenseuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/license"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
 	workOrderuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
 	"github.com/BioSystems-Indonesia/TAMALabs/migrations"
 	"github.com/BioSystems-Indonesia/TAMALabs/pkg/server"
 	"github.com/go-playground/validator/v10"
@@ -500,5 +506,123 @@ func provideLicenseService() *licenseuc.License {
 	pubKeyPath := "license/server_public.pem"
 	licensePath := "license/license.json"
 
-	return licenseuc.NewLicense(pubLoader, fileLoader, pubKeyPath, licensePath)
+	lic := licenseuc.NewLicense(pubLoader, fileLoader, pubKeyPath, licensePath)
+
+	// Start a background heartbeat goroutine to check license with license server.
+	go func() {
+		licenseServerURL := os.Getenv("LICENSE_SERVER_URL")
+		if licenseServerURL == "" {
+			licenseServerURL = "http://localhost:8080"
+		}
+
+		machineID, err := util.GenerateMachineID()
+		if err != nil {
+			slog.Error("Failed to generate machine ID for heartbeat", "error", err)
+			machineID = "unknown"
+		}
+
+		client := &http.Client{Timeout: 30 * time.Second}
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+
+		// Run immediately once
+		for {
+			// Read license file
+			data, err := os.ReadFile(licensePath)
+			if err != nil {
+				slog.Debug("License file not found, skipping heartbeat", "error", err)
+			} else {
+				var m map[string]interface{}
+				if err := json.Unmarshal(data, &m); err != nil {
+					slog.Warn("Failed to decode license file, skipping heartbeat", "error", err)
+				} else {
+					codeRaw, ok := m["license_code"]
+					if ok {
+						codeStr, ok := codeRaw.(string)
+						if ok {
+							// prepare request
+							hb := map[string]string{"machine_id": machineID, "license_code": codeStr}
+							jb, _ := json.Marshal(hb)
+							req, err := http.NewRequest("POST", fmt.Sprintf("%s/heartbeat", licenseServerURL), bytes.NewBuffer(jb))
+							if err != nil {
+								slog.Warn("License heartbeat request create failed", "error", err)
+							} else {
+								req.Header.Set("Content-Type", "application/json")
+								apiKey := "KJKDANCJSANIUWYR6243UJFOISJFJKVOMV72487YEHFHFHSDVOHF9AMDC9AN9SDN98YE98YEHDIU2Y897873YYY68686487WGDUDUAGYTE8QTEYADIUHADUYW8E8BWTNC8N8NAMDOAIMDAUDUWYAD87NYW7Y7CBT87EY8142164B36248732M87MCIFH8NYRWCM8MYCMUOIDOIADOIDOIUR83YR983Y98328N32C83NYC8732NYC8732Y87Y32NCNSAIHJAOJFOIJFOIQFIUIUNCNHCIUHWV8NRYNV8Y989N9198298YOIJOI090103021313JKJDHAHDJAJASHHAH"
+								if apiKey != "" {
+									req.Header.Set("X-API-Key", apiKey)
+								}
+								resp, err := client.Do(req)
+								if err != nil {
+									slog.Warn("License heartbeat failed - server unreachable", "error", err, "server", licenseServerURL)
+								} else {
+									body, _ := io.ReadAll(resp.Body)
+									_ = resp.Body.Close()
+									bodyStr := strings.TrimSpace(string(body))
+									bodyStr = strings.Trim(bodyStr, `"`)
+									slog.Info("License heartbeat response", "msg", bodyStr)
+
+									// helper to revoke license locally
+									revoke := func(reason string) {
+										slog.Error("License revoked by server, removing local license files", "reason", reason)
+										runtime.GC()
+										time.Sleep(100 * time.Millisecond)
+										_ = os.Remove(licensePath)
+										_ = os.Remove(pubKeyPath)
+										rev := map[string]interface{}{"revoked_at": time.Now().Unix(), "reason": reason}
+										if rb, err := json.MarshalIndent(rev, "", "  "); err == nil {
+											_ = os.WriteFile("license/revoked.json", rb, 0644)
+										}
+									}
+
+									// Try to parse as structured JSON: {code, status, message}
+									var hr struct {
+										Code    int    `json:"code"`
+										Status  string `json:"status"`
+										Message string `json:"message"`
+									}
+
+									parsed := false
+									if err := json.Unmarshal(body, &hr); err == nil {
+										parsed = true
+									} else {
+										// maybe the server returned a JSON string that contains JSON (quoted JSON)
+										var inner string
+										if err2 := json.Unmarshal(body, &inner); err2 == nil {
+											// try to parse inner JSON
+											if err3 := json.Unmarshal([]byte(inner), &hr); err3 == nil {
+												parsed = true
+											} else {
+												// inner not structured JSON we expect
+											}
+										}
+									}
+
+									if parsed {
+										lowerMsg := strings.ToLower(hr.Message)
+										if hr.Code >= 400 && (strings.Contains(lowerMsg, "device not found") || strings.Contains(lowerMsg, "revoked") || strings.Contains(lowerMsg, "mismatch")) {
+											revoke(hr.Message)
+										}
+									} else {
+										// fallback to older string matching on bodyStr
+										switch strings.ToLower(bodyStr) {
+										case "device not found", "license mismatch", "device revoked":
+											revoke(bodyStr)
+										default:
+											// OK or other non-critical responses
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// Wait for next tick
+			<-ticker.C
+		}
+	}()
+
+	return lic
 }
