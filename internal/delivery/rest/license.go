@@ -32,6 +32,12 @@ type ExternalActivateRequest struct {
 	Meta        map[string]string `json:"meta"`
 }
 
+type Response struct {
+	Code   int              `json:"code"`
+	Status string           `json:"status"`
+	Data   ActivateResponse `json:"data"`
+}
+
 type ActivateResponse struct {
 	Payload   string `json:"payload"`
 	Signature string `json:"signature"`
@@ -181,7 +187,7 @@ func (h *LicenseHandler) ActivateLicense(c echo.Context) error {
 		})
 	}
 
-	var activateResp ActivateResponse
+	var activateResp Response
 	if err := json.NewDecoder(resp.Body).Decode(&activateResp); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to parse license server response",
@@ -190,8 +196,8 @@ func (h *LicenseHandler) ActivateLicense(c echo.Context) error {
 
 	licenseData := map[string]string{
 		"license_code": req.LicenseCode,
-		"payload":      activateResp.Payload,
-		"signature":    activateResp.Signature,
+		"payload":      activateResp.Data.Payload,
+		"signature":    activateResp.Data.Signature,
 	}
 
 	licenseJSON, err := json.MarshalIndent(licenseData, "", "  ")
@@ -210,7 +216,7 @@ func (h *LicenseHandler) ActivateLicense(c echo.Context) error {
 	h.removeFileWithRetry("license/revoked.json")
 	h.removeFileWithRetry("license/expired.json")
 
-	return c.JSON(http.StatusOK, activateResp)
+	return c.JSON(http.StatusOK, activateResp.Data)
 }
 
 func (h *LicenseHandler) RegisterRoutes(g *echo.Group) {

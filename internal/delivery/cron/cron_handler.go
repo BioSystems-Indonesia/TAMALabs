@@ -209,41 +209,64 @@ func (c *CronHandler) LicenseHeartbeat(ctx context.Context) error {
 
 	slog.Info("Heartbeat response", "msg", bodyStr)
 
-	// Handle heartbeat response
-	switch bodyStr {
-	case "Missing required fields":
-		slog.Warn("License heartbeat failed - missing required fields", "response", bodyStr)
-	case "Device not found":
-		slog.Error("License heartbeat failed - device not found", "response", bodyStr)
-		c.handleLicenseRevoked()
-	case "License mismatch":
-		slog.Error("License heartbeat failed - license mismatch", "response", bodyStr)
-		c.handleLicenseRevoked()
-	case "Device revoked":
-		slog.Error("License heartbeat failed - device revoked", "response", bodyStr)
-		c.handleLicenseRevoked()
-	case "OK":
-		slog.Debug("License heartbeat successful", "status", bodyStr)
-	default:
-		slog.Debug("License heartbeat successful", "status", bodyStr)
+	var hr struct {
+		Code    int    `json:"code"`
+		Status  string `json:"status"`
+		Message string `json:"message"`
+	}
+
+	parsed := false
+	if err := json.Unmarshal(bodyBytes, &hr); err == nil {
+		parsed = true
+	} else {
+		var inner string
+		if err2 := json.Unmarshal(bodyBytes, &inner); err2 == nil {
+			if err3 := json.Unmarshal([]byte(inner), &hr); err3 == nil {
+				parsed = true
+			}
+		}
+	}
+
+	if parsed {
+		lowerMsg := strings.ToLower(hr.Message)
+		if hr.Code >= 400 && (strings.Contains(lowerMsg, "device not found") || strings.Contains(lowerMsg, "revoked") || strings.Contains(lowerMsg, "mismatch")) {
+			slog.Error("License heartbeat failed (structured) - revocation detected", "code", hr.Code, "message", hr.Message)
+			c.handleLicenseRevoked()
+		} else {
+			slog.Debug("License heartbeat successful (structured)", "status", hr.Status, "message", hr.Message)
+		}
+	} else {
+		switch strings.ToLower(bodyStr) {
+		case "missing required fields":
+			slog.Warn("License heartbeat failed - missing required fields", "response", bodyStr)
+		case "device not found":
+			slog.Error("License heartbeat failed - device not found", "response", bodyStr)
+			c.handleLicenseRevoked()
+		case "license mismatch":
+			slog.Error("License heartbeat failed - license mismatch", "response", bodyStr)
+			c.handleLicenseRevoked()
+		case "device revoked":
+			slog.Error("License heartbeat failed - device revoked", "response", bodyStr)
+			c.handleLicenseRevoked()
+		case "ok":
+			slog.Debug("License heartbeat successful", "status", bodyStr)
+		default:
+			slog.Debug("License heartbeat successful", "status", bodyStr)
+		}
 	}
 
 	return nil
 }
 
-// handleLicenseRevoked removes license files when license is revoked
 func (c *CronHandler) handleLicenseRevoked() {
 	slog.Error("CRITICAL: License has been REVOKED by server. Removing local license files.")
 
-	// Force garbage collection to close any open file handles
 	runtime.GC()
 	time.Sleep(100 * time.Millisecond) // Give a moment for GC
 
-	// Remove license files with retry mechanism
 	c.removeFileWithRetry("license/license.json")
 	c.removeFileWithRetry("license/server_public.pem")
 
-	// Create revocation marker file
 	revocationData := map[string]interface{}{
 		"revoked_at": time.Now().Unix(),
 		"reason":     "license_revoked_by_server",
@@ -261,7 +284,6 @@ func (c *CronHandler) handleLicenseRevoked() {
 	slog.Error("Application will need license reactivation to continue")
 }
 
-// removeFileWithRetry attempts to remove a file with retry mechanism
 func (c *CronHandler) removeFileWithRetry(filePath string) {
 	maxRetries := 3
 	retryDelay := 200 * time.Millisecond

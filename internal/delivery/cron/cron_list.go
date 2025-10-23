@@ -20,7 +20,7 @@ func GetAllJob(h *CronHandler) []CronJob {
 		{
 			Name:        "license_heartbeat",
 			Description: "Send periodic heartbeat to license server to check license status",
-			Schedule:    "*/5 * * * * *", // Run every 5 minutes
+			Schedule:    "0 */30 * * * *", // Run every 30 minutes (at second 0)
 			Execute:     h.LicenseHeartbeat,
 		},
 		// {
