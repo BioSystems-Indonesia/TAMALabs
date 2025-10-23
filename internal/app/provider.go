@@ -496,15 +496,18 @@ func provideLicenseService() *licenseuc.License {
 	pubLoader := licenserepo.NewFSKeyLoader()
 	fileLoader := licenserepo.NewFSFileLoader()
 
-	// Ensure license directory exists
-	licenseDir := "license"
+	// License directory under the same ProgramData/TAMALabs root as the DB
+	// dbFileName = .../ProgramData/TAMALabs/database/TAMALabs.db
+	programRoot := filepath.Dir(filepath.Dir(dbFileName)) // ProgramData/TAMALabs
+	licenseDir := filepath.Join(programRoot, "license")
 	if err := os.MkdirAll(licenseDir, 0755); err != nil {
 		slog.Warn("Failed to create license directory", "error", err)
 	}
 
-	// default paths (relative to working directory)
-	pubKeyPath := "license/server_public.pem"
-	licensePath := "license/license.json"
+	// absolute paths under ProgramData/TAMALabs/license
+	pubKeyPath := filepath.Join(licenseDir, "server_public.pem")
+	licensePath := filepath.Join(licenseDir, "license.json")
+	revokedPath := filepath.Join(licenseDir, "revoked.json")
 
 	lic := licenseuc.NewLicense(pubLoader, fileLoader, pubKeyPath, licensePath)
 
@@ -512,7 +515,7 @@ func provideLicenseService() *licenseuc.License {
 	go func() {
 		licenseServerURL := os.Getenv("LICENSE_SERVER_URL")
 		if licenseServerURL == "" {
-			licenseServerURL = "http://localhost:8080"
+			licenseServerURL = "http://localhost"
 		}
 
 		machineID, err := util.GenerateMachineID()
@@ -571,7 +574,7 @@ func provideLicenseService() *licenseuc.License {
 										_ = os.Remove(pubKeyPath)
 										rev := map[string]interface{}{"revoked_at": time.Now().Unix(), "reason": reason}
 										if rb, err := json.MarshalIndent(rev, "", "  "); err == nil {
-											_ = os.WriteFile("license/revoked.json", rb, 0644)
+											_ = os.WriteFile(revokedPath, rb, 0644)
 										}
 									}
 

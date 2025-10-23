@@ -44,12 +44,27 @@ type CronHandler struct {
 	machineID        string
 }
 
+// licenseDirPaths returns the absolute license directory and commonly used file paths
+func licenseDirPaths() (licenseDir, licensePath, pubKeyPath, revokedPath, expiredPath string) {
+	programData := os.Getenv("ProgramData")
+	if programData == "" && runtime.GOOS == "windows" {
+		programData = `C:\\ProgramData`
+	}
+	programRoot := filepath.Join(programData, "TAMALabs")
+	licenseDir = filepath.Join(programRoot, "license")
+	licensePath = filepath.Join(licenseDir, "license.json")
+	pubKeyPath = filepath.Join(licenseDir, "server_public.pem")
+	revokedPath = filepath.Join(licenseDir, "revoked.json")
+	expiredPath = filepath.Join(licenseDir, "expired.json")
+	return
+}
+
 var API_KEY = "KJKDANCJSANIUWYR6243UJFOISJFJKVOMV72487YEHFHFHSDVOHF9AMDC9AN9SDN98YE98YEHDIU2Y897873YYY68686487WGDUDUAGYTE8QTEYADIUHADUYW8E8BWTNC8N8NAMDOAIMDAUDUWYAD87NYW7Y7CBT87EY8142164B36248732M87MCIFH8NYRWCM8MYCMUOIDOIADOIDOIUR83YR983Y98328N32C83NYC8732NYC8732Y87Y32NCNSAIHJAOJFOIJFOIQFIUIUNCNHCIUHWV8NRYNV8Y989N9198298YOIJOI090103021313JKJDHAHDJAJASHHAH"
 
 func NewCronHandler(khanzaUC *khanzauc.Usecase, simrsUC SIMRSUsecase) *CronHandler {
 	licenseServerURL := os.Getenv("LICENSE_SERVER_URL")
 	if licenseServerURL == "" {
-		licenseServerURL = "http://localhost:8080"
+		licenseServerURL = "http://localhost"
 	}
 
 	machineID, err := util.GenerateMachineID()
@@ -134,7 +149,8 @@ func (c *CronHandler) LicenseHeartbeat(ctx context.Context) error {
 	slog.Debug("Performing license heartbeat")
 
 	// Read license file content
-	licenseData, err := os.ReadFile("license/license.json")
+	_, licensePath, _, _, _ := licenseDirPaths()
+	licenseData, err := os.ReadFile(licensePath)
 	if err != nil {
 		slog.Warn("License file not found, skipping heartbeat", "error", err)
 		return nil
@@ -267,9 +283,10 @@ func (c *CronHandler) handleLicenseRevoked() {
 
 	runtime.GC()
 	time.Sleep(100 * time.Millisecond) // Give a moment for GC
+	_, licensePath, pubKeyPath, revokedPath, _ := licenseDirPaths()
 
-	c.removeFileWithRetry("license/license.json")
-	c.removeFileWithRetry("license/server_public.pem")
+	c.removeFileWithRetry(licensePath)
+	c.removeFileWithRetry(pubKeyPath)
 
 	revocationData := map[string]interface{}{
 		"revoked_at": time.Now().Unix(),
@@ -278,7 +295,10 @@ func (c *CronHandler) handleLicenseRevoked() {
 	}
 
 	if data, err := json.MarshalIndent(revocationData, "", "  "); err == nil {
-		if err := os.WriteFile("license/revoked.json", data, 0644); err != nil {
+		if err := os.MkdirAll(filepath.Dir(revokedPath), 0755); err != nil {
+			slog.Warn("Failed create revoked dir", "error", err)
+		}
+		if err := os.WriteFile(revokedPath, data, 0644); err != nil {
 			slog.Error("Failed to create revoked.json", "error", err)
 		} else {
 			slog.Info("Successfully created revoked.json")

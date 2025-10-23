@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"time"
 
@@ -127,6 +128,20 @@ func (h *LicenseHandler) removeFileWithRetry(filePath string) {
 	slog.Error("Failed to remove file after all retries", "file", filePath)
 }
 
+// licenseDirPaths returns the absolute license directory and commonly used file paths
+func licenseDirPaths() (licenseDir, licensePath, revokedPath, expiredPath string) {
+	prog := os.Getenv("ProgramData")
+	if prog == "" && runtime.GOOS == "windows" {
+		prog = `C:\\ProgramData`
+	}
+	programRoot := filepath.Join(prog, "TAMALabs")
+	licenseDir = filepath.Join(programRoot, "license")
+	licensePath = filepath.Join(licenseDir, "license.json")
+	revokedPath = filepath.Join(licenseDir, "revoked.json")
+	expiredPath = filepath.Join(licenseDir, "expired.json")
+	return
+}
+
 func (h *LicenseHandler) ActivateLicense(c echo.Context) error {
 	client := &http.Client{}
 	var req ActivateRequest
@@ -152,7 +167,7 @@ func (h *LicenseHandler) ActivateLicense(c echo.Context) error {
 
 	licenseServerURL := os.Getenv("LICENSE_SERVER_URL")
 	if licenseServerURL == "" {
-		licenseServerURL = "http://localhost:8080" // Default fallback
+		licenseServerURL = "http://localhost" // Default fallback
 	}
 
 	jsonData, err := json.Marshal(externalReq)
@@ -207,14 +222,20 @@ func (h *LicenseHandler) ActivateLicense(c echo.Context) error {
 		})
 	}
 
-	if err := os.WriteFile("license/license.json", licenseJSON, 0644); err != nil {
+	// write to ProgramData/TAMALabs/license/license.json
+	_, licensePath, revokedPath, expiredPath := licenseDirPaths()
+	if err := os.MkdirAll(filepath.Dir(licensePath), 0755); err != nil {
+		slog.Warn("Failed to create license dir", "error", err)
+	}
+
+	if err := os.WriteFile(licensePath, licenseJSON, 0644); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to save license file",
 		})
 	}
 
-	h.removeFileWithRetry("license/revoked.json")
-	h.removeFileWithRetry("license/expired.json")
+	h.removeFileWithRetry(revokedPath)
+	h.removeFileWithRetry(expiredPath)
 
 	return c.JSON(http.StatusOK, activateResp.Data)
 }

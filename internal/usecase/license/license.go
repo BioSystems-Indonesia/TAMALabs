@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
@@ -88,13 +90,20 @@ func (l *License) Check() (*LicenseInformation, error) {
 		return nil, fmt.Errorf("failed to load public key: %w", err)
 	}
 
-	// Check for revocation marker first
-	if _, err := os.Stat("license/revoked.json"); err == nil {
+	// Check for revocation/expiration markers under ProgramData/TAMALabs/license
+	prog := os.Getenv("ProgramData")
+	if prog == "" && runtime.GOOS == "windows" {
+		prog = `C:\\ProgramData`
+	}
+	licenseDir := filepath.Join(prog, "TAMALabs", "license")
+	revokedPath := filepath.Join(licenseDir, "revoked.json")
+	expiredPath := filepath.Join(licenseDir, "expired.json")
+
+	if _, err := os.Stat(revokedPath); err == nil {
 		return nil, fmt.Errorf("license has been revoked by server. please contact support or reactivate")
 	}
 
-	// Check for expiration marker
-	if _, err := os.Stat("license/expired.json"); err == nil {
+	if _, err := os.Stat(expiredPath); err == nil {
 		return nil, fmt.Errorf("license has expired. please renew your license")
 	}
 
