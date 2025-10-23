@@ -32,6 +32,7 @@ import (
 	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
 	rolerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/role"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/specimen"
+	summaryrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/summary"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_template"
 	testTypeRepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/unit"
@@ -52,6 +53,7 @@ import (
 	resultUC "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
 	role_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/role"
 	specimenuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/specimen"
+	summary_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/summary"
 	test_template_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/test_template"
 	testTypeUC "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/test_type"
 	unitUC "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/unit"
@@ -91,6 +93,7 @@ var restUsecaseSet = wire.NewSet(
 	wire.Bind(new(cron.SIMRSUsecase), new(*simrsuc.Usecase)),
 	externaluc.NewUsecase,
 	provideLicenseService,
+	summary_uc.NewSummaryUsecase,
 )
 
 var restRepositorySet = wire.NewSet(
@@ -114,6 +117,7 @@ var restRepositorySet = wire.NewSet(
 	provideKhanzaRepository,
 	provideSimrsRepository,
 	provideAllDevices,
+	summaryrepo.NewSummaryRepository,
 )
 
 var tcpHandlerSet = wire.NewSet(
@@ -162,6 +166,7 @@ var restHandlerSet = wire.NewSet(
 	rest.NewExternalHandler,
 	rest.NewKhanzaExternalHandler,
 	rest.NewLicenseHandler,
+	rest.NewSummaryHandler,
 )
 
 var (

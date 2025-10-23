@@ -9,6 +9,7 @@ import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
 import TableViewIcon from '@mui/icons-material/TableView';
 import InfoIcon from '@mui/icons-material/Info';
 import LicenseIcon from '@mui/icons-material/VerifiedUser';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import jsonServerProvider from "ra-data-json-server";
 import { Admin, CustomRoutes, fetchUtils, HttpError, Resource } from "react-admin";
 import { Route } from "react-router-dom";
@@ -33,6 +34,7 @@ import { ApprovalList } from './approval/index.tsx';
 import CustomLoginPage from './login/index.tsx';
 import LogViewer from './logView/index.tsx';
 import { AboutPage } from './about/index.tsx';
+import { DashboardPage } from './dashboard/index.tsx'
 import LicensePage from './license/index.tsx';
 import LicenseStatusPage from './licenseStatus/index.tsx';
 import { useEffect, useState } from 'react';
@@ -173,6 +175,13 @@ const App = () => {
                                 </CustomRoutes>
                             </>
                         )}
+                        <Resource name="dashboard"
+                            list={DashboardPage}
+                            options={{ label: "Dashboard" }}
+                            icon={DashboardIcon}
+                        >
+
+                        </Resource>
                         <Resource
                             name="work-order"
                             list={WorkOrderList}
