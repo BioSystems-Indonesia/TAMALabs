@@ -10,7 +10,9 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import DashboardOutlinedIcon from "@mui/icons-material/Summarize";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import useAxios from "../../hooks/useAxios";
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 
 // Components
 import { WorkOrderTrend } from './components/workOrderTrend';
@@ -19,7 +21,6 @@ import { TopTestsOrdered } from './components/top10Ordered';
 import { AgeGroupDistribution } from './components/patientDemographic';
 import { AbnormalCriticalChart } from './components/abnormalCriticalChart';
 import { GenderDistribution } from './components/genderDistribution';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 interface DashboardPageProps {
     isWindow: boolean;
@@ -69,17 +70,42 @@ export const DashboardPage = ({ isWindow }: DashboardPageProps) => {
                 const data = resp.data || {};
                 console.log(data)
                 setSummary({
-                    total: data.total_work_orders,
-                    completed: data.completed_work_orders,
-                    incomplete: data.incomplate_work_orders,
-                    pending: data.pending_work_orders,
-                    tests: data.total_test,
-                    devices: data.devices_connected,
-                    parameters: data.total_test_parameters,
-                    patients: data.total_patients
+                    total: data.total_work_orders || 0,
+                    completed: data.completed_work_orders || 0,
+                    incomplete: data.incomplate_work_orders || 0,
+                    pending: data.pending_work_orders || 0,
+                    tests: data.total_test || 0,
+                    devices: data.devices_connected || 0,
+                    parameters: data.total_test_parameters || 0,
+                    patients: data.total_patients || 0
 
                 })
             })
+    }, []);
+
+    const rootRef = useRef<HTMLDivElement | null>(null);
+    const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+    const toggleFullscreen = async () => {
+        try {
+            if (!document.fullscreenElement) {
+                if (rootRef.current) {
+                    await rootRef.current.requestFullscreen();
+                } else {
+                    await document.documentElement.requestFullscreen();
+                }
+            } else {
+                await document.exitFullscreen();
+            }
+        } catch (err) {
+            console.error('Failed to toggle fullscreen:', err);
+        }
+    };
+
+    useEffect(() => {
+        const onFsChange = () => setIsFullscreen(document.fullscreenElement === rootRef.current);
+        document.addEventListener('fullscreenchange', onFsChange);
+        return () => document.removeEventListener('fullscreenchange', onFsChange);
     }, []);
 
     const formatNumber = (num: number): string => {
@@ -89,30 +115,42 @@ export const DashboardPage = ({ isWindow }: DashboardPageProps) => {
     };
 
     return (
-        <Box sx={{ display: 'grid' }}>
+        <Box
+            sx={{
+                display: 'grid',
+                backgroundColor: isFullscreen ? "#f9f9f9ff" : "",
+                padding: isFullscreen ? 5 : 0,
+                ...(isFullscreen
+                    ? {
+                        height: '100vh',
+                        width: '100vw',
+                        overflow: 'auto',
+                        boxSizing: 'border-box',
+                        position: 'relative',
+                    }
+                    : {}),
+            }}
+            ref={rootRef}
+        >
             {/* SUMMARY SECTION */}
             <Box sx={{ mb: 2, display: 'flex', alignItems: "center", gap: 1, justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <DashboardOutlinedIcon />
                     <Typography variant='h5'>SUMMARY</Typography>
                 </Box>
-                {!isWindow ? <Box>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={<OpenInNewIcon />}
-                        onClick={() => {
-                            try {
-                                const url = `${window.location.origin}/dashboard-window`;
-                                window.open(url, '_blank', 'noopener,noreferrer');
-                            } catch (err) {
-                                window.open('/dashboard-window', '_blank', 'noopener,noreferrer');
-                            }
-                        }}
-                    >
-                        Open Window
-                    </Button>
-                </Box> : ""}
+                {!isWindow ? (
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button
+                            variant="contained"
+                            color={isFullscreen ? 'secondary' : 'primary'}
+                            startIcon={isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+                            onClick={toggleFullscreen}
+                        >
+                            {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                        </Button>
+
+                    </Box>
+                ) : ""}
             </Box>
 
             {/* Cards */}
