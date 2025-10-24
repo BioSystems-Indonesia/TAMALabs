@@ -15,7 +15,11 @@ func NewSummaryHandler(summaryUc *summary_uc.SummaryUseCase) *SummaryHandler {
 	return &SummaryHandler{summaryUc: summaryUc}
 }
 
-func (h *SummaryHandler) GetAllSummary(c echo.Context) error {
-	resp := h.summaryUc.Summary(c.Request().Context())
+func (h *SummaryHandler) GetSummaryAnalytics(c echo.Context) error {
+	resp := h.summaryUc.SummaryAnalytics(c.Request().Context())
 	return c.JSON(http.StatusOK, resp)
+}
+
+func (h *SummaryHandler) GetSummary(c echo.Context) error {
+	return c.JSON(http.StatusOK, h.summaryUc.Summary(c.Request().Context()))
 }

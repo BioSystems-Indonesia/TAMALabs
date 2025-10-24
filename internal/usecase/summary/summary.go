@@ -15,14 +15,13 @@ func NewSummaryUsecase(sumaryRepo *summaryrepo.SummaryRepository) *SummaryUseCas
 	return &SummaryUseCase{summaryRepo: sumaryRepo}
 }
 
-func (u *SummaryUseCase) Summary(ctx context.Context) entity.SummaryResponse {
+func (u *SummaryUseCase) SummaryAnalytics(ctx context.Context) entity.SummaryResponse {
 	workOrderTrend := u.summaryRepo.GetWorkTrendSummary(ctx)
 	abnormalSummary := u.summaryRepo.GetAbnormalSummary(ctx)
 	mostOrderdTest := u.summaryRepo.GetMostOrderedTest(ctx)
 	testTypeDistribution := u.summaryRepo.GetTestTypeDistribution(ctx)
 	ageGroupDistribution := u.summaryRepo.GetAgeGroupDistribution(ctx)
 	genderDistribution := u.summaryRepo.GetGenderDistribution(ctx)
-
 	return entity.SummaryResponse{
 		WorkOrderTrend:       workOrderTrend,
 		AbnormalSummary:      abnormalSummary,
@@ -32,4 +31,8 @@ func (u *SummaryUseCase) Summary(ctx context.Context) entity.SummaryResponse {
 		GenderSummary:        genderDistribution,
 	}
 
+}
+
+func (u *SummaryUseCase) Summary(ctx context.Context) entity.SummaryCardResponse {
+	return u.summaryRepo.GetSummary(ctx)
 }

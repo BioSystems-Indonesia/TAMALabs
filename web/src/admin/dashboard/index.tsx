@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import { Card, CardContent, Typography, Box, Button } from '@mui/material';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
@@ -19,8 +19,13 @@ import { TopTestsOrdered } from './components/top10Ordered';
 import { AgeGroupDistribution } from './components/patientDemographic';
 import { AbnormalCriticalChart } from './components/abnormalCriticalChart';
 import { GenderDistribution } from './components/genderDistribution';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-export const DashboardPage = () => {
+interface DashboardPageProps {
+    isWindow: boolean;
+}
+
+export const DashboardPage = ({ isWindow }: DashboardPageProps) => {
     const axios = useAxios()
     const [summary, setSummary] = useState({
         total: 0,
@@ -30,7 +35,6 @@ export const DashboardPage = () => {
         tests: 0,
         devices: 0,
         patients: 0,
-        abnormal: 0,
         parameters: 0,
     });
 
@@ -44,7 +48,7 @@ export const DashboardPage = () => {
     });
 
     useEffect(() => {
-        axios.get('/summary/')
+        axios.get('/summary/analytics')
             .then(resp => {
                 const data = resp.data || {};
                 console.log(data)
@@ -60,6 +64,22 @@ export const DashboardPage = () => {
             .catch(err => {
                 console.error("Failed to load summary data:", err);
             });
+        axios.get('/summary/')
+            .then(resp => {
+                const data = resp.data || {};
+                console.log(data)
+                setSummary({
+                    total: data.total_work_orders,
+                    completed: data.completed_work_orders,
+                    incomplete: data.incomplate_work_orders,
+                    pending: data.pending_work_orders,
+                    tests: data.total_test,
+                    devices: data.devices_connected,
+                    parameters: data.total_test_parameters,
+                    patients: data.total_patients
+
+                })
+            })
     }, []);
 
     const formatNumber = (num: number): string => {
@@ -71,19 +91,38 @@ export const DashboardPage = () => {
     return (
         <Box sx={{ display: 'grid' }}>
             {/* SUMMARY SECTION */}
-            <Box sx={{ mb: 2, display: 'flex', alignItems: "center", gap: 1 }}>
-                <DashboardOutlinedIcon />
-                <Typography variant='h5'>SUMMARY</Typography>
+            <Box sx={{ mb: 2, display: 'flex', alignItems: "center", gap: 1, justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <DashboardOutlinedIcon />
+                    <Typography variant='h5'>SUMMARY</Typography>
+                </Box>
+                {!isWindow ? <Box>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<OpenInNewIcon />}
+                        onClick={() => {
+                            try {
+                                const url = `${window.location.origin}/dashboard-window`;
+                                window.open(url, '_blank', 'noopener,noreferrer');
+                            } catch (err) {
+                                window.open('/dashboard-window', '_blank', 'noopener,noreferrer');
+                            }
+                        }}
+                    >
+                        Open Window
+                    </Button>
+                </Box> : ""}
             </Box>
 
             {/* Cards */}
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(16, 1fr)', gap: 1 }}>
                 {[
                     { icon: <AssignmentTurnedInIcon sx={{ mr: 1, color: 'primary.main' }} />, title: 'Total Work Orders Today', value: summary.total },
-                    { icon: <CheckCircleIcon sx={{ mr: 1, color: 'success.main' }} />, title: 'Completed Work Orders', value: summary.completed },
-                    { icon: <HourglassEmptyIcon sx={{ mr: 1, color: 'warning.main' }} />, title: 'Pending Work Orders', value: summary.pending },
-                    { icon: <ErrorOutlineIcon sx={{ mr: 1, color: 'error.main' }} />, title: 'Incomplete Work Orders', value: summary.incomplete },
-                    { icon: <ScienceIcon sx={{ mr: 1, color: 'primary.main' }} />, title: 'Total Tests (OBR/OBX)', value: summary.tests },
+                    { icon: <CheckCircleIcon sx={{ mr: 1, color: 'success.main' }} />, title: 'Completed Work Orders Today', value: summary.completed },
+                    { icon: <HourglassEmptyIcon sx={{ mr: 1, color: 'warning.main' }} />, title: 'Pending Work Orders Today', value: summary.pending },
+                    { icon: <ErrorOutlineIcon sx={{ mr: 1, color: 'error.main' }} />, title: 'Incomplete Work Orders Today', value: summary.incomplete },
+                    { icon: <ScienceIcon sx={{ mr: 1, color: 'primary.main' }} />, title: 'Total Tests (OBR/OBX) Today', value: summary.tests },
                     { icon: <DevicesIcon sx={{ mr: 1, color: 'secondary.main' }} />, title: 'Devices Connected', value: summary.devices },
                     { icon: <PeopleIcon sx={{ mr: 1, color: 'primary.main' }} />, title: 'Total Patients', value: summary.patients },
                     { icon: <ListAltIcon sx={{ mr: 1, color: 'info.main' }} />, title: 'Total Test Parameters', value: summary.parameters },

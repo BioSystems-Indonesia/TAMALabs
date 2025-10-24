@@ -2,6 +2,7 @@ package summaryrepo
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
@@ -20,31 +21,56 @@ func (r *SummaryRepository) GetWorkTrendSummary(ctx context.Context) []entity.Su
 	db := r.db.WithContext(ctx)
 
 	var results []entity.Summary
-	// Build last 7 days in Go first to ensure deterministic keys even when DB has no rows
+
+	var latest string
+	_ = db.Raw("SELECT substr(MAX(created_at), 1, 10) FROM work_orders").Scan(&latest)
+
 	now := time.Now()
-	for i := 6; i >= 0; i-- {
-		d := now.AddDate(0, 0, -i)
-		results = append(results, entity.Summary{Name: d.Format("2006-01-02"), Total: 0})
+	if latest != "" {
+		if t, err := time.Parse("2006-01-02", latest); err == nil {
+			now = t
+		}
 	}
 
-	// Query counts grouped by date (created_at) if work_orders table exists
-	rows, err := db.Table("work_orders").Select("date(created_at) as date, count(*) as total").
-		Where("created_at >= ?", now.AddDate(0, 0, -6)).
-		Group("date(created_at)").Rows()
-	if err == nil {
-		defer rows.Close()
-		var date string
-		var total int64
-		m := make(map[string]int64)
-		for rows.Next() {
-			_ = rows.Scan(&date, &total)
+	for i := 6; i >= 0; i-- {
+		d := now.AddDate(0, 0, -i)
+		results = append(results, entity.Summary{
+			Name:  d.Format("2006-01-02"),
+			Total: 0,
+		})
+	}
+
+	query := `
+		SELECT 
+			substr(created_at, 1, 10) AS date, 
+			COUNT(*) AS total
+		FROM work_orders
+		WHERE substr(created_at, 1, 10) >= ?
+		GROUP BY substr(created_at, 1, 10)
+	`
+
+	startDate := now.AddDate(0, 0, -6).Format("2006-01-02")
+
+	rows, err := db.Raw(query, startDate).Rows()
+	if err != nil {
+		slog.Debug("failed to query work_orders summary", "error", err)
+		return results
+	}
+	defer rows.Close()
+
+	var date string
+	var total int64
+	m := make(map[string]int64)
+
+	for rows.Next() {
+		if err := rows.Scan(&date, &total); err == nil {
 			m[date] = total
 		}
+	}
 
-		for i := range results {
-			if v, ok := m[results[i].Name]; ok {
-				results[i].Total = int(v)
-			}
+	for i := range results {
+		if v, ok := m[results[i].Name]; ok {
+			results[i].Total = int(v)
 		}
 	}
 
@@ -230,4 +256,52 @@ func (r *SummaryRepository) GetGenderDistribution(ctx context.Context) []entity.
 		items = []entity.Summary{{Name: "male", Total: 0}, {Name: "female", Total: 0}}
 	}
 	return items
+}
+
+func (r *SummaryRepository) GetSummary(ctx context.Context) entity.SummaryCardResponse {
+	db := r.db.WithContext(ctx)
+	var resp entity.SummaryCardResponse
+
+	today := time.Now().Format("2006-01-02")
+
+	db.Raw(`
+		SELECT COUNT(*) 
+		FROM work_orders 
+		WHERE substr(created_at, 1, 10) = ?
+	`, today).Scan(&resp.TotalWorkOrders)
+
+	db.Raw(`
+		SELECT COUNT(*) 
+		FROM work_orders 
+		WHERE status = 'SUCCESS' 
+		  AND substr(created_at, 1, 10) = ?
+	`, today).Scan(&resp.CompletedWorkOrders)
+
+	db.Raw(`
+		SELECT COUNT(*) 
+		FROM work_orders 
+		WHERE status = 'PENDING' 
+		  AND substr(created_at, 1, 10) = ?
+	`, today).Scan(&resp.PendingWorkOrders)
+
+	db.Raw(`
+		SELECT COUNT(*) 
+		FROM work_orders 
+		WHERE status = 'NEW' 
+		  AND substr(created_at, 1, 10) = ?
+	`, today).Scan(&resp.IncomplateWorkOrders)
+
+	db.Raw(`
+		SELECT COUNT(*) 
+		FROM observation_results 
+		WHERE substr(created_at, 1, 10) = ?
+	`, today).Scan(&resp.TotalTest)
+
+	db.Raw(`SELECT COUNT(*) FROM devices`).Scan(&resp.DevicesConnected)
+
+	db.Raw(`SELECT COUNT(*) FROM patients`).Scan(&resp.TotalPatients)
+
+	db.Raw(`SELECT COUNT(*) FROM test_types`).Scan(&resp.TotalTestParameters)
+
+	return resp
 }

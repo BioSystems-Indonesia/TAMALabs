@@ -13,3 +13,14 @@ type SummaryResponse struct {
 	TopTestOrdered       []Summary `json:"top_test_ordered"`
 	TestTypeDistribution []Summary `json:"test_type_distribution"`
 }
+
+type SummaryCardResponse struct {
+	TotalWorkOrders      int `json:"total_work_orders"`
+	CompletedWorkOrders  int `json:"completed_work_orders"`
+	PendingWorkOrders    int `json:"pending_work_orders"`
+	IncomplateWorkOrders int `json:"incomplate_work_orders"`
+	TotalTest            int `json:"total_test"`
+	DevicesConnected     int `json:"devices_connected"`
+	TotalPatients        int `json:"total_patients"`
+	TotalTestParameters  int `json:"total_test_parameters"`
+}

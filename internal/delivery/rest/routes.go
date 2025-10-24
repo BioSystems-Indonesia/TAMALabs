@@ -268,7 +268,8 @@ func RegisterRoutes(
 
 	summary := authenticatedV1.Group("/summary")
 	{
-		summary.GET("/", summaryHandler.GetAllSummary)
+		summary.GET("/", summaryHandler.GetSummary)
+		summary.GET("/analytics", summaryHandler.GetSummaryAnalytics)
 	}
 
 	khanzaExternalHandler.RegisterRoutes(unauthenticatedV1)
