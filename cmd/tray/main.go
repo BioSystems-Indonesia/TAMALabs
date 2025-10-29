@@ -3,6 +3,8 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -11,8 +13,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"io"
-	"log"
 
 	"github.com/energye/systray"
 )
