@@ -11,7 +11,7 @@ import (
 
 func main() {
 	// Create a log file for debugging
-	logFile, _ := os.OpenFile(filepath.Join(filepath.Dir(getExePath()), "service-helper.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	logFile, _ := os.OpenFile(filepath.Join(filepath.Dir(getExePath()), "logs/service-helper.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if logFile != nil {
 		defer logFile.Close()
 		logFile.WriteString(fmt.Sprintf("\n=== %s ===\n", time.Now().Format("2006-01-02 15:04:05")))
@@ -77,20 +77,20 @@ func runNSSMCommand(args []string, logFile *os.File) (string, error) {
 	nssmPath := getNSSMPath()
 	cmd := exec.Command(nssmPath, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	
+
 	if logFile != nil {
 		logFile.WriteString(fmt.Sprintf("Executing: %s %v\n", nssmPath, args))
 	}
-	
+
 	output, err := cmd.CombinedOutput()
-	
+
 	if logFile != nil {
 		logFile.WriteString(fmt.Sprintf("Output: %s\n", string(output)))
 		if err != nil {
 			logFile.WriteString(fmt.Sprintf("Error: %v\n", err))
 		}
 	}
-	
+
 	return string(output), err
 }
 

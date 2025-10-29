@@ -14,6 +14,7 @@ import (
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/app"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
 	"github.com/BioSystems-Indonesia/TAMALabs/pkg/logger"
+	"github.com/joho/godotenv"
 )
 
 var (
@@ -28,6 +29,7 @@ var version = ""
 func main() {
 	defer showErrorOnPanic()
 
+	godotenv.Load()
 	flag.Parse()
 
 	if *flagDev {

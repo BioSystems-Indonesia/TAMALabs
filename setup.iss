@@ -1,11 +1,11 @@
 ; -- Inno Setup Script for TAMALabs with Windows Service Registration --
-; ==============================================
+; ===================================================================
 ; FEATURES:
-;  - Automatic service installation and startup
-;  - System tray auto-start with administrator privileges (via scheduled task)
-;  - No post-install dialog prompts
-;  - Clean uninstallation with service and task removal
-; ==============================================
+; - Automatic service installation and startup
+; - System tray auto-start with administrator privileges (via scheduled task)
+; - Avoid duplicate tray instances
+; - Clean uninstallation (removes service, scheduled task, tray process)
+; ===================================================================
 
 [Setup]
 AppId={{F4A4A2A2-702D-4B1F-A88E-5E3A1A8E2E8A}}
@@ -34,74 +34,72 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Dirs]
-Name: "{app}\tmp"; Permissions: users-modify
+Name: "{app}\logs"; Permissions: users-modify
+
 
 [Files]
-; Main app binary
 Source: "bin\TAMALabs.exe"; DestDir: "{app}"; Flags: ignoreversion
-; Include NSSM for service management
 Source: "bin\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
-; Include Tray for TAMALabs tray system
 Source: "bin\TAMALabsTray.exe"; DestDir: "{app}"; Flags: ignoreversion
-; Include Service Helper with admin privileges
 Source: "bin\service-helper.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: ".env"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-; Shortcut yang membuka browser default ke http://127.0.0.1:8322
 Name: "{autodesktop}\TAMALabs (Open Web)"; \
-    Filename: "rundll32.exe"; \
-    Parameters: "url.dll,FileProtocolHandler http://127.0.0.1:8322"; \
-    IconFilename: "{app}\TAMALabs.exe"; \
-    Tasks: desktopicon
+	Filename: "rundll32.exe"; \
+	Parameters: "url.dll,FileProtocolHandler http://127.0.0.1:8322"; \
+	IconFilename: "{app}\TAMALabs.exe"; \
+	Tasks: desktopicon
 
-; Backup startup shortcut (fallback jika scheduled task gagal)
+; Fallback shortcut if scheduled task fails
 Name: "{userstartup}\TAMALabs Tray"; \
-    Filename: "{app}\TAMALabsTray.exe"; \
-    WorkingDir: "{app}"
+	Filename: "{app}\TAMALabsTray.exe"; \
+	WorkingDir: "{app}"
 
 [Run]
 ; --- Register TAMALabs as Windows Service ---
-; Install the service (if not already installed)
 Filename: "{app}\nssm.exe"; \
-    Parameters: "install TAMALabs ""{app}\TAMALabs.exe"""; \
-    Flags: runhidden waituntilterminated; \
-    StatusMsg: "Registering TAMALabs service..."
+	Parameters: "install TAMALabs ""{app}\TAMALabs.exe"""; \
+	Flags: runhidden waituntilterminated; \
+	StatusMsg: "Registering TAMALabs service..."
 
-; Set the service startup type to automatic
 Filename: "sc.exe"; \
-    Parameters: "config TAMALabs start= auto"; \
-    Flags: runhidden waituntilterminated; \
-    StatusMsg: "Configuring TAMALabs service startup..."
+	Parameters: "config TAMALabs start= auto"; \
+	Flags: runhidden waituntilterminated; \
+	StatusMsg: "Configuring TAMALabs service startup..."
 
-; Start the service immediately
 Filename: "{app}\nssm.exe"; \
-    Parameters: "start TAMALabs"; \
-    Flags: runhidden waituntilterminated; \
-    StatusMsg: "Starting TAMALabs service..."
+	Parameters: "start TAMALabs"; \
+	Flags: runhidden waituntilterminated; \
+	StatusMsg: "Starting TAMALabs service..."
 
-; Create scheduled task for auto-start tray
+; --- Configure Tray Auto-Start via Task Scheduler ---
 Filename: "schtasks.exe"; \
-    Parameters: "/create /tn ""TAMALabs Tray"" /tr ""{app}\TAMALabsTray.exe"" /sc onlogon /f"; \
-    Flags: runhidden waituntilterminated; \
-    StatusMsg: "Setting up TAMALabs tray auto-start..."
+	Parameters: "/create /tn ""TAMALabs Tray"" /tr ""\""{app}\TAMALabsTray.exe\"""" /sc onlogon /rl HIGHEST /f /ru ""%USERNAME%"""; \
+	Flags: runhidden waituntilterminated; \
+	StatusMsg: "Setting up TAMALabs tray auto-start with admin rights..."
 
-; Start TAMALabsTray immediately (now safe with asInvoker manifest)
+; --- Start tray manually only if task not exists (avoid duplicate tray) ---
 Filename: "{app}\TAMALabsTray.exe"; \
-    Flags: runasoriginaluser nowait; \
-    StatusMsg: "Starting TAMALabs system tray..."
-
-; Start TAMALabsTray immediately as current user (now safe with asInvoker manifest)
-Filename: "{app}\TAMALabsTray.exe"; \
-    Flags: runasoriginaluser nowait; \
-    StatusMsg: "Starting TAMALabs system tray..."
+	Check: not TrayTaskExists; \
+	Flags: nowait; \
+	StatusMsg: "Starting TAMALabs system tray..."
 
 [UninstallRun]
-; --- Stop and remove service when uninstalling ---
+Filename: "taskkill.exe"; Parameters: "/F /IM TAMALabsTray.exe"; Flags: runhidden waituntilterminated; RunOnceId: "KillTray"
 Filename: "{app}\nssm.exe"; Parameters: "stop TAMALabs"; Flags: runhidden waituntilterminated; RunOnceId: "StopService"
 Filename: "{app}\nssm.exe"; Parameters: "remove TAMALabs confirm"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveService"
-; Remove scheduled task for tray auto-start (ignore errors if not exists)
-Filename: "schtasks.exe"; Parameters: "/delete /tn ""TAMALabs Tray"" /f"; Flags: runhidden; RunOnceId: "RemoveScheduledTask"
+Filename: "schtasks.exe"; Parameters: "/delete /tn ""TAMALabs Tray"" /f"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveScheduledTask"
+Filename: "cmd.exe"; Parameters: "/C rmdir /S /Q ""{app}"""; Flags: runhidden waituntilterminated; RunOnceId: "RemoveAppDir"
 
 [UninstallDelete]
-; Clean up any startup shortcuts
 Type: files; Name: "{userstartup}\TAMALabs Tray.lnk"
+
+[Code]
+function TrayTaskExists: Boolean;
+var
+ResultCode: Integer;
+begin
+Exec('schtasks.exe', '/query /tn "TAMALabs Tray"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+Result := (ResultCode = 0);
+end;

@@ -32,7 +32,7 @@ func GetDefaultLogFile() string {
 		panic(err)
 	}
 
-	defaultLogFile := path.Join(path.Dir(executable), "tmp", logFilename)
+	defaultLogFile := path.Join(path.Dir(executable), "logs", logFilename)
 	return defaultLogFile
 }
 

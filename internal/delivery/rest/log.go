@@ -116,7 +116,7 @@ func (h *LogHandler) ExportLog(c echo.Context) error {
 	zipFileName := fmt.Sprintf("%s%s.zip", prefix, timestamp)
 	zipFilePath := filepath.Join(os.TempDir(), zipFileName)
 
-	srcDir := filepath.Join(".", "tmp")
+	srcDir := filepath.Join(".", "logs")
 	if err := ZipDir(srcDir, zipFilePath); err != nil {
 		return handleError(c, fmt.Errorf("failed to zip tmp dir: %w", err))
 	}

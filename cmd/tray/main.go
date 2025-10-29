@@ -11,6 +11,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"io"
+	"log"
 
 	"github.com/energye/systray"
 )
@@ -24,7 +26,39 @@ type ServiceStatus struct {
 }
 
 func main() {
+	// initialize logging to logs/tray.log next to the executable
+	lf, err := setupLogging()
+	if err != nil {
+		fmt.Printf("Failed to initialize logger: %v\n", err)
+	} else {
+		defer lf.Close()
+	}
+
 	systray.Run(onReady, nil)
+}
+
+// setupLogging creates a logs directory next to the executable and
+// configures the standard logger to write to logs/tray.log (and stdout).
+func setupLogging() (*os.File, error) {
+	exePath, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+	base := filepath.Dir(exePath)
+	logsDir := filepath.Join(base, "logs")
+	if err := os.MkdirAll(logsDir, 0755); err != nil {
+		return nil, err
+	}
+	logPath := filepath.Join(logsDir, "tray.log")
+	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return nil, err
+	}
+	mw := io.MultiWriter(os.Stdout, f)
+	log.SetOutput(mw)
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	log.Printf("Logger initialized, writing to %s", logPath)
+	return f, nil
 }
 
 func onReady() {
@@ -207,23 +241,54 @@ func getServiceStatus() string {
 		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	}
 	output, err := cmd.CombinedOutput()
-
-	if err != nil {
-		// If NSSM fails, service might not be installed yet
-		return "Not Installed"
-	}
-
 	status := strings.TrimSpace(string(output))
-	if strings.Contains(status, "SERVICE_RUNNING") {
+
+	// Parse NSSM output regardless of the command exit code. NSSM may return
+	// non-zero for certain states but still output a useful status string.
+	if strings.Contains(strings.ToLower(status), "service_running") || strings.Contains(strings.ToLower(status), "running") {
 		return "Running"
-	} else if strings.Contains(status, "SERVICE_STOPPED") {
+	}
+	if strings.Contains(strings.ToLower(status), "service_stopped") || strings.Contains(strings.ToLower(status), "stopped") {
 		return "Stopped"
-	} else if strings.Contains(status, "SERVICE_PAUSED") {
+	}
+	if strings.Contains(strings.ToLower(status), "service_paused") || strings.Contains(strings.ToLower(status), "paused") {
 		return "Paused"
-	} else if strings.Contains(status, "service does not exist") {
+	}
+	if strings.Contains(strings.ToLower(status), "service does not exist") || strings.Contains(strings.ToLower(status), "not installed") {
 		return "Not Installed"
 	}
 
+	// If we have an error but couldn't parse a known status, log the output for debugging and return Unknown
+	if err != nil {
+		log.Printf("nssm status error: %v, output: %s\n", err, status)
+
+		// Fallback: try using sc.exe which is available on all Windows systems
+		if runtime.GOOS == "windows" {
+			scCmd := exec.Command("sc", "query", "TAMALabs")
+			if runtime.GOOS == "windows" {
+				scCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+			}
+			scOut, scErr := scCmd.CombinedOutput()
+			scStatus := strings.ToLower(strings.TrimSpace(string(scOut)))
+			if scErr == nil || len(scStatus) > 0 {
+				if strings.Contains(scStatus, "running") || strings.Contains(scStatus, "state") && strings.Contains(scStatus, "running") {
+					return "Running"
+				}
+				if strings.Contains(scStatus, "stopped") || strings.Contains(scStatus, "state") && strings.Contains(scStatus, "stopped") {
+					return "Stopped"
+				}
+				if strings.Contains(scStatus, "does not exist") || strings.Contains(scStatus, "not found") {
+					return "Not Installed"
+				}
+				// If SC returned something we don't understand, fall through to Unknown
+				log.Printf("sc query output: %s, err: %v\n", scStatus, scErr)
+			}
+		}
+
+		return "Unknown"
+	}
+
+	// Fallback to Unknown if nothing matched
 	return "Unknown"
 }
 
@@ -239,7 +304,7 @@ func showNotification(message string) {
 }
 
 func showError(message string) {
-	fmt.Printf("Error: %s\n", message)
+	log.Printf("Error: %s", message)
 	systray.SetTooltip(fmt.Sprintf("TAMALabs - Error: %s", message))
 
 	// Reset tooltip after 5 seconds
