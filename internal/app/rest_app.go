@@ -166,7 +166,7 @@ var restHandlerSet = wire.NewSet(
 	rest.NewExternalHandler,
 	rest.NewKhanzaExternalHandler,
 	rest.NewLicenseHandler,
-	rest.NewSummaryHandler,
+	summary_uc.NewSummaryUsecase,
 )
 
 var (

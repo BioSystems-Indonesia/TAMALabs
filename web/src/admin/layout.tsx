@@ -27,6 +27,7 @@ import { toTitleCase } from '../helper/format';
 import FileOpenIcon from '@mui/icons-material/FileOpen';
 import logo from '../assets/elgatama-logo.png';
 import { useCurrentUser, useCurrentUserRole } from '../hooks/currentUser';
+import WhatsNew from './WhatsNew';
 
 
 const SettingsButton = () => (
@@ -435,7 +436,9 @@ export const DefaultLayout = ({ children }: { children: ReactNode }) => {
                 <DynamicBreadcrumbs />
             </Stack>
             <Box sx={{ paddingLeft: 3, paddingRight: 3, paddingBottom: 8 }}>
-                {children}
+                <WhatsNew>
+                    {children}
+                </WhatsNew>
             </Box>
             <CheckForApplicationUpdate />
             <Footer />

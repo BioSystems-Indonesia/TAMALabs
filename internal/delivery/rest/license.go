@@ -167,7 +167,7 @@ func (h *LicenseHandler) ActivateLicense(c echo.Context) error {
 
 	licenseServerURL := os.Getenv("LICENSE_SERVER_URL")
 	if licenseServerURL == "" {
-		licenseServerURL = "http://localhost" // Default fallback
+		licenseServerURL = "https://tamalabs.biosystems.id"
 	}
 
 	jsonData, err := json.Marshal(externalReq)

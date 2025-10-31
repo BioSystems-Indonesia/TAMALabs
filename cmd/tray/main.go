@@ -2,325 +2,222 @@ package main
 
 import (
 	_ "embed"
-	"fmt"
-	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"syscall"
 	"time"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
+	"github.com/BioSystems-Indonesia/TAMALabs/pkg/logger"
 	"github.com/energye/systray"
 )
 
 //go:embed trayicon.ico
 var trayicon []byte
 
-type ServiceStatus struct {
-	Status string `json:"status"`
-	Error  string `json:"error,omitempty"`
-}
+var serverCmd *exec.Cmd
 
 func main() {
-	// initialize logging to logs/tray.log next to the executable
-	lf, err := setupLogging()
-	if err != nil {
-		fmt.Printf("Failed to initialize logger: %v\n", err)
-	} else {
-		defer lf.Close()
+	runtime.LockOSThread()
+
+	if os.Getenv(constant.ENVLogLevel) == "" {
+		os.Setenv(constant.ENVLogLevel, string(constant.LogLevelInfo))
 	}
 
-	systray.Run(onReady, nil)
-}
+	provideGlobalLog()
 
-// setupLogging creates a logs directory next to the executable and
-// configures the standard logger to write to logs/tray.log (and stdout).
-func setupLogging() (*os.File, error) {
-	exePath, err := os.Executable()
-	if err != nil {
-		return nil, err
-	}
-	base := filepath.Dir(exePath)
-	logsDir := filepath.Join(base, "logs")
-	if err := os.MkdirAll(logsDir, 0755); err != nil {
-		return nil, err
-	}
-	logPath := filepath.Join(logsDir, "tray.log")
-	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	if err != nil {
-		return nil, err
-	}
-	mw := io.MultiWriter(os.Stdout, f)
-	log.SetOutput(mw)
-	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
-	log.Printf("Logger initialized, writing to %s", logPath)
-	return f, nil
+	systray.Run(onReady, func() {})
 }
 
 func onReady() {
 	systray.SetTitle("TAMALabs")
-	systray.SetTooltip("TAMALabs Service Controller")
+	systray.SetTooltip("TAMALabs")
 	systray.SetIcon(trayicon)
 
-	mStatus := systray.AddMenuItem("Service Status: Checking...", "Current service status")
-	mStatus.Disable()
+	mStatus := systray.AddMenuItem("Status: Checking...", "Server status")
 	systray.AddSeparator()
 
-	mStart := systray.AddMenuItem("Start Service", "Start the TAMALabs service")
-	mStop := systray.AddMenuItem("Stop Service", "Stop the TAMALabs service")
-	mRestart := systray.AddMenuItem("Restart Service", "Restart the TAMALabs service")
+	mRun := systray.AddMenuItem("Run", "Start server")
+	mRestart := systray.AddMenuItem("Restart", "Restart server")
+	mStop := systray.AddMenuItem("Stop", "Stop server")
 	systray.AddSeparator()
 
-	mOpen := systray.AddMenuItem("Open Web Interface", "Open TAMALabs in browser")
+	mOpen := systray.AddMenuItem("Open Browser", "Open Browser")
 	systray.AddSeparator()
-	mExit := systray.AddMenuItem("Exit Tray", "Exit this tray app")
 
-	// Update status periodically
+	mQuit := systray.AddMenuItem("Quit", "Exit tray")
+
+	// status updater
 	go func() {
 		for {
-			status := getServiceStatus()
-			mStatus.SetTitle(fmt.Sprintf("Service Status: %s", status))
-
-			// Enable/disable buttons based on status
-			switch strings.ToLower(status) {
-			case "running":
-				mStart.Disable()
-				mStop.Enable()
-				mRestart.Enable()
-			case "stopped":
-				mStart.Enable()
-				mStop.Disable()
-				mRestart.Disable()
-			case "not installed":
-				mStart.Disable()
-				mStop.Disable()
-				mRestart.Disable()
-				mStatus.SetTitle("Service Status: Not Installed (Run installer)")
-			default:
-				// Unknown status - enable all for manual control
-				mStart.Enable()
-				mStop.Enable()
-				mRestart.Enable()
+			status := "Not Running"
+			if isServerRunning() {
+				status = "Running"
 			}
-
-			time.Sleep(5 * time.Second)
+			mStatus.SetTitle("Status: " + status)
+			time.Sleep(2 * time.Second)
 		}
 	}()
-
-	// Event handlers
-	mStart.Click(func() {
-		go func() {
-			mStart.SetTitle("Starting...")
-			mStart.Disable()
-
-			success := controlService("start")
-
-			// Reset button title
-			mStart.SetTitle("Start Service")
-
-			if success {
-				showNotification("TAMALabs service started successfully")
-			} else {
-				showError("Failed to start service")
-			}
-
-			// Force status update
-			time.Sleep(1 * time.Second)
-		}()
-	})
-
-	mStop.Click(func() {
-		go func() {
-			mStop.SetTitle("Stopping...")
-			mStop.Disable()
-
-			success := controlService("stop")
-
-			// Reset button title
-			mStop.SetTitle("Stop Service")
-
-			if success {
-				showNotification("TAMALabs service stopped successfully")
-			} else {
-				showError("Failed to stop service")
-			}
-
-			// Force status update
-			time.Sleep(1 * time.Second)
-		}()
-	})
-
-	mRestart.Click(func() {
-		go func() {
-			mRestart.SetTitle("Restarting...")
-			mRestart.Disable()
-
-			success := controlService("restart")
-
-			// Reset button title
-			mRestart.SetTitle("Restart Service")
-
-			if success {
-				showNotification("TAMALabs service restarted successfully")
-			} else {
-				showError("Failed to restart service")
-			}
-
-			// Force status update
-			time.Sleep(1 * time.Second)
-		}()
-	})
 
 	mOpen.Click(func() {
 		openbrowser("http://127.0.0.1:8322")
 	})
 
-	mExit.Click(func() {
+	mRun.Click(func() {
+		startServer()
+	})
+
+	mRestart.Click(func() {
+		stopServer()
+		time.Sleep(500 * time.Millisecond)
+		startServer()
+	})
+
+	mStop.Click(func() {
+		stopServer()
+	})
+
+	mQuit.Click(func() {
+		stopServer()
 		systray.Quit()
 	})
 }
 
-func controlService(action string) bool {
-	exePath, err := os.Executable()
-	if err != nil {
-		showError(fmt.Sprintf("Failed to get executable path: %v", err))
-		return false
+func startServer() {
+	if serverCmd != nil && serverCmd.Process != nil {
+		slog.Info("Server already running")
+		return
 	}
 
-	helperPath := filepath.Join(filepath.Dir(exePath), "service-helper.exe")
-
-	// Check if helper exists
-	if _, err := os.Stat(helperPath); os.IsNotExist(err) {
-		showError("Service helper not found. Please reinstall TAMALabs.")
-		return false
+	// Resolve TAMALabs executable path relative to this tray executable.
+	// This avoids failures when the tray's working directory is different
+	// (for example when launched from Startup shortcuts).
+	var exePath string
+	if runtime.GOOS == "windows" {
+		// Prefer the TAMALabs.exe next to the tray executable
+		if exe, err := os.Executable(); err == nil {
+			exePath = filepath.Join(filepath.Dir(exe), "TAMALabs.exe")
+		} else {
+			exePath = "./TAMALabs.exe"
+		}
+	} else {
+		if exe, err := os.Executable(); err == nil {
+			exePath = filepath.Join(filepath.Dir(exe), "TAMALabs")
+		} else {
+			exePath = "./TAMALabs"
+		}
 	}
 
-	cmd := exec.Command(helperPath, action, "TAMALabs")
-	output, err := cmd.CombinedOutput()
-
-	if err != nil {
-		showError(fmt.Sprintf("Failed to %s service: %v\nOutput: %s", action, err, string(output)))
-		return false
+	// Log and validate the resolved executable path to help diagnose installer/startup issues
+	slog.Info("Resolved server executable path", "exePath", exePath)
+	if info, err := os.Stat(exePath); err != nil {
+		if os.IsNotExist(err) {
+			slog.Error("TAMALabs executable not found", "path", exePath, "err", err)
+			return
+		}
+		slog.Error("Failed to stat TAMALabs executable", "path", exePath, "err", err)
+		return
+	} else if info.IsDir() {
+		slog.Error("Resolved server path is a directory, expected executable", "path", exePath)
+		return
 	}
 
-	return true
-}
+	cmd := exec.Command(exePath)
+	// ensure the child process has its working directory set to the
+	// application folder so relative file reads (like .env) work as
+	// expected when started from shortcuts.
+	cmd.Dir = filepath.Dir(exePath)
 
-func getServiceStatus() string {
-	// First try to check if web interface is responding (primary check)
-	// Check root path instead of /ping since /ping might not exist
-	client := &http.Client{Timeout: 2 * time.Second}
-	resp, err := client.Get("http://127.0.0.1:8322/")
-	if err == nil {
-		defer resp.Body.Close()
-		// Any response code means service is running (200, 404, etc.)
-		return "Running"
+	// Avoid flashing a console window when starting the server from the tray.
+	// - Do not attach Stdout/Stderr to the tray process's stdio (that can cause
+	//   a console to appear).
+	// - On Windows set HideWindow so no console is shown for the child.
+	// Redirect child's output to a rotating file under logs so we can inspect it.
+	if logFile, err := os.OpenFile(filepath.Join(filepath.Dir(exePath), "logs", "server.stdout.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644); err == nil {
+		cmd.Stdout = logFile
+		cmd.Stderr = logFile
 	}
 
-	// Fallback to direct NSSM check using correct path
-	exePath, err := os.Executable()
-	if err != nil {
-		return "Unknown Path"
-	}
-
-	nssmPath := filepath.Join(filepath.Dir(exePath), "nssm.exe")
-
-	// Check if NSSM exists
-	if _, err := os.Stat(nssmPath); os.IsNotExist(err) {
-		// Try system PATH as fallback
-		nssmPath = "nssm"
-	}
-
-	cmd := exec.Command(nssmPath, "status", "TAMALabs")
-	// Hide window on Windows
 	if runtime.GOOS == "windows" {
 		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	}
-	output, err := cmd.CombinedOutput()
-	status := strings.TrimSpace(string(output))
 
-	// Parse NSSM output regardless of the command exit code. NSSM may return
-	// non-zero for certain states but still output a useful status string.
-	if strings.Contains(strings.ToLower(status), "service_running") || strings.Contains(strings.ToLower(status), "running") {
-		return "Running"
+	if err := cmd.Start(); err != nil {
+		slog.Error("Failed to start server", "err", err)
+		return
 	}
-	if strings.Contains(strings.ToLower(status), "service_stopped") || strings.Contains(strings.ToLower(status), "stopped") {
-		return "Stopped"
-	}
-	if strings.Contains(strings.ToLower(status), "service_paused") || strings.Contains(strings.ToLower(status), "paused") {
-		return "Paused"
-	}
-	if strings.Contains(strings.ToLower(status), "service does not exist") || strings.Contains(strings.ToLower(status), "not installed") {
-		return "Not Installed"
-	}
+	serverCmd = cmd
+	slog.Info("Server started", "pid", cmd.Process.Pid)
+}
 
-	// If we have an error but couldn't parse a known status, log the output for debugging and return Unknown
-	if err != nil {
-		log.Printf("nssm status error: %v, output: %s\n", err, status)
+func stopServer() {
+	slog.Info("Stopping TAMALabs.exe via taskkill /IM")
 
-		// Fallback: try using sc.exe which is available on all Windows systems
-		if runtime.GOOS == "windows" {
-			scCmd := exec.Command("sc", "query", "TAMALabs")
-			if runtime.GOOS == "windows" {
-				scCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-			}
-			scOut, scErr := scCmd.CombinedOutput()
-			scStatus := strings.ToLower(strings.TrimSpace(string(scOut)))
-			if scErr == nil || len(scStatus) > 0 {
-				if strings.Contains(scStatus, "running") || strings.Contains(scStatus, "state") && strings.Contains(scStatus, "running") {
-					return "Running"
-				}
-				if strings.Contains(scStatus, "stopped") || strings.Contains(scStatus, "state") && strings.Contains(scStatus, "stopped") {
-					return "Stopped"
-				}
-				if strings.Contains(scStatus, "does not exist") || strings.Contains(scStatus, "not found") {
-					return "Not Installed"
-				}
-				// If SC returned something we don't understand, fall through to Unknown
-				log.Printf("sc query output: %s, err: %v\n", scStatus, scErr)
-			}
+	if runtime.GOOS == "windows" {
+		cmd := exec.Command("taskkill", "/IM", "TAMALabs.exe", "/F", "/T")
+		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+
+		if err := cmd.Run(); err != nil {
+			slog.Error("taskkill failed", "err", err)
+		} else {
+			slog.Info("taskkill succeeded")
 		}
-
-		return "Unknown"
+	} else {
+		cmd := exec.Command("pkill", "TAMALabs")
+		if err := cmd.Run(); err != nil {
+			slog.Error("pkill failed", "err", err)
+		} else {
+			slog.Info("pkill succeeded")
+		}
 	}
 
-	// Fallback to Unknown if nothing matched
-	return "Unknown"
+	serverCmd = nil
 }
 
-func showNotification(message string) {
-	// Simple notification via systray tooltip
-	systray.SetTooltip(fmt.Sprintf("TAMALabs - %s", message))
-
-	// Reset tooltip after 3 seconds
-	go func() {
-		time.Sleep(3 * time.Second)
-		systray.SetTooltip("TAMALabs Service Controller")
-	}()
-}
-
-func showError(message string) {
-	log.Printf("Error: %s", message)
-	systray.SetTooltip(fmt.Sprintf("TAMALabs - Error: %s", message))
-
-	// Reset tooltip after 5 seconds
-	go func() {
-		time.Sleep(5 * time.Second)
-		systray.SetTooltip("TAMALabs Service Controller")
-	}()
+func isServerRunning() bool {
+	client := &http.Client{Timeout: 500 * time.Millisecond}
+	resp, err := client.Get("http://127.0.0.1:8322/")
+	if err == nil {
+		resp.Body.Close()
+		return true
+	}
+	return false
 }
 
 func openbrowser(url string) {
+	var err error
 	switch runtime.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
 	case "windows":
-		exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 	case "darwin":
-		exec.Command("open", url).Start()
-	default:
-		exec.Command("xdg-open", url).Start()
+		err = exec.Command("open", url).Start()
 	}
+	if err != nil {
+		slog.Error("Failed to open browser", "err", err)
+	}
+}
+
+func provideGlobalLog() {
+	// Prefer a dedicated tray log file under the application's logs folder so
+	// tray logs don't mix with the main server logs.
+	if exe, err := os.Executable(); err == nil {
+		logsDir := filepath.Join(filepath.Dir(exe), "logs")
+		// Ensure logs directory exists (installer usually creates it, but be safe)
+		_ = os.MkdirAll(logsDir, 0o755)
+		trayLogPath := filepath.Join(logsDir, "tray.txt")
+		l := logger.NewFileLogger(logger.Options{Filename: trayLogPath})
+		slog.SetDefault(l)
+		slog.Info("Tray logger initialized", "path", trayLogPath)
+		return
+	}
+
+	// Fallback: use default logger behavior
+	l := logger.NewFileLogger(logger.Options{})
+	slog.SetDefault(l)
 }

@@ -71,6 +71,8 @@ func (h *Handler) handleMessage(ctx context.Context, message string) (string, er
 		return "", fmt.Errorf("decode header failed: %w", err)
 	}
 
+	fmt.Println(string(msgByte))
+
 	switch m := header.(type) {
 	case h251.ORM_O01:
 		return h.ORMO01(ctx, m, msgByte)

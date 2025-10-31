@@ -170,8 +170,7 @@ func InitRestApp() server.RestServer {
 	cronManager := cron.NewCronManager(cronHandler)
 	summaryRepository := summaryrepo.NewSummaryRepository(gormDB)
 	summaryUseCase := summary_uc.NewSummaryUsecase(summaryRepository)
-	summaryHandler := rest.NewSummaryHandler(summaryUseCase)
-	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, externalHandler, jwtMiddleware, cronManager, summaryHandler)
+	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, externalHandler, jwtMiddleware, cronManager, summaryUseCase)
 	return restServer
 }
 

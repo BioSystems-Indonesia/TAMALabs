@@ -35,6 +35,7 @@ import (
 	simrsuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simrs"
 	licenseuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/license"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
+	summary_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/summary"
 	workOrderuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/work_order"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/util"
 	"github.com/BioSystems-Indonesia/TAMALabs/migrations"
@@ -79,7 +80,7 @@ func provideRestServer(
 	khanzaHandler *rest.ExternalHandler,
 	authMiddleware *middleware.JWTMiddleware,
 	cronManager *cron.CronManager,
-	summaryHandler *rest.SummaryHandler,
+	summaryHandler *summary_uc.SummaryUseCase,
 ) server.RestServer {
 	serv := server.NewRest(config.Port, validate, cronManager)
 	rest.RegisterMiddleware(serv.GetClient())
@@ -515,7 +516,7 @@ func provideLicenseService() *licenseuc.License {
 	go func() {
 		licenseServerURL := os.Getenv("LICENSE_SERVER_URL")
 		if licenseServerURL == "" {
-			licenseServerURL = "http://localhost"
+			licenseServerURL = "https://tamalabs.biosystems.id"
 		}
 
 		machineID, err := util.GenerateMachineID()

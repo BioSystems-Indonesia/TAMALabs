@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"syscall"
 )
 
 // GenerateMachineID returns deterministic machine id like "MACHINE-<first-20-hex-chars>"
@@ -227,10 +228,18 @@ func readMachineIDFile() (string, error) {
 
 // windowsGetSystemUUID uses "wmic csproduct get uuid" (best-effort)
 func windowsGetSystemUUID() (string, error) {
-	out, err := exec.Command("wmic", "csproduct", "get", "uuid").Output()
+	cmd := exec.Command("wmic", "csproduct", "get", "uuid")
+	if runtime.GOOS == "windows" {
+		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	}
+	out, err := cmd.Output()
 	if err != nil {
 		// fallback to wmic csproduct get uuid /format:list
-		out2, _ := exec.Command("wmic", "csproduct", "get", "uuid", "/format:list").Output()
+		cmd2 := exec.Command("wmic", "csproduct", "get", "uuid", "/format:list")
+		if runtime.GOOS == "windows" {
+			cmd2.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		}
+		out2, _ := cmd2.Output()
 		if len(out2) == 0 {
 			return "", err
 		}
@@ -249,7 +258,11 @@ func windowsGetSystemUUID() (string, error) {
 }
 
 func windowsGetBiosSerial() (string, error) {
-	out, err := exec.Command("wmic", "bios", "get", "serialnumber").Output()
+	cmd := exec.Command("wmic", "bios", "get", "serialnumber")
+	if runtime.GOOS == "windows" {
+		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	}
+	out, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}

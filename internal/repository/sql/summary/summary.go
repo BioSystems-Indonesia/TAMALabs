@@ -22,15 +22,8 @@ func (r *SummaryRepository) GetWorkTrendSummary(ctx context.Context) []entity.Su
 
 	var results []entity.Summary
 
-	var latest string
-	_ = db.Raw("SELECT substr(MAX(created_at), 1, 10) FROM work_orders").Scan(&latest)
-
+	// Anchor window to today (don't base on MAX(created_at) which may be far in the past)
 	now := time.Now()
-	if latest != "" {
-		if t, err := time.Parse("2006-01-02", latest); err == nil {
-			now = t
-		}
-	}
 
 	for i := 6; i >= 0; i-- {
 		d := now.AddDate(0, 0, -i)
@@ -81,36 +74,43 @@ func (r *SummaryRepository) GetAbnormalSummary(ctx context.Context) []entity.Sum
 	var totalAbnormal int64
 	var totalNormal int64
 	db := r.db.WithContext(ctx)
+	// calculate start date for 7-day window (including today)
+	now := time.Now()
+	startDate := now.AddDate(0, 0, -6).Format("2006-01-02")
 
+	// Count abnormal results in the last 7 days
 	err := db.Raw(`
 		SELECT COUNT(*) 
 		FROM observation_results AS o
 		LEFT JOIN test_types AS t 
 			ON t.code = o.code
 		WHERE 
-			json_valid(o."values") = 1
+			substr(o.created_at, 1, 10) >= ?
+			AND json_valid(o."values") = 1
 			AND (
 				CAST(json_extract(o."values", '$[0]') AS REAL) < IFNULL(t.low_ref_range, -999999)
 				OR CAST(json_extract(o."values", '$[0]') AS REAL) > IFNULL(t.high_ref_range, 999999)
 			)
-	`).Scan(&totalAbnormal).Error
+	`, startDate).Scan(&totalAbnormal).Error
 
 	if err != nil {
 		return nil
 	}
 
+	// Count normal results in the last 7 days
 	err = db.Raw(`
-	SELECT COUNT(*) 
-	FROM observation_results AS o
-	LEFT JOIN test_types AS t 
-	    ON t.code = o.code
-	WHERE 
-	    json_valid(o."values") = 1
-	    AND (
-	        CAST(json_extract(o."values", '$[0]') AS REAL) >= IFNULL(t.low_ref_range, -999999)
-	        AND CAST(json_extract(o."values", '$[0]') AS REAL) <= IFNULL(t.high_ref_range, 999999)
-	    );
-	`).Scan(&totalNormal).Error
+		SELECT COUNT(*) 
+		FROM observation_results AS o
+		LEFT JOIN test_types AS t 
+			ON t.code = o.code
+		WHERE 
+			substr(o.created_at, 1, 10) >= ?
+			AND json_valid(o."values") = 1
+			AND (
+				CAST(json_extract(o."values", '$[0]') AS REAL) >= IFNULL(t.low_ref_range, -999999)
+				AND CAST(json_extract(o."values", '$[0]') AS REAL) <= IFNULL(t.high_ref_range, 999999)
+			)
+	`, startDate).Scan(&totalNormal).Error
 	if err != nil {
 		return nil
 	}
@@ -130,9 +130,14 @@ func (r *SummaryRepository) GetMostOrderedTest(ctx context.Context) []entity.Sum
 	db := r.db.WithContext(ctx)
 	var items []entity.Summary
 
-	// Query utama: hitung berdasarkan test_code
+	// limit to last 7 days (including today)
+	now := time.Now()
+	startDate := now.AddDate(0, 0, -6).Format("2006-01-02")
+
+	// Query utama: hitung berdasarkan test_code (last 7 days)
 	err := db.Table("observation_requests").
 		Select("test_code AS name, COUNT(*) AS total").
+		Where("substr(created_at, 1, 10) >= ?", startDate).
 		Group("test_code").
 		Order("total DESC").
 		Limit(10).
@@ -143,13 +148,16 @@ func (r *SummaryRepository) GetMostOrderedTest(ctx context.Context) []entity.Sum
 	}
 
 	// Jika hasil kosong, fallback berdasarkan test_types
+
 	if len(items) == 0 {
+		// Fallback: use test_types.name if available (also limited to last 7 days)
 		err = db.Table("observation_requests").
 			Select(`
 				COALESCE(test_types.name, observation_requests.test_code) AS name,
 				COUNT(*) AS total`).
 			Joins(`LEFT JOIN test_types
 					ON test_types.code = observation_requests.test_code`).
+			Where("substr(observation_requests.created_at, 1, 10) >= ?", startDate).
 			Group("COALESCE(test_types.name, observation_requests.test_code)").
 			Order("total DESC").
 			Limit(10).
@@ -168,12 +176,17 @@ func (r *SummaryRepository) GetTestTypeDistribution(ctx context.Context) []entit
 
 	var items []entity.Summary
 
+	// limit to last 7 days (including today)
+	now := time.Now()
+	startDate := now.AddDate(0, 0, -6).Format("2006-01-02")
+
 	err := db.Table("observation_requests").
 		Select(`
 			COALESCE(test_types.category, 'Uncategorized') AS name,
 			COUNT(*) AS total`).
 		Joins(`LEFT JOIN test_types
 				ON test_types.code = observation_requests.test_code`).
+		Where("substr(observation_requests.created_at, 1, 10) >= ?", startDate).
 		Group(`COALESCE(test_types.category, 'Uncategorized')`).
 		Order("total DESC").
 		Scan(&items).Error

@@ -9,7 +9,6 @@ import PeopleIcon from '@mui/icons-material/People';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import DashboardOutlinedIcon from "@mui/icons-material/Summarize";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
-import useAxios from "../../hooks/useAxios";
 import { useEffect, useRef, useState } from 'react';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
@@ -27,7 +26,6 @@ interface DashboardPageProps {
 }
 
 export const DashboardPage = ({ isWindow }: DashboardPageProps) => {
-    const axios = useAxios()
     const [summary, setSummary] = useState({
         total: 0,
         completed: 0,
@@ -49,38 +47,87 @@ export const DashboardPage = ({ isWindow }: DashboardPageProps) => {
     });
 
     useEffect(() => {
-        axios.get('/summary/analytics')
-            .then(resp => {
-                const data = resp.data || {};
-                console.log(data)
-                setAnalyticData({
-                    work_order_trend: data.work_order_trend || [],
-                    abnormal_summary: data.abnormal_summary || [],
-                    gender_summary: data.gender_summary || [],
-                    age_group: data.age_group || [],
-                    top_test_ordered: data.top_test_ordered || [],
-                    test_type_distribution: data.test_type_distribution || [],
-                });
-            })
-            .catch(err => {
-                console.error("Failed to load summary data:", err);
-            });
-        axios.get('/summary/')
-            .then(resp => {
-                const data = resp.data || {};
-                console.log(data)
-                setSummary({
-                    total: data.total_work_orders || 0,
-                    completed: data.completed_work_orders || 0,
-                    incomplete: data.incomplate_work_orders || 0,
-                    pending: data.pending_work_orders || 0,
-                    tests: data.total_test || 0,
-                    devices: data.devices_connected || 0,
-                    parameters: data.total_test_parameters || 0,
-                    patients: data.total_patients || 0
 
-                })
-            })
+        // Open websocket for live updates
+        let mounted = true;
+        const backendBase = import.meta.env.VITE_BACKEND_BASE_URL || window.location.origin;
+        const wsBase = backendBase.replace(/^http/, 'ws').replace(/\/$/, '');
+        // backendBase may already include the API prefix (/api/v1). Avoid duplicating it.
+        const apiPrefix = '/api/v1';
+        const wsUrl = wsBase + (wsBase.includes(apiPrefix) ? '/summary/ws' : `${apiPrefix}/summary/ws`);
+
+        const wsRef: { current: WebSocket | null } = { current: null };
+        let reconnectHandle: number | null = null;
+
+        const connect = () => {
+            try {
+                const socket = new WebSocket(wsUrl);
+                wsRef.current = socket;
+
+                socket.onopen = () => {
+                    console.debug('summary WS connected', wsUrl);
+                    if (reconnectHandle) {
+                        clearTimeout(reconnectHandle);
+                        reconnectHandle = null;
+                    }
+                };
+
+                socket.onmessage = (ev: MessageEvent) => {
+                    try {
+                        const payload = JSON.parse(ev.data || '{}');
+                        const s = payload.Summary || payload.summary;
+                        const a = payload.Analytics || payload.analytics;
+                        if (s) {
+                            setSummary({
+                                total: s.total_work_orders || 0,
+                                completed: s.completed_work_orders || 0,
+                                incomplete: s.incomplate_work_orders || 0,
+                                pending: s.pending_work_orders || 0,
+                                tests: s.total_test || 0,
+                                devices: s.devices_connected || 0,
+                                parameters: s.total_test_parameters || 0,
+                                patients: s.total_patients || 0
+                            });
+                        }
+                        if (a) {
+                            setAnalyticData({
+                                work_order_trend: a.work_order_trend || [],
+                                abnormal_summary: a.abnormal_summary || [],
+                                gender_summary: a.gender_summary || [],
+                                age_group: a.age_group || [],
+                                top_test_ordered: a.top_test_ordered || [],
+                                test_type_distribution: a.test_type_distribution || [],
+                            });
+                        }
+                    } catch (err) {
+                        console.error('Failed to parse summary WS message', err);
+                    }
+                };
+
+                socket.onclose = () => {
+                    if (!mounted) return;
+                    console.warn('summary WS closed, reconnecting in 2s');
+                    reconnectHandle = window.setTimeout(() => connect(), 2000) as unknown as number;
+                };
+
+                socket.onerror = (err) => {
+                    console.error('summary WS error', err);
+                };
+            } catch (err) {
+                console.error('Failed to connect summary WS', err);
+                reconnectHandle = window.setTimeout(() => connect(), 2000) as unknown as number;
+            }
+        };
+
+        connect();
+
+        return () => {
+            mounted = false;
+            if (wsRef.current) {
+                try { wsRef.current.close(); } catch (e) { /* ignore */ }
+            }
+            if (reconnectHandle) clearTimeout(reconnectHandle);
+        };
     }, []);
 
     const rootRef = useRef<HTMLDivElement | null>(null);

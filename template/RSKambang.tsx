@@ -31,6 +31,14 @@ const styles = StyleSheet.create({
         fontFamily: 'Helvetica',
         padding: 40,
     },
+    pageWithTopSpacing: {
+        fontSize: 10,
+        fontFamily: 'Helvetica',
+        paddingTop: 120,
+        paddingRight: 40,
+        paddingBottom: 40,
+        paddingLeft: 40,
+    },
     header: {
         display: 'flex',
         flexDirection: 'row',
@@ -167,13 +175,28 @@ const styles = StyleSheet.create({
 });
 
 // // Helper function to format birthdate
-// const formatBirthdate = (birthdate: string) => {
-//     const date = new Date(birthdate);
-//     const day = String(date.getDate()).padStart(2, '0');
-//     const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
-//     const year = date.getFullYear();
-//     return `${day}/${month}/${year}`;
-// };
+// Helper function to format birthdate (show only date part, not time)
+const formatBirthdate = (birthdate?: string | null) => {
+    if (!birthdate) return '-';
+    const d = new Date(birthdate);
+    if (isNaN(d.getTime())) return birthdate;
+    // Format as DD/MM/YYYY
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+};
+
+// Helper to extract time (HH:MM:SS) from an ISO datetime string
+const formatTime = (datetime?: string | null) => {
+    if (!datetime) return '-';
+    const d = new Date(datetime);
+    if (isNaN(d.getTime())) return datetime;
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    const ss = String(d.getSeconds()).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+};
 
 // // Helper function to calculate age
 // const calculateAge = (birthdate: string) => {
@@ -205,6 +228,38 @@ const styles = StyleSheet.create({
 //     if (gender === 'M') return 'Male';
 //     return '-';
 // };
+
+// Helper function to calculate age from birthdate until today
+const calculateAge = (birthdate?: string | null) => {
+    if (!birthdate) return '-';
+    const now = new Date();
+    const birth = new Date(birthdate);
+    if (isNaN(birth.getTime())) return '-';
+
+    let years = now.getFullYear() - birth.getFullYear();
+    let months = now.getMonth() - birth.getMonth();
+    let days = now.getDate() - birth.getDate();
+
+    if (days < 0) {
+        // borrow days from previous month
+        const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        days += prevMonth.getDate();
+        months -= 1;
+    }
+    if (months < 0) {
+        months += 12;
+        years -= 1;
+    }
+
+    if (years <= 0) {
+        if (months <= 0) {
+            return `${days} day(s)`;
+        }
+        return `${months} month(s)` + (days > 0 ? ` ${days} day(s)` : '');
+    }
+
+    return `${years} year(s)` + (months > 0 ? ` ${months} month(s)` : '');
+};
 
 // const Header = () => {
 //     const [settings] = useSettings();
@@ -259,18 +314,28 @@ const PatientInfo = ({ patient, workOrder }: { patient: Patient, workOrder: Work
             </View>
 
             <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+                <Text style={[styles.label, { width: 60 }]}>Birth Date</Text>
+                <Text style={styles.value}>: {formatBirthdate(patient.birthdate)}</Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+                <Text style={[styles.label, { width: 60 }]}>Age</Text>
+                <Text style={styles.value}>: {calculateAge(patient.birthdate)}</Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', marginBottom: 4 }}>
                 <Text style={[styles.label, { width: 60 }]}>Seq.</Text>
                 <Text style={styles.value}>: {workOrder.id || ''}</Text>
             </View>
 
             <View style={{ flexDirection: 'row', marginBottom: 4 }}>
                 <Text style={[styles.label, { width: 60 }]}>Date</Text>
-                <Text style={styles.value}>: {new Date().toLocaleDateString('en-GB')}</Text>
+                <Text style={styles.value}>: {formatBirthdate(workOrder.updated_at)}</Text>
             </View>
 
             <View style={{ flexDirection: 'row', marginBottom: 4 }}>
                 <Text style={[styles.label, { width: 60 }]}>Time</Text>
-                <Text style={styles.value}>: {new Date().toLocaleTimeString('en-GB', { hour12: false })}</Text>
+                <Text style={styles.value}>: {formatTime(workOrder.updated_at)}</Text>
             </View>
 
             <View style={{ flexDirection: 'row', marginBottom: 4 }}>
@@ -434,6 +499,7 @@ const createGroupedDisplayData = (groupedData: { [category: string]: ReportData[
     patientData: Patient,
     workOrderData: WorkOrder
 }) => {
+    console.log(data)
     // Use grouped data if available, otherwise fall back to sorted data
     console.log('ReportDocument - Available categories:', groupedData ? Object.keys(groupedData) : 'No groupedData');
     console.log('ReportDocument - groupedData:', groupedData);
@@ -442,33 +508,60 @@ const createGroupedDisplayData = (groupedData: { [category: string]: ReportData[
 
     if (groupedData && Object.keys(groupedData).length > 0) {
         // Use the grouped data as-is, with categories from the database
-        console.log('Using grouped data with categories');
+        console.log('Using grouped data with categories (from prop)');
         displayData = createGroupedDisplayData(groupedData);
     } else {
-        // No grouping available, just show sorted data without category headers
-        console.log('No grouped data, using sorted data only');
-        displayData = sortLabData(data);
+        // If groupedData not provided, try to derive grouping from `data` (if category fields exist)
+        const groupedFromData = (data || []).reduce((acc: { [k: string]: ReportData[] }, item) => {
+            const category = (item.category || 'Other').toString();
+            if (!acc[category]) acc[category] = [];
+            acc[category].push(item);
+            return acc;
+        }, {} as { [category: string]: ReportData[] });
+
+        if (Object.keys(groupedFromData).length > 0) {
+            // If categories are meaningful (more than 1 or first key not 'Other'), use grouped view so headers appear
+            const meaningful = Object.keys(groupedFromData).some(k => k && k.toLowerCase().trim() !== 'other');
+            if (meaningful) {
+                console.log('Deriving grouped data from `data` (categories detected)');
+                displayData = createGroupedDisplayData(groupedFromData);
+            } else {
+                console.log('No meaningful categories in data, falling back to sorted list');
+                displayData = sortLabData(data);
+            }
+        } else {
+            console.log('No grouped data and data is empty, using sorted (empty)');
+            displayData = sortLabData(data);
+        }
     }
 
-    // Check if Hematology exists in the data
-    const hasHematology = displayData.some(item =>
-        'isCategory' in item && item.isCategory && item.category.toLowerCase() === 'hematology'
-    );
+    // Detect if displayData contains category headers (grouped) or plain list (ungrouped)
+    const isGrouped = displayData.some(item => 'isCategory' in item && item.isCategory);
 
-    // Get the first category for page 1 (Hematology if exists, otherwise the first available)
-    const firstCategoryItem = displayData.find(item => 'isCategory' in item && item.isCategory) as { isCategory: true, category: string } | undefined;
-    const firstCategory = hasHematology ? 'hematology' : firstCategoryItem?.category?.toLowerCase();
+    // Determine the first category robustly (prefer 'hematology' if present)
+    let firstCategory: string | undefined = undefined;
+    if (isGrouped) {
+        // look for exact 'hematology' category first
+        const hemat = displayData.find(item => 'isCategory' in item && item.isCategory && (item.category || '').toLowerCase().trim() === 'hematology') as { isCategory: true, category: string } | undefined;
+        if (hemat) {
+            firstCategory = 'hematology';
+        } else {
+            const firstCatItem = displayData.find(item => 'isCategory' in item && item.isCategory) as { isCategory: true, category: string } | undefined;
+            firstCategory = firstCatItem?.category?.toLowerCase().trim();
+        }
+    }
 
-    console.log('Has Hematology:', hasHematology);
+    console.log('Is grouped data:', isGrouped);
+    console.log('Has Hematology:', firstCategory === 'hematology');
     console.log('First Category for Page 1:', firstCategory);
 
-    // Check if there's content for page 2
-    const hasSecondPageContent = displayData.some(item => {
+    // Check if there's content for page 2 (only possible when grouped)
+    const hasSecondPageContent = isGrouped && displayData.some(item => {
         if ('isCategory' in item && item.isCategory) {
-            return item.category.toLowerCase() !== firstCategory;
+            return (item.category || '').toLowerCase().trim() !== firstCategory;
         } else {
             const dataItem = item as ReportData;
-            return dataItem.category?.toLowerCase() !== firstCategory;
+            return (dataItem.category || '').toLowerCase().trim() !== firstCategory;
         }
     });
 
@@ -481,106 +574,134 @@ const createGroupedDisplayData = (groupedData: { [category: string]: ReportData[
                 <PatientInfo patient={patientData} workOrder={workOrderData} />
 
                 <View style={{ marginTop: 15, marginBottom: 10 }}>
-                    {displayData.map((item, index) => {
-                        // Check if this is a category header
-                        if ('isCategory' in item && item.isCategory) {
-                            // Only show the first category on first page
-                            if (item.category.toLowerCase() !== firstCategory) {
+                    {(() => {
+                        // Ensure we show the table header at least once on this page.
+                        let tableHeaderShownPage1 = false;
+
+                        return displayData.map((item, index) => {
+                            // Check if this is a category header
+                            if ('isCategory' in item && item.isCategory) {
+                                // Only show the first category on first page
+                                const catName = (item.category || '').toLowerCase().trim();
+                                if (catName !== firstCategory) {
+                                    return null;
+                                }
+
+                                // Render category header and table header
+                                tableHeaderShownPage1 = true;
+                                return (
+                                    <View key={`category-${index}`}>
+                                        {/* Category header */}
+                                        <View style={styles.categoryRow}>
+                                            <Text style={styles.categoryText}>{item.category}</Text>
+                                        </View>
+
+                                        {/* Table header for this category */}
+                                        <View style={styles.tableHeader}>
+                                            <Text style={[styles.columnHeader, styles.cell]}>Parameter</Text>
+                                            <Text style={[styles.columnResult, styles.cell]}>Result</Text>
+                                            <Text style={[styles.columnStatus, styles.cell]}>Status</Text>
+                                            <Text style={[styles.columnUnit, styles.cell]}>Unit</Text>
+                                            <Text style={[styles.columnReference, styles.cell, { textAlign: 'center' }]}>Ranges</Text>
+                                        </View>
+                                    </View>
+                                );
+                            }
+
+                            // Regular data row - check if it belongs to first category
+                            const dataItem = item as ReportData;
+
+                            // If grouped, only show items belonging to the firstCategory on page 1.
+                            // If not grouped, show everything.
+                            if (isGrouped && (dataItem.category || '').toLowerCase().trim() !== firstCategory) {
                                 return null;
                             }
-                            return (
-                                <View key={`category-${index}`}>
-                                    {/* Category header */}
-                                    <View style={styles.categoryRow}>
-                                        <Text style={styles.categoryText}>{item.category}</Text>
-                                    </View>
 
-                                    {/* Table header for this category */}
-                                    <View style={styles.tableHeader}>
+                            // If table header hasn't been shown yet on this page (e.g. ungrouped data), render it once before first data row
+                            const nodes: any[] = [];
+                            if (!tableHeaderShownPage1) {
+                                tableHeaderShownPage1 = true;
+                                nodes.push(
+                                    <View key={`table-header-${index}`} style={styles.tableHeader}>
                                         <Text style={[styles.columnHeader, styles.cell]}>Parameter</Text>
                                         <Text style={[styles.columnResult, styles.cell]}>Result</Text>
                                         <Text style={[styles.columnStatus, styles.cell]}>Status</Text>
                                         <Text style={[styles.columnUnit, styles.cell]}>Unit</Text>
                                         <Text style={[styles.columnReference, styles.cell, { textAlign: 'center' }]}>Ranges</Text>
                                     </View>
+                                );
+                            }
+
+                            const isHigh = dataItem.abnormality === 'High';
+                            const isLow = dataItem.abnormality === 'Low';
+                            const isPositive = dataItem.abnormality === 'Positive';
+                            const isNegative = dataItem.abnormality === 'Negative';
+                            const abnormalStyle = {};
+
+                            // Format the result to show proper decimals like in the image
+                            const formattedResult = typeof dataItem.result === 'string'
+                                ? dataItem.result
+                                : String(dataItem.result || '');
+
+                            nodes.push(
+                                <View key={index} style={styles.tableRow}>
+                                    <Text style={[styles.columnHeader, styles.cell, abnormalStyle]}>
+                                        {dataItem.parameter}
+                                    </Text>
+                                    <Text style={[styles.columnResult, styles.cell, abnormalStyle]}>
+                                        {formattedResult}
+                                    </Text>
+                                    <Text style={[styles.columnStatus, styles.cell, abnormalStyle]}>
+                                        {isHigh ? 'H' : isLow ? 'L' : isPositive ? '+' : isNegative ? '-' : ''}
+                                    </Text>
+                                    <Text style={[styles.columnUnit, styles.cell, abnormalStyle]}>
+                                        {dataItem.unit}
+                                    </Text>
+                                    <View style={[styles.columnReference, styles.cell]}>
+                                        {(() => {
+                                            const rangeData = formatReferenceRange(dataItem.reference);
+                                            if ('hasRange' in rangeData && rangeData.hasRange && 'low' in rangeData && 'high' in rangeData) {
+                                                return (
+                                                    <>
+                                                        <Text style={[styles.cell, abnormalStyle, { textAlign: 'left', flex: 1 }]}>
+                                                            {rangeData.low}
+                                                        </Text>
+                                                        <Text style={[styles.cell, abnormalStyle, { textAlign: 'center', flex: 0 }]}>
+                                                            -
+                                                        </Text>
+                                                        <Text style={[styles.cell, abnormalStyle, { textAlign: 'right', flex: 1 }]}>
+                                                            {rangeData.high}
+                                                        </Text>
+                                                    </>
+                                                );
+                                            } else {
+                                                return (
+                                                    <Text style={[styles.cell, abnormalStyle]}>
+                                                        {'value' in rangeData ? rangeData.value : dataItem.reference}
+                                                    </Text>
+                                                );
+                                            }
+                                        })()}
+                                    </View>
                                 </View>
                             );
-                        }
 
-                        // Regular data row - check if it belongs to first category
-                        const dataItem = item as ReportData;
-
-                        // Only show first category data on first page
-                        if (dataItem.category?.toLowerCase() !== firstCategory) {
-                            return null;
-                        }
-
-                        const isHigh = dataItem.abnormality === 'High';
-                        const isLow = dataItem.abnormality === 'Low';
-                        const isPositive = dataItem.abnormality === 'Positive';
-                        const isNegative = dataItem.abnormality === 'Negative';
-                        const abnormalStyle = {};
-
-                        // Format the result to show proper decimals like in the image
-                        const formattedResult = typeof dataItem.result === 'string'
-                            ? dataItem.result
-                            : String(dataItem.result || '');
-
-                        return (
-                            <View key={index} style={styles.tableRow}>
-                                <Text style={[styles.columnHeader, styles.cell, abnormalStyle]}>
-                                    {dataItem.parameter}
-                                </Text>
-                                <Text style={[styles.columnResult, styles.cell, abnormalStyle]}>
-                                    {formattedResult}
-                                </Text>
-                                <Text style={[styles.columnStatus, styles.cell, abnormalStyle]}>
-                                    {isHigh ? 'H' : isLow ? 'L' : isPositive ? '+' : isNegative ? '-' : ''}
-                                </Text>
-                                <Text style={[styles.columnUnit, styles.cell, abnormalStyle]}>
-                                    {dataItem.unit}
-                                </Text>
-                                <View style={[styles.columnReference, styles.cell]}>
-                                    {(() => {
-                                        const rangeData = formatReferenceRange(dataItem.reference);
-                                        if ('hasRange' in rangeData && rangeData.hasRange && 'low' in rangeData && 'high' in rangeData) {
-                                            return (
-                                                <>
-                                                    <Text style={[styles.cell, abnormalStyle, { textAlign: 'left', flex: 1 }]}>
-                                                        {rangeData.low}
-                                                    </Text>
-                                                    <Text style={[styles.cell, abnormalStyle, { textAlign: 'center', flex: 0 }]}>
-                                                        -
-                                                    </Text>
-                                                    <Text style={[styles.cell, abnormalStyle, { textAlign: 'right', flex: 1 }]}>
-                                                        {rangeData.high}
-                                                    </Text>
-                                                </>
-                                            );
-                                        } else {
-                                            return (
-                                                <Text style={[styles.cell, abnormalStyle]}>
-                                                    {'value' in rangeData ? rangeData.value : dataItem.reference}
-                                                </Text>
-                                            );
-                                        }
-                                    })()}
-                                </View>
-                            </View>
-                        );
-                    })}
+                            return nodes;
+                        });
+                    })()}
                 </View>
             </Page>
 
             {/* Second Page - Other Categories (only if there's content) */}
             {hasSecondPageContent && (
-                <Page size={"A4"} style={styles.page} wrap>
-                    <View style={{ marginTop: 120, marginBottom: 10 }}>
+                <Page size={"A4"} style={styles.pageWithTopSpacing} wrap>
+                    <View style={{ marginBottom: 10 }}>
                         {displayData.map((item, index) => {
                             // Check if this is a category header
                             if ('isCategory' in item && item.isCategory) {
                                 // Skip the first category on second page (already shown on page 1)
-                                if (item.category.toLowerCase() === firstCategory) {
+                                const catName = (item.category || '').toLowerCase().trim();
+                                if (catName === firstCategory) {
                                     return null;
                                 }
 
@@ -606,8 +727,9 @@ const createGroupedDisplayData = (groupedData: { [category: string]: ReportData[
                             // Regular data row - check if it belongs to categories other than first category
                             const dataItem = item as ReportData;
 
-                            // Skip first category data on second page (already shown on page 1)
-                            if (dataItem.category?.toLowerCase() === firstCategory) {
+                            // If grouped, skip first category data on second page (already shown on page 1).
+                            // If not grouped, there should be no second page.
+                            if (isGrouped && (dataItem.category || '').toLowerCase().trim() === firstCategory) {
                                 return null;
                             }
 

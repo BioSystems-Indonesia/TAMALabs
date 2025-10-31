@@ -13,4 +13,3 @@ export interface Patient {
   updated_at: string;
   specimen_list: Specimen[] | null;
 }
-

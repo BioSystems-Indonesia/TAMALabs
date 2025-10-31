@@ -1,24 +1,19 @@
-; -- Inno Setup Script for TAMALabs with Windows Service Registration --
-; ===================================================================
-; FEATURES:
-; - Automatic service installation and startup
-; - System tray auto-start with administrator privileges (via scheduled task)
-; - Avoid duplicate tray instances
-; - Clean uninstallation (removes service, scheduled task, tray process)
-; ===================================================================
+; ==================================================================
+; Inno Setup Script for TAMALabs (Normal App + Auto-Start Tray)
+; ==================================================================
 
 [Setup]
-AppId={{F4A4A2A2-702D-4B1F-A88E-5E3A1A8E2E8A}}
+AppId={{A8A93F44-8D2B-4D75-9CC8-0C52B2184AC4}}
 AppName=TAMALabs
-AppVersion=1.0
+AppVersion=1.0.0
 AppPublisher=Elga Tama
-AppPublisherURL=https://www.elgatama.com/
-AppSupportURL=https://www.elgatama.com/support
-AppUpdatesURL=https://www.elgatama.com/updates
+AppPublisherURL=https://tamalabs.biosystems.id/
+AppSupportURL=https://tamalabs.biosystems.id/support
+AppUpdatesURL=https://tamalabs.biosystems.id/updates
 DefaultDirName={autopf}\TAMALabs
 DefaultGroupName=TAMALabs
 AllowNoIcons=yes
-OutputBaseFilename=TAMALabs-setup-v1.0
+OutputBaseFilename=TAMALabs-setup-v1.0.0
 OutputDir=.\installers
 Compression=lzma
 SolidCompression=yes
@@ -31,75 +26,60 @@ PrivilegesRequiredOverridesAllowed=dialog
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Dirs]
 Name: "{app}\logs"; Permissions: users-modify
 
-
 [Files]
 Source: "bin\TAMALabs.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "bin\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "bin\TAMALabsTray.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "bin\service-helper.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: ".env"; DestDir: "{app}"; Flags: ignoreversion
+Source: "bin\TAMALabsTray.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
+; Optional desktop shortcut
 Name: "{autodesktop}\TAMALabs (Open Web)"; \
-	Filename: "rundll32.exe"; \
-	Parameters: "url.dll,FileProtocolHandler http://127.0.0.1:8322"; \
-	IconFilename: "{app}\TAMALabs.exe"; \
-	Tasks: desktopicon
+    Filename: "rundll32.exe"; \
+    Parameters: "url.dll,FileProtocolHandler http://127.0.0.1:8322"; \
+    IconFilename: "{app}\TAMALabs.exe"; \
+    Tasks: desktopicon
 
-; Fallback shortcut if scheduled task fails
-Name: "{userstartup}\TAMALabs Tray"; \
-	Filename: "{app}\TAMALabsTray.exe"; \
-	WorkingDir: "{app}"
+; Auto-start main app via Startup folder (for all users)
+Name: "{commonstartup}\TAMALabs"; \
+    Filename: "{app}\TAMALabs.exe"; \
+    WorkingDir: "{app}"; \
+    IconFilename: "{app}\TAMALabs.exe"
+
+; Auto-start tray via Startup folder (for all users)
+Name: "{commonstartup}\TAMALabs Tray"; \
+    Filename: "{app}\TAMALabsTray.exe"; \
+    WorkingDir: "{app}"; \
+    IconFilename: "{app}\TAMALabsTray.exe"
 
 [Run]
-; --- Register TAMALabs as Windows Service ---
-Filename: "{app}\nssm.exe"; \
-	Parameters: "install TAMALabs ""{app}\TAMALabs.exe"""; \
-	Flags: runhidden waituntilterminated; \
-	StatusMsg: "Registering TAMALabs service..."
+; Jalankan aplikasi utama langsung (tanpa muncul checkbox di akhir)
+Filename: "{app}\TAMALabs.exe"; \
+    Description: "Start TAMALabs"; \
+    Flags: nowait skipifsilent; \
+    StatusMsg: "Starting TAMALabs..."
 
-Filename: "sc.exe"; \
-	Parameters: "config TAMALabs start= auto"; \
-	Flags: runhidden waituntilterminated; \
-	StatusMsg: "Configuring TAMALabs service startup..."
-
-Filename: "{app}\nssm.exe"; \
-	Parameters: "start TAMALabs"; \
-	Flags: runhidden waituntilterminated; \
-	StatusMsg: "Starting TAMALabs service..."
-
-; --- Configure Tray Auto-Start via Task Scheduler ---
-Filename: "schtasks.exe"; \
-	Parameters: "/create /tn ""TAMALabs Tray"" /tr ""\""{app}\TAMALabsTray.exe\"""" /sc onlogon /rl HIGHEST /f /ru ""%USERNAME%"""; \
-	Flags: runhidden waituntilterminated; \
-	StatusMsg: "Setting up TAMALabs tray auto-start with admin rights..."
-
-; --- Start tray manually only if task not exists (avoid duplicate tray) ---
+; Jalankan tray langsung (tanpa muncul checkbox di akhir)
 Filename: "{app}\TAMALabsTray.exe"; \
-	Check: not TrayTaskExists; \
-	Flags: nowait; \
-	StatusMsg: "Starting TAMALabs system tray..."
+    Description: "Start TAMALabs Tray"; \
+    Flags: nowait skipifsilent; \
+    WorkingDir: "{app}"; \
+    StatusMsg: "Starting TAMALabs Tray..."
 
 [UninstallRun]
-Filename: "taskkill.exe"; Parameters: "/F /IM TAMALabsTray.exe"; Flags: runhidden waituntilterminated; RunOnceId: "KillTray"
-Filename: "{app}\nssm.exe"; Parameters: "stop TAMALabs"; Flags: runhidden waituntilterminated; RunOnceId: "StopService"
-Filename: "{app}\nssm.exe"; Parameters: "remove TAMALabs confirm"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveService"
-Filename: "schtasks.exe"; Parameters: "/delete /tn ""TAMALabs Tray"" /f"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveScheduledTask"
-Filename: "cmd.exe"; Parameters: "/C rmdir /S /Q ""{app}"""; Flags: runhidden waituntilterminated; RunOnceId: "RemoveAppDir"
+; Tutup tray dan app sebelum uninstall
+Filename: "taskkill.exe"; Parameters: "/F /IM TAMALabs.exe /T"; Flags: runhidden waituntilterminated; RunOnceId: "KillMain"
+Filename: "taskkill.exe"; Parameters: "/F /IM TAMALabsTray.exe /T"; Flags: runhidden waituntilterminated; RunOnceId: "KillTray"
+
+; Hapus folder aplikasi
+Filename: "cmd.exe"; Parameters: "/C rmdir /S /Q ""{app}"""; Flags: runhidden waituntilterminated; RunOnceId: "RemoveAppFolder"
 
 [UninstallDelete]
-Type: files; Name: "{userstartup}\TAMALabs Tray.lnk"
-
-[Code]
-function TrayTaskExists: Boolean;
-var
-ResultCode: Integer;
-begin
-Exec('schtasks.exe', '/query /tn "TAMALabs Tray"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-Result := (ResultCode = 0);
-end;
+; Hapus shortcut startup & desktop
+Type: files; Name: "{commonstartup}\TAMALabs Tray.lnk"
+Type: files; Name: "{autodesktop}\TAMALabs (Open Web).lnk"
+Type: dirifempty; Name: "{app}\logs"

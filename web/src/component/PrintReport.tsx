@@ -26,7 +26,7 @@ type PrintReportButtonProps = {
 
 const PrintReportButton = (prop: PrintReportButtonProps) => {
     const [data, setData] = useState<ReportData[]>([])
-    // const [groupedData, setGroupedData] = useState<{ [category: string]: ReportData[] }>({})
+    const [groupedData, setGroupedData] = useState<{ [category: string]: ReportData[] }>({})
 
     useEffect(() => {
         const reportData = prop.results?.map(v => {
@@ -104,9 +104,7 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
             return acc;
         }, {} as { [category: string]: ReportData[] });
 
-        console.log('PrintReport - reportData:', reportData);
-        console.log('PrintReport - grouped data:', grouped);
-        // setGroupedData(grouped);
+        setGroupedData(grouped);
 
     }, [prop.results]);
 
@@ -115,9 +113,8 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
     //     setPatientData(prop.patient)
     // }, [prop.patient]);
 
-    // groupedData={groupedData}
     return (
-        <BlobProvider document={<ReportDocument data={data} patientData={prop.patient} workOrderData={prop.workOrder} />}>
+        <BlobProvider document={<ReportDocument data={data} patientData={prop.patient} workOrderData={prop.workOrder} groupedData={groupedData} />}>
             {({ url, loading, error }) => {
                 if (error) {
                     return <span color='red'>Error generating PDF: {error.message}</span>;

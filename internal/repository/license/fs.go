@@ -9,25 +9,35 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 // FSKeyLoader implements PublicKeyLoader using the local filesystem PEM file.
 type FSKeyLoader struct{}
+type FSFileLoader struct{}
 
-func NewFSKeyLoader() *FSKeyLoader { return &FSKeyLoader{} }
+func NewFSKeyLoader() *FSKeyLoader   { return &FSKeyLoader{} }
+func NewFSFileLoader() *FSFileLoader { return &FSFileLoader{} }
+
+func (l *FSFileLoader) LoadFile(path string) ([]byte, error) {
+	return os.ReadFile(path)
+}
 
 var API_KEY = "KJKDANCJSANIUWYR6243UJFOISJFJKVOMV72487YEHFHFHSDVOHF9AMDC9AN9SDN98YE98YEHDIU2Y897873YYY68686487WGDUDUAGYTE8QTEYADIUHADUYW8E8BWTNC8N8NAMDOAIMDAUDUWYAD87NYW7Y7CBT87EY8142164B36248732M87MCIFH8NYRWCM8MYCMUOIDOIADOIDOIUR83YR983Y98328N32C83NYC8732NYC8732Y87Y32NCNSAIHJAOJFOIJFOIQFIUIUNCNHCIUHWV8NRYNV8Y989N9198298YOIJOI090103021313JKJDHAHDJAJASHHAH"
 
 // downloadPublicKey downloads public key from license server
 func (l *FSKeyLoader) downloadPublicKey() ([]byte, error) {
-	client := &http.Client{}
-	// Get license server URL from environment variable
+	// Use environment variable LICENSE_SERVER_URL if provided, otherwise
+	// fall back to the default license server URL.
 	licenseServerURL := os.Getenv("LICENSE_SERVER_URL")
 	if licenseServerURL == "" {
-		licenseServerURL = "http://localhost:8080" // Default fallback
+		licenseServerURL = "https://tamalabs.biosystems.id"
 	}
 
-	request, err := http.NewRequest("GET", fmt.Sprintf("%s/pubkey", licenseServerURL), nil)
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	reqURL := fmt.Sprintf("%s/pubkey", licenseServerURL)
+	request, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download public key from server: %v", err)
 	}
@@ -92,13 +102,4 @@ func (l *FSKeyLoader) LoadPublicKey(path string) (*rsa.PublicKey, error) {
 		return nil, err
 	}
 	return pub.(*rsa.PublicKey), nil
-}
-
-// FSFileLoader implements LicenseFileLoader using local filesystem.
-type FSFileLoader struct{}
-
-func NewFSFileLoader() *FSFileLoader { return &FSFileLoader{} }
-
-func (l *FSFileLoader) LoadFile(path string) ([]byte, error) {
-	return os.ReadFile(path)
 }

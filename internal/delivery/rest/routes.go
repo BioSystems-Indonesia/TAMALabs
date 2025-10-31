@@ -5,13 +5,17 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/BioSystems-Indonesia/TAMALabs/web"
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
 	appMiddleware "github.com/BioSystems-Indonesia/TAMALabs/internal/middleware"
 	"golang.org/x/exp/slices"
+
+	summary_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/summary"
 )
 
 // Handler is a struct that contains the handler of the REST server.
@@ -35,6 +39,20 @@ type Handler struct {
 var blackListLoggingOnEndpoint = []string{
 	// This is healthcheck endpoint, so we don't need to log it.
 	"/api/v1/server/status",
+	"/api/v1/summary/ws",
+}
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+type latestSummaryData struct {
+	Summary   interface{}
+	Analytics interface{}
 }
 
 // getCORSOrigins returns the allowed CORS origins
@@ -128,7 +146,7 @@ func RegisterRoutes(
 	khanzaExternalHandler *KhanzaExternalHandler,
 	externalHandler *ExternalHandler,
 	authMiddleware *appMiddleware.JWTMiddleware,
-	summaryHandler *SummaryHandler,
+	summaryHandler *summary_uc.SummaryUseCase,
 ) {
 	slog.Info("registering routes")
 
@@ -268,8 +286,31 @@ func RegisterRoutes(
 
 	summary := authenticatedV1.Group("/summary")
 	{
-		summary.GET("/", summaryHandler.GetSummary)
-		summary.GET("/analytics", summaryHandler.GetSummaryAnalytics)
+		// Clients can connect to /api/v1/summary/ws to receive periodic summary snapshots
+		summary.GET("/ws", func(c echo.Context) error {
+			conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+			if err != nil {
+				return err
+			}
+			defer conn.Close()
+
+			ticker := time.NewTicker(2 * time.Second) // periodic snapshot
+			defer ticker.Stop()
+
+			for range ticker.C {
+				ctx := c.Request().Context()
+				// fetch fresh data directly from usecase to avoid writing on hijacked http response
+				s := summaryHandler.Summary(ctx)
+				a := summaryHandler.SummaryAnalytics(ctx)
+				payload := latestSummaryData{Summary: s, Analytics: a}
+				if err := conn.WriteJSON(payload); err != nil {
+					slog.Error("failed to write summary websocket", "error", err)
+					return err
+				}
+			}
+
+			return nil
+		})
 	}
 
 	khanzaExternalHandler.RegisterRoutes(unauthenticatedV1)

@@ -64,7 +64,7 @@ var API_KEY = "KJKDANCJSANIUWYR6243UJFOISJFJKVOMV72487YEHFHFHSDVOHF9AMDC9AN9SDN9
 func NewCronHandler(khanzaUC *khanzauc.Usecase, simrsUC SIMRSUsecase) *CronHandler {
 	licenseServerURL := os.Getenv("LICENSE_SERVER_URL")
 	if licenseServerURL == "" {
-		licenseServerURL = "http://localhost"
+		licenseServerURL = "https://tamalabs.biosystems.id"
 	}
 
 	machineID, err := util.GenerateMachineID()
