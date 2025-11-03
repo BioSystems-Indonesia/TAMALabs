@@ -46,13 +46,29 @@ func (u *Usecase) ProcessBTS(ctx context.Context) error {
 				continue
 			}
 
+			// Get TestType to determine decimal formatting
+			testType, err := u.TestTypeRepository.FindOneByCode(ctx, record.Analyte)
+			if err != nil {
+				// Try to find by alias_code if not found by code
+				testType, err = u.TestTypeRepository.FindOneByAliasCode(ctx, record.Analyte)
+				if err != nil {
+					// Use default decimal if test type not found
+					testType = entity.TestType{Decimal: 2}
+				}
+			}
+
+			decimal := testType.Decimal
+			if decimal < 0 {
+				decimal = 0
+			}
+
 			date, _ := time.Parse("2006-01-02 15:04:05", fmt.Sprintf("%s %s", record.Date, record.Time))
 			results = append(results, entity.ObservationResult{
 				SpecimenID:  int64(specimen.ID),
 				TestCode:    record.Analyte,
 				Description: record.Analyte,
 				Values: entity.JSONStringArray{
-					fmt.Sprintf("%.2f", record.Result),
+					fmt.Sprintf("%.*f", decimal, record.Result),
 				},
 				Type:           record.Analyte,
 				Unit:           record.Units,

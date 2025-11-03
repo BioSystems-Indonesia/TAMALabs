@@ -56,7 +56,8 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
             }
 
             const aliasCode = v.test_type?.alias_code;
-            let displayResult: string = v.result || ""; // Use string result instead of formatted_result
+            // Use formatted_result (with proper decimal places) if available, otherwise use result
+            let displayResult: string = String(v.formatted_result || v.result || "");
             let displayUnit = v.unit;
             let displayReference = v.computed_reference_range || v.reference_range;
 

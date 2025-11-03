@@ -207,6 +207,12 @@ func abs(x float64) float64 {
 
 // ConvertReferenceRange converts a reference range by multiplying both values by a factor
 func ConvertReferenceRange(refRange string, factor float64) string {
+	return ConvertReferenceRangeWithDecimal(refRange, factor, 2)
+}
+
+// ConvertReferenceRangeWithDecimal converts a reference range by multiplying both values by a factor
+// and formats with specified decimal places
+func ConvertReferenceRangeWithDecimal(refRange string, factor float64, decimal int) string {
 	if refRange == "" {
 		return ""
 	}
@@ -234,12 +240,17 @@ func ConvertReferenceRange(refRange string, factor float64) string {
 	convertedLow := lowValue * factor
 	convertedHigh := highValue * factor
 
+	// Ensure decimal is not negative
+	if decimal < 0 {
+		decimal = 0
+	}
+
 	// Format with appropriate decimal places
-	if convertedLow == float64(int(convertedLow)) && convertedHigh == float64(int(convertedHigh)) {
-		// If both are whole numbers, format without decimal places
+	if decimal == 0 || (convertedLow == float64(int(convertedLow)) && convertedHigh == float64(int(convertedHigh))) {
+		// If decimal is 0 or both are whole numbers, format without decimal places
 		return fmt.Sprintf("%.0f - %.0f", convertedLow, convertedHigh)
 	} else {
-		// Otherwise, format with 2 decimal places
-		return fmt.Sprintf("%.2f - %.2f", convertedLow, convertedHigh)
+		// Otherwise, format with specified decimal places
+		return fmt.Sprintf("%.*f - %.*f", decimal, convertedLow, decimal, convertedHigh)
 	}
 }

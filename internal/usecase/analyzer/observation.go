@@ -241,10 +241,28 @@ func (u *Usecase) ProcessDiestro(ctx context.Context, data entity.DiestroResult)
 		return err
 	}
 
+	// Get TestType to determine decimal formatting
+	testType, err := u.TestTypeRepository.FindOneByCode(ctx, data.TestName)
+	if err != nil {
+		// Try to find by alias_code if not found by code
+		testType, err = u.TestTypeRepository.FindOneByAliasCode(ctx, data.TestName)
+		if err != nil {
+			slog.Error("test type not found", "test_code", data.TestName, "error", err)
+			// Continue with default decimal
+			testType = entity.TestType{Decimal: 2}
+		}
+	}
+
+	// Use TestType decimal setting, default to 0 if negative
+	decimal := testType.Decimal
+	if decimal < 0 {
+		decimal = 0
+	}
+
 	observation := entity.ObservationResult{
 		SpecimenID: int64(speciment.ID),
 		TestCode:   data.TestName,
-		Values:     []string{fmt.Sprintf("%.2f", data.Value)},
+		Values:     []string{fmt.Sprintf("%.*f", decimal, data.Value)},
 		Unit:       data.Unit,
 		Date:       data.Timestamp,
 	}
@@ -263,10 +281,28 @@ func (u *Usecase) ProcessCBS400(ctx context.Context, data entity.CBS400Result) e
 		return err
 	}
 
+	// Get TestType to determine decimal formatting
+	testType, err := u.TestTypeRepository.FindOneByCode(ctx, data.TestName)
+	if err != nil {
+		// Try to find by alias_code if not found by code
+		testType, err = u.TestTypeRepository.FindOneByAliasCode(ctx, data.TestName)
+		if err != nil {
+			slog.Error("test type not found", "test_code", data.TestName, "error", err)
+			// Continue with default decimal
+			testType = entity.TestType{Decimal: 2}
+		}
+	}
+
+	// Use TestType decimal setting, default to 0 if negative
+	decimal := testType.Decimal
+	if decimal < 0 {
+		decimal = 0
+	}
+
 	observation := entity.ObservationResult{
 		SpecimenID: int64(specimen.ID),
 		TestCode:   data.TestName,
-		Values:     []string{fmt.Sprintf("%.2f", data.Value)},
+		Values:     []string{fmt.Sprintf("%.*f", decimal, data.Value)},
 		Unit:       data.Unit,
 		Date:       data.Timestamp,
 	}
@@ -291,8 +327,24 @@ func (u *Usecase) ProcessVerifyU120(ctx context.Context, data entity.VerifyResul
 		valueString = data.ValueStr
 		slog.Debug("Using ValueStr for VerifyU120", "testName", data.TestName, "valueStr", data.ValueStr)
 	} else {
-		valueString = fmt.Sprintf("%.2f", data.Value)
-		slog.Debug("Using numeric Value for VerifyU120", "testName", data.TestName, "value", data.Value, "formatted", valueString)
+		// Get TestType to determine decimal formatting for numeric values
+		testType, err := u.TestTypeRepository.FindOneByCode(ctx, data.TestName)
+		if err != nil {
+			// Try to find by alias_code if not found by code
+			testType, err = u.TestTypeRepository.FindOneByAliasCode(ctx, data.TestName)
+			if err != nil {
+				// Use default decimal if test type not found
+				testType = entity.TestType{Decimal: 2}
+			}
+		}
+
+		decimal := testType.Decimal
+		if decimal < 0 {
+			decimal = 0
+		}
+
+		valueString = fmt.Sprintf("%.*f", decimal, data.Value)
+		slog.Debug("Using numeric Value for VerifyU120", "testName", data.TestName, "value", data.Value, "formatted", valueString, "decimal", decimal)
 	}
 
 	observation := entity.ObservationResult{
@@ -332,7 +384,23 @@ func (u *Usecase) ProcessVerifyU120Batch(ctx context.Context, data []entity.Veri
 		if result.ValueStr != "" {
 			valueString = result.ValueStr
 		} else {
-			valueString = fmt.Sprintf("%.2f", result.Value)
+			// Get TestType to determine decimal formatting for numeric values
+			testType, err := u.TestTypeRepository.FindOneByCode(ctx, result.TestName)
+			if err != nil {
+				// Try to find by alias_code if not found by code
+				testType, err = u.TestTypeRepository.FindOneByAliasCode(ctx, result.TestName)
+				if err != nil {
+					// Use default decimal if test type not found
+					testType = entity.TestType{Decimal: 2}
+				}
+			}
+
+			decimal := testType.Decimal
+			if decimal < 0 {
+				decimal = 0
+			}
+
+			valueString = fmt.Sprintf("%.*f", decimal, result.Value)
 		}
 
 		observation := entity.ObservationResult{

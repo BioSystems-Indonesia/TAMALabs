@@ -98,15 +98,18 @@ func (t *TestType) IsStringReference() bool {
 
 // GetReferenceRange returns the appropriate reference range based on type
 func (t *TestType) GetReferenceRange() string {
-	// Debug logging
-
 	if t.IsNumericReference() {
 		decimal := t.Decimal
 		if decimal < 0 {
-			decimal = 2
+			decimal = 0 // Default to 0 decimal places (whole numbers) if not set
 		}
-		result := fmt.Sprintf("%.*f - %.*f", decimal, t.LowRefRange, decimal, t.HighRefRange)
-		return result
+
+		// Format with specified decimal places
+		// This preserves trailing zeros (e.g., "1.90" instead of "1.9")
+		lowStr := fmt.Sprintf("%.*f", decimal, t.LowRefRange)
+		highStr := fmt.Sprintf("%.*f", decimal, t.HighRefRange)
+
+		return fmt.Sprintf("%s - %s", lowStr, highStr)
 	}
 	return t.NormalRefString
 }

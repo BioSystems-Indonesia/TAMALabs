@@ -364,39 +364,55 @@ const TestResultTable = (props: TestResultTableProps) => {
     }
 
     async function putResult(newRow: TestResult, _oldRow: TestResult) {
+        if (newRow.specimen_type !== _oldRow.specimen_type) {
+            setSpecimenTypeCache(prev => ({
+                ...prev,
+                [newRow.id]: newRow.specimen_type
+            }));
+        }
+
         if (newRow.result === _oldRow.result && newRow.unit === _oldRow.unit) {
-            return _oldRow
+            return newRow; // Return newRow to keep specimen_type change
         }
         const url = `/result/${newRow.specimen_id}/test`
 
         try {
             const response = await axios.put(url, newRow);
             notify(`Success update ${newRow.test}`, { type: 'success' });
-            return response.data;
+            // Preserve specimen_type from user edit
+            return {
+                ...response.data,
+                specimen_type: newRow.specimen_type
+            };
         } catch (error: any) {
             notify(`Error update ${error}`, { type: 'error' });
+            return _oldRow;
         }
     }
 
     let negID = -1
 
-    // support id == 0 when the TestResult is not set yet
-    // TODO find better hack than this
     const [rows, setRows] = useState<any>([])
+    const [specimenTypeCache, setSpecimenTypeCache] = useState<Record<string, string>>({})
+
     useEffect(() => {
         if (!props?.rows) return;
         if (!Array.isArray(props.rows)) return;
 
-        console.log(props.rows)
+        setRows(props.rows.map((r: any) => {
+            const rowId = r.id || negID--;
+            const cachedSpecimenType = specimenTypeCache[rowId];
+            const specimenType = cachedSpecimenType || r.specimen_type || r?.test_type?.types?.[0]?.type || (r?.test_type?.types && r.test_type.types.length > 0 ? r.test_type.types[0].type : '-');
 
-        setRows(props.rows.map((r: any) => ({
-            ...r,
-            id: r.id || negID--,
-            name: r?.test_type?.name || r?.history?.[0]?.test_type?.name || r.test,
-            specimen_type: r?.test_type?.types?.[0]?.type || (r?.test_type?.types && r.test_type.types.length > 0 ? r.test_type.types[0].type : '-'),
-            alias: r?.test_type?.alias_code || r?.history?.[0]?.test_type?.alias_code || r.alias || r.test,
-        })));
-    }, [props?.rows]);
+            return {
+                ...r,
+                id: rowId,
+                name: r?.test_type?.name || r?.history?.[0]?.test_type?.name || r.test,
+                specimen_type: specimenType,
+                alias: r?.test_type?.alias_code || r?.history?.[0]?.test_type?.alias_code || r.alias || r.test,
+            };
+        }));
+    }, [props?.rows, specimenTypeCache]);
 
     return (
         <MuiDatagrid rows={rows}
@@ -406,6 +422,15 @@ const TestResultTable = (props: TestResultTableProps) => {
             processRowUpdate={putResult}
             onProcessRowUpdateError={onUpdateError}
             rowHeight={60}
+            onRowEditStop={(params, event) => {
+                setRows((prevRows: any[]) =>
+                    prevRows.map(row =>
+                        row.id === params.id
+                            ? { ...row, specimen_type: specimenTypeCache[params.id] || row.specimen_type }
+                            : row
+                    )
+                );
+            }}
             columns={[
                 {
                     field: 'name',
@@ -416,6 +441,7 @@ const TestResultTable = (props: TestResultTableProps) => {
                     field: 'specimen_type',
                     headerName: 'Specimen Type',
                     flex: 1,
+                    editable: false,
                 },
                 {
                     field: 'alias',

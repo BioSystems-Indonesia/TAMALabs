@@ -300,7 +300,8 @@ function transformTestResultsForDataTable(ar: RawTestResult[][]): ProcessedTestR
                 default: color = "success";
             }
 
-            result[date + "_result"] = i[0].result;
+            // Use formatted_result with proper decimal places if available
+            result[date + "_result"] = i[0].formatted_result || i[0].result;
             result[date + "_color"] = color;
             result[date + "_egfr"] = i[0].egfr;
         }

@@ -176,7 +176,12 @@ func (u *Usecase) SyncResult(ctx context.Context, workOrderID int64) error {
 
 			// Convert reference range by multiplying by 1000
 			if testResult.ReferenceRange != "" {
-				refRangeConverted := util.ConvertReferenceRange(testResult.ReferenceRange, 1000)
+				// Use decimal from TestType for proper formatting
+				decimal := testResult.TestType.Decimal
+				if decimal < 0 {
+					decimal = 0
+				}
+				refRangeConverted := util.ConvertReferenceRangeWithDecimal(testResult.ReferenceRange, 1000, decimal)
 				if refRangeConverted != "" {
 					refRange = refRangeConverted
 				}

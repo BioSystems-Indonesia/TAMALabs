@@ -114,6 +114,12 @@ func (wo *WorkOrder) CalculateEGFRForResults(ctx context.Context) {
 			// Convert creatinine to mg/dL if needed
 			creatinineValue := testResult.Result
 
+			// Use TestType decimal setting for proper precision
+			decimal := testResult.TestType.Decimal
+			if decimal < 0 {
+				decimal = 0
+			}
+
 			if testResult.Unit != "mg/dL" {
 				creatinineValueFloat, _ := strconv.ParseFloat(creatinineValue, 64)
 				convertedValue, err := util.ConvertCreatinineUnit(creatinineValueFloat, testResult.Unit, "mg/dL")
@@ -124,7 +130,7 @@ func (wo *WorkOrder) CalculateEGFRForResults(ctx context.Context) {
 						"error", err)
 					continue
 				}
-				creatinineValue = strconv.FormatFloat(convertedValue, 'f', 2, 64)
+				creatinineValue = strconv.FormatFloat(convertedValue, 'f', decimal, 64)
 			}
 
 			// Calculate eGFR using CKD-EPI formula
@@ -149,6 +155,13 @@ func (wo *WorkOrder) CalculateEGFRForResults(ctx context.Context) {
 			for j := range testResult.History {
 				if testResult.History[j].Result != "" {
 					historyCreatinine := testResult.History[j].Result
+
+					// Use TestType decimal setting for history as well
+					historyDecimal := testResult.History[j].TestType.Decimal
+					if historyDecimal < 0 {
+						historyDecimal = 0
+					}
+
 					if testResult.History[j].Unit != "mg/dL" {
 						historyCreatinineFloat, _ := strconv.ParseFloat(historyCreatinine, 64)
 
@@ -156,7 +169,7 @@ func (wo *WorkOrder) CalculateEGFRForResults(ctx context.Context) {
 						if err != nil {
 							continue
 						}
-						historyCreatinine = strconv.FormatFloat(convertedValue, 'f', 2, 64)
+						historyCreatinine = strconv.FormatFloat(convertedValue, 'f', historyDecimal, 64)
 					}
 
 					historyCreatinineFloat, _ := strconv.ParseFloat(historyCreatinine, 64)

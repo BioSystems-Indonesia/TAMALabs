@@ -2,10 +2,13 @@
 ; Inno Setup Script for TAMALabs (Normal App + Auto-Start Tray)
 ; ==================================================================
 
+; Read version from version.go
+#define AppVer ReadIni(SourcePath + "version.ini", "Version", "AppVersion", "v1.0.0")
+
 [Setup]
 AppId={{A8A93F44-8D2B-4D75-9CC8-0C52B2184AC4}}
 AppName=TAMALabs
-AppVersion=1.0.0
+AppVersion={#AppVer}
 AppPublisher=Elga Tama
 AppPublisherURL=https://tamalabs.biosystems.id/
 AppSupportURL=https://tamalabs.biosystems.id/support
@@ -13,7 +16,7 @@ AppUpdatesURL=https://tamalabs.biosystems.id/updates
 DefaultDirName={autopf}\TAMALabs
 DefaultGroupName=TAMALabs
 AllowNoIcons=yes
-OutputBaseFilename=TAMALabs-setup-v1.0.0
+OutputBaseFilename=TAMALabs-setup-{#AppVer}
 OutputDir=.\installers
 Compression=lzma
 SolidCompression=yes

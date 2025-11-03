@@ -38,22 +38,23 @@ type DeleteResultBulkReq struct {
 // in our LIS. it is used to store or add the test manually or to show
 // the test to others
 type TestResult struct {
-	ID              int64          `json:"id"`
-	SpecimenID      int64          `json:"specimen_id"`
-	AliasCode       string         `json:"alias_code"`
-	TestTypeID      int64          `json:"test_type_id"`
-	Test            string         `json:"test"`
-	Result          string         `json:"result"`
-	FormattedResult *string        `json:"formatted_result"`
-	Unit            string         `json:"unit"`
-	Category        string         `json:"category"`
-	SpecimenType    string         `json:"specimen_type"`
-	Abnormal        AbnormalResult `json:"abnormal"`
-	ReferenceRange  string         `json:"reference_range"`
-	CreatedAt       string         `json:"created_at"`
-	Picked          bool           `json:"picked"`
-	TestType        TestType       `json:"test_type"`
-	CreatedBy       Admin          `json:"created_by" validate:"-"`
+	ID                     int64          `json:"id"`
+	SpecimenID             int64          `json:"specimen_id"`
+	AliasCode              string         `json:"alias_code"`
+	TestTypeID             int64          `json:"test_type_id"`
+	Test                   string         `json:"test"`
+	Result                 string         `json:"result"`
+	FormattedResult        *string        `json:"formatted_result"`
+	Unit                   string         `json:"unit"`
+	Category               string         `json:"category"`
+	SpecimenType           string         `json:"specimen_type"`
+	Abnormal               AbnormalResult `json:"abnormal"`
+	ReferenceRange         string         `json:"reference_range"`
+	ComputedReferenceRange string         `json:"computed_reference_range,omitempty"` // Always use TestType.GetReferenceRange() for proper decimal formatting
+	CreatedAt              string         `json:"created_at"`
+	Picked                 bool           `json:"picked"`
+	TestType               TestType       `json:"test_type"`
+	CreatedBy              Admin          `json:"created_by" validate:"-"`
 
 	History []TestResult `json:"history"`
 
@@ -87,21 +88,24 @@ func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
 		decimal = 0
 	}
 
+	computedRefRange := request.TestType.GetReferenceRange()
+
 	return TestResult{
-		ID:             0,
-		SpecimenID:     request.SpecimenID,
-		Test:           request.TestCode,
-		Result:         "",
-		TestTypeID:     int64(request.TestType.ID),
-		Unit:           request.TestType.Unit,
-		Category:       request.TestType.Category,
-		ReferenceRange: request.TestType.GetReferenceRange(),
-		CreatedAt:      request.UpdatedAt.Format(time.RFC3339),
-		Abnormal:       NoDataResult,
-		Picked:         false,
-		History:        []TestResult{},
-		TestType:       request.TestType,
-		CreatedBy:      Admin{},
+		ID:                     0,
+		SpecimenID:             request.SpecimenID,
+		Test:                   request.TestCode,
+		Result:                 "",
+		TestTypeID:             int64(request.TestType.ID),
+		Unit:                   request.TestType.Unit,
+		Category:               request.TestType.Category,
+		ReferenceRange:         computedRefRange,
+		ComputedReferenceRange: computedRefRange,
+		CreatedAt:              request.UpdatedAt.Format(time.RFC3339),
+		Abnormal:               NoDataResult,
+		Picked:                 false,
+		History:                []TestResult{},
+		TestType:               request.TestType,
+		CreatedBy:              Admin{},
 	}
 }
 
@@ -117,18 +121,25 @@ func (r TestResult) FromObservationResult(observation ObservationResult, specime
 		referenceRange = "" // Empty reference range for invalid/missing TestType
 	}
 
+	// Always compute reference range with proper decimal from TestType
+	computedRefRange := ""
+	if observation.TestType.ID != 0 {
+		computedRefRange = observation.TestType.GetReferenceRange()
+	}
+
 	resultTest := TestResult{
-		ID:             observation.ID,
-		SpecimenID:     observation.SpecimenID,
-		Test:           observation.TestCode,
-		TestTypeID:     int64(observation.TestType.ID),
-		Unit:           observation.TestType.Unit,
-		Category:       observation.TestType.Category,
-		ReferenceRange: referenceRange,
-		CreatedAt:      observation.CreatedAt.Format(time.RFC3339),
-		Picked:         observation.Picked,
-		TestType:       observation.TestType,
-		CreatedBy:      observation.CreatedByAdmin,
+		ID:                     observation.ID,
+		SpecimenID:             observation.SpecimenID,
+		Test:                   observation.TestCode,
+		TestTypeID:             int64(observation.TestType.ID),
+		Unit:                   observation.TestType.Unit,
+		Category:               observation.TestType.Category,
+		ReferenceRange:         referenceRange,
+		ComputedReferenceRange: computedRefRange,
+		CreatedAt:              observation.CreatedAt.Format(time.RFC3339),
+		Picked:                 observation.Picked,
+		TestType:               observation.TestType,
+		CreatedBy:              observation.CreatedByAdmin,
 
 		// Result, Abnormal will be filled below
 		Result:   "",
@@ -184,20 +195,19 @@ func (r TestResult) FromObservationResult(observation ObservationResult, specime
 		}
 	}
 
-	resultStr := strconv.FormatFloat(result, 'f', 2, 64)
+	// Use TestType decimal setting for all formatting
+	decimal := observation.TestType.Decimal
+	if decimal < 0 {
+		decimal = 0 // Default to 0 (whole numbers) if negative
+	}
+
+	// Format result string with proper decimal places
+	resultStr := strconv.FormatFloat(result, 'f', decimal, 64)
 	resultTest.Result = resultStr
 
-	if observation.TestType.Decimal < 1 {
-		observation.TestType.Decimal = 2
-	}
-
-	formattedResult, err := strconv.ParseFloat(fmt.Sprintf("%.*f", observation.TestType.Decimal, result), 64)
-	if err != nil {
-		resultTest.FormattedResult = &resultTest.Result
-	} else {
-		formattedResultStr := strconv.FormatFloat(formattedResult, 'f', 2, 64)
-		resultTest.FormattedResult = &formattedResultStr
-	}
+	// Format for display - use the same decimal precision
+	formattedResultStr := fmt.Sprintf("%.*f", decimal, result)
+	resultTest.FormattedResult = &formattedResultStr
 
 	resultTest.Abnormal = NormalResult
 	if result <= observation.TestType.LowRefRange {
@@ -221,20 +231,36 @@ func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[i
 			decimal = 0
 		}
 
+		// Try to format numeric values with proper decimal places
+		var formattedResult *string
+		if numValue, err := strconv.ParseFloat(resultStr, 64); err == nil {
+			// It's a numeric value, format with proper decimals
+			formatted := fmt.Sprintf("%.*f", decimal, numValue)
+			formattedResult = &formatted
+		} else {
+			// It's a qualitative value (like "negative", "1+"), keep as is
+			formattedResult = &resultStr
+		}
+
+		// Compute reference range with proper decimal formatting
+		computedRefRange := h.TestType.GetReferenceRange()
+
 		histories[i] = TestResult{
-			ID:             h.ID,
-			SpecimenID:     h.SpecimenID,
-			Test:           h.TestCode,
-			Result:         resultStr, // Use string value directly
-			TestTypeID:     int64(h.TestType.ID),
-			Unit:           h.Unit,
-			Category:       h.TestType.Category,
-			ReferenceRange: h.TestType.GetReferenceRange(),
-			CreatedAt:      h.CreatedAt.Format(time.RFC3339),
-			Picked:         h.Picked,
-			TestType:       h.TestType,
-			SpecimenType:   specimenType,
-			CreatedBy:      h.CreatedByAdmin,
+			ID:                     h.ID,
+			SpecimenID:             h.SpecimenID,
+			Test:                   h.TestCode,
+			Result:                 resultStr, // Use string value directly
+			FormattedResult:        formattedResult,
+			TestTypeID:             int64(h.TestType.ID),
+			Unit:                   h.Unit,
+			Category:               h.TestType.Category,
+			ReferenceRange:         h.TestType.GetReferenceRange(),
+			ComputedReferenceRange: computedRefRange,
+			CreatedAt:              h.CreatedAt.Format(time.RFC3339),
+			Picked:                 h.Picked,
+			TestType:               h.TestType,
+			SpecimenType:           specimenType,
+			CreatedBy:              h.CreatedByAdmin,
 		}
 	}
 

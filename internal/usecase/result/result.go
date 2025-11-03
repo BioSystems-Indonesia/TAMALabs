@@ -142,6 +142,18 @@ func (u *Usecase) PutTestResult(
 		slog.Info("cannot find specimen for result", "specimen_id", obs.SpecimenID, "error", err)
 	} else {
 		specimenType = specimen.Type
+
+		// Update specimen type if it's different and provided in the request
+		if result.SpecimenType != "" && result.SpecimenType != specimen.Type {
+			specimens := []entity.Specimen{specimen}
+			specimens[0].Type = result.SpecimenType
+			err = u.specimenRepository.BulkUpdate(ctx, specimens)
+			if err != nil {
+				slog.Warn("failed to update specimen type", "specimen_id", obs.SpecimenID, "error", err)
+			} else {
+				specimenType = result.SpecimenType
+			}
+		}
 	}
 
 	result = result.FromObservationResult(obs, specimenType)

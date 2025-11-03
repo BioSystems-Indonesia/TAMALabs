@@ -43,8 +43,13 @@ build-service-helper:
 build-tray-simple:
 	go build -ldflags "-H windowsgui" -v -o bin/TAMALabsTray.exe ./cmd/tray
 
+# Generate version.ini from version.go
+gen-version:
+	@echo "Generating version.ini from version.go..."
+	@go run scripts/gen-version-ini.go
+
 # Create Windows Installer using Docker (Inno Setup)
-installer: build
+installer: build gen-version
 	@echo "Creating installer..."
 	@docker run --rm -v "$(CURDIR):/work" amake/innosetup $(ISS_FILE)
 	@echo "✅ Installer created successfully!"

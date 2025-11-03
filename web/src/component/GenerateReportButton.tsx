@@ -85,7 +85,7 @@ const GenerateReportButton = (prop: GenerateReportButtonProps) => {
                 alias_code: v.test_type?.alias_code,
                 reference: v.computed_reference_range || v.reference_range || '',
                 unit: v.unit || '',
-                result: v.result || '', // Keep as string to support non-numeric values like "3+"
+                result: String(v.formatted_result || v.result || ''), // Use formatted_result with proper decimal places
                 abnormality: abnormality,
                 subCategory: v.category || '',
             }
@@ -128,7 +128,7 @@ const GenerateReportButton = (prop: GenerateReportButtonProps) => {
                 alias_code: v.test_type?.alias_code,
                 reference: v.computed_reference_range || v.reference_range || '',
                 unit: v.unit || '',
-                result: v.result || '',
+                result: String(v.formatted_result || v.result || ''), // Use formatted_result with proper decimal places
                 abnormality: abnormality,
                 subCategory: v.category || '',
             }

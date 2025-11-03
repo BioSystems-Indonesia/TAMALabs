@@ -57,9 +57,12 @@ export type TestType = {
   unit: string;
   low_ref_range: number;
   high_ref_range: number;
+  normal_ref_string?: string;
+  decimal: number;
   category: string;
   sub_category: string;
   description: string;
+  computed_reference_range?: string; // Computed from GetReferenceRange() with proper decimal formatting
 };
 
 export type ReportDataAbnormality =
