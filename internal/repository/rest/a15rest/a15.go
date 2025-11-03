@@ -28,6 +28,33 @@ func NewA15() *A15rest {
 }
 
 func (a *A15rest) Send(ctx context.Context, req *entity.SendPayloadRequest) error {
+	// For testing - write to local directory instead of SMB
+	// localDir := "tmp/a15_test"
+	// err := os.MkdirAll(localDir, 0755)
+	// if err != nil {
+	// 	return fmt.Errorf("cannot create local directory %s: %v", localDir, err)
+	// }
+
+	// filePath := filepath.Join(localDir, "import.txt")
+	// content := createContentFile(req)
+
+	// err = os.WriteFile(filePath, content, 0644)
+	// if err != nil {
+	// 	return fmt.Errorf("cannot write file to local directory: %v", err)
+	// }
+
+	// slog.Info("Send to A15 (local test)", "file_path", filePath)
+	// return nil
+
+	if req == nil {
+		return fmt.Errorf("a15: nil request")
+	}
+
+	// Validate device address/port (Device is a value on SendPayloadRequest)
+	if req.Device.IPAddress == "" || req.Device.SendPort == "" {
+		return fmt.Errorf("a15: device missing address or port")
+	}
+
 	address := fmt.Sprintf("http://%s:%s/api/v1/request/a15", req.Device.IPAddress, req.Device.SendPort)
 
 	buf := bytes.NewBuffer(nil)
@@ -49,6 +76,9 @@ func (a *A15rest) Send(ctx context.Context, req *entity.SendPayloadRequest) erro
 	}
 
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, address, buf)
+	if err != nil {
+		return fmt.Errorf("a15: failed create http request: %w", err)
+	}
 	httpReq.Header.Set("Content-Type", w.FormDataContentType())
 
 	res, err := a.client.Do(httpReq)
@@ -103,7 +133,7 @@ func createContentFile(req *entity.SendPayloadRequest) []byte {
 	for _, p := range req.Patients {
 		for _, s := range p.Specimen {
 			for _, r := range s.ObservationRequest {
-				if r.TestType.IsCalculatedTest || r.TestType.Device.Type != entity.DeviceTypeA15 {
+				if r.TestType.IsCalculatedTest {
 					continue
 				}
 				samples = append(samples, row(req, s, r))

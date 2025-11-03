@@ -393,7 +393,7 @@ const TestResultTable = (props: TestResultTableProps) => {
             ...r,
             id: r.id || negID--,
             name: r?.test_type?.name || r?.history?.[0]?.test_type?.name || r.test,
-            specimen_type: r?.test_type?.types[0].type,
+            specimen_type: r?.test_type?.types?.[0]?.type || (r?.test_type?.types && r.test_type.types.length > 0 ? r.test_type.types[0].type : '-'),
             alias: r?.test_type?.alias_code || r?.history?.[0]?.test_type?.alias_code || r.alias || r.test,
         })));
     }, [props?.rows]);
@@ -485,17 +485,18 @@ const TestResultTable = (props: TestResultTableProps) => {
                     headerName: 'Action',
                     flex: 1,
                     renderCell: (params: GridRenderCellParams) => {
-                        const resultDifference = !params.row.history
+                        const history = Array.isArray(params.row.history) ? params.row.history : [];
+                        const resultDifference = history.length > 0 ? !history
                             .map((h: TestResult) => "" + h.result + h.unit)
-                            .every((v: string, _: number, a: string[]) => v === a[0])
+                            .every((v: string, _: number, a: string[]) => v === a[0]) : false;
 
                         return <Box>
                             <Tooltip title={resultDifference ? "History has different result" : "Show History"}>
-                                <Badge badgeContent={params.row.history.length} color={resultDifference ? "warning" : "primary"}>
+                                <Badge badgeContent={history.length} color={resultDifference ? "warning" : "primary"}>
                                     <IconButton color={resultDifference ? "warning" : "primary"}
                                         onClick={() => {
                                             props.setHistory({
-                                                rows: params.row.history,
+                                                rows: history,
                                                 title: `History of ${params.row.test}`
                                             })
                                             props.setOpenHistory(true)

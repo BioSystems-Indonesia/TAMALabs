@@ -45,18 +45,25 @@ func (h *Handler) ORUR01(ctx context.Context, m h251.ORU_R01, msgByte []byte) (s
 }
 
 func (h *Handler) fixMessage(msgByte []byte) []byte {
-	msgByteSplit := bytes.Split(msgByte, []byte("\r\n"))
+	// Split by CR (\r) which is the HL7 segment terminator.
+	// Some senders may use LF or CRLF; upstream we normalized to CR already.
+	msgByteSplit := bytes.Split(msgByte, []byte("\r"))
 	for i := range msgByteSplit {
 		if bytes.HasPrefix(msgByteSplit[i], []byte("PID")) {
 			splitPID := bytes.Split(msgByteSplit[i], []byte("|"))
-			if len(splitPID) < 7 {
-				continue
+			// PID field index 7 is Date/Time of Birth in HL7 (1-based).
+			// Ensure we have at least 8 entries (0..7) before touching it.
+			if len(splitPID) > 7 {
+				// Clear invalid DOB values such as "0" or "\n" to avoid parser errors.
+				if len(bytes.TrimSpace(splitPID[7])) == 0 || bytes.Equal(splitPID[7], []byte("0")) {
+					splitPID[7] = []byte("")
+				}
 			}
-			splitPID[7] = []byte("")
 			msgByteSplit[i] = bytes.Join(splitPID, []byte("|"))
 		}
 	}
-	msgByte = bytes.Join(msgByteSplit, []byte("\r\n"))
+	// Rejoin using CR so decoder sees proper segment terminators.
+	msgByte = bytes.Join(msgByteSplit, []byte("\r"))
 	return msgByte
 }
 
@@ -104,6 +111,22 @@ func (h *Handler) MapORUR01ToEntity(msg *h251.ORU_R01) (entity.ORU_R01, error) {
 
 func (h *Handler) mapORUR01OrderObservationToSpecimenEntity(s h251.ORU_R01_OrderObservation, res h251.ORU_R01_PatientResult) entity.Specimen {
 	specimen := h.mapOBRToSpecimenEntity(s.OBR)
+	// Prefer PID-based barcode for this handler (neomedika_ncc61).
+	// Some senders put the real sample id in PID while OBR contains an internal id.
+	if res.Patient != nil && res.Patient.PID != nil {
+		pid := res.Patient.PID
+		// Try PatientIdentifierList first, then PatientID
+		var pidID string
+		if len(pid.PatientIdentifierList) > 0 {
+			pidID = pid.PatientIdentifierList[0].IDNumber
+		}
+		if pidID == "" {
+			pidID = pid.PatientID.IDNumber
+		}
+		if pidID != "" {
+			specimen.Barcode = pidID
+		}
+	}
 	observationResults := []entity.ObservationResult{}
 
 	for _, o := range s.Observation {

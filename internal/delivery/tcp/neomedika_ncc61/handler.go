@@ -66,7 +66,13 @@ func (h *Handler) handleMessage(ctx context.Context, message string) (string, er
 	logMsg := strings.ReplaceAll(message, "\r", "\n")
 	slog.Info("received message", "message", logMsg)
 
-	msgByte := []byte(message)
+	// normalize newlines to CR (\r) because HL7 segments are separated by CR
+	// some senders use LF (\n) or CRLF (\r\n); normalize to a single CR so the
+	// hl7 decoder can detect the message header correctly.
+	normalized := strings.ReplaceAll(message, "\r\n", "\r")
+	normalized = strings.ReplaceAll(normalized, "\n", "\r")
+
+	msgByte := []byte(normalized)
 	headerDecoder := hl7.NewDecoder(h251.Registry, &hl7.DecodeOption{HeaderOnly: true})
 	header, err := headerDecoder.Decode(msgByte)
 	if err != nil {

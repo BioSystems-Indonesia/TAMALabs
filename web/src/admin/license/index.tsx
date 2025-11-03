@@ -25,7 +25,6 @@ export default function LicensePage() {
         message: ""
     });
 
-    // Check license status on component mount
     useEffect(() => {
         checkLicenseStatus();
     }, []);
@@ -53,7 +52,6 @@ export default function LicensePage() {
                 message: data.message || "Unknown status"
             });
 
-            // If license is valid, show success message
             if (data.valid) {
                 setSuccess("License is already activated and valid!");
                 setTimeout(() => {
@@ -72,13 +70,11 @@ export default function LicensePage() {
     };
 
     const handleLicenseChange = (index: number, value: string) => {
-        // Only allow alphanumeric characters and limit to 4 characters
         const cleanValue = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
         const newLicenseCode = [...licenseCode];
         newLicenseCode[index] = cleanValue;
         setLicenseCode(newLicenseCode);
 
-        // Auto-focus next field when current field is filled
         if (cleanValue.length === 4 && index < 3) {
             const nextField = document.getElementById(`license-field-${index + 1}`);
             nextField?.focus();
@@ -91,7 +87,6 @@ export default function LicensePage() {
         setIsLoading(true);
 
         try {
-            // Validate license code
             const fullLicenseKey = licenseCode.join('-');
             if (licenseCode.some(code => code.length !== 4)) {
                 setError("Please enter all 4 parts of the license code");
@@ -99,12 +94,10 @@ export default function LicensePage() {
                 return;
             }
 
-            // Prepare request body - only send license code
             const requestBody = {
                 license_code: fullLicenseKey
             };
 
-            // Send request to local server
             const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/license/activate`, {
                 method: 'POST',
                 headers: {
@@ -120,12 +113,10 @@ export default function LicensePage() {
 
             const data = await response.json();
 
-            // Check if we got the expected response format
             if (data.payload && data.signature) {
                 setSuccess("License activated successfully!");
                 setLicenseCode(["", "", "", ""]);
 
-                // Re-check license status after successful activation
                 setTimeout(async () => {
                     await checkLicenseStatus();
                 }, 1000);
