@@ -214,14 +214,14 @@ const Header = () => {
                         wrap={true}
                         style={{ width: '45%' }}
                     >{settings.company_address}</Text>
-                    <Text
+                    {/* <Text
                         wrap={true}
                         style={{ width: '45%' }}
                     >{settings.company_contact_phone}</Text>
                     <Text
                         wrap={true}
                         style={{ width: '45%' }}
-                    >{settings.company_contact_email}</Text>
+                    >{settings.company_contact_email}</Text> */}
                 </View>
             </View>
         </View>

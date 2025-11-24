@@ -4,7 +4,7 @@ import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentT
 import Stack from "@mui/material/Stack";
 import { AxiosError } from "axios";
 import { useEffect, useMemo, useState } from "react";
-import { AutocompleteArrayInput, Create, Datagrid, DateField, DeleteButton, Edit, FilterLiveForm, List, NumberField, ReferenceField, ReferenceInput, SaveButton, SearchInput, SimpleForm, TextField, TextInput, Toolbar, required, useEditContext, useNotify, useRedirect, useSaveContext } from "react-admin";
+import { AutocompleteArrayInput, Create, Datagrid, DateField, DeleteButton, Edit, FilterLiveForm, FunctionField, List, NumberField, ReferenceInput, SaveButton, SearchInput, SimpleForm, TextInput, Toolbar, required, useEditContext, useNotify, useRedirect, useSaveContext } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import SideFilter from "../../component/SideFilter";
 import { useCurrentUser } from "../../hooks/currentUser";
@@ -16,6 +16,16 @@ import { TestTemplate, TestTemplateDiff } from "../../types/test_templates";
 import { WorkOrder } from "../../types/work_order";
 import { TestInput, testTypesField } from '../workOrder/Form';
 
+const NullableField = ({ value }: { value: any }) => (
+    <span style={{
+        color: !value || value === '' ? '#888' : 'inherit',
+        fontStyle: !value || value === '' ? 'italic' : 'normal',
+        opacity: !value || value === '' ? 0.6 : 1,
+        fontSize: !value || value === '' ? '0.875rem' : 'inherit'
+    }}>
+        {value || 'null'}
+    </span>
+);
 
 export const TestTemplateList = () => (
     <List aside={<TestTemplateFilterSidebar />} title="Test Template" sort={{
@@ -24,14 +34,20 @@ export const TestTemplateList = () => (
     }}
         storeKey={false} exporter={false}
     >
-        <Datagrid bulkActionButtons={false}>
+        <Datagrid bulkActionButtons={false} rowClick="edit">
             <NumberField source="id" />
-            <TextField source="name" />
-            <TextField source="description" />
+            <FunctionField label="Name" render={(record: any) => <NullableField value={record.name} />} />
+            <FunctionField label="Description" render={(record: any) => <NullableField value={record.description} />} />
             <DateField source="created_at" showTime />
             <DateField source="updated_at" showTime />
-            <ReferenceField source="created_by" reference="user" />
-            <ReferenceField source="last_updated_by" reference="user" />
+            <FunctionField
+                label="Created By"
+                render={(record: any) => <NullableField value={record.created_by_user?.fullname} />}
+            />
+            <FunctionField
+                label="Last Updated By"
+                render={(record: any) => <NullableField value={record.last_updated_by_user?.fullname} />}
+            />
         </Datagrid>
     </List>
 );
@@ -42,8 +58,8 @@ const TestTemplateFilterSidebar = () => {
 
     return (
 
-        <SideFilter  sx={{
-            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',          
+        <SideFilter sx={{
+            backgroundColor: isDarkMode ? theme.palette.background.paper : 'white',
         }}>
             <FilterLiveForm debounce={1500}>
                 <Stack spacing={0}>
@@ -128,9 +144,9 @@ function TestTemplateForm(props: TestTemplateFormProps) {
 
     const currentUser = useCurrentUser()
     return (
-        <Box sx={{ml: 3, mr: 3}}>
-            <SimpleForm 
-                disabled={props.readonly} 
+        <Box sx={{ ml: 3, mr: 3 }}>
+            <SimpleForm
+                disabled={props.readonly}
                 toolbar={false}
                 sx={{
                     '& .RaSimpleForm-form': {
@@ -141,45 +157,45 @@ function TestTemplateForm(props: TestTemplateFormProps) {
                 }}
             >
                 <TestTypeToolbar />
-              
-                
+
+
                 <Stack spacing={3} sx={{ width: '100%' }}>
-                    <Card 
-                        elevation={0} 
-                        sx={{ 
+                    <Card
+                        elevation={0}
+                        sx={{
                             border: `1px solid ${theme.palette.divider}`,
                             borderRadius: 2
                         }}
                     >
                         <CardContent sx={{ p: 3 }}>
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 1.5, 
-                                mb: 3 
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1.5,
+                                mb: 3
                             }}>
-                                <Typography 
-                                    variant="subtitle1" 
-                                    sx={{ 
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
                                         fontWeight: 600,
                                         color: theme.palette.text.primary
                                     }}
                                 >
                                     ❗Basic Information
                                 </Typography>
-                                <Chip 
-                                    label="Required" 
-                                    size="small" 
-                                    color="error" 
+                                <Chip
+                                    label="Required"
+                                    size="small"
+                                    color="error"
                                     variant="outlined"
                                     sx={{ ml: 'auto', fontSize: '0.75rem' }}
                                 />
                             </Box>
-                            
+
                             <Stack>
-                                <TextInput 
-                                    source="name" 
-                                    readOnly={props.readonly} 
+                                <TextInput
+                                    source="name"
+                                    readOnly={props.readonly}
                                     validate={[required()]}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
@@ -193,9 +209,9 @@ function TestTemplateForm(props: TestTemplateFormProps) {
                                         }
                                     }}
                                 />
-                                <TextInput 
-                                    source="description" 
-                                    readOnly={props.readonly} 
+                                <TextInput
+                                    source="description"
+                                    readOnly={props.readonly}
                                     multiline
                                     rows={3}
                                     sx={{
@@ -214,45 +230,45 @@ function TestTemplateForm(props: TestTemplateFormProps) {
                         </CardContent>
                     </Card>
 
-                    <Card 
-                        elevation={0} 
-                        sx={{ 
+                    <Card
+                        elevation={0}
+                        sx={{
                             border: `1px solid ${theme.palette.divider}`,
                             borderRadius: 2
                         }}
                     >
                         <CardContent sx={{ p: 3 }}>
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 1.5, 
-                                mb: 3 
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1.5,
+                                mb: 3
                             }}>
-                                <Typography 
-                                    variant="subtitle1" 
-                                    sx={{ 
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
                                         fontWeight: 600,
                                         color: theme.palette.text.primary
                                     }}
                                 >
                                     👨‍⚕️ Assignments
                                 </Typography>
-                                <Chip 
-                                    label="Optional" 
-                                    size="small" 
-                                    color="default" 
+                                <Chip
+                                    label="Optional"
+                                    size="small"
+                                    color="default"
                                     variant="outlined"
                                     sx={{ ml: 'auto', fontSize: '0.75rem' }}
                                 />
                             </Box>
-                            
+
                             <Stack>
-                                <ReferenceInput 
-                                    source={"doctor_ids"} 
-                                    reference="user" 
-                                    resource='user' 
-                                    target="id" 
-                                    label="Doctor" 
+                                <ReferenceInput
+                                    source={"doctor_ids"}
+                                    reference="user"
+                                    resource='user'
+                                    target="id"
+                                    label="Doctor"
                                     filter={{
                                         role: [RoleNameValue.DOCTOR, RoleNameValue.ADMIN]
                                     }}
@@ -276,13 +292,13 @@ function TestTemplateForm(props: TestTemplateFormProps) {
                                         }}
                                     />
                                 </ReferenceInput>
-                                
-                                <ReferenceInput 
-                                    source={"analyzers_ids"} 
-                                    reference="user" 
-                                    resource='user' 
-                                    target="id" 
-                                    label="Analyst" 
+
+                                <ReferenceInput
+                                    source={"analyzers_ids"}
+                                    reference="user"
+                                    resource='user'
+                                    target="id"
+                                    label="Analyst"
                                     filter={{}}
                                 >
                                     <AutocompleteArrayInput
@@ -308,38 +324,38 @@ function TestTemplateForm(props: TestTemplateFormProps) {
                         </CardContent>
                     </Card>
 
-                    <Card 
-                        elevation={0} 
-                        sx={{ 
+                    <Card
+                        elevation={0}
+                        sx={{
                             border: `1px solid ${theme.palette.divider}`,
                             borderRadius: 2
                         }}
                     >
                         <CardContent sx={{ p: 3 }}>
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 1.5, 
-                                mb: 3 
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1.5,
+                                mb: 3
                             }}>
-                                <Typography 
-                                    variant="subtitle1" 
-                                    sx={{ 
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
                                         fontWeight: 600,
                                         color: theme.palette.text.primary
                                     }}
                                 >
                                     🧪 Test Configuration
                                 </Typography>
-                                <Chip 
-                                    label="Required" 
-                                    size="small" 
-                                    color="error" 
+                                <Chip
+                                    label="Required"
+                                    size="small"
+                                    color="error"
                                     variant="outlined"
                                     sx={{ ml: 'auto', fontSize: '0.75rem' }}
                                 />
                             </Box>
-                            
+
                             <TestInput initSelectedType={selectedType} />
                         </CardContent>
                     </Card>
@@ -493,10 +509,10 @@ const TestTypeToolbar = () => {
 
 export function TestTemplateEdit() {
     const theme = useTheme();
-    
+
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
@@ -513,10 +529,10 @@ export function TestTemplateEdit() {
 
 export function TestTemplateCreate() {
     const theme = useTheme();
-    
+
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>

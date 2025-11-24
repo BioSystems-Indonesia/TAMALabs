@@ -73,6 +73,16 @@ func (h *WorkOrderHandler) GetOneWorkOrder(c echo.Context) error {
 }
 
 func (h *WorkOrderHandler) DeleteWorkOrder(c echo.Context) error {
+	// Get current user from context
+	admin := entity.GetEchoContextUser(c)
+
+	// Check if user has Doctor role only
+	if admin.Role != string(entity.RoleDoctor) {
+		return c.JSON(http.StatusForbidden, map[string]string{
+			"error": "Only doctors can delete work orders",
+		})
+	}
+
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))

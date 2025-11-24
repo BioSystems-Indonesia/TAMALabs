@@ -136,3 +136,15 @@ func (r PatientRepository) FirstOrCreate(patient *entity.Patient) (entity.Patien
 
 	return *patient, err
 }
+
+func (r PatientRepository) FindByMedicalRecordNumber(ctx context.Context, medicalRecordNumber string, patient *entity.Patient) error {
+	err := r.db.WithContext(ctx).
+		Where("medical_record_number = ? AND medical_record_number != ''", medicalRecordNumber).
+		First(patient).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return entity.ErrNotFound
+	}
+
+	return err
+}

@@ -66,7 +66,7 @@ type ObservationResult struct {
 	CreatedAt      time.Time       `json:"created_at" gorm:"not null"`
 	UpdatedAt      time.Time       `json:"updated_at" gorm:"not null"`
 
-	TestType       TestType `json:"test_type" gorm:"foreignKey:TestCode;references:Code" validate:"required"`
+	TestType       TestType `json:"test_type" gorm:"-" validate:"required"` // Changed to gorm:"-" to prevent auto-loading
 	CreatedByAdmin Admin    `json:"created_by_admin" gorm:"foreignKey:CreatedBy;references:ID"`
 
 	// Calculated fields (not stored in database)
@@ -86,6 +86,48 @@ func (o *ObservationResult) AfterFind(tx *gorm.DB) error {
 		o.CreatedByAdmin = Admin{
 			ID:       int64(constant.CreatedBySystem),
 			Fullname: "System",
+		}
+	}
+
+	// Load TestType with support for alternative_codes
+	if o.TestCode != "" {
+		var testType TestType
+		found := false
+
+		// 1. Try by main code
+		err := tx.Where("LOWER(code) = LOWER(?)", o.TestCode).First(&testType).Error
+		if err == nil {
+			o.TestType = testType
+			found = true
+		}
+
+		// 2. Try by alias_code
+		if !found {
+			err = tx.Where("LOWER(alias_code) = LOWER(?) AND alias_code != ''", o.TestCode).First(&testType).Error
+			if err == nil {
+				o.TestType = testType
+				found = true
+			}
+		}
+
+		// 3. Try by alternative_codes (JSON array search) - using exact JSON format
+		if !found {
+			// Get all test types and check in Go code
+			var allTestTypes []TestType
+			err = tx.Find(&allTestTypes).Error
+			if err == nil {
+				for _, tt := range allTestTypes {
+					if tt.HasCode(o.TestCode) {
+						o.TestType = tt
+						found = true
+						break
+					}
+				}
+			}
+		}
+
+		if !found {
+			slog.Warn("TestType not found", "test_code", o.TestCode, "observation_result_id", o.ID)
 		}
 	}
 
@@ -116,13 +158,40 @@ func (o *ObservationResult) generateReferenceRange(tx *gorm.DB) error {
 	}
 
 	var testType TestType
-	err := tx.Where("code = ?", o.TestCode).First(&testType).Error
-	if err != nil {
-		// Try to find by alias_code if not found by code
-		err = tx.Where("alias_code = ? AND alias_code != ''", o.TestCode).First(&testType).Error
-		if err != nil {
-			return nil // Skip if test type not found
+	found := false
+
+	// 1. Try by main code (case insensitive)
+	err := tx.Where("LOWER(code) = LOWER(?)", o.TestCode).First(&testType).Error
+	if err == nil {
+		found = true
+	}
+
+	// 2. Try by alias_code
+	if !found {
+		err = tx.Where("LOWER(alias_code) = LOWER(?) AND alias_code != ''", o.TestCode).First(&testType).Error
+		if err == nil {
+			found = true
 		}
+	}
+
+	// 3. Try by alternative_codes - load all and check in Go
+	if !found {
+		var allTestTypes []TestType
+		err = tx.Find(&allTestTypes).Error
+		if err == nil {
+			for _, tt := range allTestTypes {
+				if tt.HasCode(o.TestCode) {
+					testType = tt
+					found = true
+					break
+				}
+			}
+		}
+	}
+
+	if !found {
+		slog.Warn("generateReferenceRange: TestType not found", "test_code", o.TestCode)
+		return nil
 	}
 
 	decimal := testType.Decimal
@@ -131,6 +200,7 @@ func (o *ObservationResult) generateReferenceRange(tx *gorm.DB) error {
 	}
 
 	o.ReferenceRange = testType.GetReferenceRange()
+	slog.Info("generateReferenceRange: set reference range", "test_code", o.TestCode, "reference_range", o.ReferenceRange)
 	return nil
 }
 

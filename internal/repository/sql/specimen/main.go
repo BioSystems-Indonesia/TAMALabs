@@ -39,8 +39,7 @@ func (r Repository) FindAllForResult(
 	ctx context.Context, req *entity.ResultGetManyRequest,
 ) (entity.PaginationResponse[entity.Specimen], error) {
 	db := r.db.WithContext(ctx).
-		Preload("ObservationResult").
-		Preload("ObservationResult.TestType").
+		Preload("ObservationResult"). // TestType will be loaded in AfterFind hook
 		Preload("ObservationRequest").
 		Preload("Patient").
 		Preload("WorkOrder")
@@ -73,8 +72,7 @@ func (r Repository) FindOne(ctx context.Context, id int64) (entity.Specimen, err
 		Where("id = ?", id).
 		Preload("ObservationRequest").
 		Preload("ObservationRequest.TestType").
-		Preload("ObservationResult").
-		Preload("ObservationResult.TestType").
+		Preload("ObservationResult"). // TestType will be loaded in AfterFind hook
 		Preload("Patient").
 		Preload("WorkOrder").
 		First(&specimen).Error
@@ -95,8 +93,7 @@ func (r Repository) FindByBarcode(ctx context.Context, barcode string) (entity.S
 		Where("barcode = ?", barcode).
 		Preload("ObservationRequest").
 		Preload("ObservationRequest.TestType").
-		Preload("ObservationResult").
-		Preload("ObservationResult.TestType").
+		Preload("ObservationResult"). // TestType will be loaded in AfterFind hook
 		Preload("WorkOrder").
 		Preload("Patient").
 		First(&specimen).Error

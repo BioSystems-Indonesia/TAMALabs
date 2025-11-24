@@ -77,12 +77,18 @@ func (h *ResultHandler) AddTestResult(c echo.Context) error {
 }
 
 func (h *ResultHandler) DeleteTestResult(c echo.Context) error {
+	workOrderID, err := strconv.ParseInt(c.Param("work_order_id"), 10, 64)
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
 	testResultID, err := strconv.ParseInt(c.Param("test_result_id"), 10, 64)
 	if err != nil {
 		return handleError(c, entity.ErrBadRequest.WithInternal(err))
 	}
 
-	result, err := h.resultUsecase.DeleteTestResult(c.Request().Context(), testResultID)
+	admin := entity.GetEchoContextUser(c)
+	result, err := h.resultUsecase.DeleteTestResult(c.Request().Context(), workOrderID, testResultID, admin.ID)
 	if err != nil {
 		return handleError(c, err)
 	}

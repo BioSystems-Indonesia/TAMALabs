@@ -19,6 +19,7 @@ import {
     DateTimeInput,
     Edit,
     FilterLiveForm,
+    FunctionField,
     List,
     PasswordInput,
     ReferenceArrayInput,
@@ -43,6 +44,17 @@ export type UserFormProps = {
     readonly?: boolean
     mode?: ActionKeys
 }
+
+const NullableField = ({ value }: { value: any }) => (
+    <span style={{
+        color: !value || value === '' ? '#888' : 'inherit',
+        fontStyle: !value || value === '' ? 'italic' : 'normal',
+        opacity: !value || value === '' ? 0.6 : 1,
+        fontSize: !value || value === '' ? '0.875rem' : 'inherit'
+    }}>
+        {value || 'null'}
+    </span>
+);
 
 export function UserFormField(props: UserFormProps) {
     const theme = useTheme();
@@ -636,9 +648,9 @@ export const UserList = () => (
         }}>
         <Datagrid>
             <TextField source="id" />
-            <TextField source="username" />
-            <TextField source="fullname" />
-            <TextField source="email" />
+            <FunctionField label="Username" render={(record: any) => <NullableField value={record.username} />} />
+            <FunctionField label="Fullname" render={(record: any) => <NullableField value={record.fullname} />} />
+            <FunctionField label="Email" render={(record: any) => <NullableField value={record.email} />} />
             <BooleanField source="is_active" />
             <ArrayField source="roles" sortable={false}>
                 <SingleFieldList linkType={false}>

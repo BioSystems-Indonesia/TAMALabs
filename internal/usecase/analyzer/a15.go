@@ -62,12 +62,8 @@ func (u *Usecase) ProcessA15(ctx context.Context) error {
 		// Get TestType to determine decimal formatting
 		testType, err := u.TestTypeRepository.FindOneByCode(ctx, lr.TestName)
 		if err != nil {
-			// Try to find by alias_code if not found by code
-			testType, err = u.TestTypeRepository.FindOneByAliasCode(ctx, lr.TestName)
-			if err != nil {
-				slog.Error("test type not found", "test_code", lr.TestName, "error", err)
-				continue
-			}
+			slog.Error("test type not found", "test_code", lr.TestName, "error", err)
+			continue
 		}
 
 		// Use TestType decimal setting, default to 2 if not set or negative

@@ -90,12 +90,26 @@ func (l *License) Check() (*LicenseInformation, error) {
 		return nil, fmt.Errorf("failed to load public key: %w", err)
 	}
 
-	// Check for revocation/expiration markers under ProgramData/TAMALabs/license
-	prog := os.Getenv("ProgramData")
-	if prog == "" && runtime.GOOS == "windows" {
-		prog = `C:\\ProgramData`
+	// Check for revocation/expiration markers under AppData/Local/TAMALabs/license
+	// Use same logic as database path - prefer LOCALAPPDATA over ProgramData
+	var licenseDir string
+	localAppData := os.Getenv("LOCALAPPDATA")
+	if localAppData != "" {
+		licenseDir = filepath.Join(localAppData, "TAMALabs", "license")
+	} else {
+		appData := os.Getenv("APPDATA")
+		if appData != "" {
+			licenseDir = filepath.Join(appData, "TAMALabs", "license")
+		} else if runtime.GOOS == "windows" {
+			// Fallback to ProgramData for backward compatibility
+			prog := os.Getenv("ProgramData")
+			if prog == "" {
+				prog = `C:\ProgramData`
+			}
+			licenseDir = filepath.Join(prog, "TAMALabs", "license")
+		}
 	}
-	licenseDir := filepath.Join(prog, "TAMALabs", "license")
+
 	revokedPath := filepath.Join(licenseDir, "revoked.json")
 	expiredPath := filepath.Join(licenseDir, "expired.json")
 

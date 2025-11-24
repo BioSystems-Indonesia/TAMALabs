@@ -47,8 +47,7 @@ func (r *WorkOrderRepository) FindAllForResult(ctx context.Context, req *entity.
 		Preload("Specimen").
 		Preload("Specimen.ObservationRequest").
 		Preload("Specimen.ObservationRequest.TestType").
-		Preload("Specimen.ObservationResult").
-		Preload("Specimen.ObservationResult.TestType").
+		Preload("Specimen.ObservationResult"). // TestType will be loaded in AfterFind hook
 		Preload("Doctors").
 		Preload("Analyzers")
 
@@ -108,8 +107,7 @@ func (r WorkOrderRepository) FindOneForResult(id int64) (entity.WorkOrder, error
 		Preload("Specimen").
 		Preload("Specimen.ObservationRequest").
 		Preload("Specimen.ObservationRequest.TestType").
-		Preload("Specimen.ObservationResult").
-		Preload("Specimen.ObservationResult.TestType").
+		Preload("Specimen.ObservationResult"). // TestType will be loaded in AfterFind hook
 		Preload("Specimen.ObservationResult.CreatedByAdmin").
 		Preload("Doctors").
 		Preload("Analyzers").
@@ -148,7 +146,9 @@ func (r WorkOrderRepository) FindAll(
 	}
 
 	if len(req.SpecimenIDs) > 0 {
-		db = db.Joins("join work_order_specimens on work_order_Specimens.work_order_id = work_orders.id and work_order_Specimens.Specimen_id in (?)", req.SpecimenIDs)
+		subQuery := r.db.Table("work_order_specimens").Select("work_order_id").
+			Where("specimen_id in (?)", req.SpecimenIDs)
+		db = db.Where("work_orders.id in (?)", subQuery)
 	}
 
 	if len(req.PatientIDs) > 0 {
@@ -224,16 +224,17 @@ func (r WorkOrderRepository) Create(req *entity.WorkOrderCreateRequest) (entity.
 		}
 
 		workOrder = entity.WorkOrder{
-			Status:          entity.WorkOrderStatusNew,
-			VerifiedStatus:  verifiedStatus,
-			PatientID:       req.PatientID,
-			Barcode:         req.Barcode,
-			BarcodeSIMRS:    req.BarcodeSIMRS,
-			AnalyzerIDs:     req.AnalyzerIDs,
-			DoctorIDs:       req.DoctorIDs,
-			TestTemplateIDs: req.TestTemplateIDs,
-			CreatedBy:       req.CreatedBy,
-			LastUpdatedBy:   req.CreatedBy,
+			Status:              entity.WorkOrderStatusNew,
+			VerifiedStatus:      verifiedStatus,
+			PatientID:           req.PatientID,
+			Barcode:             req.Barcode,
+			BarcodeSIMRS:        req.BarcodeSIMRS,
+			MedicalRecordNumber: req.MedicalRecordNumber,
+			AnalyzerIDs:         req.AnalyzerIDs,
+			DoctorIDs:           req.DoctorIDs,
+			TestTemplateIDs:     req.TestTemplateIDs,
+			CreatedBy:           req.CreatedBy,
+			LastUpdatedBy:       req.CreatedBy,
 		}
 		err = tx.Save(&workOrder).Error
 		if err != nil {
@@ -280,7 +281,7 @@ func (r WorkOrderRepository) Edit(id int, req *entity.WorkOrderCreateRequest) (e
 			return fmt.Errorf("error finding workOrder: %w", err)
 		}
 		workOrder.Status = entity.WorkOrderStatusNew
-		if len(workOrder.DoctorIDs) == 0 {
+		if len(req.DoctorIDs) == 0 {
 			workOrder.VerifiedStatus = string(entity.WorkOrderVerifiedStatusVerified)
 		} else {
 			workOrder.VerifiedStatus = string(entity.WorkOrderVerifiedStatusPending)
@@ -288,12 +289,16 @@ func (r WorkOrderRepository) Edit(id int, req *entity.WorkOrderCreateRequest) (e
 		workOrder.PatientID = req.PatientID
 		workOrder.Barcode = req.Barcode
 		workOrder.BarcodeSIMRS = req.BarcodeSIMRS
+		workOrder.MedicalRecordNumber = req.MedicalRecordNumber
 		workOrder.LastUpdatedBy = req.CreatedBy
+		workOrder.DoctorIDs = req.DoctorIDs
+		workOrder.AnalyzerIDs = req.AnalyzerIDs
+		workOrder.TestTemplateIDs = req.TestTemplateIDs
 		workOrder.FillData()
 
 		err = tx.Save(&workOrder).Error
 		if err != nil {
-			return fmt.Errorf("error creating workOrder: %w", err)
+			return fmt.Errorf("error updating workOrder: %w", err)
 		}
 
 		err = r.deleteUnusedRelation(tx, req, &workOrder)
@@ -497,16 +502,32 @@ func (r WorkOrderRepository) upsertRelation(
 		}).Create(&specimen)
 		err = specimenQuery.Error
 		if err != nil {
-			return err
+			return fmt.Errorf("error creating specimen: %w", err)
 		}
 
 		if specimenQuery.RowsAffected == 0 {
-			err = trx.Where("patient_id = ? AND order_id = ? AND type = ?", patient.ID, workOrder.ID, specimenType).
+			// Specimen already exists, find it
+			err = trx.Where("patient_id = ? AND order_id = ? AND type = ?", req.PatientID, workOrder.ID, specimenType).
 				First(&specimen).Error
 			if err != nil {
-				return fmt.Errorf("error finding specimen: %w", err)
+				// If specimen not found with current patient_id, try with work order's patient_id
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					err = trx.Where("order_id = ? AND type = ?", workOrder.ID, specimenType).
+						First(&specimen).Error
+					if err != nil {
+						return fmt.Errorf("error finding specimen (order_id=%d, type=%s): %w", workOrder.ID, specimenType, err)
+					}
+					// Update specimen's patient_id if it's different
+					if specimen.PatientID != int(req.PatientID) {
+						specimen.PatientID = int(req.PatientID)
+						if err := trx.Save(&specimen).Error; err != nil {
+							return fmt.Errorf("error updating specimen patient_id: %w", err)
+						}
+					}
+				} else {
+					return fmt.Errorf("error finding specimen: %w", err)
+				}
 			}
-
 		}
 
 		for _, testType := range testTypes {
@@ -759,8 +780,7 @@ func (r WorkOrderRepository) FindOneByBarcode(ctx context.Context, barcode strin
 		Preload("Specimen").
 		Preload("Specimen.ObservationRequest").
 		Preload("Specimen.ObservationRequest.TestType").
-		Preload("Specimen.ObservationResult").
-		Preload("Specimen.ObservationResult.TestType").
+		Preload("Specimen.ObservationResult"). // TestType will be loaded in AfterFind hook
 		Preload("Doctors").
 		Preload("Analyzers").
 		First(&workOrder).Error
@@ -821,8 +841,7 @@ func (r WorkOrderRepository) GetBySIMRSBarcode(ctx context.Context, barcode stri
 		Preload("Specimen").
 		Preload("Specimen.ObservationRequest").
 		Preload("Specimen.ObservationRequest.TestType").
-		Preload("Specimen.ObservationResult").
-		Preload("Specimen.ObservationResult.TestType").
+		Preload("Specimen.ObservationResult"). // TestType will be loaded in AfterFind hook
 		Preload("Doctors").
 		Preload("Analyzers").
 		First(&workOrder).Error

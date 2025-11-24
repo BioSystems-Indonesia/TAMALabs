@@ -115,3 +115,13 @@ func (u *AdminUsecase) DeleteAdmin(ctx context.Context, id int64) error {
 
 	return u.adminRepo.Delete(id)
 }
+
+// GetAllDoctors returns all admins with Doctor role
+func (u *AdminUsecase) GetAllDoctors(ctx context.Context) ([]entity.Admin, error) {
+	return u.adminRepo.FindAllByRole(ctx, entity.RoleDoctor)
+}
+
+// GetAllAnalyzers returns all admins with Analyzer role
+func (u *AdminUsecase) GetAllAnalyzers(ctx context.Context) ([]entity.Admin, error) {
+	return u.adminRepo.FindAllByRole(ctx, entity.RoleAnalyzer)
+}

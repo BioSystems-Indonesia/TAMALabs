@@ -691,6 +691,7 @@ function BarcodeInput(props: InputProps) {
                 }}>Barcode Configuration</Typography>
                 <Stack gap={1}>
                     <TextInput source="barcode_simrs" label="SIMRS Barcode" helperText="Barcode for SIMRS integration" fullWidth required />
+                    <TextInput source="medical_record_number" label="No. Rekam Medis" helperText="Medical record number from SIMRS" fullWidth />
                 </Stack>
             </Stack>
         </>
@@ -780,8 +781,9 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
                 analyzer_ids: data[analystIDField],
                 doctor_ids: data[doctorIDField],
                 test_template_ids: data[testTemplateIDField],
-                barcode: data.barcode, // Tambahkan barcode ke payload
-                barcode_simrs: data.barcode_simrs, // Tambahkan barcode SIMRS ke payload
+                barcode: data.barcode,
+                barcode_simrs: data.barcode_simrs,
+                medical_record_number: data.medical_record_number,
             });
         }
     };

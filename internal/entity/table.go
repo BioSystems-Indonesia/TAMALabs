@@ -100,6 +100,7 @@ var TableWorkOrderStatus = Tables{
 }
 
 var TableBaudRate = Tables{
+	{ID: "4800", Name: "4800"},
 	{ID: "9600", Name: "9600"},
 	{ID: "19200", Name: "19200"},
 	{ID: "38400", Name: "38400"},

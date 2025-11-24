@@ -84,7 +84,7 @@ func (h *Handler) MapORUR01ToEntity(msg *h251.ORU_R01) (entity.ORU_R01, error) {
 }
 
 func (h *Handler) mapORUR01OrderObservationToSpecimenEntity(s h251.ORU_R01_OrderObservation, res h251.ORU_R01_PatientResult) entity.Specimen {
-	specimen := h.mapOBRToSpecimenEntity(s.OBR)
+	specimen := h.mapOBRToSpecimenEntity(s.OBR, res)
 	observationResults := []entity.ObservationResult{}
 
 	for _, o := range s.Observation {
@@ -95,13 +95,23 @@ func (h *Handler) mapORUR01OrderObservationToSpecimenEntity(s h251.ORU_R01_Order
 	return specimen
 }
 
-func (h *Handler) mapOBRToSpecimenEntity(obr *h251.OBR) entity.Specimen {
-	if obr == nil {
-		return entity.Specimen{}
+func (h *Handler) mapOBRToSpecimenEntity(obr *h251.OBR, res h251.ORU_R01_PatientResult) entity.Specimen {
+	barcode := ""
+
+	// Try to get barcode from OBR first
+	if obr != nil && obr.UniversalServiceIdentifier.Identifier != "" {
+		barcode = obr.UniversalServiceIdentifier.Identifier
+	}
+
+	// Fallback to PID.PatientID if OBR barcode is empty or invalid
+	if barcode == "" || len(barcode) < 3 {
+		if res.Patient != nil && res.Patient.PID != nil {
+			barcode = res.Patient.PID.PatientID.IDNumber
+		}
 	}
 
 	return entity.Specimen{
-		Barcode: obr.UniversalServiceIdentifier.Identifier,
+		Barcode: barcode,
 	}
 }
 

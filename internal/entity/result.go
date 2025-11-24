@@ -82,13 +82,21 @@ func (r TestResult) GetFormattedResult() string {
 // Result test can be filled manualy in frontend or from the result observation
 // When we fill we need to show to the user, what testCode that we are filling
 // What are the unit they will fill and what is the reference range
-func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
+func (r TestResult) CreateEmpty(request ObservationRequest, patient *Patient) TestResult {
 	decimal := request.TestType.Decimal
 	if decimal < 0 {
 		decimal = 0
 	}
 
-	computedRefRange := request.TestType.GetReferenceRange()
+	// Use patient-specific reference range if patient data is available
+	var computedRefRange string
+	if patient != nil {
+		age := patient.GetAge()
+		gender := patient.GetGenderString()
+		computedRefRange = request.TestType.GetReferenceRangeForPatient(&age, gender)
+	} else {
+		computedRefRange = request.TestType.GetReferenceRange()
+	}
 
 	return TestResult{
 		ID:                     0,
@@ -109,22 +117,44 @@ func (r TestResult) CreateEmpty(request ObservationRequest) TestResult {
 	}
 }
 
-func (r TestResult) FromObservationResult(observation ObservationResult, specimenType string) TestResult {
-	// Use existing reference range if available, otherwise generate from TestType
+func (r TestResult) FromObservationResult(observation ObservationResult, specimenType string, patient *Patient) TestResult {
+	// Always compute reference range based on patient data if available
 	var referenceRange string
-	if observation.ReferenceRange != "" {
-		referenceRange = observation.ReferenceRange
-	} else if observation.TestType.ID != 0 {
-		// Use TestType's GetReferenceRange method to determine appropriate reference range
-		referenceRange = observation.TestType.GetReferenceRange()
+	var computedRefRange string
+	var lowRefRange, highRefRange float64
+
+	if observation.TestType.ID != 0 {
+		// Use patient-specific reference range if available
+		if patient != nil {
+			age := patient.GetAge()
+			gender := patient.GetGenderString()
+
+			// Get the specific reference range for this patient
+			specificRange := observation.TestType.GetSpecificReferenceRangeForPatient(&age, gender)
+			if specificRange != nil && specificRange.LowRefRange != nil && specificRange.HighRefRange != nil {
+				// Use specific range values
+				lowRefRange = *specificRange.LowRefRange
+				highRefRange = *specificRange.HighRefRange
+				referenceRange = observation.TestType.GetReferenceRangeForPatient(&age, gender)
+			} else {
+				// Fallback to global range
+				lowRefRange = observation.TestType.LowRefRange
+				highRefRange = observation.TestType.HighRefRange
+				referenceRange = observation.TestType.GetReferenceRange()
+			}
+			computedRefRange = referenceRange
+		} else {
+			// No patient data, use global range
+			lowRefRange = observation.TestType.LowRefRange
+			highRefRange = observation.TestType.HighRefRange
+			referenceRange = observation.TestType.GetReferenceRange()
+			computedRefRange = referenceRange
+		}
 	} else {
 		referenceRange = "" // Empty reference range for invalid/missing TestType
-	}
-
-	// Always compute reference range with proper decimal from TestType
-	computedRefRange := ""
-	if observation.TestType.ID != 0 {
-		computedRefRange = observation.TestType.GetReferenceRange()
+		computedRefRange = ""
+		lowRefRange = 0
+		highRefRange = 0
 	}
 
 	resultTest := TestResult{
@@ -209,17 +239,18 @@ func (r TestResult) FromObservationResult(observation ObservationResult, specime
 	formattedResultStr := fmt.Sprintf("%.*f", decimal, result)
 	resultTest.FormattedResult = &formattedResultStr
 
+	// Determine abnormal status using the correct reference range values
 	resultTest.Abnormal = NormalResult
-	if result <= observation.TestType.LowRefRange {
+	if result <= lowRefRange {
 		resultTest.Abnormal = LowResult
-	} else if result >= observation.TestType.HighRefRange {
+	} else if result >= highRefRange {
 		resultTest.Abnormal = HighResult
 	}
 
 	return resultTest
 }
 
-func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[int64]string) TestResult {
+func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[int64]string, patient *Patient) TestResult {
 	histories := make([]TestResult, len(history))
 	for i, h := range history {
 		// Use string value to preserve qualitative results like "negative", "1+", etc.
@@ -242,8 +273,15 @@ func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[i
 			formattedResult = &resultStr
 		}
 
-		// Compute reference range with proper decimal formatting
-		computedRefRange := h.TestType.GetReferenceRange()
+		// Compute reference range with proper decimal formatting - use patient-specific if available
+		var computedRefRange string
+		if patient != nil {
+			age := patient.GetAge()
+			gender := patient.GetGenderString()
+			computedRefRange = h.TestType.GetReferenceRangeForPatient(&age, gender)
+		} else {
+			computedRefRange = h.TestType.GetReferenceRange()
+		}
 
 		histories[i] = TestResult{
 			ID:                     h.ID,
@@ -254,7 +292,7 @@ func (r TestResult) FillHistory(history []ObservationResult, specimenTypes map[i
 			TestTypeID:             int64(h.TestType.ID),
 			Unit:                   h.Unit,
 			Category:               h.TestType.Category,
-			ReferenceRange:         h.TestType.GetReferenceRange(),
+			ReferenceRange:         computedRefRange,
 			ComputedReferenceRange: computedRefRange,
 			CreatedAt:              h.CreatedAt.Format(time.RFC3339),
 			Picked:                 h.Picked,

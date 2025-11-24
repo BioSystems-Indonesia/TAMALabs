@@ -4,17 +4,20 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/middleware"
 	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
 	"github.com/labstack/echo/v4"
 )
 
 type KhanzaExternalHandler struct {
-	usecase *khanzauc.Usecase
+	usecase               *khanzauc.Usecase
+	integrationMiddleware *middleware.IntegrationCheckMiddleware
 }
 
-func NewKhanzaExternalHandler(usecase *khanzauc.Usecase) *KhanzaExternalHandler {
+func NewKhanzaExternalHandler(usecase *khanzauc.Usecase, integrationMiddleware *middleware.IntegrationCheckMiddleware) *KhanzaExternalHandler {
 	return &KhanzaExternalHandler{
-		usecase: usecase,
+		usecase:               usecase,
+		integrationMiddleware: integrationMiddleware,
 	}
 }
 
@@ -44,7 +47,7 @@ func (h *KhanzaExternalHandler) GetResult(c echo.Context) error {
 }
 
 func (h *KhanzaExternalHandler) RegisterRoutes(g *echo.Group) {
-	khanza := g.Group("/khanza")
+	khanza := g.Group("/khanza", h.integrationMiddleware.CheckKhanzaEnabled())
 	khanza.POST("/order", h.ProcessRequest)
 	khanza.GET("/result/:user/:key/:id", h.GetResult)
 }

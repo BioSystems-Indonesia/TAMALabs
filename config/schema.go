@@ -15,6 +15,15 @@ type Schema struct {
 	SimrsIntegrationEnabled string `validate:"-"`
 	SimrsDatabaseDSN        string `validate:"-"`
 
+	// SIMGOS Configuration
+	SimgosIntegrationEnabled string `validate:"-"`
+	SimgosDatabaseDSN        string `validate:"-"`
+
+	// Backup Configuration
+	BackupScheduleType string `validate:"-"` // "interval" or "daily"
+	BackupInterval     string `validate:"-"` // hours between backups (for interval type)
+	BackupTime         string `validate:"-"` // time of day for backup (for daily type) HH:MM format
+
 	// Runtime
 	Version  string `validate:"required"`
 	Revision string

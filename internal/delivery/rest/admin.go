@@ -95,3 +95,59 @@ func (h *AdminHandler) CreateAdmin(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, req)
 }
+
+// ListAllDoctors returns all doctors without pagination
+func (h *AdminHandler) ListAllDoctors(c echo.Context) error {
+	doctors, err := h.adminUsecase.GetAllDoctors(c.Request().Context())
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	// Map to simplified response
+	type DoctorResponse struct {
+		ID       int64  `json:"id"`
+		Fullname string `json:"fullname"`
+		Username string `json:"username"`
+		IsActive bool   `json:"is_active"`
+	}
+
+	response := make([]DoctorResponse, len(doctors))
+	for i, doctor := range doctors {
+		response[i] = DoctorResponse{
+			ID:       doctor.ID,
+			Fullname: doctor.Fullname,
+			Username: doctor.Username,
+			IsActive: doctor.IsActive,
+		}
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+// ListAllAnalyzers returns all analyzers without pagination
+func (h *AdminHandler) ListAllAnalyzers(c echo.Context) error {
+	analyzers, err := h.adminUsecase.GetAllAnalyzers(c.Request().Context())
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	// Map to simplified response
+	type AnalyzerResponse struct {
+		ID       int64  `json:"id"`
+		Fullname string `json:"fullname"`
+		Username string `json:"username"`
+		IsActive bool   `json:"is_active"`
+	}
+
+	response := make([]AnalyzerResponse, len(analyzers))
+	for i, analyzer := range analyzers {
+		response[i] = AnalyzerResponse{
+			ID:       analyzer.ID,
+			Fullname: analyzer.Fullname,
+			Username: analyzer.Username,
+			IsActive: analyzer.IsActive,
+		}
+	}
+
+	return c.JSON(http.StatusOK, response)
+}

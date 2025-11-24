@@ -34,6 +34,7 @@ type Handler struct {
 	*UnitHandler
 	*LogHandler
 	*LicenseHandler
+	*CronHandler
 }
 
 var blackListLoggingOnEndpoint = []string{
@@ -144,6 +145,7 @@ func RegisterRoutes(
 	authHandler *AuthHandler,
 	roleHandler *RoleHandler,
 	khanzaExternalHandler *KhanzaExternalHandler,
+	simrsExternalHandler *SimrsExternalHandler,
 	externalHandler *ExternalHandler,
 	authMiddleware *appMiddleware.JWTMiddleware,
 	summaryHandler *summary_uc.SummaryUseCase,
@@ -158,11 +160,24 @@ func RegisterRoutes(
 	unauthenticatedV1.POST("/login", authHandler.Login)
 	unauthenticatedV1.POST("/logout", authHandler.Logout)
 
-	// Add health endpoint (unauthenticated for monitoring)
 	handler.HealthHandler.RegisterRoutes(unauthenticatedV1)
 
-	// Add license endpoint (unauthenticated for license checking)
 	handler.LicenseHandler.RegisterRoutes(unauthenticatedV1)
+
+	testTypeUnauthenticated := unauthenticatedV1.Group("/test-type")
+	{
+		testTypeUnauthenticated.GET("/all", handler.ListAllTestTypes)
+	}
+
+	doctorUnauthenticated := unauthenticatedV1.Group("/doctor")
+	{
+		doctorUnauthenticated.GET("/all", adminHandler.ListAllDoctors)
+	}
+
+	analyzerUnauthenticated := unauthenticatedV1.Group("/analyst")
+	{
+		analyzerUnauthenticated.GET("/all", adminHandler.ListAllAnalyzers)
+	}
 
 	authenticatedV1 := api.Group("/v1", authMiddleware.Middleware())
 	authenticatedV1.GET("/check-auth", handler.Ping)
@@ -254,6 +269,15 @@ func RegisterRoutes(
 		config.PUT("/:key", handler.EditConfig)
 	}
 
+	cron := authenticatedV1.Group("/cron")
+	{
+		cron.GET("/jobs", handler.GetAllJobs)
+		cron.POST("/jobs/:name/enable", handler.EnableJob)
+		cron.POST("/jobs/:name/disable", handler.DisableJob)
+		cron.POST("/backup/update-schedule", handler.UpdateBackupSchedule)
+		cron.POST("/reload", handler.ReloadJobs)
+	}
+
 	unit := authenticatedV1.Group("/unit")
 	{
 		unit.GET("", handler.ListUnit)
@@ -314,6 +338,7 @@ func RegisterRoutes(
 	}
 
 	khanzaExternalHandler.RegisterRoutes(unauthenticatedV1)
+	simrsExternalHandler.RegisterRoutes(unauthenticatedV1)
 	handler.RegisterFeatureList(authenticatedV1)
 	externalHandler.RegisterRoutes(authenticatedV1)
 }
