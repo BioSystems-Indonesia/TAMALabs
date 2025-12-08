@@ -11,15 +11,16 @@ import (
 
 type ObservationRequest struct {
 	ID              int64     `json:"id" gorm:"primaryKey;autoIncrement"`
-	TestCode        string    `json:"test_code" gorm:"not null;index:observation_request_uniq,unique,priority:2" validate:"required,observation-type"`
+	TestCode        string    `json:"test_code" gorm:"not null" validate:"required,observation-type"`
+	TestTypeID      *int      `json:"test_type_id" gorm:"index:observation_request_uniq,unique,priority:1"` // Specific test_type ID selected by user
 	TestDescription string    `json:"test_description"`
 	RequestedDate   time.Time `json:"requested_date"`
 	ResultStatus    string    `json:"result_status"`
-	SpecimenID      int64     `json:"specimen_id" gorm:"not null;index:observation_request_uniq,unique,priority:1" validate:"required"`
+	SpecimenID      int64     `json:"specimen_id" gorm:"not null;index:observation_request_uniq,unique,priority:2" validate:"required"`
 	CreatedAt       time.Time `json:"created_at" gorm:"not null"`
 	UpdatedAt       time.Time `json:"updated_at" gorm:"not null"`
 
-	TestType  TestType  `json:"test_type" gorm:"foreignKey:TestCode;references:Code;->" validate:"-"`
+	TestType  TestType  `json:"test_type" gorm:"foreignKey:TestTypeID;references:ID;->" validate:"-"`
 	WorkOrder WorkOrder `json:"work_order" gorm:"-" validate:"-"`
 }
 
@@ -53,6 +54,7 @@ type ObservationResult struct {
 	ID             int64           `json:"id" gorm:"primaryKey;autoIncrement"`
 	SpecimenID     int64           `json:"specimen_id"`
 	TestCode       string          `json:"code" gorm:"column:code"`
+	TestTypeID     *int            `json:"test_type_id" gorm:"index:idx_observation_results_test_type_id"` // Specific test_type ID
 	Description    string          `json:"description"`
 	Values         JSONStringArray `json:"values" gorm:"type:json"` // Using JSON for the slice
 	Type           string          `json:"type"`
@@ -89,46 +91,22 @@ func (o *ObservationResult) AfterFind(tx *gorm.DB) error {
 		}
 	}
 
-	// Load TestType with support for alternative_codes
-	if o.TestCode != "" {
+	// Load TestType - prioritize test_type_id if available (for accurate test selection)
+	if o.TestTypeID != nil && *o.TestTypeID > 0 {
+		// Use test_type_id for accurate lookup (handles cases where multiple tests share the same code)
 		var testType TestType
-		found := false
-
-		// 1. Try by main code
-		err := tx.Where("LOWER(code) = LOWER(?)", o.TestCode).First(&testType).Error
+		err := tx.First(&testType, *o.TestTypeID).Error
 		if err == nil {
 			o.TestType = testType
-			found = true
+		} else {
+			slog.Warn("TestType not found by ID, falling back to code lookup",
+				"test_type_id", *o.TestTypeID, "test_code", o.TestCode, "observation_result_id", o.ID)
+			// Fall back to code lookup if ID not found (backward compatibility)
+			o.loadTestTypeByCode(tx)
 		}
-
-		// 2. Try by alias_code
-		if !found {
-			err = tx.Where("LOWER(alias_code) = LOWER(?) AND alias_code != ''", o.TestCode).First(&testType).Error
-			if err == nil {
-				o.TestType = testType
-				found = true
-			}
-		}
-
-		// 3. Try by alternative_codes (JSON array search) - using exact JSON format
-		if !found {
-			// Get all test types and check in Go code
-			var allTestTypes []TestType
-			err = tx.Find(&allTestTypes).Error
-			if err == nil {
-				for _, tt := range allTestTypes {
-					if tt.HasCode(o.TestCode) {
-						o.TestType = tt
-						found = true
-						break
-					}
-				}
-			}
-		}
-
-		if !found {
-			slog.Warn("TestType not found", "test_code", o.TestCode, "observation_result_id", o.ID)
-		}
+	} else if o.TestCode != "" {
+		// Fallback to code-based lookup for backward compatibility
+		o.loadTestTypeByCode(tx)
 	}
 
 	// Set computed reference range from TestType
@@ -139,6 +117,47 @@ func (o *ObservationResult) AfterFind(tx *gorm.DB) error {
 	}
 
 	return nil
+}
+
+// loadTestTypeByCode loads TestType using test_code with support for alternative_codes
+func (o *ObservationResult) loadTestTypeByCode(tx *gorm.DB) {
+	var testType TestType
+	found := false
+
+	// 1. Try by main code
+	err := tx.Where("LOWER(code) = LOWER(?)", o.TestCode).First(&testType).Error
+	if err == nil {
+		o.TestType = testType
+		found = true
+	}
+
+	// 2. Try by alias_code
+	if !found {
+		err = tx.Where("LOWER(alias_code) = LOWER(?) AND alias_code != ''", o.TestCode).First(&testType).Error
+		if err == nil {
+			o.TestType = testType
+			found = true
+		}
+	}
+
+	// 3. Try by alternative_codes (JSON array search)
+	if !found {
+		var allTestTypes []TestType
+		err = tx.Find(&allTestTypes).Error
+		if err == nil {
+			for _, tt := range allTestTypes {
+				if tt.HasCode(o.TestCode) {
+					o.TestType = tt
+					found = true
+					break
+				}
+			}
+		}
+	}
+
+	if !found {
+		slog.Warn("TestType not found", "test_code", o.TestCode, "observation_result_id", o.ID)
+	}
 }
 
 // BeforeCreate is called before creating ObservationResult
@@ -153,6 +172,21 @@ func (o *ObservationResult) BeforeUpdate(tx *gorm.DB) error {
 
 // generateReferenceRange generates reference range based on TestType
 func (o *ObservationResult) generateReferenceRange(tx *gorm.DB) error {
+	// Priority 1: Use test_type_id if available
+	if o.TestTypeID != nil && *o.TestTypeID > 0 {
+		var testType TestType
+		err := tx.First(&testType, *o.TestTypeID).Error
+		if err == nil {
+			o.ReferenceRange = testType.GetReferenceRange()
+			slog.Info("generateReferenceRange: set reference range by ID",
+				"test_type_id", *o.TestTypeID, "reference_range", o.ReferenceRange)
+			return nil
+		}
+		slog.Warn("generateReferenceRange: TestType not found by ID, falling back to code",
+			"test_type_id", *o.TestTypeID, "test_code", o.TestCode)
+	}
+
+	// Priority 2: Fall back to test_code lookup
 	if o.TestCode == "" {
 		return nil
 	}
@@ -192,11 +226,6 @@ func (o *ObservationResult) generateReferenceRange(tx *gorm.DB) error {
 	if !found {
 		slog.Warn("generateReferenceRange: TestType not found", "test_code", o.TestCode)
 		return nil
-	}
-
-	decimal := testType.Decimal
-	if decimal < 0 {
-		decimal = 0
 	}
 
 	o.ReferenceRange = testType.GetReferenceRange()

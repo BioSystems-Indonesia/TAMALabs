@@ -576,7 +576,15 @@ export function UserEdit() {
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
-            <Edit resource="user" mutationMode='pessimistic'>
+            <Edit
+                resource="user"
+                mutationMode='pessimistic'
+                transform={(data: any) => {
+                    // Remove readonly fields that shouldn't be sent to backend
+                    const { created_at, updated_at, ...rest } = data;
+                    return rest;
+                }}
+            >
                 <UserForm mode={"EDIT"} />
             </Edit>
         </Box>

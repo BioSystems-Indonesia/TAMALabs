@@ -39,8 +39,6 @@ import { workOrderStatusDontShowRun, workOrderStatusShowCancel, type WorkOrder }
 import { WorkOrderChipColorMap } from "./ChipFieldStatus.tsx";
 import WorkOrderForm from "./Form.tsx";
 import RunWorkOrderForm from "./RunWorkOrderForm.tsx";
-import { useCurrentUserRole } from "../../hooks/currentUser.ts";
-import { RoleNameValue } from "../../types/role.ts";
 
 const NullableField = ({ value }: { value: any }) => (
     <span style={{
@@ -521,10 +519,6 @@ const WorkOrderDataGrid = () => {
     const { isLoading, isFetching, data } = useListContext();
     const [open, setOpen] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
-    const currentUserRole = useCurrentUserRole();
-
-    // Check if current user is Doctor only
-    const canDelete = currentUserRole === RoleNameValue.DOCTOR;
 
     useEffect(() => {
         if (data && data.length > 0) {
@@ -643,7 +637,7 @@ const WorkOrderDataGrid = () => {
                 <WrapperField label="Actions" sortable={false} >
                     <Stack direction={"row"} spacing={2}>
                         <ShowButton variant="contained" />
-                        {canDelete && <DeleteButton variant="contained" mutationMode="pessimistic" />}
+                        <DeleteButton variant="contained" mutationMode="pessimistic" />
                     </Stack>
                 </WrapperField>
             </Datagrid>

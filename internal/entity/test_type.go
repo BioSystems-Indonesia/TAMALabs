@@ -11,7 +11,7 @@ import (
 type TestType struct {
 	ID               int     `json:"id" gorm:"primaryKey"`
 	Name             string  `json:"name"`
-	Code             string  `json:"code" gorm:"unique"`
+	Code             string  `json:"code" gorm:"index:idx_test_type_code"`
 	AliasCode        string  `json:"alias_code" gorm:"index:test_type_alias_code"`
 	LoincCode        string  `json:"loinc_code" gorm:"index:test_type_loinc_code"`
 	Unit             string  `json:"unit"`

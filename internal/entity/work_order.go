@@ -38,9 +38,13 @@ type WorkOrderCreateRequest struct {
 	AnalyzerIDs     []int64                          `json:"analyzer_ids" gorm:"-"`
 	TestTemplateIDs []int64                          `json:"test_template_ids" gorm:"-"`
 
-	Barcode             string `json:"barcode" gorm:"column:barcode;index:work_order_barcode,unique"`
-	BarcodeSIMRS        string `json:"barcode_simrs" gorm:"column:barcode_simrs;index:work_order_barcode_simrs"`
-	MedicalRecordNumber string `json:"medical_record_number" gorm:"column:medical_record_number;type:varchar(255);default:''"`
+	Barcode                string `json:"barcode" gorm:"column:barcode;index:work_order_barcode,unique"`
+	BarcodeSIMRS           string `json:"barcode_simrs" gorm:"column:barcode_simrs;index:work_order_barcode_simrs"`
+	MedicalRecordNumber    string `json:"medical_record_number" gorm:"column:medical_record_number;type:varchar(255);default:''"`
+	VisitNumber            string `json:"visit_number" gorm:"column:visit_number;type:varchar(255);default:''"`
+	SpecimenCollectionDate string `json:"specimen_collection_date" gorm:"column:specimen_collection_date;type:datetime"`
+	ResultReleaseDate      string `json:"result_release_date" gorm:"column:result_release_date;type:datetime"`
+	Diagnosis              string `json:"diagnosis" gorm:"column:diagnosis;type:text;default:''"`
 }
 
 type WorkOrderCreateRequestTestType struct {
@@ -55,14 +59,18 @@ type WorkOrder struct {
 	PatientID          int64           `json:"patient_id" gorm:"type:not null;default:0"`
 	DeviceIDDeprecated int64           `json:"device_id" gorm:"column:device_id;type:not null;default:0"`
 	//nolint:lll // tag cannot be shorter
-	Barcode             string    `json:"barcode" gorm:"column:barcode;type:varchar(255);default:'';index:work_order_barcode,unique"`
-	BarcodeSIMRS        string    `json:"barcode_simrs" gorm:"column:barcode_simrs;type:varchar(255);default:''"`
-	MedicalRecordNumber string    `json:"medical_record_number" gorm:"column:medical_record_number;type:varchar(255);default:''"`
-	VerifiedStatus      string    `json:"verified_status" gorm:"column:verified_status;type:varchar(255);default:''"`
-	CreatedBy           int64     `json:"created_by" gorm:"column:created_by;type:bigint;default:0"`
-	LastUpdatedBy       int64     `json:"last_updated_by" gorm:"column:last_updated_by;type:bigint;default:0"`
-	CreatedAt           time.Time `json:"created_at" gorm:"index:work_order_created_at"`
-	UpdatedAt           time.Time `json:"updated_at" gorm:""`
+	Barcode                string     `json:"barcode" gorm:"column:barcode;type:varchar(255);default:'';index:work_order_barcode,unique"`
+	BarcodeSIMRS           string     `json:"barcode_simrs" gorm:"column:barcode_simrs;type:varchar(255);default:''"`
+	MedicalRecordNumber    string     `json:"medical_record_number" gorm:"column:medical_record_number;type:varchar(255);default:''"`
+	VisitNumber            string     `json:"visit_number" gorm:"column:visit_number;type:varchar(255);default:''"`
+	SpecimenCollectionDate *time.Time `json:"specimen_collection_date" gorm:"column:specimen_collection_date;type:datetime"`
+	ResultReleaseDate      *time.Time `json:"result_release_date" gorm:"column:result_release_date;type:datetime"`
+	Diagnosis              string     `json:"diagnosis" gorm:"column:diagnosis;type:text;default:''"`
+	VerifiedStatus         string     `json:"verified_status" gorm:"column:verified_status;type:varchar(255);default:''"`
+	CreatedBy              int64      `json:"created_by" gorm:"column:created_by;type:bigint;default:0"`
+	LastUpdatedBy          int64      `json:"last_updated_by" gorm:"column:last_updated_by;type:bigint;default:0"`
+	CreatedAt              time.Time  `json:"created_at" gorm:"index:work_order_created_at"`
+	UpdatedAt              time.Time  `json:"updated_at" gorm:""`
 
 	DoctorIDs       []int64 `json:"doctor_ids" gorm:"-"`
 	AnalyzerIDs     []int64 `json:"analyzer_ids" gorm:"-"`
@@ -232,16 +240,27 @@ func (wo *WorkOrder) FillResultDetail(opt ResultDetailOption) {
 	})
 
 	// ok final step to create the order data
-	// Group by test code, but also match alternative codes
+	// Group by test_type_id (precise) or test code (fallback for backward compatibility)
 	testResults := map[string][]ObservationResult{}
 	for _, observation := range allObservationResults {
-		// Use the observation's test code as primary key
+		// Strategy: Add each observation to multiple keys for flexible lookup
+		// 1. Primary key by test_type_id (if available) - for precise matching
+		// 2. Always add by test_code - for fallback and backward compatibility
+		// 3. Add by alternative codes - for alias matching
+
+		// 1. Add by test_type_id (precise key for tests with same code like GDP/GDS)
+		if observation.TestTypeID != nil && *observation.TestTypeID > 0 {
+			tidKey := fmt.Sprintf("tid_%d", *observation.TestTypeID)
+			testResults[tidKey] = append(testResults[tidKey], observation)
+		}
+
+		// 2. ALWAYS add by test_code (fallback key - critical for history!)
 		testResults[observation.TestCode] = append(testResults[observation.TestCode], observation)
 
-		// Also add to alternative keys if TestType is loaded and has code/alternative codes
+		// 3. Add by alternative codes if TestType is loaded
 		if observation.TestType.ID != 0 {
-			// Add under main code
-			if observation.TestType.Code != observation.TestCode {
+			// Add under TestType's main code if different from observation's TestCode
+			if observation.TestType.Code != "" && observation.TestType.Code != observation.TestCode {
 				testResults[observation.TestType.Code] = append(testResults[observation.TestType.Code], observation)
 			}
 			// Add under alias code
@@ -250,7 +269,7 @@ func (wo *WorkOrder) FillResultDetail(opt ResultDetailOption) {
 			}
 			// Add under alternative codes
 			for _, altCode := range observation.TestType.AlternativeCodes {
-				if altCode != observation.TestCode {
+				if altCode != "" && altCode != observation.TestCode {
 					testResults[altCode] = append(testResults[altCode], observation)
 				}
 			}
@@ -289,7 +308,27 @@ func (wo *WorkOrder) pickDefaultResult(
 	totalResultFilled := 0
 	for i, test := range allTests {
 		newTest := test
-		history := testResults[test.Test]
+		// Lookup by test_type_id first (precise), fallback to test code
+		var historyKey string
+		if test.TestTypeID > 0 {
+			historyKey = fmt.Sprintf("tid_%d", test.TestTypeID)
+		} else {
+			historyKey = test.Test
+		}
+		history := testResults[historyKey]
+
+		// Fallback: if no history found by test_type_id, try by test_code
+		// BUT filter by test_type_id to prevent mixing different tests with same code (GDP/GDS/G2JPP)
+		if len(history) == 0 && test.TestTypeID > 0 {
+			allHistoryByCode := testResults[test.Test]
+			// Filter only observations matching this test_type_id
+			for _, obs := range allHistoryByCode {
+				if obs.TestTypeID != nil && *obs.TestTypeID == int(test.TestTypeID) {
+					history = append(history, obs)
+				}
+			}
+		}
+
 		if len(history) > 0 {
 			// Pick the latest history or the manually picked one
 			pickedTest := history[0]

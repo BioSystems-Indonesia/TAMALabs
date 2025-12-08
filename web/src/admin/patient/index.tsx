@@ -399,7 +399,14 @@ export function PatientEdit() {
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
-            <Edit resource="patient">
+            <Edit
+                resource="patient"
+                transform={(data: any) => {
+                    // Remove readonly fields that shouldn't be sent to backend
+                    const { created_at, updated_at, ...rest } = data;
+                    return rest;
+                }}
+            >
                 <PatientForm mode={"EDIT"} />
             </Edit>
         </Box>

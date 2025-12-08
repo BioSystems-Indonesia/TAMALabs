@@ -21,7 +21,7 @@ func NewRepository(simgosDB *DB) *Repository {
 }
 
 // GetNewLabOrders fetches all lab orders with status 'NEW' from Database Sharing
-func (r *Repository) GetNewLabOrders(ctx context.Context) ([]entity.SimgosLabOrder, error) {
+func (r *Repository) GetNewLabOrders(ctx context.Context) ([]entity.SimrsLabOrder, error) {
 	if r.simgosDB == nil {
 		return nil, fmt.Errorf("Database Sharing database not initialized")
 	}
@@ -49,15 +49,15 @@ func (r *Repository) GetNewLabOrders(ctx context.Context) ([]entity.SimgosLabOrd
 		ORDER BY created_at ASC
 	`
 
-	rows, err := conn.QueryContext(ctx, query, entity.SimgosStatusNew)
+	rows, err := conn.QueryContext(ctx, query, entity.SimrsStatusNew)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query new lab orders: %w", err)
 	}
 	defer rows.Close()
 
-	var orders []entity.SimgosLabOrder
+	var orders []entity.SimrsLabOrder
 	for rows.Next() {
-		var order entity.SimgosLabOrder
+		var order entity.SimrsLabOrder
 		err := rows.Scan(
 			&order.ID,
 			&order.NoLabOrder,
@@ -85,7 +85,7 @@ func (r *Repository) GetNewLabOrders(ctx context.Context) ([]entity.SimgosLabOrd
 }
 
 // GetOrderDetailsByNoLabOrder fetches all order details for a specific lab order
-func (r *Repository) GetOrderDetailsByNoLabOrder(ctx context.Context, noLabOrder string) ([]entity.SimgosOrderDetail, error) {
+func (r *Repository) GetOrderDetailsByNoLabOrder(ctx context.Context, noLabOrder string) ([]entity.SimrsOrderDetail, error) {
 	if r.simgosDB == nil {
 		return nil, fmt.Errorf("Database Sharing database not initialized")
 	}
@@ -117,9 +117,9 @@ func (r *Repository) GetOrderDetailsByNoLabOrder(ctx context.Context, noLabOrder
 	}
 	defer rows.Close()
 
-	var details []entity.SimgosOrderDetail
+	var details []entity.SimrsOrderDetail
 	for rows.Next() {
-		var detail entity.SimgosOrderDetail
+		var detail entity.SimrsOrderDetail
 		err := rows.Scan(
 			&detail.ID,
 			&detail.NoLabOrder,
@@ -145,7 +145,7 @@ func (r *Repository) GetOrderDetailsByNoLabOrder(ctx context.Context, noLabOrder
 }
 
 // UpdateOrderStatus updates the status of a lab order
-func (r *Repository) UpdateOrderStatus(ctx context.Context, noLabOrder string, status entity.SimgosOrderStatus) error {
+func (r *Repository) UpdateOrderStatus(ctx context.Context, noLabOrder string, status entity.SimrsOrderStatus) error {
 	if r.simgosDB == nil {
 		return fmt.Errorf("Database Sharing database not initialized")
 	}
@@ -180,7 +180,7 @@ func (r *Repository) UpdateOrderStatus(ctx context.Context, noLabOrder string, s
 }
 
 // BatchUpdateOrderDetails updates multiple order detail results
-func (r *Repository) BatchUpdateOrderDetails(ctx context.Context, details []entity.SimgosOrderDetail) error {
+func (r *Repository) BatchUpdateOrderDetails(ctx context.Context, details []entity.SimrsOrderDetail) error {
 	if len(details) == 0 {
 		return nil
 	}
@@ -263,7 +263,7 @@ func (r *Repository) BatchUpdateOrderDetails(ctx context.Context, details []enti
 }
 
 // GetCompletedLabOrders fetches all lab orders with status 'LIS_SUCCESS'
-func (r *Repository) GetCompletedLabOrders(ctx context.Context) ([]entity.SimgosLabOrder, error) {
+func (r *Repository) GetCompletedLabOrders(ctx context.Context) ([]entity.SimrsLabOrder, error) {
 	if r.simgosDB == nil {
 		return nil, fmt.Errorf("Database Sharing database not initialized")
 	}
@@ -291,15 +291,15 @@ func (r *Repository) GetCompletedLabOrders(ctx context.Context) ([]entity.Simgos
 		ORDER BY created_at ASC
 	`
 
-	rows, err := conn.QueryContext(ctx, query, entity.SimgosStatusLISSuccess)
+	rows, err := conn.QueryContext(ctx, query, entity.SimrsStatusLISSuccess)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query completed lab orders: %w", err)
 	}
 	defer rows.Close()
 
-	var orders []entity.SimgosLabOrder
+	var orders []entity.SimrsLabOrder
 	for rows.Next() {
-		var order entity.SimgosLabOrder
+		var order entity.SimrsLabOrder
 		err := rows.Scan(
 			&order.ID,
 			&order.NoLabOrder,
@@ -348,7 +348,7 @@ func (r *Repository) CheckOrderExists(ctx context.Context, noLabOrder string) (b
 }
 
 // GetLabOrderByNoLabOrder fetches a specific lab order by no_lab_order
-func (r *Repository) GetLabOrderByNoLabOrder(ctx context.Context, noLabOrder string) (*entity.SimgosLabOrder, error) {
+func (r *Repository) GetLabOrderByNoLabOrder(ctx context.Context, noLabOrder string) (*entity.SimrsLabOrder, error) {
 	if r.simgosDB == nil {
 		return nil, fmt.Errorf("Database Sharing database not initialized")
 	}
@@ -374,7 +374,7 @@ func (r *Repository) GetLabOrderByNoLabOrder(ctx context.Context, noLabOrder str
 		WHERE no_lab_order = ?
 	`
 
-	var order entity.SimgosLabOrder
+	var order entity.SimrsLabOrder
 	err := conn.QueryRowContext(ctx, query, noLabOrder).Scan(
 		&order.ID,
 		&order.NoLabOrder,
@@ -458,7 +458,7 @@ func (r *Repository) TestConnection(ctx context.Context) error {
 }
 
 // GetOrdersForSync fetches lab orders that need to be synced (within last 14 days)
-func (r *Repository) GetOrdersForSync(ctx context.Context, startDate, endDate time.Time) ([]entity.SimgosLabOrder, error) {
+func (r *Repository) GetOrdersForSync(ctx context.Context, startDate, endDate time.Time) ([]entity.SimrsLabOrder, error) {
 	if r.simgosDB == nil {
 		return nil, fmt.Errorf("Database Sharing database not initialized")
 	}
@@ -486,15 +486,15 @@ func (r *Repository) GetOrdersForSync(ctx context.Context, startDate, endDate ti
 		ORDER BY created_at DESC
 	`
 
-	rows, err := conn.QueryContext(ctx, query, entity.SimgosStatusPending, entity.SimgosStatusLISSuccess)
+	rows, err := conn.QueryContext(ctx, query, entity.SimrsStatusPending, entity.SimrsStatusLISSuccess)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query orders for sync: %w", err)
 	}
 	defer rows.Close()
 
-	var orders []entity.SimgosLabOrder
+	var orders []entity.SimrsLabOrder
 	for rows.Next() {
-		var order entity.SimgosLabOrder
+		var order entity.SimrsLabOrder
 		err := rows.Scan(
 			&order.ID,
 			&order.NoLabOrder,

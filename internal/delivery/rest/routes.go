@@ -215,6 +215,7 @@ func RegisterRoutes(
 		workOrder.POST("/cancel", handler.CancelOrder)
 		workOrder.GET("/:id", handler.GetOneWorkOrder)
 		workOrder.PUT("/:id", handler.EditWorkOrder)
+		workOrder.PATCH("/:id/release-date", handler.UpdateReleaseDate)
 		workOrder.DELETE("/:id", handler.DeleteWorkOrder)
 	}
 

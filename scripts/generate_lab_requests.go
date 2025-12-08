@@ -159,8 +159,10 @@ func generateLabRequests(db *gorm.DB, count int) error {
 						continue
 					}
 
+					testTypeID := testType.ID
 					observationRequest := entity.ObservationRequest{
 						TestCode:        testCode,
+						TestTypeID:      &testTypeID,
 						TestDescription: testType.Name,
 						RequestedDate:   time.Now().Add(-time.Duration(randSource.Intn(30)) * 24 * time.Hour), // Random date in last 30 days
 						ResultStatus:    "PENDING",

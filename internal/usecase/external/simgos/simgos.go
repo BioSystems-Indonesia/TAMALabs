@@ -103,7 +103,7 @@ func (u *Usecase) SyncAllRequest(ctx context.Context) error {
 		}
 
 		// Update order status to PENDING after successful processing
-		err = u.simgosRepo.UpdateOrderStatus(ctx, order.NoLabOrder, entity.SimgosStatusPending)
+		err = u.simgosRepo.UpdateOrderStatus(ctx, order.NoLabOrder, entity.SimrsStatusPending)
 		if err != nil {
 			slog.Error("Failed to update order status to PENDING", "no_lab_order", order.NoLabOrder, "error", err)
 			errorCount++
@@ -113,7 +113,7 @@ func (u *Usecase) SyncAllRequest(ctx context.Context) error {
 		processedCount++
 		slog.Info("Successfully processed and updated order status",
 			"no_lab_order", order.NoLabOrder,
-			"status", entity.SimgosStatusPending)
+			"status", entity.SimrsStatusPending)
 	}
 
 	slog.Info("Database Sharing lab request synchronization completed",
@@ -125,7 +125,7 @@ func (u *Usecase) SyncAllRequest(ctx context.Context) error {
 }
 
 // processNewOrder processes a single new order from Database Sharing
-func (u *Usecase) processNewOrder(ctx context.Context, order entity.SimgosLabOrder) error {
+func (u *Usecase) processNewOrder(ctx context.Context, order entity.SimrsLabOrder) error {
 	// Get order details
 	orderDetails, err := u.simgosRepo.GetOrderDetailsByNoLabOrder(ctx, order.NoLabOrder)
 	if err != nil {
@@ -157,7 +157,7 @@ func (u *Usecase) processNewOrder(ctx context.Context, order entity.SimgosLabOrd
 }
 
 // findOrCreatePatient finds an existing patient or creates a new one from Database Sharing order data
-func (u *Usecase) findOrCreatePatient(ctx context.Context, order entity.SimgosLabOrder) (*entity.Patient, error) {
+func (u *Usecase) findOrCreatePatient(ctx context.Context, order entity.SimrsLabOrder) (*entity.Patient, error) {
 	// Split patient name into first and last name
 	var firstName, lastName string
 	nameParts := strings.Fields(order.PatientName)
@@ -169,7 +169,7 @@ func (u *Usecase) findOrCreatePatient(ctx context.Context, order entity.SimgosLa
 	}
 
 	// Convert sex
-	sex := entity.SimgosSex(order.Sex).ToPatientSex()
+	sex := entity.SimrsSex(order.Sex).ToPatientSex()
 
 	// Try to find existing patient by Medical Record Number (No RM)
 	if order.NoRM != "" {
@@ -221,7 +221,7 @@ func (u *Usecase) findOrCreatePatient(ctx context.Context, order entity.SimgosLa
 }
 
 // createWorkOrder creates a work order from Database Sharing order and details
-func (u *Usecase) createWorkOrder(ctx context.Context, order entity.SimgosLabOrder, orderDetails []entity.SimgosOrderDetail, patientID int64) error {
+func (u *Usecase) createWorkOrder(ctx context.Context, order entity.SimrsLabOrder, orderDetails []entity.SimrsOrderDetail, patientID int64) error {
 	// Map parameter codes to test types
 	var testTypes []entity.WorkOrderCreateRequestTestType
 	var notFoundCodes []string
@@ -380,7 +380,7 @@ func (u *Usecase) syncResultByWorkOrder(ctx context.Context, workOrderID int64) 
 	}
 
 	// Only sync if status is PENDING (order has been fetched by LIS)
-	if simgosOrder.Status != string(entity.SimgosStatusPending) {
+	if simgosOrder.Status != string(entity.SimrsStatusPending) {
 		slog.Debug("Order status is not PENDING, skipping",
 			"no_lab_order", workOrder.BarcodeSIMRS,
 			"status", simgosOrder.Status)
@@ -388,7 +388,7 @@ func (u *Usecase) syncResultByWorkOrder(ctx context.Context, workOrderID int64) 
 	}
 
 	// Prepare order detail updates
-	var orderDetailUpdates []entity.SimgosOrderDetail
+	var orderDetailUpdates []entity.SimrsOrderDetail
 
 	for _, testResultGroup := range workOrder.TestResult {
 		for _, testResult := range testResultGroup {
@@ -410,13 +410,13 @@ func (u *Usecase) syncResultByWorkOrder(ctx context.Context, workOrderID int64) 
 			}
 
 			// Create order detail update
-			orderDetail := entity.SimgosOrderDetail{
+			orderDetail := entity.SimrsOrderDetail{
 				NoLabOrder:     workOrder.BarcodeSIMRS,
 				ParameterCode:  testType.Code,
 				ResultValue:    testResult.Result,
 				Unit:           testResult.Unit,
 				ReferenceRange: testResult.ReferenceRange,
-				Flag:           string(entity.NewSimgosFlag(testResult)),
+				Flag:           string(entity.NewSimrsFlag(testResult)),
 			}
 
 			orderDetailUpdates = append(orderDetailUpdates, orderDetail)
@@ -447,7 +447,7 @@ func (u *Usecase) syncResultByWorkOrder(ctx context.Context, workOrderID int64) 
 
 	// If all details are completed, update order status to LIS_SUCCESS
 	if completedDetails >= totalDetails {
-		err = u.simgosRepo.UpdateOrderStatus(ctx, workOrder.BarcodeSIMRS, entity.SimgosStatusLISSuccess)
+		err = u.simgosRepo.UpdateOrderStatus(ctx, workOrder.BarcodeSIMRS, entity.SimrsStatusLISSuccess)
 		if err != nil {
 			return fmt.Errorf("failed to update order status to LIS_SUCCESS: %w", err)
 		}

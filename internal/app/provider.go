@@ -211,7 +211,7 @@ func InitSQLiteDB() (*gorm.DB, error) {
 		slog.Info("DB already exists", "path", dbFileName)
 	}
 
-	dialec, err := sql.Open("sqlite", dbFileName)
+	dialec, err := sql.Open("sqlite", dbFileName+"?_parseTime=true")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}

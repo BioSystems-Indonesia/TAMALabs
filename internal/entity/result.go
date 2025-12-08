@@ -98,10 +98,16 @@ func (r TestResult) CreateEmpty(request ObservationRequest, patient *Patient) Te
 		computedRefRange = request.TestType.GetReferenceRange()
 	}
 
+	// Use TestType.Name for display, fallback to TestCode if Name is empty
+	testName := request.TestType.Name
+	if testName == "" {
+		testName = request.TestCode
+	}
+
 	return TestResult{
 		ID:                     0,
 		SpecimenID:             request.SpecimenID,
-		Test:                   request.TestCode,
+		Test:                   testName, // Use TestType.Name (GDP/GDS) for display, not TestCode (GLUCOSE)
 		Result:                 "",
 		TestTypeID:             int64(request.TestType.ID),
 		Unit:                   request.TestType.Unit,

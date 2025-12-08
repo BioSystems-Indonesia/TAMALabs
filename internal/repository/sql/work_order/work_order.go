@@ -41,6 +41,34 @@ func NewWorkOrderRepository(db *gorm.DB, cfg *config.Schema, specimentRepo *spec
 	return r
 }
 
+// parseDate parses a date string and returns a pointer to time.Time, or nil if empty
+func parseDate(dateStr string) *time.Time {
+	if dateStr == "" {
+		slog.Info("parseDate: empty string")
+		return nil
+	}
+
+	slog.Info("parseDate: attempting to parse", "dateStr", dateStr)
+
+	// Try multiple date formats
+	formats := []string{
+		time.RFC3339,
+		"2006-01-02",
+		"2006-01-02T15:04:05Z07:00",
+		"2006-01-02T15:04:05.000Z",
+	}
+
+	for _, format := range formats {
+		if t, err := time.Parse(format, dateStr); err == nil {
+			slog.Info("parseDate: successfully parsed", "format", format, "result", t)
+			return &t
+		}
+	}
+
+	slog.Warn("parseDate: failed to parse any format", "dateStr", dateStr)
+	return nil
+}
+
 func (r *WorkOrderRepository) FindAllForResult(ctx context.Context, req *entity.ResultGetManyRequest) (entity.PaginationResponse[entity.WorkOrder], error) {
 	db := r.db.WithContext(ctx).
 		Preload("Patient").
@@ -224,17 +252,21 @@ func (r WorkOrderRepository) Create(req *entity.WorkOrderCreateRequest) (entity.
 		}
 
 		workOrder = entity.WorkOrder{
-			Status:              entity.WorkOrderStatusNew,
-			VerifiedStatus:      verifiedStatus,
-			PatientID:           req.PatientID,
-			Barcode:             req.Barcode,
-			BarcodeSIMRS:        req.BarcodeSIMRS,
-			MedicalRecordNumber: req.MedicalRecordNumber,
-			AnalyzerIDs:         req.AnalyzerIDs,
-			DoctorIDs:           req.DoctorIDs,
-			TestTemplateIDs:     req.TestTemplateIDs,
-			CreatedBy:           req.CreatedBy,
-			LastUpdatedBy:       req.CreatedBy,
+			Status:                 entity.WorkOrderStatusNew,
+			VerifiedStatus:         verifiedStatus,
+			PatientID:              req.PatientID,
+			Barcode:                req.Barcode,
+			BarcodeSIMRS:           req.BarcodeSIMRS,
+			MedicalRecordNumber:    req.MedicalRecordNumber,
+			VisitNumber:            req.VisitNumber,
+			SpecimenCollectionDate: parseDate(req.SpecimenCollectionDate),
+			ResultReleaseDate:      parseDate(req.ResultReleaseDate),
+			Diagnosis:              req.Diagnosis,
+			AnalyzerIDs:            req.AnalyzerIDs,
+			DoctorIDs:              req.DoctorIDs,
+			TestTemplateIDs:        req.TestTemplateIDs,
+			CreatedBy:              req.CreatedBy,
+			LastUpdatedBy:          req.CreatedBy,
 		}
 		err = tx.Save(&workOrder).Error
 		if err != nil {
@@ -290,6 +322,10 @@ func (r WorkOrderRepository) Edit(id int, req *entity.WorkOrderCreateRequest) (e
 		workOrder.Barcode = req.Barcode
 		workOrder.BarcodeSIMRS = req.BarcodeSIMRS
 		workOrder.MedicalRecordNumber = req.MedicalRecordNumber
+		workOrder.VisitNumber = req.VisitNumber
+		workOrder.SpecimenCollectionDate = parseDate(req.SpecimenCollectionDate)
+		workOrder.ResultReleaseDate = parseDate(req.ResultReleaseDate)
+		workOrder.Diagnosis = req.Diagnosis
 		workOrder.LastUpdatedBy = req.CreatedBy
 		workOrder.DoctorIDs = req.DoctorIDs
 		workOrder.AnalyzerIDs = req.AnalyzerIDs
@@ -391,17 +427,12 @@ func (r WorkOrderRepository) deleteUnusedRelation(
 		)
 
 		for _, testTypeID := range toDeleteTestTypeIDs {
-			var testType entity.TestType
-			err := tx.First(&testType, "id = ?", testTypeID).Error
-			if err != nil {
-				return fmt.Errorf("error finding testType %v: %w", testTypeID, err)
-			}
-
-			err = tx.Model(&entity.ObservationRequest{}).
-				Where("specimen_id = ? AND test_code = ?", specimen.ID, testType.Code).
+			// Delete observation request by test_type_id (not just code) to handle tests with same code
+			err := tx.Model(&entity.ObservationRequest{}).
+				Where("specimen_id = ? AND test_type_id = ?", specimen.ID, testTypeID).
 				Delete(&entity.ObservationRequest{}).Error
 			if err != nil {
-				return fmt.Errorf("error deleting observationRequest %v: %w", testType.Code, err)
+				return fmt.Errorf("error deleting observationRequest with test_type_id %v: %w", testTypeID, err)
 			}
 		}
 
@@ -531,12 +562,20 @@ func (r WorkOrderRepository) upsertRelation(
 		}
 
 		for _, testType := range testTypes {
+			testTypeID := testType.ID
 			observationRequest := entity.ObservationRequest{
 				TestCode:        testType.Code,
+				TestTypeID:      &testTypeID,
 				TestDescription: testType.Name,
 				SpecimenID:      int64(specimen.ID),
 				RequestedDate:   time.Now(),
 			}
+
+			slog.InfoContext(trx.Statement.Context, "Creating ObservationRequest",
+				"test_type_id", testTypeID,
+				"test_code", testType.Code,
+				"test_name", testType.Name,
+				"specimen_id", specimen.ID)
 
 			observationRequestQuery := trx.Clauses(clause.OnConflict{DoNothing: true}).Create(&observationRequest)
 			err := observationRequestQuery.Error
@@ -545,6 +584,10 @@ func (r WorkOrderRepository) upsertRelation(
 			}
 
 			if observationRequestQuery.RowsAffected == 0 {
+				slog.InfoContext(trx.Statement.Context, "ObservationRequest already exists (conflict), skipping",
+					"test_type_id", testTypeID,
+					"test_code", testType.Code,
+					"specimen_id", specimen.ID)
 				continue
 			}
 		}
@@ -861,6 +904,21 @@ func (r WorkOrderRepository) ChangeStatus(ctx context.Context, id int64, status 
 		Update("status", status)
 	if res.Error != nil {
 		return fmt.Errorf("error updating workOrder status: %w", res.Error)
+	}
+
+	if res.RowsAffected == 0 {
+		return entity.ErrNotFound
+	}
+
+	return nil
+}
+
+func (r WorkOrderRepository) UpdateReleaseDate(id int, resultReleaseDate string) error {
+	res := r.db.Model(&entity.WorkOrder{}).
+		Where("id = ?", id).
+		Update("result_release_date", resultReleaseDate)
+	if res.Error != nil {
+		return fmt.Errorf("error updating result_release_date: %w", res.Error)
 	}
 
 	if res.RowsAffected == 0 {

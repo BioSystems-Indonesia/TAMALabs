@@ -14,6 +14,7 @@ import {
     AutocompleteArrayInput,
     AutocompleteInput,
     DateInput,
+    DateTimeInput,
     Form,
     List,
     ReferenceInput,
@@ -526,7 +527,6 @@ function PatientFormModal(props: PatientFormProps) {
         );
     };
 
-
     const notify = useNotify();
     return (
         <Dialog
@@ -680,7 +680,7 @@ function CreatePatientButton(props: CreatePatientButtonProps) {
     </Button>;
 }
 
-function BarcodeInput(props: InputProps) {
+function SIMRSInformationInput(props: InputProps) {
     return (
         <>
             <Stack sx={{
@@ -688,10 +688,22 @@ function BarcodeInput(props: InputProps) {
             }}>
                 <Typography variant="subtitle1" sx={{
                     mb: "0.5rem",
-                }}>Barcode Configuration</Typography>
+                }}>SIMRS Informations</Typography>
                 <Stack gap={1}>
-                    <TextInput source="barcode_simrs" label="SIMRS Barcode" helperText="Barcode for SIMRS integration" fullWidth required />
-                    <TextInput source="medical_record_number" label="No. Rekam Medis" helperText="Medical record number from SIMRS" fullWidth />
+                    <TextInput source="barcode_simrs" label="No Order Lab" helperText="No Order Lab for SIMRS integration" fullWidth />
+                    <TextInput source="medical_record_number" label="Medical Record Number" helperText="Medical record number from SIMRS" fullWidth />
+                    <TextInput source="visit_number" label="Visit Number" helperText="Patient visit number" fullWidth />
+                    <DateTimeInput
+                        source="specimen_collection_date"
+                        label="Collection Date & Time"
+                        helperText="Specimen collection date and time"
+                        fullWidth
+                        inputProps={{
+                            max: "2100-12-31T23:59",
+                            min: "1900-01-01T00:00"
+                        }}
+                    />
+                    <TextInput source="diagnosis" label="Diagnosis / Clinical Notes" helperText="Clinical diagnosis or notes" fullWidth multiline rows={2} />
                 </Stack>
             </Stack>
         </>
@@ -737,7 +749,7 @@ function AdditionalInput(props: InputProps) {
 }
 
 
-const steps = ['Info', 'Test', 'Barcode', 'Additional'];
+const steps = ['Patient', 'Parameter Tests', 'SIMRS Information', 'Additional'];
 
 
 export default function WorkOrderForm(props: WorkOrderFormProps) {
@@ -774,7 +786,7 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
                 return value
             })
 
-            save({
+            const payload = {
                 patient_id: data[patientIDField],
                 test_types: testTypes,
                 created_by: currentUser?.id,
@@ -784,7 +796,13 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
                 barcode: data.barcode,
                 barcode_simrs: data.barcode_simrs,
                 medical_record_number: data.medical_record_number,
-            });
+                visit_number: data.visit_number,
+                specimen_collection_date: data.specimen_collection_date ? new Date(data.specimen_collection_date).toISOString() : '',
+                diagnosis: data.diagnosis,
+            };
+
+            console.log('Work Order Payload:', payload);
+            save(payload);
         }
     };
 
@@ -801,7 +819,7 @@ export default function WorkOrderForm(props: WorkOrderFormProps) {
                         activeStep === 1 && <TestInput />
                     }
                     {
-                        activeStep === 2 && <BarcodeInput {...props} setDisableNext={setDisableNext} />
+                        activeStep === 2 && <SIMRSInformationInput {...props} setDisableNext={setDisableNext} />
                     }
                     {
                         activeStep === 3 && <AdditionalInput {...props} setDisableNext={setDisableNext} />

@@ -26,7 +26,7 @@ type PrintReportButtonProps = {
 
 const PrintReportButton = (prop: PrintReportButtonProps) => {
     const [data, setData] = useState<ReportData[]>([])
-    const [groupedData, setGroupedData] = useState<{ [category: string]: ReportData[] }>({})
+    const [groupedData, setGroupedData] = useState<{ [category: string]: ReportData[] }>({});
 
     useEffect(() => {
         const reportData = prop.results?.map(v => {
@@ -131,7 +131,9 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                         }>
                             <span>
                                 <IconButton
-                                    onClick={e => e.stopPropagation()}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                    }}
                                     color='primary'
                                     download={`LAB_Test_Result_${dayjs(prop.workOrder.created_at).format("YYYYMMDD")}_${prop.patient.id}_${prop.patient.first_name}_${prop.patient.last_name}.pdf`}
                                     href={url || ''}
@@ -154,7 +156,7 @@ const PrintReportButton = (prop: PrintReportButtonProps) => {
                                 <IconButton
                                     color='secondary'
                                     onClick={(e) => {
-                                        e.stopPropagation()
+                                        e.stopPropagation();
                                         if (url
                                             // && prop.workOrder.have_complete_data
                                         ) {

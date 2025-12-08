@@ -273,6 +273,36 @@ const HeaderInfo = (props: any) => (
                 <DateField source="created_at" showTime />
             </Labeled>
         </Grid>
+        <Grid item xs={12} md={4}>
+            <Labeled>
+                <WithRecord label="Medical Record Number" render={(record: WorkOrder) => (
+                    <span>{record.medical_record_number || '-'}</span>
+                )} />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={4}>
+            <Labeled>
+                <WithRecord label="Visit Number" render={(record: WorkOrder) => (
+                    <Typography component="span">{record.visit_number || '-'}</Typography>
+                )} />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={4}>
+            <Labeled>
+                <WithRecord label="Sampling" render={(record: WorkOrder) => {
+                    if (!record.specimen_collection_date) return <span>-</span>;
+                    const date = new Date(record.specimen_collection_date);
+                    return <span>{dayjs(date).format('DD-MM-YYYY HH:mm')}</span>;
+                }} />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={8}>
+            <Labeled>
+                <WithRecord label="Diagnosis / Clinical Notes" render={(record: WorkOrder) => (
+                    <span>{record.diagnosis || '-'}</span>
+                )} />
+            </Labeled>
+        </Grid>
         <Grid item xs={12} md={4} >
             <Labeled>
                 <TextField source="total_request" label="Total Request" />
@@ -554,12 +584,15 @@ const HistoryDialog = (props: HistoryDialogProps) => {
                 type: 'success',
             });
 
+            // Close dialog first so user sees fresh data when reopening
+            props.onClose();
+
+            // Refresh to get updated data from backend
             refresh()
 
-            props.setHistory({
-                rows: props.rows.map(v => v.id === testResultID ? { ...v, picked: true } : { ...v, picked: false }),
-                title: props.title,
-            })
+            // Note: We close the dialog instead of updating local state
+            // because history dialog needs fresh data from backend to show correct picked status
+            // Backend handles unpicking correctly based on test_type_id
         } catch (err) {
             notify("Error pick test result", {
                 type: 'error',

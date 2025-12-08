@@ -101,9 +101,24 @@ func (u *Usecase) PutTestResult(
 ) (entity.TestResult, error) {
 	oldResult := result
 
+	// Get test code from TestType if available, otherwise use Test field
+	// This handles case where Test field contains test name (GDS/GDP) not code (GLUCOSE)
+	testCode := result.Test
+	var testTypeID *int
+	if result.TestTypeID > 0 {
+		// Use TestTypeID to get the actual test code
+		testType, err := u.testTypeRepository.FindOneByID(ctx, int(result.TestTypeID))
+		if err == nil {
+			testCode = testType.Code
+			id := testType.ID
+			testTypeID = &id
+		}
+	}
+
 	obs := entity.ObservationResult{
 		SpecimenID: result.SpecimenID,
-		TestCode:   result.Test,
+		TestCode:   testCode,
+		TestTypeID: testTypeID,
 		Unit:       result.Unit,
 		CreatedBy:  createdByAdmin.ID,
 		// Don't use result.ReferenceRange from old data
