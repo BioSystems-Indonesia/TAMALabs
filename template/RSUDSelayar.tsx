@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
         paddingTop: 30,
         paddingLeft: 30,
         paddingRight: 30,
-        paddingBottom: 30,
+        paddingBottom: 110,
     },
     header: {
         display: 'flex',
@@ -113,13 +113,13 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     cell: {
-        paddingVertical: 5,
+        paddingVertical: 2,
         paddingHorizontal: 3,
         borderRight: 1,
         borderBottomColor: '#000',
     },
     cellEnd: {
-        paddingVertical: 5,
+        paddingVertical: 2,
         paddingHorizontal: 3,
     },
     rectangleContainer: {
@@ -251,7 +251,7 @@ const getReferenceForParameter = (parameter?: string, referenceFromDB?: string) 
 
     // Check hardcoded reference values first (highest priority)
     if (p.includes('gula darah puasa') || p.includes('gula darah (puasa)') || p.includes('glukosa puasa')) return '<126 mg/dl';
-    if (p.includes('gula darah 2') || p.includes('2 jam')) return '<200 mg/dl';
+    if (p.includes('gula darah 2') || p.includes('2 jam') || p.includes('sewaktu')) return '<200 mg/dl';
     if (p.includes('asam urat')) return 'L=3.4-7.0 mg/dl; P=2.4-5.7 mg/dl';
     if (p.includes('sgot') || p.includes('ast')) return 'L<=42 U/L; P<=37 U/L';
     if (p.includes('sgpt') || p.includes('alt')) return 'L<=42 U/L; P<=32 U/L';
@@ -276,26 +276,33 @@ const Header = () => {
     const [settings] = useSettings();
 
     return (
-        <View style={styles.header} fixed>
-            <Image
-                style={styles.logo}
-                src={logo}
-            />
-            <View style={styles.companyInfo}>
-                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 2 }}>
-                    {settings.company_name?.toUpperCase() || 'PEMERINTAH KABUPATEN KEPULAUAN SELAYAR'}
-                </Text>
-                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 2 }}>
-                    DINAS KESEHATAN
-                </Text>
-                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 3 }}>
-                    UPT.RSUD KH. HAYYUNG
-                </Text>
-                <Text style={{ fontSize: 9.5, fontWeight: 'bold' }}>
-                    {settings.company_address || 'JL.KH.ABDUL KADIR HASIM TELP (0414)2707366 KEPULAUAN SELAYAR KODE POS : 92812'}
-                </Text>
+        <>
+
+            <View fixed>
+                <View style={styles.header}>
+                    <Image
+                        style={styles.logo}
+                        src={logo}
+                    />
+                    <View style={styles.companyInfo}>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 2 }}>
+                            {settings.company_name?.toUpperCase() || 'PEMERINTAH KABUPATEN KEPULAUAN SELAYAR'}
+                        </Text>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 2 }}>
+                            DINAS KESEHATAN
+                        </Text>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 3 }}>
+                            UPT.RSUD KH. HAYYUNG
+                        </Text>
+                        <Text style={{ fontSize: 9.5, fontWeight: 'bold' }}>
+                            {settings.company_address || 'JL.KH.ABDUL KADIR HASIM TELP (0414)2707366 KEPULAUAN SELAYAR KODE POS : 92812'}
+                        </Text>
+                    </View>
+                </View>
+                <View style={{ width: '100%', height: 1, backgroundColor: '#000000', marginTop: -4 }} />
+                <View style={{ width: '100%', height: 1, backgroundColor: '#000000', marginTop: 1 }} />
             </View>
-        </View>
+        </>
     )
 };
 
@@ -442,8 +449,7 @@ export const ReportDocument = ({ data, patientData, workOrderData, customDoctorQ
         <Document>
             <Page size={"A4"} style={styles.page} wrap>
                 <Header />
-                <View style={{ width: '100%', height: 1, backgroundColor: '#000000', marginTop: -4 }} />
-                <View style={{ width: '100%', height: 1, backgroundColor: '#000000', marginTop: 1 }} />
+
                 <PatientInfo patient={patientData} workOrder={workOrderData} />
                 <View style={{ width: '100%', height: 1, backgroundColor: '#000000', marginTop: -4 }} />
                 <View style={{ width: '100%', height: 1, backgroundColor: '#000000', marginTop: 1 }} />
