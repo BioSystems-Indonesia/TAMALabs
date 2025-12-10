@@ -13,6 +13,7 @@ export type ObservationResult = {
   id: number;
   specimen_id: number;
   code: string;
+  test_type_id?: number;
   name: string;
   description: string;
   values: string[];
@@ -81,6 +82,7 @@ export type ReportData = {
   reference: string;
   unit: string;
   abnormality: ReportDataAbnormality;
+  added_by?: "System" | "user"; // Track who added the data
 };
 
 export type Result = {

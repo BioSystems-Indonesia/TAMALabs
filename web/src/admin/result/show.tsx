@@ -273,6 +273,36 @@ const HeaderInfo = (props: any) => (
                 <DateField source="created_at" showTime />
             </Labeled>
         </Grid>
+        <Grid item xs={12} md={4}>
+            <Labeled>
+                <WithRecord label="Medical Record Number" render={(record: WorkOrder) => (
+                    <span>{record.medical_record_number || '-'}</span>
+                )} />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={4}>
+            <Labeled>
+                <WithRecord label="Visit Number" render={(record: WorkOrder) => (
+                    <Typography component="span">{record.visit_number || '-'}</Typography>
+                )} />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={4}>
+            <Labeled>
+                <WithRecord label="Sampling" render={(record: WorkOrder) => {
+                    if (!record.specimen_collection_date) return <span>-</span>;
+                    const date = new Date(record.specimen_collection_date);
+                    return <span>{dayjs(date).format('DD-MM-YYYY HH:mm')}</span>;
+                }} />
+            </Labeled>
+        </Grid>
+        <Grid item xs={12} md={8}>
+            <Labeled>
+                <WithRecord label="Diagnosis / Clinical Notes" render={(record: WorkOrder) => (
+                    <span>{record.diagnosis || '-'}</span>
+                )} />
+            </Labeled>
+        </Grid>
         <Grid item xs={12} md={4} >
             <Labeled>
                 <TextField source="total_request" label="Total Request" />
@@ -364,55 +394,39 @@ const TestResultTable = (props: TestResultTableProps) => {
     }
 
     async function putResult(newRow: TestResult, _oldRow: TestResult) {
-        if (newRow.specimen_type !== _oldRow.specimen_type) {
-            setSpecimenTypeCache(prev => ({
-                ...prev,
-                [newRow.id]: newRow.specimen_type
-            }));
-        }
-
         if (newRow.result === _oldRow.result && newRow.unit === _oldRow.unit) {
-            return newRow; // Return newRow to keep specimen_type change
+            return _oldRow
         }
         const url = `/result/${newRow.specimen_id}/test`
 
         try {
             const response = await axios.put(url, newRow);
             notify(`Success update ${newRow.test}`, { type: 'success' });
-            // Preserve specimen_type from user edit
-            return {
-                ...response.data,
-                specimen_type: newRow.specimen_type
-            };
+            return response.data;
         } catch (error: any) {
             notify(`Error update ${error}`, { type: 'error' });
-            return _oldRow;
         }
     }
 
     let negID = -1
 
+    // support id == 0 when the TestResult is not set yet
+    // TODO find better hack than this
     const [rows, setRows] = useState<any>([])
-    const [specimenTypeCache, setSpecimenTypeCache] = useState<Record<string, string>>({})
-
     useEffect(() => {
         if (!props?.rows) return;
         if (!Array.isArray(props.rows)) return;
 
-        setRows(props.rows.map((r: any) => {
-            const rowId = r.id || negID--;
-            const cachedSpecimenType = specimenTypeCache[rowId];
-            const specimenType = cachedSpecimenType || r.specimen_type || r?.test_type?.types?.[0]?.type || (r?.test_type?.types && r.test_type.types.length > 0 ? r.test_type.types[0].type : '-');
+        console.log(props.rows)
 
-            return {
-                ...r,
-                id: rowId,
-                name: r?.test_type?.name || r?.history?.[0]?.test_type?.name || r.test,
-                specimen_type: specimenType,
-                alias: r?.test_type?.alias_code || r?.history?.[0]?.test_type?.alias_code || r.alias || r.test,
-            };
-        }));
-    }, [props?.rows, specimenTypeCache]);
+        setRows(props.rows.map((r: any) => ({
+            ...r,
+            id: r.id || negID--,
+            name: r?.test_type?.name || r?.history?.[0]?.test_type?.name || r.test,
+            specimen_type: r?.test_type?.types?.[0]?.type || '',
+            alias: r?.test_type?.alias_code || r?.history?.[0]?.test_type?.alias_code || r.alias || r.test,
+        })));
+    }, [props?.rows]);
 
     return (
         <MuiDatagrid rows={rows}
@@ -422,15 +436,6 @@ const TestResultTable = (props: TestResultTableProps) => {
             processRowUpdate={putResult}
             onProcessRowUpdateError={onUpdateError}
             rowHeight={60}
-            onRowEditStop={(params, event) => {
-                setRows((prevRows: any[]) =>
-                    prevRows.map(row =>
-                        row.id === params.id
-                            ? { ...row, specimen_type: specimenTypeCache[params.id] || row.specimen_type }
-                            : row
-                    )
-                );
-            }}
             columns={[
                 {
                     field: 'name',
@@ -441,7 +446,6 @@ const TestResultTable = (props: TestResultTableProps) => {
                     field: 'specimen_type',
                     headerName: 'Specimen Type',
                     flex: 1,
-                    editable: false,
                 },
                 {
                     field: 'alias',
@@ -511,18 +515,17 @@ const TestResultTable = (props: TestResultTableProps) => {
                     headerName: 'Action',
                     flex: 1,
                     renderCell: (params: GridRenderCellParams) => {
-                        const history = Array.isArray(params.row.history) ? params.row.history : [];
-                        const resultDifference = history.length > 0 ? !history
+                        const resultDifference = !params.row.history
                             .map((h: TestResult) => "" + h.result + h.unit)
-                            .every((v: string, _: number, a: string[]) => v === a[0]) : false;
+                            .every((v: string, _: number, a: string[]) => v === a[0])
 
                         return <Box>
                             <Tooltip title={resultDifference ? "History has different result" : "Show History"}>
-                                <Badge badgeContent={history.length} color={resultDifference ? "warning" : "primary"}>
+                                <Badge badgeContent={params.row.history.length} color={resultDifference ? "warning" : "primary"}>
                                     <IconButton color={resultDifference ? "warning" : "primary"}
                                         onClick={() => {
                                             props.setHistory({
-                                                rows: history,
+                                                rows: params.row.history,
                                                 title: `History of ${params.row.test}`
                                             })
                                             props.setOpenHistory(true)
@@ -555,6 +558,8 @@ type HistoryDialogProps = {
 const HistoryDialog = (props: HistoryDialogProps) => {
     const notify = useNotify();
     const refresh = useRefresh();
+    const record = useRecordContext<Result>();
+    const currentUser = useCurrentUser();
 
     // Some Hack because Dialog is on top, and it will refresh
     // some updated value, then we need to make the values
@@ -564,6 +569,9 @@ const HistoryDialog = (props: HistoryDialogProps) => {
     }
 
     const axios = useAxios();
+
+    // Check if current user is a doctor
+    const isDoctor = record?.doctors?.map(v => v.id).includes(currentUser?.id ?? 0);
     const pickTestResult = async (testResultID: number) => {
         try {
             const url = `/result/${props.workOrderID}/test/${testResultID}/pick`
@@ -576,12 +584,15 @@ const HistoryDialog = (props: HistoryDialogProps) => {
                 type: 'success',
             });
 
+            // Close dialog first so user sees fresh data when reopening
+            props.onClose();
+
+            // Refresh to get updated data from backend
             refresh()
 
-            props.setHistory({
-                rows: props.rows.map(v => v.id === testResultID ? { ...v, picked: true } : { ...v, picked: false }),
-                title: props.title,
-            })
+            // Note: We close the dialog instead of updating local state
+            // because history dialog needs fresh data from backend to show correct picked status
+            // Backend handles unpicking correctly based on test_type_id
         } catch (err) {
             notify("Error pick test result", {
                 type: 'error',
@@ -672,10 +683,12 @@ const HistoryDialog = (props: HistoryDialogProps) => {
                             headerName: 'Action',
                             flex: 1,
                             renderCell: (params: GridRenderCellParams) => {
+
                                 return <ButtonGroup sx={{
                                     gap: 2,
                                 }}>
                                     <DeleteButton
+                                        disabled={!isDoctor}
                                         sx={{ marginLeft: 2 }}
                                         label={''}
                                         mutationMode="pessimistic"

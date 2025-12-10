@@ -49,12 +49,8 @@ func (u *Usecase) ProcessBTS(ctx context.Context) error {
 			// Get TestType to determine decimal formatting
 			testType, err := u.TestTypeRepository.FindOneByCode(ctx, record.Analyte)
 			if err != nil {
-				// Try to find by alias_code if not found by code
-				testType, err = u.TestTypeRepository.FindOneByAliasCode(ctx, record.Analyte)
-				if err != nil {
-					// Use default decimal if test type not found
-					testType = entity.TestType{Decimal: 2}
-				}
+				// Use default decimal if test type not found
+				testType = entity.TestType{Decimal: 2}
 			}
 
 			decimal := testType.Decimal

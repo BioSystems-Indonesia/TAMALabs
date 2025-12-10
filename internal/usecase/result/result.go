@@ -101,9 +101,24 @@ func (u *Usecase) PutTestResult(
 ) (entity.TestResult, error) {
 	oldResult := result
 
+	// Get test code from TestType if available, otherwise use Test field
+	// This handles case where Test field contains test name (GDS/GDP) not code (GLUCOSE)
+	testCode := result.Test
+	var testTypeID *int
+	if result.TestTypeID > 0 {
+		// Use TestTypeID to get the actual test code
+		testType, err := u.testTypeRepository.FindOneByID(ctx, int(result.TestTypeID))
+		if err == nil {
+			testCode = testType.Code
+			id := testType.ID
+			testTypeID = &id
+		}
+	}
+
 	obs := entity.ObservationResult{
 		SpecimenID: result.SpecimenID,
-		TestCode:   result.Test,
+		TestCode:   testCode,
+		TestTypeID: testTypeID,
 		Unit:       result.Unit,
 		CreatedBy:  createdByAdmin.ID,
 		// Don't use result.ReferenceRange from old data
@@ -127,21 +142,19 @@ func (u *Usecase) PutTestResult(
 
 	obs.TestType, err = u.testTypeRepository.FindOneByCode(ctx, obs.TestCode)
 	if err != nil {
-		// Try to find by alias_code if not found by code
-		obs.TestType, err = u.testTypeRepository.FindOneByAliasCode(ctx, obs.TestCode)
-		if err != nil {
-			slog.Info("cannot fill test type for result", "id", obs.ID, "error", err)
-		}
+		slog.Info("cannot fill test type for result", "id", obs.ID, "error", err)
 	}
 	obs.CreatedByAdmin = createdByAdmin
 
 	// Get specimen type for this observation result
 	specimen, err := u.specimenRepository.FindOne(ctx, obs.SpecimenID)
 	specimenType := ""
+	var patient *entity.Patient
 	if err != nil {
 		slog.Info("cannot find specimen for result", "specimen_id", obs.SpecimenID, "error", err)
 	} else {
 		specimenType = specimen.Type
+		patient = &specimen.Patient
 
 		// Update specimen type if it's different and provided in the request
 		if result.SpecimenType != "" && result.SpecimenType != specimen.Type {
@@ -156,7 +169,7 @@ func (u *Usecase) PutTestResult(
 		}
 	}
 
-	result = result.FromObservationResult(obs, specimenType)
+	result = result.FromObservationResult(obs, specimenType, patient)
 	// Hack so the front end is not add first then replace
 	// TODO maybe need to find better way than this
 	if oldResult.ID != 0 {
@@ -172,13 +185,23 @@ func (u *Usecase) PutTestResult(
 	specimenTypes := make(map[int64]string)
 	specimenTypes[obs.SpecimenID] = specimenType
 
-	result = result.FillHistory(history, specimenTypes)
+	result = result.FillHistory(history, specimenTypes, patient)
 
 	return result, nil
 }
 
-func (u *Usecase) DeleteTestResult(context context.Context, id int64) (entity.ObservationResult, error) {
-	return u.resultRepository.Delete(context, id)
+func (u *Usecase) DeleteTestResult(ctx context.Context, workOrderID int64, testResultID int64, adminID int64) (entity.ObservationResult, error) {
+	// Check if the admin is a doctor for this work order
+	workOrder, err := u.workOrderRepository.FindOne(workOrderID)
+	if err != nil {
+		return entity.ObservationResult{}, err
+	}
+
+	if !slices.Contains(workOrder.DoctorIDs, adminID) {
+		return entity.ObservationResult{}, entity.ErrForbidden
+	}
+
+	return u.resultRepository.Delete(ctx, testResultID)
 }
 
 func (u *Usecase) groupResultInCategory(tests []entity.TestResult) map[string][]entity.TestResult {

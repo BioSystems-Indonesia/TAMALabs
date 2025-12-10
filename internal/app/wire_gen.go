@@ -51,7 +51,6 @@ import (
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/device"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
-	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simrs"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/license"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/observation_request"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/patient"
@@ -144,7 +143,18 @@ func InitRestApp() server.RestServer {
 	logHandler := rest.NewLogHandler(schema)
 	license := provideLicenseService()
 	licenseHandler := rest.NewLicenseHandler(license)
-	restHandler := provideRestHandler(hlSevenHandler, healthCheckHandler, healthHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler, unitHandler, logHandler, licenseHandler)
+	khanzaRepository := provideKhanzaRepository(schema)
+	khanzaucUsecase := khanzauc.NewUsecase(khanzaRepository, workOrderRepository, patientRepository, test_typeRepository, barcode_generatorUsecase, resultUsecase)
+	simrsRepository := provideSimrsRepository(schema)
+	simrsucUsecase := provideSimrsUsecase(schema, simrsRepository, workOrderRepository, workOrderUseCase, patientRepository, test_typeRepository, resultUsecase)
+	simgosRepository := provideSimgosRepository(schema)
+	simgosucUsecase := provideSimgosUsecase(schema, simgosRepository, workOrderRepository, workOrderUseCase, patientRepository, test_typeRepository, resultUsecase)
+	configUsecase := provideConfigUsecaseForCron(configrepoRepository)
+	cronHandler := cron.NewCronHandler(khanzaucUsecase, simrsucUsecase, simgosucUsecase, configUsecase)
+	configChecker := provideConfigCheckerForCron(configrepoRepository)
+	cronManager := cron.NewCronManager(cronHandler, configChecker)
+	restCronHandler := provideCronHandler(cronManager)
+	restHandler := provideRestHandler(hlSevenHandler, healthCheckHandler, healthHandler, patientHandler, specimenHandler, workOrderHandler, featureListHandler, observationRequestHandler, testTypeHandler, resultHandler, configHandler, unitHandler, logHandler, licenseHandler, restCronHandler)
 	deviceHandler := rest.NewDeviceHandler(deviceUseCase)
 	serverControllerHandler := rest.NewServerControllerHandler(configrepoRepository, controllerRepository)
 	test_templateRepository := test_template.NewRepository(gormDB, schema)
@@ -158,19 +168,16 @@ func InitRestApp() server.RestServer {
 	adminHandler := rest.NewAdminHandler(schema, adminUsecase)
 	roleUsecase := role_uc.NewRoleUsecase(roleRepository)
 	roleHandler := rest.NewRoleHandler(schema, roleUsecase)
-	khanzaRepository := provideKhanzaRepository(schema)
-	khanzaucUsecase := khanzauc.NewUsecase(khanzaRepository, workOrderRepository, patientRepository, test_typeRepository, barcode_generatorUsecase, resultUsecase)
-	khanzaExternalHandler := rest.NewKhanzaExternalHandler(khanzaucUsecase)
-	simrsRepository := provideSimrsRepository(schema)
-	simrsucUsecase := simrsuc.NewUsecase(simrsRepository, workOrderRepository, workOrderUseCase, patientRepository, test_typeRepository, schema, resultUsecase)
+	configGetter := provideIntegrationCheckConfig(configrepoRepository)
+	integrationCheckMiddleware := middleware.NewIntegrationCheckMiddleware(configGetter)
+	khanzaExternalHandler := rest.NewKhanzaExternalHandler(khanzaucUsecase, integrationCheckMiddleware)
+	simrsExternalHandler := rest.NewSimrsExternalHandler(simrsucUsecase, integrationCheckMiddleware)
 	externalucUsecase := externaluc.NewUsecase(khanzaucUsecase, simrsucUsecase, workOrderRepository, schema)
 	externalHandler := rest.NewExternalHandler(externalucUsecase)
 	jwtMiddleware := middleware.NewJWTMiddleware(schema)
-	cronHandler := cron.NewCronHandler(khanzaucUsecase, simrsucUsecase)
-	cronManager := cron.NewCronManager(cronHandler)
 	summaryRepository := summaryrepo.NewSummaryRepository(gormDB)
 	summaryUseCase := summary_uc.NewSummaryUsecase(summaryRepository)
-	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, externalHandler, jwtMiddleware, cronManager, summaryUseCase)
+	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, simrsExternalHandler, externalHandler, jwtMiddleware, cronManager, summaryUseCase)
 	return restServer
 }
 

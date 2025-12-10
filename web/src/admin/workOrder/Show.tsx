@@ -27,7 +27,6 @@ import {
 } from "react-admin";
 import { useReactToPrint } from "react-to-print";
 import LIMSBarcode from '../../component/Barcode';
-// import { trimName } from '../../helper/format';
 import useSettings from '../../hooks/useSettings';
 import type { BarcodeStyle } from '../../types/general';
 import { User } from '../../types/user';
@@ -250,7 +249,7 @@ export function WorkOrderShow() {
                                                 <Typography variant='subtitle1' sx={{
                                                     textAlign: "center",
                                                 }}>Analyts</Typography>
-                                                <RecordContextProvider value={record.analyst}>
+                                                <RecordContextProvider value={record.analyzers}>
                                                     <AdminShow icon={<ScienceIcon />} />
                                                 </RecordContextProvider>
                                             </Stack>
@@ -266,6 +265,7 @@ export function WorkOrderShow() {
                     <TextField source="id" />
                     <TextField source="barcode" label="Barcode" />
                     <TextField source="barcode_simrs" label="Barcode SIMRS" />
+                    <TextField source="medical_record_number" label="No. Rekam Medis" />
                     <DateField source="created_at" showTime />
                     <DateField source="updated_at" showTime />
                     <ReferenceField source="created_by" reference='user' />
@@ -284,7 +284,7 @@ export function WorkOrderShow() {
                                 return (
                                     <LIMSBarcode
                                         barcode={specimen.barcode}
-                                        name={`${record.patient.first_name} ${record.patient.last_name}`}
+                                        name={record.patient.first_name}
                                         height={settings.barcode_height}
                                         width={settings.barcode_width}
                                         birthDt={record.patient.birthdate}

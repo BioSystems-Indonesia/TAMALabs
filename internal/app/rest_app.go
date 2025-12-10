@@ -47,6 +47,7 @@ import (
 	deviceuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/device"
 	externaluc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external"
 	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
+	simgosuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simgos"
 	simrsuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simrs"
 	observation_requestuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/observation_request"
 	patientuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/patient"
@@ -89,8 +90,10 @@ var restUsecaseSet = wire.NewSet(
 	analyzer.NewUsecase,
 	wire.Bind(new(usecase.Analyzer), new(*analyzer.Usecase)),
 	khanzauc.NewUsecase,
-	simrsuc.NewUsecase,
+	provideSimrsUsecase,
 	wire.Bind(new(cron.SIMRSUsecase), new(*simrsuc.Usecase)),
+	provideSimgosUsecase,
+	wire.Bind(new(cron.SIMGOSUsecase), new(*simgosuc.Usecase)),
 	externaluc.NewUsecase,
 	provideLicenseService,
 	summary_uc.NewSummaryUsecase,
@@ -116,6 +119,7 @@ var restRepositorySet = wire.NewSet(
 	server.NewControllerRepository,
 	provideKhanzaRepository,
 	provideSimrsRepository,
+	provideSimgosRepository,
 	provideAllDevices,
 	summaryrepo.NewSummaryRepository,
 )
@@ -141,6 +145,8 @@ var tcpHandlerSet = wire.NewSet(
 
 var restMiddlewareSet = wire.NewSet(
 	middleware.NewJWTMiddleware,
+	middleware.NewIntegrationCheckMiddleware,
+	provideIntegrationCheckConfig,
 )
 
 var restHandlerSet = wire.NewSet(
@@ -165,8 +171,9 @@ var restHandlerSet = wire.NewSet(
 	rest.NewLogHandler,
 	rest.NewExternalHandler,
 	rest.NewKhanzaExternalHandler,
+	rest.NewSimrsExternalHandler,
 	rest.NewLicenseHandler,
-	summary_uc.NewSummaryUsecase,
+	provideCronHandler,
 )
 
 var (
@@ -183,6 +190,8 @@ var (
 		tcpHandlerSet,
 		cron.NewCronHandler,
 		cron.NewCronManager,
+		provideConfigUsecaseForCron,
+		provideConfigCheckerForCron,
 		provideRestHandler,
 		provideRestServer,
 	)

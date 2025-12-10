@@ -40,6 +40,17 @@ import { WorkOrderChipColorMap } from "./ChipFieldStatus.tsx";
 import WorkOrderForm from "./Form.tsx";
 import RunWorkOrderForm from "./RunWorkOrderForm.tsx";
 
+const NullableField = ({ value }: { value: any }) => (
+    <span style={{
+        color: !value || value === '' ? '#888' : 'inherit',
+        fontStyle: !value || value === '' ? 'italic' : 'normal',
+        opacity: !value || value === '' ? 0.6 : 1,
+        fontSize: !value || value === '' ? '0.875rem' : 'inherit'
+    }}>
+        {value || 'null'}
+    </span>
+);
+
 const WorkOrderAction = () => {
     return (
         <TopToolbar sx={{
@@ -603,21 +614,24 @@ const WorkOrderDataGrid = () => {
                 )} />
                 <ReferenceField source="patient_id" reference="patient" link={false}>
                     <WithRecord render={(patient: any) => (
-                        <Typography variant="body2">
-                            {patient?.full_name || patient?.patient_name || patient?.name || `${patient?.first_name || ''} ${patient?.last_name || ''}`.trim() || '-'}
-                        </Typography>
+                        <NullableField
+                            value={patient?.full_name || patient?.patient_name || patient?.name || `${patient?.first_name || ''} ${patient?.last_name || ''}`.trim()}
+                        />
                     )} />
                 </ReferenceField>
-                <TextField source="barcode" />
-                <WithRecord label="Barcode SIMRS" render={(record: any) => (
-                    <Typography variant="body2">{record.barcode_simrs || '-'}</Typography>
+                <WithRecord label="No. RM" render={(record: any) => (
+                    <NullableField value={record.medical_record_number} />
                 )} />
+                <WithRecord label="Barcode" render={(record: any) => (
+                    <NullableField value={record.barcode} />
+                )} />
+                <WithRecord label="SIMRS No Order" render={(record: any) => (
+                    <NullableField value={record.barcode_simrs} />
+                )} />
+
                 <WithRecord label="Request" render={(record: any) => (
-                    <Typography variant="body2" >
-                        {getRequestLength(record)}
-                    </Typography>
+                    <NullableField value={getRequestLength(record)} />
                 )} />
-                <ReferenceArrayField source="doctor_ids" reference="user" />
                 <ReferenceArrayField source="analyzer_ids" label="Analyts" reference="user" />
                 <DateField source="created_at" />
                 <WrapperField label="Actions" sortable={false} >

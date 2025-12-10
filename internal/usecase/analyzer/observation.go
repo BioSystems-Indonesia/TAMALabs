@@ -244,13 +244,9 @@ func (u *Usecase) ProcessDiestro(ctx context.Context, data entity.DiestroResult)
 	// Get TestType to determine decimal formatting
 	testType, err := u.TestTypeRepository.FindOneByCode(ctx, data.TestName)
 	if err != nil {
-		// Try to find by alias_code if not found by code
-		testType, err = u.TestTypeRepository.FindOneByAliasCode(ctx, data.TestName)
-		if err != nil {
-			slog.Error("test type not found", "test_code", data.TestName, "error", err)
-			// Continue with default decimal
-			testType = entity.TestType{Decimal: 2}
-		}
+		slog.Error("test type not found", "test_code", data.TestName, "error", err)
+		// Continue with default decimal
+		testType = entity.TestType{Decimal: 2}
 	}
 
 	// Use TestType decimal setting, default to 0 if negative
@@ -284,13 +280,9 @@ func (u *Usecase) ProcessCBS400(ctx context.Context, data entity.CBS400Result) e
 	// Get TestType to determine decimal formatting
 	testType, err := u.TestTypeRepository.FindOneByCode(ctx, data.TestName)
 	if err != nil {
-		// Try to find by alias_code if not found by code
-		testType, err = u.TestTypeRepository.FindOneByAliasCode(ctx, data.TestName)
-		if err != nil {
-			slog.Error("test type not found", "test_code", data.TestName, "error", err)
-			// Continue with default decimal
-			testType = entity.TestType{Decimal: 2}
-		}
+		slog.Error("test type not found", "test_code", data.TestName, "error", err)
+		// Continue with default decimal
+		testType = entity.TestType{Decimal: 2}
 	}
 
 	// Use TestType decimal setting, default to 0 if negative
@@ -330,12 +322,8 @@ func (u *Usecase) ProcessVerifyU120(ctx context.Context, data entity.VerifyResul
 		// Get TestType to determine decimal formatting for numeric values
 		testType, err := u.TestTypeRepository.FindOneByCode(ctx, data.TestName)
 		if err != nil {
-			// Try to find by alias_code if not found by code
-			testType, err = u.TestTypeRepository.FindOneByAliasCode(ctx, data.TestName)
-			if err != nil {
-				// Use default decimal if test type not found
-				testType = entity.TestType{Decimal: 2}
-			}
+			// Use default decimal if test type not found
+			testType = entity.TestType{Decimal: 2}
 		}
 
 		decimal := testType.Decimal
@@ -387,12 +375,8 @@ func (u *Usecase) ProcessVerifyU120Batch(ctx context.Context, data []entity.Veri
 			// Get TestType to determine decimal formatting for numeric values
 			testType, err := u.TestTypeRepository.FindOneByCode(ctx, result.TestName)
 			if err != nil {
-				// Try to find by alias_code if not found by code
-				testType, err = u.TestTypeRepository.FindOneByAliasCode(ctx, result.TestName)
-				if err != nil {
-					// Use default decimal if test type not found
-					testType = entity.TestType{Decimal: 2}
-				}
+				// Use default decimal if test type not found
+				testType = entity.TestType{Decimal: 2}
 			}
 
 			decimal := testType.Decimal

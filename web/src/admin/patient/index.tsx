@@ -29,6 +29,17 @@ export type PatientFormProps = {
     mode?: ActionKeys
 }
 
+const NullableField = ({ value }: { value: any }) => (
+    <span style={{
+        color: !value || value === '' ? '#888' : 'inherit',
+        fontStyle: !value || value === '' ? 'italic' : 'normal',
+        opacity: !value || value === '' ? 0.6 : 1,
+        fontSize: !value || value === '' ? '0.875rem' : 'inherit'
+    }}>
+        {value || 'null'}
+    </span>
+);
+
 function ReferenceSection() {
     const theme = useTheme();
 
@@ -388,7 +399,14 @@ export function PatientEdit() {
             bgcolor: theme.palette.background.default,
             pb: 4
         }}>
-            <Edit resource="patient">
+            <Edit
+                resource="patient"
+                transform={(data: any) => {
+                    // Remove readonly fields that shouldn't be sent to backend
+                    const { created_at, updated_at, ...rest } = data;
+                    return rest;
+                }}
+            >
                 <PatientForm mode={"EDIT"} />
             </Edit>
         </Box>
@@ -487,6 +505,7 @@ const PatientFilterSidebar = () => {
     )
 };
 
+
 export const PatientList = () => {
     return (
         <List aside={<PatientFilterSidebar />} sort={{
@@ -494,31 +513,40 @@ export const PatientList = () => {
             order: "DESC"
         }}
             storeKey={false} exporter={false}
-        sx={{
-            '& .RaList-content': {
-                backgroundColor: 'background.paper',
-                padding: 2,
-                borderRadius: 1,
-            },
-        }}>
-        <DataTable>
-            <DataTable.Col source="id" />
-            <DataTable.Col source="first_name" />
-            <DataTable.Col source="last_name" />
-            <DataTable.Col source="birthdate">
-                <DateField source="birthdate" locales={["id-ID"]} />
-            </DataTable.Col>
-            <DataTable.Col source="sex" />
-            <DataTable.Col source="location" />
-            <DataTable.Col source="created_at">
-                <DateField source="created_at" showTime />
-            </DataTable.Col>
-            <DataTable.Col source="updated_at">
-                <DateField source="updated_at" showTime />
-            </DataTable.Col>
-        </DataTable>
-    </List>
-)};
+            sx={{
+                '& .RaList-content': {
+                    backgroundColor: 'background.paper',
+                    padding: 2,
+                    borderRadius: 1,
+                },
+            }}>
+            <DataTable>
+                <DataTable.Col source="id" />
+                <DataTable.Col source="first_name" render={(record: any) => (
+                    <NullableField value={record.first_name} />
+                )} />
+                <DataTable.Col source="last_name" render={(record: any) => (
+                    <NullableField value={record.last_name} />
+                )} />
+                <DataTable.Col source="birthdate" >
+                    <DateField source="birthdate" locales={["id-ID"]} />
+                </DataTable.Col>
+                <DataTable.Col source="sex" render={(record: any) => (
+                    <NullableField value={record.sex} />
+                )} />
+                <DataTable.Col source="location" render={(record: any) => (
+                    <NullableField value={record.location} />
+                )} />
+                <DataTable.Col source="created_at">
+                    <DateField source="created_at" showTime />
+                </DataTable.Col>
+                <DataTable.Col source="updated_at">
+                    <DateField source="updated_at" showTime />
+                </DataTable.Col>
+            </DataTable>
+        </List>
+    )
+};
 
 // Export PatientInfoCard component
 export { default as PatientInfoCard } from './PatientInfoCard';

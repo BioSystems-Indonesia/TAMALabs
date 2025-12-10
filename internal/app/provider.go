@@ -24,14 +24,17 @@ import (
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/middleware"
 	khanza "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/external/khanza"
+	simgos "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/external/simgos"
 	simrs "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/external/simrs"
 	licenserepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/license"
+	configrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/config"
 	devicerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/device"
 	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
 	workOrderrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
 	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
+	simgosuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simgos"
 	simrsuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simrs"
 	licenseuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/license"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
@@ -77,6 +80,7 @@ func provideRestServer(
 	adminHandler *rest.AdminHandler,
 	roleHandler *rest.RoleHandler,
 	hrisExternal *rest.KhanzaExternalHandler,
+	simrsExternal *rest.SimrsExternalHandler,
 	khanzaHandler *rest.ExternalHandler,
 	authMiddleware *middleware.JWTMiddleware,
 	cronManager *cron.CronManager,
@@ -92,6 +96,7 @@ func provideRestServer(
 		authHandler,
 		roleHandler,
 		hrisExternal,
+		simrsExternal,
 		khanzaHandler,
 		authMiddleware,
 		summaryHandler,
@@ -115,6 +120,7 @@ func provideRestHandler(
 	unitHandler *rest.UnitHandler,
 	logHandler *rest.LogHandler,
 	licenseHandler *rest.LicenseHandler,
+	cronHandler *rest.CronHandler,
 ) *rest.Handler {
 	return &rest.Handler{
 		HlSevenHandler:            hlSevenHandler,
@@ -131,22 +137,49 @@ func provideRestHandler(
 		UnitHandler:               unitHandler,
 		LogHandler:                logHandler,
 		LicenseHandler:            licenseHandler,
+		CronHandler:               cronHandler,
 	}
 }
 
-// dbFileName holds the path to the SQLite database file. On some environments
-// (for example when running as a service) the ProgramData environment
-// variable may not be set. In that case we fall back to the conventional
-// Windows ProgramData location: C:\\ProgramData
-var dbFileName = filepath.Join(os.Getenv("ProgramData"), "TAMALabs", "database", "TAMALabs.db")
+// dbFileName holds the path to the SQLite database file.
+// Using AppData\Local instead of ProgramData to avoid admin privilege requirements.
+// AppData\Local is writable by normal users without elevation.
+var dbFileName = getDBPath()
 
-func init() {
-	// If ProgramData is empty, attempt to use the default Windows location.
-	if os.Getenv("ProgramData") == "" && runtime.GOOS == "windows" {
-		fallback := `C:\\ProgramData`
-		dbFileName = filepath.Join(fallback, "TAMALabs", "database", "TAMALabs.db")
-		slog.Info("ProgramData env not set, using fallback path", "dbFile", dbFileName)
+func getDBPath() string {
+	// First, try to use LOCALAPPDATA (preferred for user-writable application data)
+	localAppData := os.Getenv("LOCALAPPDATA")
+	if localAppData != "" {
+		return filepath.Join(localAppData, "TAMALabs", "database", "TAMALabs.db")
 	}
+
+	// Fallback to APPDATA if LOCALAPPDATA is not set
+	appData := os.Getenv("APPDATA")
+	if appData != "" {
+		return filepath.Join(appData, "TAMALabs", "database", "TAMALabs.db")
+	}
+
+	// Last resort: use ProgramData (requires admin privileges)
+	// This maintains backward compatibility for existing installations
+	programData := os.Getenv("ProgramData")
+	if programData != "" {
+		slog.Warn("Using ProgramData for database - this may require admin privileges")
+		return filepath.Join(programData, "TAMALabs", "database", "TAMALabs.db")
+	}
+
+	// Final fallback for Windows
+	if runtime.GOOS == "windows" {
+		userProfile := os.Getenv("USERPROFILE")
+		if userProfile != "" {
+			return filepath.Join(userProfile, "AppData", "Local", "TAMALabs", "database", "TAMALabs.db")
+		}
+		// Absolute fallback
+		slog.Warn("All environment variables empty, using hardcoded path")
+		return `C:\Users\Public\TAMALabs\database\TAMALabs.db`
+	}
+
+	// For non-Windows systems
+	return filepath.Join(os.TempDir(), "TAMALabs", "database", "TAMALabs.db")
 }
 
 var initDBOnce sync.Once
@@ -161,21 +194,24 @@ func fileExists(filename string) bool {
 }
 
 func InitSQLiteDB() (*gorm.DB, error) {
+	// Try to migrate from old ProgramData location if exists
+	migrateOldDatabaseLocation()
+
 	// Ensure directory exists. Do not use initDBOnce here because
 	// provideDB is already guarding initialization with initDBOnce.Do.
 	// Calling initDBOnce.Do recursively would deadlock.
 	if !fileExists(dbFileName) {
-		slog.Info("DB not exists, creating folder...")
+		slog.Info("DB not exists, creating folder...", "path", dbFileName)
 		if err := os.MkdirAll(filepath.Dir(dbFileName), 0755); err != nil {
 			slog.Error("Failed to create folder", "error", err)
 			return nil, err
 		}
 		slog.Info("Folder created, DB will be created automatically by GORM")
 	} else {
-		slog.Info("DB already exists")
+		slog.Info("DB already exists", "path", dbFileName)
 	}
 
-	dialec, err := sql.Open("sqlite", dbFileName)
+	dialec, err := sql.Open("sqlite", dbFileName+"?_parseTime=true")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -190,6 +226,92 @@ func InitSQLiteDB() (*gorm.DB, error) {
 	db.Logger = db.Logger.LogMode(logger.Error)
 
 	return db, nil
+}
+
+// migrateOldDatabaseLocation attempts to copy database from old ProgramData location
+// to new AppData location if it exists and new location doesn't have a database yet
+func migrateOldDatabaseLocation() {
+	// Don't migrate if new location already has a database
+	if fileExists(dbFileName) {
+		return
+	}
+
+	// Check old ProgramData location
+	programData := os.Getenv("ProgramData")
+	if programData == "" && runtime.GOOS == "windows" {
+		programData = `C:\ProgramData`
+	}
+
+	oldDBPath := filepath.Join(programData, "TAMALabs", "database", "TAMALabs.db")
+
+	// If old database exists, try to copy it
+	if fileExists(oldDBPath) {
+		slog.Info("Found old database in ProgramData, attempting to migrate...",
+			"from", oldDBPath, "to", dbFileName)
+
+		// Create new directory
+		if err := os.MkdirAll(filepath.Dir(dbFileName), 0755); err != nil {
+			slog.Error("Failed to create new database directory", "error", err)
+			return
+		}
+
+		// Read old database
+		data, err := os.ReadFile(oldDBPath)
+		if err != nil {
+			slog.Error("Failed to read old database", "error", err)
+			return
+		}
+
+		// Write to new location
+		if err := os.WriteFile(dbFileName, data, 0644); err != nil {
+			slog.Error("Failed to write new database", "error", err)
+			return
+		}
+
+		slog.Info("Successfully migrated database from ProgramData to AppData")
+
+		// Also try to migrate license files
+		migrateLicenseFiles(programData)
+	}
+}
+
+// migrateLicenseFiles copies license files from old location to new
+func migrateLicenseFiles(oldProgramData string) {
+	oldLicenseDir := filepath.Join(oldProgramData, "TAMALabs", "license")
+
+	localAppData := os.Getenv("LOCALAPPDATA")
+	if localAppData == "" {
+		localAppData = os.Getenv("APPDATA")
+	}
+	if localAppData == "" {
+		return
+	}
+
+	newLicenseDir := filepath.Join(localAppData, "TAMALabs", "license")
+
+	// Create new license directory
+	if err := os.MkdirAll(newLicenseDir, 0755); err != nil {
+		slog.Error("Failed to create new license directory", "error", err)
+		return
+	}
+
+	// Copy license.json if exists
+	oldLicenseFile := filepath.Join(oldLicenseDir, "license.json")
+	if fileExists(oldLicenseFile) {
+		data, err := os.ReadFile(oldLicenseFile)
+		if err != nil {
+			slog.Error("Failed to read old license file", "error", err)
+			return
+		}
+
+		newLicenseFile := filepath.Join(newLicenseDir, "license.json")
+		if err := os.WriteFile(newLicenseFile, data, 0644); err != nil {
+			slog.Error("Failed to write new license file", "error", err)
+			return
+		}
+
+		slog.Info("Successfully migrated license file")
+	}
 }
 
 func InitDatabase() (*gorm.DB, error) {
@@ -287,14 +409,14 @@ func seedTestData(db *gorm.DB) error {
 		}
 	}
 
-	for _, testType := range seedDataTestType {
-		err := db.Clauses(clause.OnConflict{
-			DoNothing: true,
-		}).Create(&testType).Error
-		if err != nil {
-			return err
-		}
-	}
+	// for _, testType := range seedDataTestType {
+	// 	err := db.Clauses(clause.OnConflict{
+	// 		DoNothing: true,
+	// 	}).Create(&testType).Error
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	// for _, device := range seedDevice {
 	// 	err := db.Clauses(clause.OnConflict{
@@ -445,18 +567,52 @@ func provideSimrsUsecase(
 	testTypeRepo *test_type.Repository,
 	resultUC *result.Usecase,
 ) *simrsuc.Usecase {
-	if cfg.SimrsIntegrationEnabled != "true" {
-		slog.Info("SIMRS integration is disabled, SIMRS Usecase will not be created")
-		return nil
-	}
-
-	if simrsRepo == nil {
-		slog.Info("SIMRS repository is nil (connection failed), SIMRS Usecase will not be created")
-		return nil
-	}
+	// Always create usecase - it will handle lazy initialization based on config
+	// For SIMRS API mode (simrs-api), simrsRepo will be nil but we still need the usecase
+	// to handle external API requests. The usecase will work with local repositories only.
+	slog.Info("Creating SIMRS Usecase", "integration_enabled", cfg.SimrsIntegrationEnabled, "has_simrs_repo", simrsRepo != nil)
 
 	return simrsuc.NewUsecase(
 		simrsRepo,
+		workOrderRepo,
+		workOrderUC,
+		patientRepo,
+		testTypeRepo,
+		cfg,
+		resultUC,
+	)
+}
+
+func provideSimgosRepository(cfg *config.Schema) *simgos.Repository {
+	if cfg.SimgosIntegrationEnabled != "true" {
+		return nil
+	}
+
+	simgosDB, err := simgos.NewDB(cfg.SimgosDatabaseDSN)
+	if err != nil {
+		slog.Error("Error on create Database Sharing db connection. If you want to disable Database Sharing integration, set SimgosIntegrationEnabled to false on config", "error", err)
+		slog.Info("failed to create Database Sharing db connection, Database Sharing integration will be disabled", "error", err)
+		return nil
+	}
+
+	return simgos.NewRepository(simgosDB)
+}
+
+func provideSimgosUsecase(
+	cfg *config.Schema,
+	simgosRepo *simgos.Repository,
+	workOrderRepo *workOrderrepo.WorkOrderRepository,
+	workOrderUC *workOrderuc.WorkOrderUseCase,
+	patientRepo *patientrepo.PatientRepository,
+	testTypeRepo *test_type.Repository,
+	resultUC *result.Usecase,
+) *simgosuc.Usecase {
+	// Always create usecase - it will handle lazy initialization based on config
+	// The repository will be created on-demand when integration is enabled
+	slog.Info("Creating Database Sharing Usecase", "integration_enabled", cfg.SimgosIntegrationEnabled, "has_simgos_repo", simgosRepo != nil)
+
+	return simgosuc.NewUsecase(
+		simgosRepo,
 		workOrderRepo,
 		workOrderUC,
 		patientRepo,
@@ -497,15 +653,16 @@ func provideLicenseService() *licenseuc.License {
 	pubLoader := licenserepo.NewFSKeyLoader()
 	fileLoader := licenserepo.NewFSFileLoader()
 
-	// License directory under the same ProgramData/TAMALabs root as the DB
-	// dbFileName = .../ProgramData/TAMALabs/database/TAMALabs.db
-	programRoot := filepath.Dir(filepath.Dir(dbFileName)) // ProgramData/TAMALabs
+	// License directory under the same AppData/TAMALabs root as the DB
+	// dbFileName = .../AppData/Local/TAMALabs/database/TAMALabs.db
+	// Result: .../AppData/Local/TAMALabs/license
+	programRoot := filepath.Dir(filepath.Dir(dbFileName)) // AppData/Local/TAMALabs
 	licenseDir := filepath.Join(programRoot, "license")
 	if err := os.MkdirAll(licenseDir, 0755); err != nil {
 		slog.Warn("Failed to create license directory", "error", err)
 	}
 
-	// absolute paths under ProgramData/TAMALabs/license
+	// absolute paths under AppData/Local/TAMALabs/license
 	pubKeyPath := filepath.Join(licenseDir, "server_public.pem")
 	licensePath := filepath.Join(licenseDir, "license.json")
 	revokedPath := filepath.Join(licenseDir, "revoked.json")
@@ -629,4 +786,23 @@ func provideLicenseService() *licenseuc.License {
 	}()
 
 	return lic
+}
+
+func provideCronHandler(cronManager *cron.CronManager) *rest.CronHandler {
+	return rest.NewCronHandler(cronManager)
+}
+
+// provideConfigUsecaseForCron provides config repository as ConfigUsecase interface
+func provideConfigUsecaseForCron(repo *configrepo.Repository) cron.ConfigUsecase {
+	return repo
+}
+
+// provideConfigCheckerForCron provides config repository as ConfigChecker interface
+func provideConfigCheckerForCron(repo *configrepo.Repository) cron.ConfigChecker {
+	return repo
+}
+
+// provideIntegrationCheckConfig provides config repository as ConfigGetter interface for middleware
+func provideIntegrationCheckConfig(repo *configrepo.Repository) middleware.ConfigGetter {
+	return repo
 }

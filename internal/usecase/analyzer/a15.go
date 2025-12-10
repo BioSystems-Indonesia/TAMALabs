@@ -27,10 +27,15 @@ type A15Result struct {
 }
 
 func (u *Usecase) ProcessA15(ctx context.Context) error {
+	slog.Info("ProcessA15: Starting analyzer A15 processing")
+
 	wol, err := u.WorkOrderRepository.FindByStatus(ctx, entity.WorkOrderStatusPending)
 	if err != nil {
+		slog.Error("ProcessA15: Failed to find pending work orders", "error", err)
 		return err
 	}
+
+	slog.Info("ProcessA15: Found pending work orders", "count", len(wol))
 
 	a15Device := make([]entity.Device, 0)
 
@@ -43,14 +48,19 @@ func (u *Usecase) ProcessA15(ctx context.Context) error {
 	}
 	a15Device = removeDuplicates(a15Device)
 
+	slog.Info("ProcessA15: Found A15 devices", "count", len(a15Device))
+
 	lrs := make([]A15Result, 0)
 	for _, device := range a15Device {
 		lr, err := connectToSamba(device)
 		if err != nil {
+			slog.Error("ProcessA15: Failed to connect to Samba", "device", device.Name, "error", err)
 			return err
 		}
 		lrs = append(lrs, lr...)
 	}
+
+	slog.Info("ProcessA15: Retrieved analyzer results", "count", len(lrs))
 
 	for _, lr := range lrs {
 		speciment, err := u.SpecimenRepository.FindByBarcode(ctx, lr.PatientID)
@@ -59,36 +69,60 @@ func (u *Usecase) ProcessA15(ctx context.Context) error {
 			continue
 		}
 
-		// Get TestType to determine decimal formatting
-		testType, err := u.TestTypeRepository.FindOneByCode(ctx, lr.TestName)
-		if err != nil {
-			// Try to find by alias_code if not found by code
-			testType, err = u.TestTypeRepository.FindOneByAliasCode(ctx, lr.TestName)
-			if err != nil {
-				slog.Error("test type not found", "test_code", lr.TestName, "error", err)
+		// Get ALL observation requests for this specimen with matching test code
+		// This handles multiple test types with same code (GDP, GDS, G2JPP all use GLUCOSE)
+		observationRequests, err := u.ObservationRequestRepository.FindBySpecimenIDAndTestCode(ctx, int64(speciment.ID), lr.TestName)
+		if err != nil || len(observationRequests) == 0 {
+			slog.Error("observation request not found", "specimen_id", speciment.ID, "test_code", lr.TestName, "error", err, "found_count", len(observationRequests))
+			continue
+		}
+
+		slog.Info("found observation requests for analyzer result",
+			"specimen_id", speciment.ID,
+			"test_code", lr.TestName,
+			"count", len(observationRequests),
+			"value", lr.Value)
+
+		// Create observation result for EACH requested test type with this code
+		// This ensures GDP and GDS both get the same analyzer value
+		for _, obsReq := range observationRequests {
+			if obsReq.TestTypeID == nil {
+				slog.Warn("observation request has no test_type_id, skipping", "specimen_id", speciment.ID, "test_code", lr.TestName)
 				continue
 			}
-		}
 
-		// Use TestType decimal setting, default to 2 if not set or negative
-		decimal := testType.Decimal
-		if decimal < 0 {
-			decimal = 2
-		}
+			// Get TestType to determine decimal formatting
+			testType, err := u.TestTypeRepository.FindOneByID(ctx, *obsReq.TestTypeID)
+			if err != nil {
+				slog.Error("test type not found", "test_type_id", *obsReq.TestTypeID, "error", err)
+				continue
+			}
 
-		observation := entity.ObservationResult{
-			SpecimenID:  int64(speciment.ID),
-			TestCode:    lr.TestName,
-			Description: lr.TestName,
-			Values:      []string{fmt.Sprintf("%.*f", decimal, lr.Value)},
-			Unit:        lr.Unit,
-			Date:        lr.Timestamp,
-		}
+			// Use TestType decimal setting, default to 2 if not set or negative
+			decimal := testType.Decimal
+			if decimal < 0 {
+				decimal = 2
+			}
 
-		err = u.ObservationResultRepository.Create(ctx, &observation)
-		if err != nil {
-			slog.Error("failed to create observation result", "specimen_id", speciment.ID, "test_code", lr.TestName, "error", err)
-			continue
+			testTypeID := testType.ID
+
+			observation := entity.ObservationResult{
+				SpecimenID:  int64(speciment.ID),
+				TestCode:    lr.TestName,
+				TestTypeID:  &testTypeID,
+				Description: testType.Name, // Use test type name (GDP/GDS) not code (GLUCOSE)
+				Values:      []string{fmt.Sprintf("%.*f", decimal, lr.Value)},
+				Unit:        lr.Unit,
+				Date:        lr.Timestamp,
+			}
+
+			err = u.ObservationResultRepository.Create(ctx, &observation)
+			if err != nil {
+				slog.Error("failed to create observation result", "specimen_id", speciment.ID, "test_type_id", testTypeID, "test_code", lr.TestName, "error", err)
+				continue
+			}
+
+			slog.Info("created observation result from analyzer", "specimen_id", speciment.ID, "test_type_id", testTypeID, "test_code", lr.TestName, "test_name", testType.Name, "value", lr.Value)
 		}
 	}
 
@@ -260,13 +294,11 @@ func (u *Usecase) SaveFileResult(context context.Context, data string) error {
 
 		// Find the correct test type that matches both code and specimen type
 		var matchedTestType *entity.TestType
-		var matchedSpecimenType string
 		for _, tt := range testTypes {
 			// Check if this test type supports the specimen type
 			for _, specimenTypeStruct := range tt.Type {
 				if specimenTypeStruct.Type == result.SampleType {
 					matchedTestType = &tt
-					matchedSpecimenType = specimenTypeStruct.Type
 					break
 				}
 			}
@@ -307,40 +339,63 @@ func (u *Usecase) SaveFileResult(context context.Context, data string) error {
 		}
 
 		firstValue := fmt.Sprintf("%.*f", decimal, result.Value)
-		exists, err := u.ObservationResultRepository.Exists(context, int64(speciment.ID), result.TestName, result.Timestamp, firstValue)
-		if err != nil {
-			// if exists check fails, log and continue to try create to avoid silently skipping
-			slog.Error("failed to check existing observation result", "specimen_id", speciment.ID, "test_code", result.TestName, "error", err)
+
+		// Get ALL observation requests for this specimen with matching test code
+		// This handles multiple test types with same code (GDP, GDS, G2JPP all use GLUCOSE)
+		observationRequests, err := u.ObservationRequestRepository.FindBySpecimenIDAndTestCode(context, int64(speciment.ID), result.TestName)
+		if err != nil || len(observationRequests) == 0 {
+			slog.Error("observation request not found for SaveFileResult", "specimen_id", speciment.ID, "test_code", result.TestName, "error", err)
+			continue
 		}
 
-		if exists {
-			slog.Info("observation result already exists, skipping insert", "specimen_id", speciment.ID, "test_code", result.TestName, "value", firstValue, "date", result.Timestamp)
-		} else {
+		slog.Info("SaveFileResult: found observation requests",
+			"specimen_id", speciment.ID,
+			"test_code", result.TestName,
+			"count", len(observationRequests),
+			"value", result.Value)
+
+		// Create observation result for EACH requested test type with this code
+		for _, obsReq := range observationRequests {
+			if obsReq.TestTypeID == nil {
+				slog.Warn("SaveFileResult: observation request has no test_type_id, skipping", "specimen_id", speciment.ID, "test_code", result.TestName)
+				continue
+			}
+
+			// Get TestType for this specific observation request
+			testType, err := u.TestTypeRepository.FindOneByID(context, *obsReq.TestTypeID)
+			if err != nil {
+				slog.Error("SaveFileResult: test type not found", "test_type_id", *obsReq.TestTypeID, "error", err)
+				continue
+			}
+
+			testTypeID := testType.ID
+
 			err = u.ObservationResultRepository.Create(context, &entity.ObservationResult{
 				SpecimenID:  int64(speciment.ID),
 				TestCode:    result.TestName,
-				Description: result.TestName,
+				TestTypeID:  &testTypeID,
+				Description: testType.Name, // Use test type name (GDP/GDS) not code (GLUCOSE)
 				Values:      []string{firstValue},
 				Unit:        result.Unit,
 				Date:        result.Timestamp,
 			})
 			if err != nil {
+				slog.Error("SaveFileResult: failed to create observation result", "specimen_id", speciment.ID, "test_type_id", testTypeID, "error", err)
 				errs = append(errs, err)
+				continue
 			}
+
+			slog.Info("SaveFileResult: created observation result",
+				"specimen_id", speciment.ID,
+				"test_type_id", testTypeID,
+				"test_code", result.TestName,
+				"test_name", testType.Name,
+				"specimen_type", speciment.Type,
+				"value", result.Value,
+				"unit", result.Unit)
 		}
 
 		uniqueWorkOrderIDs[int64(speciment.WorkOrder.ID)] = struct{}{}
-
-		slog.Info(
-			"observation result created with specimen type validation",
-			"specimen_id", speciment.ID,
-			"specimen_type", speciment.Type,
-			"test_code", result.TestName,
-			"matched_test_type_specimen_type", matchedSpecimenType,
-			"value", result.Value,
-			"unit", result.Unit,
-			"date", result.Timestamp,
-		)
 	}
 
 	for workOrderID := range uniqueWorkOrderIDs {

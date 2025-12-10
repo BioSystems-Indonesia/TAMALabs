@@ -44,11 +44,30 @@ func (r AdminRepository) FindAll(
 		})
 
 	if len(roleIDs) > 0 {
-		db = db.Distinct("id", "fullname", "email", "username")
+		db = db.Distinct()
 		db = db.Joins("join admin_roles on admin_roles.admin_id = admins.id and admin_roles.role_id in?", roleIDs)
 	}
 
 	return sql.GetWithPaginationResponse[entity.Admin](db, req.GetManyRequest)
+}
+
+// FindAllByRole finds all admins with a specific role without pagination
+func (r AdminRepository) FindAllByRole(ctx context.Context, roleName entity.RoleName) ([]entity.Admin, error) {
+	var admins []entity.Admin
+
+	err := r.db.WithContext(ctx).
+		Preload("Roles").
+		Joins("JOIN admin_roles ON admin_roles.admin_id = admins.id").
+		Joins("JOIN roles ON roles.id = admin_roles.role_id AND roles.name = ?", roleName).
+		Where("admins.is_active = ?", true).
+		Order("admins.fullname ASC").
+		Find(&admins).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("error finding admins by role: %w", err)
+	}
+
+	return admins, nil
 }
 
 func (r AdminRepository) FindOne(id int64) (entity.Admin, error) {

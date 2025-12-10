@@ -42,6 +42,15 @@ func (r *Repository) FindOne(ctx context.Context, id string) (entity.Config, err
 	return config, nil
 }
 
+// Get retrieves a config value by key (alias for FindOne with value extraction)
+func (r *Repository) Get(ctx context.Context, key string) (string, error) {
+	config, err := r.FindOne(ctx, key)
+	if err != nil {
+		return "", err
+	}
+	return config.Value, nil
+}
+
 func (r *Repository) Edit(ctx context.Context, id string, value string) (entity.Config, error) {
 	config, err := r.FindOne(ctx, id)
 	if err != nil {

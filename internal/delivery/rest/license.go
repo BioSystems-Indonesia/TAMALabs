@@ -129,13 +129,30 @@ func (h *LicenseHandler) removeFileWithRetry(filePath string) {
 }
 
 // licenseDirPaths returns the absolute license directory and commonly used file paths
+// Uses AppData\Local instead of ProgramData to avoid admin privilege requirements
 func licenseDirPaths() (licenseDir, licensePath, revokedPath, expiredPath string) {
-	prog := os.Getenv("ProgramData")
-	if prog == "" && runtime.GOOS == "windows" {
-		prog = `C:\\ProgramData`
+	// Prefer LOCALAPPDATA for user-writable application data
+	localAppData := os.Getenv("LOCALAPPDATA")
+	if localAppData != "" {
+		programRoot := filepath.Join(localAppData, "TAMALabs")
+		licenseDir = filepath.Join(programRoot, "license")
+	} else {
+		// Fallback to APPDATA
+		appData := os.Getenv("APPDATA")
+		if appData != "" {
+			programRoot := filepath.Join(appData, "TAMALabs")
+			licenseDir = filepath.Join(programRoot, "license")
+		} else if runtime.GOOS == "windows" {
+			// Last resort: ProgramData (backward compatibility)
+			prog := os.Getenv("ProgramData")
+			if prog == "" {
+				prog = `C:\ProgramData`
+			}
+			programRoot := filepath.Join(prog, "TAMALabs")
+			licenseDir = filepath.Join(programRoot, "license")
+		}
 	}
-	programRoot := filepath.Join(prog, "TAMALabs")
-	licenseDir = filepath.Join(programRoot, "license")
+
 	licensePath = filepath.Join(licenseDir, "license.json")
 	revokedPath = filepath.Join(licenseDir, "revoked.json")
 	expiredPath = filepath.Join(licenseDir, "expired.json")
@@ -222,7 +239,7 @@ func (h *LicenseHandler) ActivateLicense(c echo.Context) error {
 		})
 	}
 
-	// write to ProgramData/TAMALabs/license/license.json
+	// write to AppData/Local/TAMALabs/license/license.json
 	_, licensePath, revokedPath, expiredPath := licenseDirPaths()
 	if err := os.MkdirAll(filepath.Dir(licensePath), 0755); err != nil {
 		slog.Warn("Failed to create license dir", "error", err)

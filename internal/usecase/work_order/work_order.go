@@ -86,6 +86,10 @@ func (p WorkOrderUseCase) Update(workOrder *entity.WorkOrder) error {
 	return p.workOrderRepo.Update(workOrder)
 }
 
+func (p WorkOrderUseCase) UpdateReleaseDate(id int, resultReleaseDate string) error {
+	return p.workOrderRepo.UpdateReleaseDate(id, resultReleaseDate)
+}
+
 func (p WorkOrderUseCase) UpsertDevice(workOrderID int64, deviceID int64) error {
 	return p.workOrderRepo.UpsertDevice(workOrderID, deviceID)
 }

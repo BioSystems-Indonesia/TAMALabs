@@ -23,6 +23,7 @@ var (
 	reDate        = regexp.MustCompile(`\d{4}/\d{2}/\d{2}`)
 	reTime        = regexp.MustCompile(`\d{2}:\d{2}:\d{2}`)
 	reOnlyDigits  = regexp.MustCompile(`^\d{3,10}$`)
+	rePatientID   = regexp.MustCompile(`^[A-Z]{2,4}\d{6,12}$`) // matches SER251113009, etc.
 )
 
 type Handler struct {
@@ -118,6 +119,12 @@ func parseReportTolerant(cleaned string) ([]entity.DiestroResult, error) {
 		if strings.HasPrefix(low, "patient") {
 			if idx := strings.Index(l, ":"); idx >= 0 {
 				cand := strings.TrimSpace(l[idx+1:])
+				// Check for alphanumeric IDs like SER251113009
+				if rePatientID.MatchString(cand) {
+					patientID = cand
+					break
+				}
+				// Fallback to numeric-only IDs
 				if reOnlyDigits.MatchString(cand) {
 					patientID = cand
 					break
@@ -125,6 +132,12 @@ func parseReportTolerant(cleaned string) ([]entity.DiestroResult, error) {
 			}
 			if i+1 < len(lines) {
 				cand := strings.TrimSpace(lines[i+1])
+				// Check for alphanumeric IDs
+				if rePatientID.MatchString(cand) {
+					patientID = cand
+					break
+				}
+				// Fallback to numeric-only IDs
 				if reOnlyDigits.MatchString(cand) {
 					patientID = cand
 					break
@@ -138,8 +151,15 @@ func parseReportTolerant(cleaned string) ([]entity.DiestroResult, error) {
 			if strings.HasPrefix(ll, "mem") {
 				continue
 			}
-			if reOnlyDigits.MatchString(strings.TrimSpace(l)) {
-				patientID = strings.TrimSpace(l)
+			cand := strings.TrimSpace(l)
+			// Check for alphanumeric IDs first
+			if rePatientID.MatchString(cand) {
+				patientID = cand
+				break
+			}
+			// Fallback to numeric-only IDs
+			if reOnlyDigits.MatchString(cand) {
+				patientID = cand
 				break
 			}
 		}

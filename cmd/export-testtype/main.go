@@ -30,7 +30,7 @@ func main() {
 	// Connect to database using modernc.org/sqlite driver
 	db, err := gorm.Open(sqlite.Dialector{
 		DriverName: "sqlite",
-		DSN:        dbFileName,
+		DSN:        dbFileName + "?_parseTime=true",
 	}, &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)

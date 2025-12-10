@@ -8,6 +8,8 @@ import {
 } from '@react-pdf/renderer';
 import dayjs from 'dayjs';
 import { useEffect, useState, useMemo } from 'react';
+import { useNotify, useRefresh } from 'react-admin';
+import useAxios from '../hooks/useAxios';
 import type { ReportData, ReportDataAbnormality, TestResult } from '../types/observation_result';
 import type { Patient } from '../types/patient';
 import type { WorkOrder } from '../types/work_order';
@@ -31,17 +33,55 @@ const GenerateReportButton = (prop: GenerateReportButtonProps) => {
     const [data, setData] = useState<ReportData[]>([])
     // const [groupedData, setGroupedData] = useState<{ [category: string]: ReportData[] }>({})
     const [isGenerating, setIsGenerating] = useState(false)
+    const axios = useAxios();
+    const notify = useNotify();
+    const refresh = useRefresh();
 
     const buttonId = prop.uniqueId || `${prop.workOrder.id}-${prop.patient.id}`
 
     const isGenerated = prop.currentGeneratedId === buttonId
 
-    const reportDocument = useMemo(() =>
-        // <ReportDocument data={data} groupedData={groupedData} patientData={prop.patient} workOrderData={prop.workOrder} />,
-        // [data, groupedData, prop.patient, prop.workOrder]
-        <ReportDocument data={data} patientData={prop.patient} workOrderData={prop.workOrder} />,
-        [data, prop.patient, prop.workOrder]
-    )
+    const updateReleaseDate = async () => {
+        // Only update if result_release_date is not set yet
+        if (!prop.workOrder.result_release_date || prop.workOrder.result_release_date === '') {
+            const currentDate = new Date().toISOString();
+            try {
+                await axios.patch(`work-order/${prop.workOrder.id}/release-date`, {
+                    result_release_date: currentDate
+                });
+                console.log('Release date updated successfully');
+
+                // Fetch updated work order
+                const response = await axios.get(`work-order/${prop.workOrder.id}`);
+                if (response.data) {
+                    // Update the prop by triggering a refresh
+                    prop.workOrder.result_release_date = response.data.result_release_date;
+                    refresh();
+                }
+            } catch (error) {
+                console.error('Failed to update release date:', error);
+                notify('Failed to update release date', { type: 'error' });
+            }
+        }
+    };
+
+    const reportDocument = useMemo(() => {
+        // Format release date for QR code
+        const releaseDate = prop.workOrder.result_release_date
+            ? dayjs(prop.workOrder.result_release_date).format('DD-MM-YYYY HH:mm')
+            : dayjs().format('DD-MM-YYYY HH:mm');
+
+        const doctorQRText = `Dikeluarkan di UPT.RSUD KH. HAYYUNG, Kabupaten Kepulauan Selayar. Ditandatangani secara elektronik oleh dr.Hj. Misnah, M.Kes, Sp.PK(K), Pada tanggal: ${releaseDate}`;
+
+        return (
+            <ReportDocument
+                data={data}
+                patientData={prop.patient}
+                workOrderData={prop.workOrder}
+                customDoctorQRText={doctorQRText}
+            />
+        );
+    }, [data, prop.patient, prop.workOrder])
 
     useEffect(() => {
         // Add null check for prop.results
@@ -159,14 +199,18 @@ const GenerateReportButton = (prop: GenerateReportButtonProps) => {
         }
     }, [prop.currentGeneratedId, buttonId]);
 
-    const handleGenerateReport = () => {
+    const handleGenerateReport = async () => {
         setIsGenerating(true)
+
+        // Update release date when generating report
+        await updateReleaseDate();
+
         setTimeout(() => {
             setIsGenerating(false)
             if (prop.onGenerate) {
                 prop.onGenerate(buttonId)
             }
-        }, 800) // 1.5 seconds simulation
+        }, 800) // 0.8 seconds simulation
     }
     if (!isGenerated) {
         return (
@@ -228,7 +272,10 @@ const GenerateReportButton = (prop: GenerateReportButtonProps) => {
                                 }>
                                     <span>
                                         <IconButton
-                                            onClick={e => e.stopPropagation()}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                updateReleaseDate();
+                                            }}
                                             download={`MCU_Result_${dayjs(prop.workOrder.created_at).format("YYYYMMDD")}_${prop.patient.id}_${prop.patient.first_name}_${prop.patient.last_name}.pdf`}
                                             href={url || ''}
                                             disabled={loading}
@@ -259,7 +306,8 @@ const GenerateReportButton = (prop: GenerateReportButtonProps) => {
                                     <span>
                                         <IconButton
                                             onClick={(e) => {
-                                                e.stopPropagation()
+                                                e.stopPropagation();
+                                                updateReleaseDate();
                                                 if (url) {
                                                     window.open(url, '_blank')?.focus();
                                                 }

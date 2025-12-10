@@ -126,8 +126,10 @@ func (r *Repository) GetObservationRequestDifference(ctx context.Context, req *e
 					continue
 				}
 
+				testTypeID := testType.ID
 				newObservationRequest := entity.ObservationRequest{
 					TestCode:        testType.Code,
+					TestTypeID:      &testTypeID,
 					TestDescription: testType.Name,
 					SpecimenID:      int64(specimen.ID),
 					RequestedDate:   time.Now(),

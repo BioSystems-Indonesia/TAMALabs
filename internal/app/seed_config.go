@@ -40,6 +40,14 @@ var seedConfig = []entity.Config{
 		ID:    "SimrsDatabaseDSN",
 		Value: "root:secret@tcp(localhost:3306)/simrs_db?charset=utf8mb4&parseTime=True&loc=Local",
 	},
+	{
+		ID:    "SimgosIntegrationEnabled",
+		Value: "false",
+	},
+	{
+		ID:    "SimgosDatabaseDSN",
+		Value: "client:LabBridgingLIS001@tcp(192.168.0.10:3306)/lis_bridging?charset=utf8mb4&parseTime=True&loc=Local",
+	},
 }
 
 // GenerateRandomSigningKey creates a cryptographically secure random signing key.

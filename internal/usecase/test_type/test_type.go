@@ -46,3 +46,7 @@ func (u *Usecase) Update(ctx context.Context, req *entity.TestType) (entity.Test
 func (u *Usecase) Delete(ctx context.Context, req *entity.TestType) (entity.TestType, error) {
 	return u.repository.Delete(ctx, req)
 }
+
+func (u *Usecase) FindAllSimple(ctx context.Context) ([]entity.TestType, error) {
+	return u.repository.FindAllSimple(ctx)
+}

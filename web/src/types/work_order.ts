@@ -18,6 +18,11 @@ export type WorkOrder = {
   verified_status: VerifiedStatus;
   barcode: string;
   barcode_simrs: string;
+  medical_record_number: string;
+  visit_number: string;
+  specimen_collection_date: string;
+  result_release_date: string;
+  diagnosis: string;
   devices: Device[] | null;
   created_at: string;
   updated_at: string;
@@ -35,7 +40,7 @@ export type WorkOrder = {
   percent_complete: number;
   have_complete_data: boolean;
   analyzers: any[];
-}
+};
 
 export const workOrderStatusShowCancel: WorkOrderStatus[] = [
   "PENDING",

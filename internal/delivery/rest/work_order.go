@@ -93,10 +93,24 @@ func (h *WorkOrderHandler) CreateWorkOrder(c echo.Context) error {
 		return handleError(c, err)
 	}
 
+	// Log untuk debugging
+	slog.Info("CreateWorkOrder Request",
+		"visit_number", req.VisitNumber,
+		"specimen_collection_date", req.SpecimenCollectionDate,
+		"diagnosis", req.Diagnosis,
+	)
+
 	workOrder, err := h.workOrderUsecase.Create(&req)
 	if err != nil {
 		return handleError(c, err)
 	}
+
+	// Log response
+	slog.Info("CreateWorkOrder Response",
+		"id", workOrder.ID,
+		"visit_number", workOrder.VisitNumber,
+		"specimen_collection_date", workOrder.SpecimenCollectionDate,
+	)
 
 	return c.JSON(http.StatusCreated, workOrder)
 }
@@ -210,4 +224,25 @@ func (h *WorkOrderHandler) GetWorkOrderBarcode(c echo.Context) error {
 	}
 
 	return successMany(c, resp)
+}
+
+func (h *WorkOrderHandler) UpdateReleaseDate(c echo.Context) error {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	var req struct {
+		ResultReleaseDate string `json:"result_release_date"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	err = h.workOrderUsecase.UpdateReleaseDate(int(id), req.ResultReleaseDate)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.NoContent(http.StatusOK)
 }

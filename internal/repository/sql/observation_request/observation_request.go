@@ -50,6 +50,18 @@ func (r *Repository) FindOne(ctx context.Context, id int64) (entity.ObservationR
 	return ObservationRequest, nil
 }
 
+func (r *Repository) FindBySpecimenIDAndTestCode(ctx context.Context, specimenID int64, testCode string) ([]entity.ObservationRequest, error) {
+	var observationRequests []entity.ObservationRequest
+	err := r.DB.WithContext(ctx).
+		Preload("TestType").
+		Where("specimen_id = ? AND test_code = ?", specimenID, testCode).
+		Find(&observationRequests).Error
+	if err != nil {
+		return nil, fmt.Errorf("error finding observation requests: %w", err)
+	}
+	return observationRequests, nil
+}
+
 func (r *Repository) BulkUpdate(ctx context.Context, request []entity.ObservationRequest) error {
 	return r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, req := range request {
