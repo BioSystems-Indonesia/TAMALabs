@@ -19,12 +19,14 @@ import (
 // HlSevenHandler is a struct that contains the handler of the REST server.
 type HlSevenHandler struct {
 	analyzerUsecase usecase.Analyzer
+	qcUsecase       usecase.QualityControl
 }
 
 // NewHlSevenHandler creates a new instance of HlSevenHandler.
-func NewHlSevenHandler(analyzerUsecase usecase.Analyzer) *HlSevenHandler {
+func NewHlSevenHandler(analyzerUsecase usecase.Analyzer, qcUsecase usecase.QualityControl) *HlSevenHandler {
 	return &HlSevenHandler{
 		analyzerUsecase: analyzerUsecase,
+		qcUsecase:       qcUsecase,
 	}
 }
 
@@ -165,4 +167,26 @@ func simpleHD(id string) *h251.HD {
 		UniversalID:     "",
 		UniversalIDType: "",
 	}
+}
+
+// isQCMessage checks if the HL7 message contains QC specimen identifiers
+func (h *HlSevenHandler) isQCMessage(message string) bool {
+	// Check for QC HUMAN I, II, or III patterns in SPM segment
+	qcPatterns := []string{
+		"QC HUMAN I ",
+		"QC HUMAN II ",
+		"QC HUMAN III ",
+		"QC HUMAN 1 ",
+		"QC HUMAN 2 ",
+		"QC HUMAN 3 ",
+	}
+
+	upperMsg := strings.ToUpper(message)
+	for _, pattern := range qcPatterns {
+		if strings.Contains(upperMsg, pattern) {
+			return true
+		}
+	}
+
+	return false
 }

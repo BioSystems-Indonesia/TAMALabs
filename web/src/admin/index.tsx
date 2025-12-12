@@ -10,6 +10,7 @@ import TableViewIcon from '@mui/icons-material/TableView';
 import InfoIcon from '@mui/icons-material/Info';
 import LicenseIcon from '@mui/icons-material/VerifiedUser';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 import jsonServerProvider from "ra-data-json-server";
 import { Admin, CustomRoutes, fetchUtils, HttpError, Resource } from "react-admin";
 import { Route } from "react-router-dom";
@@ -37,6 +38,7 @@ import { AboutPage } from './about/index.tsx';
 import { DashboardPage } from './dashboard/index.tsx'
 import LicensePage from './license/index.tsx';
 import LicenseStatusPage from './licenseStatus/index.tsx';
+import { QualityControlList, QualityControlDetail, QCForm, QCEntryForm } from './qualityControl';
 import { useEffect, useState } from 'react';
 
 // Component to handle license check before authentication
@@ -206,6 +208,21 @@ const App = () => {
                             icon={AssessmentIcon}
                             recordRepresentation={record => `#${record.barcode}}`}
                         />
+                        <Resource
+                            name="quality-control"
+                            list={QualityControlList}
+                            hasCreate={false}
+                            hasEdit={false}
+                            hasShow={false}
+                            icon={FactCheckIcon}
+                            options={{
+                                label: "Quality Control"
+                            }}
+                        >
+                            <Route path="/:id" element={<QualityControlDetail />} />
+                            <Route path="/:deviceId/parameter/:testTypeId" element={<QCForm />} />
+                            <Route path="/:deviceId/parameter/:testTypeId/entry/new" element={<QCEntryForm />} />
+                        </Resource>
                         <Resource name="approval" list={ApprovalList} show={ResultShow}
                             hasCreate={false}
                             hasEdit={false}
@@ -213,6 +230,7 @@ const App = () => {
                             icon={ApprovalIcon}
                             recordRepresentation={record => `#${record.barcode}}`}
                         />
+
                         <Resource name="patient" list={PatientList} show={PatientShow} edit={PatientEdit} create={PatientCreate}
                             hasCreate={true}
                             hasEdit={true}

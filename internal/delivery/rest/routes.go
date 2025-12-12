@@ -147,6 +147,7 @@ func RegisterRoutes(
 	khanzaExternalHandler *KhanzaExternalHandler,
 	simrsExternalHandler *SimrsExternalHandler,
 	externalHandler *ExternalHandler,
+	qcHandler *QCEntryHandler,
 	authMiddleware *appMiddleware.JWTMiddleware,
 	summaryHandler *summary_uc.SummaryUseCase,
 ) {
@@ -222,6 +223,8 @@ func RegisterRoutes(
 	deviceHandler.RegisterRoute(authenticatedV1.Group("/device"))
 
 	serverControllerHandler.RegisterRoute(authenticatedV1.Group("/server"))
+
+	qcHandler.RegisterRoute(authenticatedV1.Group("/quality-control"))
 
 	testType := authenticatedV1.Group("/test-type")
 	{
