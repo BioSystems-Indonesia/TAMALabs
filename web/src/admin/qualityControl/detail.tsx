@@ -1,4 +1,5 @@
-import { Box as MuiBox, Card, CardContent, Typography, Chip, CircularProgress } from '@mui/material';
+import React from 'react';
+import { Box as MuiBox, Card, CardContent, Typography, CircularProgress, List, ListItem, ListItemAvatar, Avatar, ListItemText, Divider } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { useGetOne, useGetList, Link } from 'react-admin';
 import { Device } from '../../types/device';
@@ -26,115 +27,36 @@ interface QCParameter {
 }
 
 const QCParameterCard = ({ parameter, deviceId }: { parameter: QCParameter; deviceId: number }) => {
-    const getStatusColor = () => {
-        switch (parameter.qc_status) {
-            case 'Pass': return '#4caf50';
-            case 'Fail': return '#f44336';
-            case 'Pending': return '#ff9800';
-            default: return '#9e9e9e';
-        }
-    };
-
-    const getStatusBgColor = () => {
-        switch (parameter.qc_status) {
-            case 'Pass': return 'rgba(76, 175, 80, 0.1)';
-            case 'Fail': return 'rgba(244, 67, 54, 0.1)';
-            case 'Pending': return 'rgba(255, 152, 0, 0.1)';
-            default: return 'rgba(158, 158, 158, 0.1)';
-        }
-    };
-
     return (
-        <Link to={`/quality-control/${deviceId}/parameter/${parameter.test_type_id}`} style={{ textDecoration: 'none' }}>
-            <Card
-                sx={{
-                    transition: 'all 0.2s ease',
-                    cursor: 'pointer',
-                    '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    }
-                }}
-            >
-                <CardContent>
-                    <MuiBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <MuiBox sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <ScienceIcon sx={{ color: '#2196f3' }} />
-                            <MuiBox>
-                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                    {parameter.test_type?.code}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    {parameter.test_type?.name}
-                                </Typography>
-                            </MuiBox>
-                        </MuiBox>
-                        <Chip
-                            label={parameter.qc_status}
-                            size="small"
-                            sx={{
-                                backgroundColor: getStatusBgColor(),
-                                color: getStatusColor(),
-                                fontWeight: 600,
-                                border: `1px solid ${getStatusColor()}`
-                            }}
+        <Card>
+            <MuiBox>
+                <Link to={`/quality-control/${deviceId}/parameter/${parameter.test_type_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <ListItem
+                        sx={{
+                            px: 2,
+                            py: 1.25,
+                            borderRadius: 1,
+                            transition: 'all 0.15s ease',
+                            '&:hover': { backgroundColor: 'action.hover', transform: 'translateY(-2px)' }
+                        }}
+                        disableGutters
+                    >
+                        <ListItemAvatar sx={{ minWidth: 44 }}>
+                            <Avatar sx={{ bgcolor: 'transparent' }}>
+                                <ScienceIcon sx={{ color: '#2196f3' }} />
+                            </Avatar>
+                        </ListItemAvatar>
+
+                        <ListItemText
+                            primary={<Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{parameter.test_type?.code}</Typography>}
+                            secondary={<Typography variant="body2" color="text.secondary">{parameter.test_type?.name}</Typography>}
                         />
-                    </MuiBox>
 
-                    <MuiBox sx={{ display: 'flex', gap: 3, mb: 1 }}>
-                        <MuiBox>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                                Unit
-                            </Typography>
-                            <Typography variant="body2" fontWeight={500}>
-                                {parameter.test_type?.unit}
-                            </Typography>
-                        </MuiBox>
-                        <MuiBox>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                                Reference Range
-                            </Typography>
-                            <Typography variant="body2" fontWeight={500}>
-                                {parameter.test_type?.reference_range_min} - {parameter.test_type?.reference_range_max}
-                            </Typography>
-                        </MuiBox>
-                    </MuiBox>
+                    </ListItem>
+                </Link>
+            </MuiBox>
 
-                    <MuiBox sx={{ display: 'flex', gap: 3, mt: 2 }}>
-                        <MuiBox>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                                Last QC
-                            </Typography>
-                            <Typography variant="body2" fontWeight={500}>
-                                {parameter.last_qc_date}
-                            </Typography>
-                        </MuiBox>
-                        <MuiBox>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                                Total Runs
-                            </Typography>
-                            <Typography variant="body2" fontWeight={500}>
-                                {parameter.total_runs}
-                            </Typography>
-                        </MuiBox>
-                        <MuiBox>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                                Pass Rate
-                            </Typography>
-                            <Typography
-                                variant="body2"
-                                fontWeight={500}
-                                sx={{
-                                    color: parameter.pass_rate >= 95 ? '#4caf50' : parameter.pass_rate >= 85 ? '#ff9800' : '#f44336'
-                                }}
-                            >
-                                {parameter.pass_rate}%
-                            </Typography>
-                        </MuiBox>
-                    </MuiBox>
-                </CardContent>
-            </Card>
-        </Link>
+        </Card>
     );
 };
 
@@ -145,15 +67,12 @@ export const QualityControlDetail = () => {
     // Fetch device data
     const { data: device, isLoading: deviceLoading } = useGetOne<Device>('device', { id: deviceId });
 
-    // Fetch test types yang berelasi dengan device ini
     const { data: testTypes, isLoading: testTypesLoading } = useGetList<TestType>('test-type', {
         filter: { device_id: deviceId },
         pagination: { page: 1, perPage: 1000 },
         sort: { field: 'code', order: 'ASC' }
     });
 
-    // Generate QC parameters from test types
-    // TODO: Replace with actual QC data from backend when API is ready
     const qcParameters: QCParameter[] = (testTypes || []).map((testType, index) => {
         const statuses: Array<'Pass' | 'Fail' | 'Pending'> = ['Pass', 'Pass', 'Pass', 'Fail', 'Pending'];
         return {
@@ -188,50 +107,19 @@ export const QualityControlDetail = () => {
         );
     }
 
-    const passCount = qcParameters.filter((p: QCParameter) => p.qc_status === 'Pass').length;
-    const failCount = qcParameters.filter((p: QCParameter) => p.qc_status === 'Fail').length;
-    const pendingCount = qcParameters.filter((p: QCParameter) => p.qc_status === 'Pending').length;
+
 
     return (
         <MuiBox sx={{ mt: 2 }}>
             <MuiBox sx={{ mb: 3 }}>
-
-
                 <Card sx={{ mb: 3 }}>
                     <CardContent>
                         <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
                             {device.name}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                        <Typography variant="body2" color="text.secondary" >
                             Device ID: {device.id} | Type: {device.type}
                         </Typography>
-
-                        <MuiBox sx={{ display: 'flex', gap: 2, mt: 3 }}>
-                            <Chip
-                                label={`${passCount} Pass`}
-                                sx={{
-                                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                                    color: '#4caf50',
-                                    fontWeight: 600,
-                                }}
-                            />
-                            <Chip
-                                label={`${failCount} Fail`}
-                                sx={{
-                                    backgroundColor: 'rgba(244, 67, 54, 0.1)',
-                                    color: '#f44336',
-                                    fontWeight: 600,
-                                }}
-                            />
-                            <Chip
-                                label={`${pendingCount} Pending`}
-                                sx={{
-                                    backgroundColor: 'rgba(255, 152, 0, 0.1)',
-                                    color: '#ff9800',
-                                    fontWeight: 600,
-                                }}
-                            />
-                        </MuiBox>
                     </CardContent>
                 </Card>
             </MuiBox>
@@ -240,21 +128,14 @@ export const QualityControlDetail = () => {
                 QC Parameters ({qcParameters.length})
             </Typography>
 
-            <MuiBox
-                sx={{
-                    display: 'grid',
-                    gridTemplateColumns: {
-                        xs: '1fr',
-                        md: 'repeat(2, 1fr)',
-                        lg: 'repeat(3, 1fr)'
-                    },
-                    gap: 2
-                }}
-            >
-                {qcParameters.map((parameter: QCParameter) => (
-                    <QCParameterCard key={parameter.id} parameter={parameter} deviceId={deviceId} />
+            <List sx={{ width: '100%', bgcolor: 'transparent' }}>
+                {qcParameters.map((parameter: QCParameter, idx: number) => (
+                    <React.Fragment key={parameter.id}>
+                        <QCParameterCard parameter={parameter} deviceId={deviceId} />
+                        {idx < qcParameters.length - 1 && <Divider component="li" />}
+                    </React.Fragment>
                 ))}
-            </MuiBox>
+            </List>
 
             {qcParameters.length === 0 && (
                 <MuiBox sx={{ textAlign: 'center', p: 3 }}>

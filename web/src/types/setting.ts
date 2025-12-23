@@ -26,8 +26,9 @@ export const defaultSettings: Settings = {
   barcode_width: 1.3,
   barcode_height: 50,
   barcode_orientation: "landscape",
-  company_name: "",
-  company_address: "",
+  company_name: "PT ELGA TAMA",
+  company_address:
+    "Jl. Kyai Caringin No.18A-20, RT.11/RW.4, Cideng, Kecamatan Gambir, Daerah Khusus Ibukota Jakarta 10150",
   company_contact_email: "help@elgatama.com",
   company_contact_phone: "+6281938123234",
 };

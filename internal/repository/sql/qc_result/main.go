@@ -32,10 +32,15 @@ func (r *QCResultRepository) GetMany(ctx context.Context, req entity.GetManyRequ
 		db = db.Where("qc_results.method = ?", *req.Method)
 	}
 
-	// Join with qc_entries to filter by device_id
-	if req.DeviceID != nil {
-		db = db.Joins("JOIN qc_entries ON qc_entries.id = qc_results.qc_entry_id").
-			Where("qc_entries.device_id = ?", *req.DeviceID)
+	// If filtering by device or test type, join qc_entries once and apply where clauses
+	if req.DeviceID != nil || req.TestTypeID != nil {
+		db = db.Joins("JOIN qc_entries ON qc_entries.id = qc_results.qc_entry_id")
+		if req.DeviceID != nil {
+			db = db.Where("qc_entries.device_id = ?", *req.DeviceID)
+		}
+		if req.TestTypeID != nil {
+			db = db.Where("qc_entries.test_type_id = ?", *req.TestTypeID)
+		}
 	}
 
 	// Count before pagination
@@ -75,6 +80,16 @@ func (r *QCResultRepository) GetByEntryID(ctx context.Context, entryID int) ([]e
 	var results []entity.QCResult
 	err := r.db.WithContext(ctx).
 		Where("qc_results.qc_entry_id = ?", entryID).
+		Order("qc_results.created_at ASC").
+		Find(&results).Error
+
+	return results, err
+}
+
+func (r *QCResultRepository) GetByEntryIDAndMethod(ctx context.Context, entryID int, method string) ([]entity.QCResult, error) {
+	var results []entity.QCResult
+	err := r.db.WithContext(ctx).
+		Where("qc_results.qc_entry_id = ? AND qc_results.method = ?", entryID, method).
 		Order("qc_results.created_at ASC").
 		Find(&results).Error
 

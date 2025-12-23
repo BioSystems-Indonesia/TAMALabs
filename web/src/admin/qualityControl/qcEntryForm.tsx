@@ -6,7 +6,6 @@ import {
     Button,
     TextField,
     Stack,
-    Chip,
     FormControl,
     InputLabel,
     Select,
@@ -17,7 +16,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useGetOne, useNotify } from 'react-admin';
 import SaveIcon from '@mui/icons-material/Save';
 import ScienceIcon from '@mui/icons-material/Science';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 interface TestType {
     id: number;
@@ -36,7 +34,6 @@ export const QCEntryForm = () => {
     const { data: testType, isLoading } = useGetOne<TestType>('test-type', { id: parseInt(testTypeId || '0') });
 
     const [qcLevel, setQcLevel] = useState<1 | 2 | 3>(1);
-    const [method, setMethod] = useState<'statistic' | 'manual'>('statistic');
     const [formData, setFormData] = useState({
         sd_target: '',
         lot_number: '',
@@ -75,7 +72,6 @@ export const QCEntryForm = () => {
 
             const rangeMin = parseFloat(formData.range_min);
             const rangeMax = parseFloat(formData.range_max);
-            const sdTargert = parseFloat(formData.sd_target)
 
             if (isNaN(rangeMin) || isNaN(rangeMax)) {
                 notify('Please enter valid numbers for range', { type: 'error' });
@@ -104,7 +100,6 @@ export const QCEntryForm = () => {
                 target_sd: sdTarget,
                 ref_min: rangeMin,
                 ref_max: rangeMax,
-                method: method,
                 created_by: 'Admin', // TODO: Get from auth context
             };
 
@@ -260,17 +255,7 @@ export const QCEntryForm = () => {
                             helperText="Enter the SD target from the Product Documentation"
                         />
 
-                        <FormControl fullWidth required>
-                            <InputLabel>QC Method</InputLabel>
-                            <Select
-                                value={method}
-                                label="QC Method"
-                                onChange={(e) => setMethod(e.target.value as 'statistic' | 'manual')}
-                            >
-                                <MenuItem value="statistic">Statistic - Statistical calculation based on measurements</MenuItem>
-                                <MenuItem value="manual">Manual - Manual entry by operator</MenuItem>
-                            </Select>
-                        </FormControl>
+
 
                         {formData.range_min && formData.range_max && (
                             <MuiBox sx={{

@@ -59,6 +59,7 @@ export const QCForm = () => {
     const navigate = useNavigate();
     const [selectedQcLevelFilter, setSelectedQcLevelFilter] = useState<'all' | 1 | 2 | 3>('all');
     const [visibleLevels, setVisibleLevels] = useState<{ 1: boolean; 2: boolean; 3: boolean }>({ 1: true, 2: true, 3: true });
+    const [selectedMethod, setSelectedMethod] = useState<'statistic' | 'manual'>('statistic');
     const [hoveredPoint, setHoveredPoint] = useState<{ level: number; index: number; data: any } | null>(null);
     const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
@@ -70,7 +71,7 @@ export const QCForm = () => {
 
     useEffect(() => {
         fetchQCData();
-    }, [deviceId, testTypeId]);
+    }, [deviceId, testTypeId, selectedMethod]);
 
     const fetchQCData = async () => {
         try {
@@ -91,13 +92,15 @@ export const QCForm = () => {
                 setQcEntries(entriesData.data || []);
             }
 
-            // Fetch QC results
-            const resultsResponse = await fetch(
-                `/api/v1/quality-control/results?device_id=${deviceId}&test_type_id=${testTypeId}`,
-                {
-                    credentials: 'include',
-                }
-            );
+            // Fetch QC results (include method if selected)
+            const resultsUrl = new URL(`/api/v1/quality-control/results`, window.location.origin);
+            resultsUrl.searchParams.set('device_id', String(deviceId));
+            resultsUrl.searchParams.set('test_type_id', String(testTypeId));
+            resultsUrl.searchParams.set('method', selectedMethod);
+
+            const resultsResponse = await fetch(resultsUrl.toString(), {
+                credentials: 'include',
+            });
 
             if (!resultsResponse.ok) {
                 //
@@ -152,7 +155,7 @@ export const QCForm = () => {
                                     {testType.code} - {testType.name}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    Unit: {testType.unit} | Reference Range: {testType.reference_range_min} - {testType.reference_range_max}
+                                    Unit: {testType.unit}
                                 </Typography>
                             </MuiBox>
                         </MuiBox>
@@ -221,7 +224,7 @@ export const QCForm = () => {
                                             </MuiBox>
 
                                             <Typography variant="body2" sx={{ mb: 2 }}>
-                                                <strong>Lot:</strong> {entry.lot_number} | <strong>Count:</strong> {resultCount}
+                                                <strong>Lot:</strong> {entry.lot_number} | <strong>Count:</strong> {resultCount} {"|"} <strong>Ref:</strong> {entry.ref_min?.toFixed ? entry.ref_min.toFixed(2) : entry.ref_min} - {entry.ref_max?.toFixed ? entry.ref_max.toFixed(2) : entry.ref_max}
                                             </Typography>
 
                                             <MuiBox sx={{ mb: 2, p: 1.5, backgroundColor: 'rgba(33, 150, 243, 0.05)', borderRadius: 1 }}>
@@ -289,6 +292,34 @@ export const QCForm = () => {
                     </CardContent>
                 </Card>
             )}
+            {/* Filters: Level + Method */}
+            <MuiBox sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                <MuiBox sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <Typography variant="body2" sx={{ mr: 1, fontWeight: 500 }}>Method:</Typography>
+                    <Chip
+                        label="Statistic"
+                        onClick={() => setSelectedMethod('statistic')}
+                        size="small"
+                        sx={{
+                            backgroundColor: selectedMethod === 'statistic' ? '#2196f3' : 'rgba(33, 150, 243, 0.1)',
+                            color: selectedMethod === 'statistic' ? 'white' : '#2196f3',
+                            fontWeight: 500,
+                            cursor: 'pointer'
+                        }}
+                    />
+                    <Chip
+                        label="Manual"
+                        onClick={() => setSelectedMethod('manual')}
+                        size="small"
+                        sx={{
+                            backgroundColor: selectedMethod === 'manual' ? '#9c27b0' : 'rgba(156, 39, 176, 0.1)',
+                            color: selectedMethod === 'manual' ? 'white' : '#9c27b0',
+                            fontWeight: 500,
+                            cursor: 'pointer'
+                        }}
+                    />
+                </MuiBox>
+            </MuiBox>
 
             {!hasActiveEntry && (
                 <Card sx={{ mb: 3, backgroundColor: 'rgba(255, 152, 0, 0.05)' }}>
@@ -320,7 +351,7 @@ export const QCForm = () => {
 
                             [1, 2, 3].forEach(level => {
                                 const levelResults = qcResults
-                                    .filter(r => r.qc_entry?.qc_level === level)
+                                    .filter(r => r.method === selectedMethod && r.qc_entry?.qc_level === level)
                                     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
                                 if (levelResults.length === 0) return;
@@ -451,6 +482,16 @@ export const QCForm = () => {
 
                                             {level1Data.length > 0 && visibleLevels[1] && (
                                                 <>
+                                                    <Line
+                                                        type="monotone"
+                                                        data={level1Data}
+                                                        dataKey="error"
+                                                        stroke="#2196f3"
+                                                        strokeWidth={2}
+                                                        dot={false}
+                                                        activeDot={false}
+                                                        connectNulls
+                                                    />
                                                     <Scatter
                                                         id="level1-scatter"
                                                         data={level1Data}
@@ -477,7 +518,7 @@ export const QCForm = () => {
                                                                     fill={color}
                                                                     stroke={color}
                                                                     strokeWidth={isHovered ? 2 : 1}
-                                                                    style={{ cursor: 'pointer' }}
+                                                                    style={{ cursor: 'pointer', }}
                                                                     onMouseOver={(e: any) => {
                                                                         setHoveredPoint({ level: 1, index, data: payload });
                                                                         setTooltipPos({ x: e.clientX, y: e.clientY });
@@ -490,21 +531,22 @@ export const QCForm = () => {
                                                             );
                                                         }}
                                                     />
-                                                    <Line
-                                                        type="monotone"
-                                                        data={level1Data}
-                                                        dataKey="error"
-                                                        stroke="#2196f3"
-                                                        strokeWidth={2}
-                                                        dot={false}
-                                                        activeDot={false}
-                                                        connectNulls
-                                                    />
+
                                                 </>
                                             )}
 
                                             {level2Data.length > 0 && visibleLevels[2] && (
                                                 <>
+                                                    <Line
+                                                        type="monotone"
+                                                        data={level2Data}
+                                                        dataKey="error"
+                                                        stroke="#9c27b0"
+                                                        strokeWidth={2}
+                                                        dot={false}
+                                                        activeDot={false}
+                                                        connectNulls
+                                                    />
                                                     <Scatter
                                                         id="level2-scatter"
                                                         data={level2Data}
@@ -544,16 +586,7 @@ export const QCForm = () => {
                                                             );
                                                         }}
                                                     />
-                                                    <Line
-                                                        type="monotone"
-                                                        data={level2Data}
-                                                        dataKey="error"
-                                                        stroke="#9c27b0"
-                                                        strokeWidth={2}
-                                                        dot={false}
-                                                        activeDot={false}
-                                                        connectNulls
-                                                    />
+
                                                 </>
                                             )}
 
@@ -786,6 +819,7 @@ export const QCForm = () => {
                             <TableBody>
                                 {qcResults
                                     .filter((result) => {
+                                        if (result.method !== selectedMethod) return false;
                                         if (selectedQcLevelFilter !== 'all' && result.qc_entry?.qc_level !== selectedQcLevelFilter) {
                                             return false;
                                         }

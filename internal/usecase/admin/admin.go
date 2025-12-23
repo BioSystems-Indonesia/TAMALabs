@@ -123,5 +123,5 @@ func (u *AdminUsecase) GetAllDoctors(ctx context.Context) ([]entity.Admin, error
 
 // GetAllAnalyzers returns all admins with Analyzer role
 func (u *AdminUsecase) GetAllAnalyzers(ctx context.Context) ([]entity.Admin, error) {
-	return u.adminRepo.FindAllByRole(ctx, entity.RoleAnalyzer)
+	return u.adminRepo.FindAllByRole(ctx, entity.RoleAnalyst)
 }

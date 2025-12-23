@@ -177,7 +177,7 @@ var seedRole = []entity.Role{
 	},
 	{
 		ID:          3,
-		Name:        string(entity.RoleAnalyzer),
-		Description: "Analyzer can be assigned as lab request technician and able to perform lab request, but not approve result",
+		Name:        string(entity.RoleAnalyst),
+		Description: "Analyst can be assigned as lab request technician and able to perform lab request, but not approve result",
 	},
 }

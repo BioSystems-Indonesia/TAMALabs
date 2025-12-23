@@ -138,18 +138,19 @@ func (r *QCEntryRepository) GetDeviceSummary(ctx context.Context, deviceID int) 
 		Count(&totalCount).Error; err != nil {
 		return nil, err
 	}
-	summary.TotalQC = int(totalCount)
+	summary.TotalQC = int(totalCount) / 2
 
 	// Get this month's QC count
 	var monthCount int64
 	if err := r.db.WithContext(ctx).
 		Model(&entity.QCResult{}).
 		Joins("JOIN qc_entries ON qc_entries.id = qc_results.qc_entry_id").
-		Where("qc_entries.device_id = ? AND strftime('%Y-%m', qc_results.created_at) = strftime('%Y-%m', 'now')", deviceID).
+		// Use substr on created_at to be robust to ISO timestamps (YYYY-MM-DD...)
+		Where("qc_entries.device_id = ? AND substr(qc_results.created_at,1,7) = strftime('%Y-%m','now')", deviceID).
 		Count(&monthCount).Error; err != nil {
 		return nil, err
 	}
-	summary.QCThisMonth = int(monthCount)
+	summary.QCThisMonth = int(monthCount) / 2
 
 	// Get last QC result
 	var lastResult entity.QCResult
@@ -160,13 +161,15 @@ func (r *QCEntryRepository) GetDeviceSummary(ctx context.Context, deviceID int) 
 		First(&lastResult).Error
 
 	if err == nil {
-		summary.LastQCDate = lastResult.CreatedAt
+		// Set pointer to last result time
+		t := lastResult.CreatedAt
+		summary.LastQCDate = &t
 		summary.LastQCStatus = lastResult.Result
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
 
-	// Get today's QC status - check if all 3 levels have results today
+	// Get today's QC status - check which levels have results today
 	var todayResults []struct {
 		QCLevel int
 	}
@@ -174,14 +177,31 @@ func (r *QCEntryRepository) GetDeviceSummary(ctx context.Context, deviceID int) 
 		Model(&entity.QCResult{}).
 		Select("DISTINCT qc_entries.qc_level").
 		Joins("JOIN qc_entries ON qc_entries.id = qc_results.qc_entry_id").
-		Where("qc_entries.device_id = ? AND date(qc_results.created_at) = date('now')", deviceID).
+		// Use substr to compare date portion (YYYY-MM-DD) to date('now')
+		Where("qc_entries.device_id = ? AND substr(qc_results.created_at,1,10) = date('now')", deviceID).
 		Scan(&todayResults).Error; err != nil {
 		return nil, err
 	}
 
-	if len(todayResults) == 0 {
+	// default false
+	summary.Level1Today = false
+	summary.Level2Today = false
+	summary.Level3Today = false
+
+	for _, tr := range todayResults {
+		switch tr.QCLevel {
+		case 1:
+			summary.Level1Today = true
+		case 2:
+			summary.Level2Today = true
+		case 3:
+			summary.Level3Today = true
+		}
+	}
+
+	if !summary.Level1Today && !summary.Level2Today && !summary.Level3Today {
 		summary.QCTodayStatus = "Not Done"
-	} else if len(todayResults) == 3 {
+	} else if summary.Level1Today && summary.Level2Today && summary.Level3Today {
 		summary.QCTodayStatus = "Done"
 	} else {
 		summary.QCTodayStatus = "Partial"

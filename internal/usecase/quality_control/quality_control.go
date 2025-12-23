@@ -79,177 +79,126 @@ func (u *QualityControlUsecase) processQCRecord(
 	msh, spm, inv, obx, orc, deviceIdentifier, messageControlID string,
 ) error {
 
-	spmParts := strings.Split(spm, "|")
-	if len(spmParts) < 3 {
-		return fmt.Errorf("invalid SPM segment")
-	}
-
-	qcSampleID := spmParts[2]
-	qcLevel := u.extractQCLevel(qcSampleID)
-
-	_ = inv
-
 	obxParts := strings.Split(obx, "|")
-	if len(obxParts) < 8 {
+	if len(obxParts) < 6 {
 		return fmt.Errorf("invalid OBX segment")
 	}
 
-	testCodeField := obxParts[3]
-	testCodeParts := strings.Split(testCodeField, "^")
-	if len(testCodeParts) < 1 {
-		return fmt.Errorf("invalid test code")
-	}
-	testCode := testCodeParts[0]
-
-	measuredMean, err := strconv.ParseFloat(obxParts[5], 64)
+	testCode := strings.Split(obxParts[3], "^")[0]
+	measuredValue, err := strconv.ParseFloat(obxParts[5], 64)
 	if err != nil {
-		return fmt.Errorf("invalid measured value: %w", err)
+		return fmt.Errorf("invalid measured value")
 	}
-
-	_ = obxParts[7]
 
 	operator := "SYSTEM"
 	if len(obxParts) > 16 {
 		operator = obxParts[16]
 	}
 
-	orcParts := strings.Split(orc, "|")
-	_ = orcParts // For future use
-
-	deviceType := entity.DeviceType(deviceIdentifier)
-	device, err := u.deviceRepo.FindOneByType(ctx, deviceType)
+	device, err := u.deviceRepo.FindOneByType(ctx, entity.DeviceType(deviceIdentifier))
 	if err != nil {
-		return fmt.Errorf("device not found for type %s: %w", deviceIdentifier, err)
+		return err
 	}
 
 	testType, err := u.testTypeRepo.FindOneByCode(ctx, testCode)
 	if err != nil {
-		return fmt.Errorf("test type not found for code %s: %w", testCode, err)
+		return err
 	}
 
+	qcLevel := u.extractQCLevel(spm)
 	qcEntry, err := u.qcEntryRepo.GetActiveEntry(ctx, device.ID, testType.ID, qcLevel)
 	if err != nil {
-		return fmt.Errorf("no active QC entry found for device %d, test %d, level %d: %w",
-			device.ID, testType.ID, qcLevel, err)
+		return err
 	}
 
-	slog.InfoContext(ctx, "Debug", "measuredMean", measuredMean, "operator", operator, "qc entry", qcEntry)
-
-	var targetMean, targetSD float64
-
-	calculatedMean, _, count, err := u.qcResultRepo.CalculateStatistics(ctx, qcEntry.ID)
-	if err != nil {
-		slog.WarnContext(ctx, "Failed to calculate statistics, using target values from entry", "error", err)
-		// Fallback to entry values
-		targetMean = qcEntry.TargetMean
-		if qcEntry.TargetSD != nil {
-			targetSD = *qcEntry.TargetSD
-		}
-	} else if count >= 4 {
-
-		tempMean := (calculatedMean*float64(count) + measuredMean) / float64(count+1)
-
-		previousResults, _ := u.qcResultRepo.GetByEntryID(ctx, qcEntry.ID)
-		var variance float64
-		for _, r := range previousResults {
-			diff := r.MeasuredValue - tempMean
-			variance += diff * diff
-		}
-		diff := measuredMean - tempMean
-		variance += diff * diff
-
-		tempSD := 0.0
-		totalCount := count + 1
-		if totalCount > 1 {
-			tempSD = math.Sqrt(variance / float64(totalCount-1))
-		}
-
-		targetMean = tempMean
-		targetSD = tempSD
-		slog.InfoContext(ctx, "Using calculated statistics (count >= 4, will be >= 5 after save)",
-			"current_count", count,
-			"count_after_save", count+1,
-			"calculated_mean", tempMean,
-			"calculated_sd", tempSD)
-	} else {
-		targetMean = qcEntry.TargetMean
-		if qcEntry.TargetSD != nil {
-			targetSD = *qcEntry.TargetSD
-		}
-		slog.InfoContext(ctx, "Using target values from entry (count < 4)",
-			"current_count", count,
-			"count_after_save", count+1)
+	if qcEntry.TargetSD == nil || *qcEntry.TargetSD == 0 {
+		return fmt.Errorf("target SD not defined for QC entry")
 	}
 
-	var cvValue float64
-	if targetMean != 0 {
-		cvValue = (targetSD / targetMean) * 100
-	}
-
-	sd1 := targetMean + (1 * targetSD)
-	sd2 := targetMean + (2 * targetSD)
-	sd3 := targetMean + (3 * targetSD)
-
-	var errorSD float64
-	if qcEntry.TargetSD != nil && *qcEntry.TargetSD != 0 {
-		errorSD = (measuredMean - qcEntry.TargetMean) / *qcEntry.TargetSD
-	}
-
-	absoluteError := measuredMean - qcEntry.TargetMean
-
-	var relativeError float64
-	if qcEntry.TargetMean != 0 {
-		relativeError = (math.Abs(absoluteError) / qcEntry.TargetMean) * 100
-	}
-
-	var result string
-	absErrorSD := math.Abs(errorSD)
-	if absErrorSD <= 2 {
-		result = "In Control"
-	} else if absErrorSD <= 3 {
-		result = "Warning"
-	} else {
-		result = "Reject"
-	}
-
-	// Create QC result record
-	qcResult := entity.QCResult{
-		QCEntryID:        qcEntry.ID,
-		MeasuredValue:    measuredMean,
-		CalculatedMean:   targetMean,
-		CalculatedSD:     targetSD,
-		CalculatedCV:     cvValue,
-		ErrorSD:          errorSD,
-		AbsoluteError:    absoluteError,
-		RelativeError:    relativeError,
-		SD1:              sd1,
-		SD2:              sd2,
-		SD3:              sd3,
-		Result:           result,
-		Method:           "statistic",
-		Operator:         operator,
-		MessageControlID: messageControlID,
-	}
-
-	// Save to database
-	err = u.qcResultRepo.Create(ctx, &qcResult)
-	if err != nil {
-		return fmt.Errorf("error saving QC result: %w", err)
-	}
-
-	slog.InfoContext(ctx, "QC result saved",
-		"device_id", device.ID,
-		"test_type", testCode,
-		"qc_level", qcLevel,
-		"measured_value", measuredMean,
-		"target_mean", targetMean,
-		"target_sd", targetSD,
-		"cv", cvValue,
-		"result", result,
-		"method", "statistic",
+	prevStats, _ := u.qcResultRepo.GetByEntryIDAndMethod(
+		ctx,
+		qcEntry.ID,
+		"statistic",
 	)
 
-	return nil
+	values := make([]float64, 0, len(prevStats)+1)
+	for _, r := range prevStats {
+		values = append(values, r.MeasuredValue)
+	}
+	values = append(values, measuredValue)
+
+	manualMean := qcEntry.TargetMean
+	manualSD := *qcEntry.TargetSD
+	manualCV := (manualSD / manualMean) * 100
+	manualErrorSD := (measuredValue - manualMean) / manualSD
+
+	manualResult := u.buildQCResult(
+		qcEntry.ID,
+		measuredValue,
+		manualMean,
+		manualSD,
+		manualCV,
+		manualErrorSD,
+		"manual",
+		operator,
+		messageControlID,
+	)
+
+	if err := u.qcResultRepo.Create(ctx, manualResult); err != nil {
+		return err
+	}
+
+	var statMean, statSD, statCV float64
+
+	targetMean := manualMean
+	targetSD := manualSD
+
+	count := len(values)
+
+	if count < 5 {
+		statMean = targetMean
+		statSD = targetSD
+		statCV = manualCV
+
+	} else {
+		stats := calculateStats(values)
+
+		statMean = stats.Mean
+		statSD = stats.SD
+
+		minSD := targetSD * 0.7
+		if statSD < minSD {
+			statSD = minSD
+		}
+
+		alpha := math.Min(float64(count-5)/5.0, 1.0)
+
+		statMean = alpha*statMean + (1-alpha)*targetMean
+		statSD = alpha*statSD + (1-alpha)*targetSD
+
+		if statMean != 0 {
+			statCV = (statSD / statMean) * 100
+		}
+	}
+
+	statErrorSD := 0.0
+	if statSD != 0 {
+		statErrorSD = (measuredValue - statMean) / statSD
+	}
+
+	statResult := u.buildQCResult(
+		qcEntry.ID,
+		measuredValue,
+		statMean,
+		statSD,
+		statCV,
+		statErrorSD,
+		"statistic",
+		operator,
+		messageControlID,
+	)
+
+	return u.qcResultRepo.Create(ctx, statResult)
 }
 
 func (u *QualityControlUsecase) extractQCLevel(sampleID string) int {
@@ -330,6 +279,111 @@ func (u *QualityControlUsecase) GetQCHistory(ctx context.Context, req entity.Get
 }
 
 func (u *QualityControlUsecase) GetQCStatistics(ctx context.Context, deviceID int) (map[string]interface{}, error) {
-	// Return empty for backward compatibility
-	return map[string]interface{}{}, nil
+	// Use QCEntry repository to gather device summary
+	summary, err := u.qcEntryRepo.GetDeviceSummary(ctx, deviceID)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"total_qc":         summary.TotalQC,
+		"qc_this_month":    summary.QCThisMonth,
+		"last_qc":          summary.LastQCDate,
+		"last_qc_status":   summary.LastQCStatus,
+		"qc_today_status":  summary.QCTodayStatus,
+		"level_1_complete": summary.Level1Complete,
+		"level_2_complete": summary.Level2Complete,
+		"level_3_complete": summary.Level3Complete,
+		"level_1_today":    summary.Level1Today,
+		"level_2_today":    summary.Level2Today,
+		"level_3_today":    summary.Level3Today,
+	}, nil
+}
+
+type qcStats struct {
+	Mean float64
+	SD   float64
+	CV   float64
+}
+
+type StatsResult struct {
+	Mean float64
+	SD   float64
+	CV   float64
+}
+
+func calculateStats(values []float64) StatsResult {
+	n := len(values)
+	if n == 0 {
+		return StatsResult{}
+	}
+
+	var sum float64
+	for _, v := range values {
+		sum += v
+	}
+	mean := sum / float64(n)
+
+	var variance float64
+	for _, v := range values {
+		diff := v - mean
+		variance += diff * diff
+	}
+
+	sd := 0.0
+	if n > 1 {
+		sd = math.Sqrt(variance / float64(n-1))
+	}
+
+	cv := 0.0
+	if mean != 0 {
+		cv = (sd / mean) * 100
+	}
+
+	return StatsResult{
+		Mean: mean,
+		SD:   sd,
+		CV:   cv,
+	}
+}
+
+func (u *QualityControlUsecase) buildQCResult(
+	qcEntryID int,
+	measured, mean, sd, cv, errorSD float64,
+	method string,
+	operator, messageControlID string,
+) *entity.QCResult {
+
+	absError := measured - mean
+	relativeError := 0.0
+	if mean != 0 {
+		relativeError = (absError / mean) * 100
+	}
+
+	result := "In Control"
+	if errorSD >= 3 || errorSD <= -3 {
+		result = "Reject"
+	} else if (errorSD > 2 && errorSD < 3) || (errorSD < -2 && errorSD > -3) {
+		result = "Warning"
+	}
+
+	return &entity.QCResult{
+		QCEntryID:     qcEntryID,
+		MeasuredValue: measured,
+
+		CalculatedMean: mean,
+		CalculatedSD:   sd,
+		CalculatedCV:   cv,
+		ErrorSD:        errorSD,
+
+		SD1:              mean + sd,
+		SD2:              mean + 2*sd,
+		SD3:              mean + 3*sd,
+		AbsoluteError:    absError,
+		RelativeError:    relativeError,
+		Result:           result,
+		Method:           method,
+		Operator:         operator,
+		MessageControlID: messageControlID,
+	}
 }

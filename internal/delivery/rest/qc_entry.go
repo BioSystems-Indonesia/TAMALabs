@@ -21,6 +21,7 @@ func NewQCEntryHandler(qcUsecase usecase.QualityControl) *QCEntryHandler {
 
 func (h *QCEntryHandler) RegisterRoute(qc *echo.Group) {
 	qc.POST("/entries", h.CreateQCEntry)
+	qc.GET("/statistics", h.GetQCStatistics)
 	qc.GET("/entries", h.ListQCEntries)
 	qc.GET("/results", h.ListQCResults)
 }
@@ -83,4 +84,25 @@ func (h *QCEntryHandler) ListQCResults(c echo.Context) error {
 		Data:  results,
 		Total: total,
 	})
+}
+
+func (h *QCEntryHandler) GetQCStatistics(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	deviceIDStr := c.QueryParam("device_id")
+	if deviceIDStr == "" {
+		return handleError(c, entity.ErrBadRequest.WithInternal(nil))
+	}
+
+	deviceID, err := strconv.Atoi(deviceIDStr)
+	if err != nil {
+		return handleError(c, entity.ErrBadRequest.WithInternal(err))
+	}
+
+	stats, err := h.qcUsecase.GetQCStatistics(ctx, deviceID)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, stats)
 }

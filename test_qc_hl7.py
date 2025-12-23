@@ -7,7 +7,7 @@ from datetime import datetime
 
 random.seed(42)
 level1_values = []
-for i in range(4):
+for i in range(20):
     rand = random.random()
     if rand < 0.85:
         value = random.gauss(9.70, 0.39 * 0.6)
@@ -24,7 +24,7 @@ for i in range(4):
     level1_values.append(round(value, 2))
 
 level2_values = []
-for i in range(4):
+for i in range(20):
     rand = random.random()
     if rand < 0.85:
         value = random.gauss(13.90, 0.60 * 0.6)
@@ -48,9 +48,9 @@ def create_hl7_message(level, lot_number, value, timestamp):
         f"MSH|^~\\&|BA400|Biosystems|Host|Host provider|{timestamp}||OUL^R22^OUL_R22|{message_id}|P|2.5.1|||ER|AL||UNICODE UTF-8|||LAB-29^IHE\r"
         f"SPM|1|{qc_sample_id}||NULL|||||||Q|||||||\r"
         f"INV|{qc_sample_id}|OK|CO|||||||||20260203022259||||{lot_number}XA\r"
-        f"OBR||\"\"||CALCIUM ARSENAZO^CALCIUM ARSENAZO^A400|||||||||||||||||||||||||\r"
+        f"OBR||\"\"||CHOLESTEROL^CHOLESTEROL^A400|||||||||||||||||||||||||\r"
         f"ORC|OK||||CM||||{timestamp}\r"
-        f"OBX|1|NM|CALCIUM ARSENAZO^CALCIUM ARSENAZO^A400||{value}|mg/dL^mg/dL^A400|8.5 - 10.8199997|NONE|||F|||||ADMIN||A400^Biosystems~834000240^Biosystems|{timestamp}\r"
+        f"OBX|1|NM|CHOLESTEROL^CHOLESTEROL^A400||{value}|mg/dL^mg/dL^A400|8.5 - 10.8199997|NONE|||F|||||ADMIN||A400^Biosystems~834000240^Biosystems|{timestamp}\r"
     )
     return hl7_msg
 
