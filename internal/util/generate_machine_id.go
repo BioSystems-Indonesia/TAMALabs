@@ -1,7 +1,6 @@
 package util
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -10,7 +9,6 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
-	"syscall"
 )
 
 // GenerateMachineID returns deterministic machine id like "MACHINE-<first-20-hex-chars>"
@@ -226,56 +224,7 @@ func readMachineIDFile() (string, error) {
 	return "", fmt.Errorf("no machine-id file found")
 }
 
-// windowsGetSystemUUID uses "wmic csproduct get uuid" (best-effort)
-func windowsGetSystemUUID() (string, error) {
-	cmd := exec.Command("wmic", "csproduct", "get", "uuid")
-	if runtime.GOOS == "windows" {
-		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	}
-	out, err := cmd.Output()
-	if err != nil {
-		// fallback to wmic csproduct get uuid /format:list
-		cmd2 := exec.Command("wmic", "csproduct", "get", "uuid", "/format:list")
-		if runtime.GOOS == "windows" {
-			cmd2.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-		}
-		out2, _ := cmd2.Output()
-		if len(out2) == 0 {
-			return "", err
-		}
-		out = out2
-	}
-	// output contains header and value; get last non-empty line
-	lines := bytes.Split(out, []byte("\n"))
-	for i := len(lines) - 1; i >= 0; i-- {
-		line := strings.TrimSpace(string(lines[i]))
-		if line == "" || strings.Contains(strings.ToLower(line), "uuid") {
-			continue
-		}
-		return line, nil
-	}
-	return "", fmt.Errorf("uuid not found in wmic output")
-}
-
-func windowsGetBiosSerial() (string, error) {
-	cmd := exec.Command("wmic", "bios", "get", "serialnumber")
-	if runtime.GOOS == "windows" {
-		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	}
-	out, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-	lines := bytes.Split(out, []byte("\n"))
-	for i := len(lines) - 1; i >= 0; i-- {
-		line := strings.TrimSpace(string(lines[i]))
-		if line == "" || strings.Contains(strings.ToLower(line), "serialnumber") {
-			continue
-		}
-		return line, nil
-	}
-	return "", fmt.Errorf("bios serial not found")
-}
+// Windows-specific helpers are implemented in platform-specific files.
 
 // linuxGetDmiUUID tries "cat /sys/class/dmi/id/product_uuid" or hostnamectl
 func linuxGetDmiUUID() (string, error) {

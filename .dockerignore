@@ -1,0 +1,11 @@
+node_modules
+web/dist
+bin
+logs
+tmp
+.git
+.vscode
+*.exe
+*.log
+**/node_modules
+.DS_Store

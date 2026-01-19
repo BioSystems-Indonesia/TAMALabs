@@ -273,7 +273,7 @@ func migrateOldDatabaseLocation() {
 		slog.Info("Successfully migrated database from ProgramData to AppData")
 
 		// Also try to migrate license files
-		migrateLicenseFiles(programData)
+		// migrateLicenseFiles(programData)
 	}
 }
 

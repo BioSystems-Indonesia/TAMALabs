@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  tamalabs:
+    build: .
+    ports:
+      - "8087:8322"
+    environment:
+      - PORT=8322
+    volumes:
+      - tamalabs-data:/tmp/TAMALabs/database
+      - tamalabs-license:/tmp/TAMALabs/license
+      # Optional: bind a host folder for license files for easier access during development
+      # - ./data/license:/tmp/TAMALabs/license
+    restart: unless-stopped
+
+volumes:
+  tamalabs-data:
+  tamalabs-license:

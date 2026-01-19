@@ -140,3 +140,36 @@ To create a Windows installer for the application:
     installed and running on your system.
 
 2.  The installer will be created in the `installer` directory.
+---
+
+## Docker (production)
+
+A Dockerfile and `docker-compose.yml` are provided to run the backend (with the frontend embedded).
+
+- Build image locally:
+
+```sh
+docker build -t tamalabs .
+```
+
+- Run with Docker Compose (maps host 8087 to backend 8322):
+
+```sh
+docker-compose up -d --build
+```
+
+Access the app on http://localhost:8087
+
+License data and keys are persisted by a Docker volume mounted at `/tmp/TAMALabs/license` in the container. By default `docker-compose` creates a named volume `tamalabs-license` for this purpose. To provide your own license files, create or mount files with the following names into the volume:
+
+- `server_public.pem` (public key for license verification)
+- `license.json` (license payload)
+
+Example (bind-mount instead of named volume):
+
+```yaml
+services:
+  tamalabs:
+    volumes:
+      - ./data/license:/tmp/TAMALabs/license
+```

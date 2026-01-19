@@ -4,6 +4,7 @@ package config
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"time"
 
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/constant"
@@ -34,6 +35,15 @@ func New(db *gorm.DB) (Schema, error) {
 	err = v.Unmarshal(&cfg)
 	if err != nil {
 		return Schema{}, fmt.Errorf("error unmarshalling config: %w", err)
+	}
+
+	// Allow overriding the port with environment variables, otherwise fallback to default 8322
+	if p := os.Getenv("PORT"); p != "" {
+		cfg.Port = p
+	} else if p := os.Getenv("BACKEND_PORT"); p != "" {
+		cfg.Port = p
+	} else if cfg.Port == "" {
+		cfg.Port = "8322"
 	}
 
 	InjectRuntime(&cfg)
