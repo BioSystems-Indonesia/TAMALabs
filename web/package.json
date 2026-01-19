@@ -21,6 +21,7 @@
     "@types/react-date-range": "^1.4.9",
     "axios": "^1.7.9",
     "dayjs": "^1.11.13",
+    "html2canvas": "^1.4.1",
     "jwt-decode": "^4.0.0",
     "qrcode": "^1.5.4",
     "ra-data-json-server": "^5.4.1",

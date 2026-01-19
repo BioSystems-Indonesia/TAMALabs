@@ -19,6 +19,11 @@ type QCEntry struct {
 	RefMin     float64   `json:"ref_min" gorm:"not null"`
 	RefMax     float64   `json:"ref_max" gorm:"not null"`
 
+	// Selected result IDs for each level when multiple results exist for the same day
+	Level1SelectedResultID *int `json:"level1_selected_result_id,omitempty" gorm:"column:level1_selected_result_id"`
+	Level2SelectedResultID *int `json:"level2_selected_result_id,omitempty" gorm:"column:level2_selected_result_id"`
+	Level3SelectedResultID *int `json:"level3_selected_result_id,omitempty" gorm:"column:level3_selected_result_id"`
+
 	// Relations
 	Device   *Device    `json:"device,omitempty" gorm:"foreignKey:DeviceID"`
 	TestType *TestType  `json:"test_type,omitempty" gorm:"foreignKey:TestTypeID"`
@@ -59,6 +64,7 @@ type QCResult struct {
 
 	Operator         string    `json:"operator" gorm:"not null"`
 	MessageControlID string    `json:"message_control_id"`
+	CreatedBy        string    `json:"created_by" gorm:"not null"`
 	CreatedAt        time.Time `json:"created_at" gorm:"autoCreateTime"`
 
 	// Relations
@@ -85,7 +91,9 @@ type GetManyRequestQCResult struct {
 	QCEntryID  *int    `query:"qc_entry_id"`
 	DeviceID   *int    `query:"device_id"`
 	TestTypeID *int    `query:"test_type_id"`
-	Method     *string `query:"method"` // statistic or manual
+	Method     *string `query:"method"`     // statistic or manual
+	StartDate  *string `query:"start_date"` // YYYY-MM-DD format
+	EndDate    *string `query:"end_date"`   // YYYY-MM-DD format
 }
 
 type CreateQCEntryRequest struct {
@@ -102,10 +110,21 @@ type CreateQCEntryRequest struct {
 }
 
 type UpdateQCEntryRequest struct {
-	LotNumber  string   `json:"lot_number"`
-	TargetMean *float64 `json:"target_mean"`
-	TargetSD   *float64 `json:"target_sd"`
-	IsActive   *bool    `json:"is_active"`
+	LotNumber              string   `json:"lot_number"`
+	TargetMean             *float64 `json:"target_mean"`
+	TargetSD               *float64 `json:"target_sd"`
+	IsActive               *bool    `json:"is_active"`
+	Level1SelectedResultID *int     `json:"level1_selected_result_id,omitempty"`
+	Level2SelectedResultID *int     `json:"level2_selected_result_id,omitempty"`
+	Level3SelectedResultID *int     `json:"level3_selected_result_id,omitempty"`
+}
+
+// CreateManualQCResultRequest represents a manual QC input request
+type CreateManualQCResultRequest struct {
+	DeviceID      int     `json:"device_id" validate:"required"`
+	TestTypeID    int     `json:"test_type_id" validate:"required"`
+	QCLevel       int     `json:"qc_level" validate:"required,min=1,max=3"`
+	MeasuredValue float64 `json:"measured_value" validate:"required"`
 }
 
 // QCSummary represents aggregated QC statistics for a device

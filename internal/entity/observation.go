@@ -155,6 +155,15 @@ func (o *ObservationResult) loadTestTypeByCode(tx *gorm.DB) {
 		}
 	}
 
+	// 4. Try by name (some devices send human-readable test name instead of code)
+	if !found {
+		err = tx.Where("LOWER(name) = LOWER(?) AND name != ''", o.TestCode).First(&testType).Error
+		if err == nil {
+			o.TestType = testType
+			found = true
+		}
+	}
+
 	if !found {
 		slog.Warn("TestType not found", "test_code", o.TestCode, "observation_result_id", o.ID)
 	}
@@ -220,6 +229,14 @@ func (o *ObservationResult) generateReferenceRange(tx *gorm.DB) error {
 					break
 				}
 			}
+		}
+	}
+
+	// 4. Try by name (devices sometimes send name instead of code)
+	if !found {
+		err = tx.Where("LOWER(name) = LOWER(?) AND name != ''", o.TestCode).First(&testType).Error
+		if err == nil {
+			found = true
 		}
 	}
 

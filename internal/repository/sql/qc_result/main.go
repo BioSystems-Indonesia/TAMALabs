@@ -21,6 +21,18 @@ func (r *QCResultRepository) Create(ctx context.Context, result *entity.QCResult
 	return r.db.WithContext(ctx).Create(result).Error
 }
 
+func (r *QCResultRepository) GetByID(ctx context.Context, id int) (*entity.QCResult, error) {
+	var result entity.QCResult
+	err := r.db.WithContext(ctx).
+		Preload("QCEntry.Device").
+		Preload("QCEntry.TestType").
+		First(&result, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
 func (r *QCResultRepository) GetMany(ctx context.Context, req entity.GetManyRequestQCResult) ([]entity.QCResult, int64, error) {
 	db := r.db.WithContext(ctx).Model(&entity.QCResult{})
 
@@ -30,6 +42,14 @@ func (r *QCResultRepository) GetMany(ctx context.Context, req entity.GetManyRequ
 
 	if req.Method != nil {
 		db = db.Where("qc_results.method = ?", *req.Method)
+	}
+
+	// Filter by date range if provided
+	if req.StartDate != nil && *req.StartDate != "" {
+		db = db.Where("substr(qc_results.created_at, 1, 10) >= ?", *req.StartDate)
+	}
+	if req.EndDate != nil && *req.EndDate != "" {
+		db = db.Where("substr(qc_results.created_at, 1, 10) <= ?", *req.EndDate)
 	}
 
 	// If filtering by device or test type, join qc_entries once and apply where clauses
@@ -93,6 +113,23 @@ func (r *QCResultRepository) GetByEntryIDAndMethod(ctx context.Context, entryID 
 		Order("qc_results.created_at ASC").
 		Find(&results).Error
 
+	return results, err
+}
+
+func (r *QCResultRepository) GetByEntryIDAndMethodWithDateRange(ctx context.Context, entryID int, method string, startDate, endDate *string) ([]entity.QCResult, error) {
+	var results []entity.QCResult
+	db := r.db.WithContext(ctx).
+		Where("qc_results.qc_entry_id = ? AND qc_results.method = ?", entryID, method)
+
+	// Apply date range filter if provided
+	if startDate != nil && *startDate != "" {
+		db = db.Where("substr(qc_results.created_at, 1, 10) >= ?", *startDate)
+	}
+	if endDate != nil && *endDate != "" {
+		db = db.Where("substr(qc_results.created_at, 1, 10) <= ?", *endDate)
+	}
+
+	err := db.Order("qc_results.created_at ASC").Find(&results).Error
 	return results, err
 }
 

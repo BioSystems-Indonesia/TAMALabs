@@ -6,21 +6,28 @@ import {
     StyleSheet,
     Text,
     View,
+    // Svg,
+    // Text as SvgText,
 } from '@react-pdf/renderer';
-import useSettings from '../hooks/useSettings';
-import logo from '../assets/elgatama-logo.png'
-import yt from '../assets/youtube.png'
-import fb from '../assets/facebook.png'
-import ig from '../assets/instagram.png'
+// import useSettings from '../hooks/useSettings';
+import logo from '../assets/trigas-logo.png'
+// import yt from '../assets/youtube.png'
+// import fb from '../assets/facebook.png'
+// import ig from '../assets/instagram.png'
+import trigasKop from '../assets/terigas-kop.png'
+import aptos from '../assets/font/Aptos.ttf'
+import aptosBold from '../assets/font/Aptos-Bold.ttf'
+import aptosSemiBold from '../assets/font/Aptos-SemiBold.ttf'
 import type { ReportData } from '../types/observation_result';
 import { Patient } from "../types/patient.ts";
 import { WorkOrder } from '../types/work_order.ts';
 
 Font.register({
-    family: 'Helvetica',
+    family: 'Aptos',
     fonts: [
-        { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxP.ttf', fontWeight: 400 },
-        { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmEU9fBBc9.ttf', fontWeight: 700 },
+        { src: aptos, fontWeight: 400 },
+        { src: aptosSemiBold, fontWeight: 500 },
+        { src: aptosBold, fontWeight: 700 },
     ],
 });
 
@@ -28,8 +35,8 @@ Font.register({
 const styles = StyleSheet.create({
     page: {
         fontSize: 10,
-        fontFamily: 'Helvetica',
-        paddingTop: 40,
+        fontFamily: 'Aptos',
+        paddingTop: 10,
         paddingLeft: 40,
         paddingRight: 40,
         paddingBottom: 49,
@@ -41,18 +48,42 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
     },
+    headerTitleContainer: {
+        position: 'relative',
+        textAlign: 'center',
+        height: 36,
+    },
+    titleStroke: {
+        position: 'absolute',
+        fontSize: 28,
+        fontWeight: 500,
+        color: '#4C94D8',
+        opacity: 1,
+        fontFamily: 'Aptos',
+        textAlign: 'center',
+
+
+    },
+    title: {
+        textAlign: 'center',
+        fontSize: 28,
+        fontWeight: 500,
+        color: '#a5c9eb',
+        fontFamily: 'Aptos',
+    },
     companyInfo: {
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'flex-end',
+        alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 7.5,
-        textAlign: 'right',
+        fontSize: 12,
+        textAlign: 'center',
+        color: '#4C94D8'
     },
     logo: {
-        width: 64,
-        height: 64,
+        width: 120,
+        height: 120,
         marginBottom: 10,
     },
     footer: {
@@ -150,7 +181,6 @@ const styles = StyleSheet.create({
     },
 });
 
-// Helper function to format birthdate
 const formatBirthdate = (birthdate: string) => {
     const date = new Date(birthdate);
     const day = String(date.getDate()).padStart(2, '0');
@@ -159,7 +189,6 @@ const formatBirthdate = (birthdate: string) => {
     return `${day}/${month}/${year}`;
 };
 
-// Helper function to calculate age
 const calculateAge = (birthdate: string) => {
     const now = new Date();
     const birthDate = new Date(birthdate);
@@ -168,7 +197,6 @@ const calculateAge = (birthdate: string) => {
     let months = now.getMonth() - birthDate.getMonth();
     let days = now.getDate() - birthDate.getDate();
 
-    // Adjust for negative months or days
     if (months < 0 || (months === 0 && days < 0)) {
         years--;
         months += 12;
@@ -179,11 +207,9 @@ const calculateAge = (birthdate: string) => {
         months--;
     }
 
-    // return `${years} year(s), ${months} month(s), ${days} day(s)`;
     return `${years} year(s)`;
 };
 
-// Helper function to format gender
 const formatGender = (gender: string) => {
     if (gender === 'F') return 'Female';
     if (gender === 'M') return 'Male';
@@ -191,7 +217,7 @@ const formatGender = (gender: string) => {
 };
 
 const Header = () => {
-    const [settings] = useSettings();
+    // const [settings] = useSettings();
 
     return (
         <View style={styles.header} fixed>
@@ -200,28 +226,21 @@ const Header = () => {
                 src={logo}
             />
             <View style={{ width: '85%' }}>
-                <Text style={{
-                    fontSize: 24
-                }}>{settings.company_name}</Text>
-                <View style={{
-                    width: '100%',
-                    height: '0.2rem',
-                    backgroundColor: 'rgb(74, 186, 171)'
-                }}>
-                </View>
+                <Image src={trigasKop} style={{ width: '350px', marginLeft: 26, marginBottom: 6 }} />
+
                 <View style={styles.companyInfo}>
+
                     <Text
                         wrap={true}
-                        style={{ width: '45%' }}
-                    >{settings.company_address}</Text>
+                        style={{ width: '100%', fontSize: 12 }}
+                    >Jln. Trans Kalimantan Kec. Bulik, Kab. Lamandau Provinsi Kalimantan Tengah</Text>
                     <Text
                         wrap={true}
-                        style={{ width: '45%' }}
-                    >{settings.company_contact_phone}</Text>
-                    <Text
-                        wrap={true}
-                        style={{ width: '45%' }}
-                    >{settings.company_contact_email}</Text>
+                        style={{
+                            width: '100%',
+                            fontSize: 12
+                        }}
+                    >Hp. 0895-3210-65003</Text>
                 </View>
             </View>
         </View>
@@ -298,37 +317,36 @@ const PatientInfo = ({ patient, workOrder }: { patient: Patient, workOrder: Work
     </View>
 );
 
-const Footer = () => (
-    <View style={styles.footer} fixed>
-        <View style={{
-            height: '0.2rem',
-            backgroundColor: 'rgb(74, 186, 171)'
-        }}>
-        </View>
-        <View style={{
-            marginTop: 4,
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-        }}>
-            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Image src={yt} style={{ width: 15, height: 15 }} />
-                <Text>BioSystems Indonesia</Text>
-            </View>
-            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Image src={ig} style={{ width: 15, height: 15 }} />
-                <Text>@biosystems.ind</Text>
-            </View>
-            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Image src={fb} style={{ width: 15, height: 15 }} />
-                <Text>BioSystems Indonesia</Text>
-            </View>
-        </View>
-    </View>
-);
+// const Footer = () => (
+//     <View style={styles.footer} fixed>
+//         <View style={{
+//             height: '0.2rem',
+//             backgroundColor: 'rgb(74, 186, 171)'
+//         }}>
+//         </View>
+//         <View style={{
+//             marginTop: 4,
+//             display: 'flex',
+//             flexDirection: 'row',
+//             alignItems: 'center',
+//             justifyContent: 'space-between',
+//         }}>
+//             <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+//                 <Image src={yt} style={{ width: 15, height: 15 }} />
+//                 <Text>BioSystems Indonesia</Text>
+//             </View>
+//             <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+//                 <Image src={ig} style={{ width: 15, height: 15 }} />
+//                 <Text>@biosystems.ind</Text>
+//             </View>
+//             <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+//                 <Image src={fb} style={{ width: 15, height: 15 }} />
+//                 <Text>BioSystems Indonesia</Text>
+//             </View>
+//         </View>
+//     </View>
+// );
 
-// Helper function to group data by category (if needed)
 const groupData = (data: ReportData[]) => {
     const grouped: Record<string, ReportData[]> = {};
     data?.forEach((item) => {
@@ -373,7 +391,13 @@ export const ReportDocument = ({ data, patientData, workOrderData }: {
                         </View>
 
                         {/* Table Rows */}
-                        {items.map((item, index) => {
+                        {[...items].sort((a, b) => {
+                            const aKey = ((a.alias_code || a.parameter) || '').toString().toUpperCase();
+                            const bKey = ((b.alias_code || b.parameter) || '').toString().toUpperCase();
+                            if (aKey === 'WBC' && bKey !== 'WBC') return -1;
+                            if (bKey === 'WBC' && aKey !== 'WBC') return 1;
+                            return 0;
+                        }).map((item, index) => {
                             const abnormalColor = {
                                 color:
                                     item.abnormality === 'High' ? '#e53e3e' : // Red for High
@@ -396,10 +420,8 @@ export const ReportDocument = ({ data, patientData, workOrderData }: {
                         })}
                     </View>
                 ))}
-                <Footer />
+                {/* <Footer /> */}
             </Page>
         </Document>
     );
 };
-
-// Usage example remains the same

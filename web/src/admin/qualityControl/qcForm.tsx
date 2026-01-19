@@ -1,10 +1,19 @@
 import { Box as MuiBox, Card, CardContent, Typography, Button, Divider, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, CircularProgress } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGetOne } from 'react-admin';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
 import ScienceIcon from '@mui/icons-material/Science';
 import AddIcon from '@mui/icons-material/Add';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import DownloadIcon from '@mui/icons-material/Download';
 import { Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, ReferenceLine, Scatter, ComposedChart } from 'recharts';
+import { ManualQCInputDialog } from './ManualQCInputDialog';
+import { QCReportTemplate } from './QCReportTemplate';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { pdf } from '@react-pdf/renderer';
 
 interface TestType {
     id: number;
@@ -13,6 +22,12 @@ interface TestType {
     unit: string;
     reference_range_min?: number;
     reference_range_max?: number;
+}
+
+interface Device {
+    id: number;
+    name: string;
+    serial_number: string;
 }
 
 interface QCEntry {
@@ -30,6 +45,9 @@ interface QCEntry {
     created_by: string;
     created_at: string;
     updated_at: string;
+    level1_selected_result_id?: number;
+    level2_selected_result_id?: number;
+    level3_selected_result_id?: number;
 }
 
 interface QCResult {
@@ -46,8 +64,9 @@ interface QCResult {
     sd_2: number;
     sd_3: number;
     result: string;
-    method: string; // 'statistic' or 'manual'
+    method: string; // 'raw', 'statistic' or 'manual'
     operator: string;
+    created_by?: string; // New field for audit trail
     message_control_id?: string;
     created_at: string;
     qc_entry?: QCEntry;
@@ -62,8 +81,13 @@ export const QCForm = () => {
     const [selectedMethod, setSelectedMethod] = useState<'statistic' | 'manual'>('statistic');
     const [hoveredPoint, setHoveredPoint] = useState<{ level: number; index: number; data: any } | null>(null);
     const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
+    const [manualInputDialogOpen, setManualInputDialogOpen] = useState(false);
+    const [startDate, setStartDate] = useState<Date | null>(null);
+    const [endDate, setEndDate] = useState<Date | null>(null);
+    const chartRef = useRef<HTMLDivElement>(null);
 
     const { data: testType, isLoading: testTypeLoading } = useGetOne<TestType>('test-type', { id: parseInt(testTypeId || '0') });
+    const { data: device, isLoading: deviceLoading } = useGetOne<Device>('device', { id: parseInt(deviceId || '0') });
 
     const [qcResults, setQcResults] = useState<QCResult[]>([]);
     const [qcEntries, setQcEntries] = useState<QCEntry[]>([]);
@@ -71,7 +95,7 @@ export const QCForm = () => {
 
     useEffect(() => {
         fetchQCData();
-    }, [deviceId, testTypeId, selectedMethod]);
+    }, [deviceId, testTypeId, selectedMethod, startDate, endDate]);
 
     const fetchQCData = async () => {
         try {
@@ -85,11 +109,13 @@ export const QCForm = () => {
                 }
             );
 
+            let entries: QCEntry[] = [];
             if (!entriesResponse.ok) {
                 //
             } else {
                 const entriesData = await entriesResponse.json();
-                setQcEntries(entriesData.data || []);
+                entries = entriesData.data || [];
+                setQcEntries(entries);
             }
 
             // Fetch QC results (include method if selected)
@@ -97,6 +123,14 @@ export const QCForm = () => {
             resultsUrl.searchParams.set('device_id', String(deviceId));
             resultsUrl.searchParams.set('test_type_id', String(testTypeId));
             resultsUrl.searchParams.set('method', selectedMethod);
+
+            // Add date range filters if set
+            if (startDate) {
+                resultsUrl.searchParams.set('start_date', startDate.toISOString().split('T')[0]);
+            }
+            if (endDate) {
+                resultsUrl.searchParams.set('end_date', endDate.toISOString().split('T')[0]);
+            }
 
             const resultsResponse = await fetch(resultsUrl.toString(), {
                 credentials: 'include',
@@ -106,7 +140,11 @@ export const QCForm = () => {
                 //
             } else {
                 const resultsData = await resultsResponse.json();
-                setQcResults(resultsData.data || []);
+                const allResults: QCResult[] = resultsData.data || [];
+
+                // Filter to show only selected results for each day
+                const filteredResults = filterSelectedResults(allResults, entries);
+                setQcResults(filteredResults);
             }
         } catch (error) {
             console.error('Error fetching QC data:', error);
@@ -115,12 +153,168 @@ export const QCForm = () => {
         }
     };
 
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' });
+    const filterSelectedResults = (results: QCResult[], entries: QCEntry[]): QCResult[] => {
+        // Group results by date and level
+        const resultsByDateAndLevel = results.reduce((acc, result) => {
+            if (!result.qc_entry) return acc;
+
+            const date = new Date(result.created_at);
+            date.setHours(0, 0, 0, 0);
+            const dateKey = date.toISOString();
+            const level = result.qc_entry.qc_level;
+            const key = `${dateKey}-${level}`;
+
+            if (!acc[key]) {
+                acc[key] = [];
+            }
+            acc[key].push(result);
+            return acc;
+        }, {} as Record<string, QCResult[]>);
+
+        // For each date+level group, select only the selected result
+        const selectedResults: QCResult[] = [];
+
+        Object.entries(resultsByDateAndLevel).forEach(([key, dayResults]) => {
+            if (dayResults.length === 1) {
+                // Only one result, include it
+                selectedResults.push(dayResults[0]);
+            } else {
+                // Multiple results, find the selected one
+                const level = dayResults[0].qc_entry?.qc_level;
+                const entry = entries.find(e => e.qc_level === level && e.is_active);
+
+                let selectedId: number | undefined;
+                if (level === 1) selectedId = entry?.level1_selected_result_id;
+                else if (level === 2) selectedId = entry?.level2_selected_result_id;
+                else if (level === 3) selectedId = entry?.level3_selected_result_id;
+
+                // If a result is selected, use it; otherwise use the first one
+                const selectedResult = selectedId
+                    ? dayResults.find(r => r.id === selectedId) || dayResults[0]
+                    : dayResults[0];
+
+                selectedResults.push(selectedResult);
+            }
+        });
+
+        return selectedResults;
     };
 
-    const isLoading = testTypeLoading || loading;
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+    };
+
+    const prepareChartData = () => {
+        const allChartData: any[] = [];
+
+        [1, 2, 3].forEach(level => {
+            const levelResults = qcResults
+                .filter(r => r.method === selectedMethod && r.qc_entry?.qc_level === level)
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); // Descending: newest first
+
+            if (levelResults.length === 0) return;
+
+            const levelEntry = activeEntries.find(e => e.qc_level === level);
+
+            levelResults.forEach((result, index) => {
+                // Use calculated mean/sd for statistic method, target mean/sd for manual method
+                const useMean = selectedMethod === 'statistic' && result.calculated_mean
+                    ? result.calculated_mean
+                    : (levelEntry?.target_mean || 0);
+                const useSD = selectedMethod === 'statistic' && result.calculated_sd
+                    ? result.calculated_sd
+                    : (levelEntry?.target_sd || 0);
+
+                // Determine status based on error_sd
+                const absErrorSD = Math.abs(result.error_sd);
+                let status = 'In Control';
+                if (absErrorSD >= 3) status = 'Reject';
+                else if (absErrorSD >= 2) status = 'Warning';
+
+                // Determine source
+                const source = result.message_control_id ? 'Analyzer' : 'Manual';
+
+                allChartData.push({
+                    level: level,
+                    levelName: `Level ${level}`,
+                    index: index + 1,
+                    date: formatDate(result.created_at),
+                    errorSD: result.error_sd,
+                    result: result.measured_value,
+                    mean: useMean,
+                    sd: useSD,
+                    lotNumber: levelEntry?.lot_number || '-',
+                    absoluteError: result.absolute_error,
+                    relativeError: result.relative_error,
+                    status: status,
+                    source: source,
+                    // For debugging: include both calculated and target values
+                    _debug: {
+                        calculated_mean: result.calculated_mean,
+                        calculated_sd: result.calculated_sd,
+                        target_mean: levelEntry?.target_mean,
+                        target_sd: levelEntry?.target_sd,
+                        method: selectedMethod,
+                    }
+                });
+            });
+        });
+
+        console.log('Chart data for PDF:', allChartData);
+        return allChartData;
+    };
+
+    const handleDownloadPDF = async () => {
+        if (!testType) return;
+
+        try {
+            const chartData = prepareChartData();
+
+            // Capture chart as image
+            let chartImageUrl = '';
+            if (chartRef.current && chartData.length > 0) {
+                const canvas = await html2canvas(chartRef.current, {
+                    backgroundColor: '#ffffff',
+                    scale: 2, // Higher quality
+                    logging: false,
+                });
+                chartImageUrl = canvas.toDataURL('image/png');
+            }
+
+            const blob = await pdf(
+                <QCReportTemplate
+                    testType={testType}
+                    device={device}
+                    entries={activeEntries}
+                    qcResults={qcResults.filter(r => r.method === selectedMethod)}
+                    selectedMethod={selectedMethod}
+                    startDate={startDate}
+                    endDate={endDate}
+                    chartData={chartData}
+                    chartImageUrl={chartImageUrl}
+                />
+            ).toBlob();
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `QC_Report_${testType.code}_${new Date().toISOString().split('T')[0]}.pdf`;
+            link.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+        }
+    };
+
+    const isLoading = testTypeLoading || deviceLoading || loading;
 
     if (isLoading) {
         return (
@@ -159,13 +353,32 @@ export const QCForm = () => {
                                 </Typography>
                             </MuiBox>
                         </MuiBox>
-                        <Button
-                            variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={() => navigate(`/quality-control/${deviceId}/parameter/${testTypeId}/entry/new`)}
-                        >
-                            New QC Entry
-                        </Button>
+                        <MuiBox sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={() => navigate(`/quality-control/${deviceId}/parameter/${testTypeId}/entry/new`)}
+                            >
+                                New QC Entry
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<EditNoteIcon />}
+                                onClick={() => setManualInputDialogOpen(true)}
+                                disabled={!hasActiveEntry}
+                            >
+                                Manual Input
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<DownloadIcon />}
+                                onClick={handleDownloadPDF}
+                                disabled={!hasActiveEntry || qcResults.length === 0}
+                                color="primary"
+                            >
+                                Download PDF
+                            </Button>
+                        </MuiBox>
                     </MuiBox>
                 </CardContent>
             </Card>
@@ -293,7 +506,7 @@ export const QCForm = () => {
                 </Card>
             )}
             {/* Filters: Level + Method */}
-            <MuiBox sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+            <MuiBox sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center', flexWrap: 'wrap' }}>
                 <MuiBox sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                     <Typography variant="body2" sx={{ mr: 1, fontWeight: 500 }}>Method:</Typography>
                     <Chip
@@ -318,6 +531,49 @@ export const QCForm = () => {
                             cursor: 'pointer'
                         }}
                     />
+                </MuiBox>
+
+                <Divider orientation="vertical" flexItem />
+
+                <MuiBox sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>Date Range:</Typography>
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <DatePicker
+                            label="Start Date"
+                            value={startDate}
+                            onChange={(newValue) => setStartDate(newValue)}
+                            slotProps={{
+                                textField: {
+                                    size: 'small',
+                                    sx: { width: 160 }
+                                }
+                            }}
+                        />
+                        <DatePicker
+                            label="End Date"
+                            value={endDate}
+                            onChange={(newValue) => setEndDate(newValue)}
+                            minDate={startDate || undefined}
+                            slotProps={{
+                                textField: {
+                                    size: 'small',
+                                    sx: { width: 160 }
+                                }
+                            }}
+                        />
+                    </LocalizationProvider>
+                    {(startDate || endDate) && (
+                        <Button
+                            size="small"
+                            onClick={() => {
+                                setStartDate(null);
+                                setEndDate(null);
+                            }}
+                            sx={{ textTransform: 'none' }}
+                        >
+                            Clear
+                        </Button>
+                    )}
                 </MuiBox>
             </MuiBox>
 
@@ -357,10 +613,16 @@ export const QCForm = () => {
                                 if (levelResults.length === 0) return;
 
                                 const levelEntry = activeEntries.find(e => e.qc_level === level);
-                                const targetMean = levelEntry?.target_mean || 0;
-                                const targetSD = levelEntry?.target_sd || 0;
 
                                 levelResults.forEach((result, index) => {
+                                    // Use calculated mean/sd for statistic method, target mean/sd for manual method
+                                    const useMean = selectedMethod === 'statistic' && result.calculated_mean
+                                        ? result.calculated_mean
+                                        : (levelEntry?.target_mean || 0);
+                                    const useSD = selectedMethod === 'statistic' && result.calculated_sd
+                                        ? result.calculated_sd
+                                        : (levelEntry?.target_sd || 0);
+
                                     allChartData.push({
                                         level: level,
                                         levelName: `Level ${level}`,
@@ -369,8 +631,8 @@ export const QCForm = () => {
                                         value: result.measured_value,
                                         error: result.error_sd, // Use error_sd calculated by backend
                                         result: result.result,
-                                        mean: targetMean,
-                                        sd: targetSD,
+                                        mean: useMean,
+                                        sd: useSD,
                                         lotNumber: levelEntry?.lot_number || '-',
                                     });
                                 });
@@ -450,201 +712,203 @@ export const QCForm = () => {
                                         )}
                                     </MuiBox>
 
-                                    <ResponsiveContainer width="100%" height={400}>
-                                        <ComposedChart
-                                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                                            onMouseLeave={() => {
-                                                setHoveredPoint(null);
-                                                setTooltipPos(null);
-                                            }}
-                                        >
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis
-                                                dataKey="index"
-                                                label={{ value: 'N (Measurement)', position: 'insideBottom', offset: -5 }}
-                                                tick={{ fontSize: 12 }}
-                                                type="number"
-                                                domain={[1, 'dataMax']}
-                                            />
-                                            <YAxis
-                                                label={{ value: 'Error (SD)', angle: -90, position: 'insideLeft' }}
-                                                domain={[-4, 4]}
-                                                ticks={[-3, -2, -1, 0, 1, 2, 3]}
-                                            />
+                                    <MuiBox ref={chartRef}>
+                                        <ResponsiveContainer width="100%" height={400}>
+                                            <ComposedChart
+                                                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                                                onMouseLeave={() => {
+                                                    setHoveredPoint(null);
+                                                    setTooltipPos(null);
+                                                }}
+                                            >
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis
+                                                    dataKey="index"
+                                                    label={{ value: 'N (Measurement)', position: 'insideBottom', offset: -5 }}
+                                                    tick={{ fontSize: 12 }}
+                                                    type="number"
+                                                    domain={[1, 'dataMax']}
+                                                />
+                                                <YAxis
+                                                    label={{ value: 'Error (SD)', angle: -90, position: 'insideLeft' }}
+                                                    domain={[-4, 4]}
+                                                    ticks={[-3, -2, -1, 0, 1, 2, 3]}
+                                                />
 
-                                            <ReferenceLine y={0} stroke="#000" strokeWidth={2} />
-                                            <ReferenceLine y={1} stroke="#FFA500" strokeDasharray="5 5" />
-                                            <ReferenceLine y={-1} stroke="#FFA500" strokeDasharray="5 5" />
-                                            <ReferenceLine y={2} stroke="#FF6347" strokeDasharray="3 3" />
-                                            <ReferenceLine y={-2} stroke="#FF6347" strokeDasharray="3 3" />
-                                            <ReferenceLine y={3} stroke="#DC143C" strokeWidth={2} />
-                                            <ReferenceLine y={-3} stroke="#DC143C" strokeWidth={2} />
+                                                <ReferenceLine y={0} stroke="#000" strokeWidth={2} />
+                                                <ReferenceLine y={1} stroke="#FFA500" strokeDasharray="5 5" />
+                                                <ReferenceLine y={-1} stroke="#FFA500" strokeDasharray="5 5" />
+                                                <ReferenceLine y={2} stroke="#FF6347" strokeDasharray="3 3" />
+                                                <ReferenceLine y={-2} stroke="#FF6347" strokeDasharray="3 3" />
+                                                <ReferenceLine y={3} stroke="#DC143C" strokeWidth={2} />
+                                                <ReferenceLine y={-3} stroke="#DC143C" strokeWidth={2} />
 
-                                            {level1Data.length > 0 && visibleLevels[1] && (
-                                                <>
-                                                    <Line
-                                                        type="monotone"
-                                                        data={level1Data}
-                                                        dataKey="error"
-                                                        stroke="#2196f3"
-                                                        strokeWidth={2}
-                                                        dot={false}
-                                                        activeDot={false}
-                                                        connectNulls
-                                                    />
-                                                    <Scatter
-                                                        id="level1-scatter"
-                                                        data={level1Data}
-                                                        dataKey="error"
-                                                        fill="#2196f3"
-                                                        isAnimationActive={false}
-                                                        shape={(props: any) => {
-                                                            const { cx, cy, payload, index } = props;
-                                                            const errorValue = payload.error;
-                                                            const isHovered = hoveredPoint?.level === 1 && hoveredPoint?.index === index;
-                                                            let color;
-                                                            if (Math.abs(errorValue) <= 2) {
-                                                                color = '#4caf50';
-                                                            } else if (Math.abs(errorValue) <= 3) {
-                                                                color = '#ff9800';
-                                                            } else {
-                                                                color = '#f44336';
-                                                            }
-                                                            return (
-                                                                <circle
-                                                                    cx={cx}
-                                                                    cy={cy}
-                                                                    r={isHovered ? 7 : 5}
-                                                                    fill={color}
-                                                                    stroke={color}
-                                                                    strokeWidth={isHovered ? 2 : 1}
-                                                                    style={{ cursor: 'pointer', }}
-                                                                    onMouseOver={(e: any) => {
-                                                                        setHoveredPoint({ level: 1, index, data: payload });
-                                                                        setTooltipPos({ x: e.clientX, y: e.clientY });
-                                                                    }}
-                                                                    onMouseOut={() => {
-                                                                        setHoveredPoint(null);
-                                                                        setTooltipPos(null);
-                                                                    }}
-                                                                />
-                                                            );
-                                                        }}
-                                                    />
+                                                {level1Data.length > 0 && visibleLevels[1] && (
+                                                    <>
+                                                        <Line
+                                                            type="monotone"
+                                                            data={level1Data}
+                                                            dataKey="error"
+                                                            stroke="#2196f3"
+                                                            strokeWidth={2}
+                                                            dot={false}
+                                                            activeDot={false}
+                                                            connectNulls
+                                                        />
+                                                        <Scatter
+                                                            id="level1-scatter"
+                                                            data={level1Data}
+                                                            dataKey="error"
+                                                            fill="#2196f3"
+                                                            isAnimationActive={false}
+                                                            shape={(props: any) => {
+                                                                const { cx, cy, payload, index } = props;
+                                                                const errorValue = payload.error;
+                                                                const isHovered = hoveredPoint?.level === 1 && hoveredPoint?.index === index;
+                                                                let color;
+                                                                if (Math.abs(errorValue) <= 2) {
+                                                                    color = '#4caf50';
+                                                                } else if (Math.abs(errorValue) <= 3) {
+                                                                    color = '#ff9800';
+                                                                } else {
+                                                                    color = '#f44336';
+                                                                }
+                                                                return (
+                                                                    <circle
+                                                                        cx={cx}
+                                                                        cy={cy}
+                                                                        r={isHovered ? 7 : 5}
+                                                                        fill={color}
+                                                                        stroke={color}
+                                                                        strokeWidth={isHovered ? 2 : 1}
+                                                                        style={{ cursor: 'pointer', }}
+                                                                        onMouseOver={(e: any) => {
+                                                                            setHoveredPoint({ level: 1, index, data: payload });
+                                                                            setTooltipPos({ x: e.clientX, y: e.clientY });
+                                                                        }}
+                                                                        onMouseOut={() => {
+                                                                            setHoveredPoint(null);
+                                                                            setTooltipPos(null);
+                                                                        }}
+                                                                    />
+                                                                );
+                                                            }}
+                                                        />
 
-                                                </>
-                                            )}
+                                                    </>
+                                                )}
 
-                                            {level2Data.length > 0 && visibleLevels[2] && (
-                                                <>
-                                                    <Line
-                                                        type="monotone"
-                                                        data={level2Data}
-                                                        dataKey="error"
-                                                        stroke="#9c27b0"
-                                                        strokeWidth={2}
-                                                        dot={false}
-                                                        activeDot={false}
-                                                        connectNulls
-                                                    />
-                                                    <Scatter
-                                                        id="level2-scatter"
-                                                        data={level2Data}
-                                                        dataKey="error"
-                                                        fill="#9c27b0"
-                                                        isAnimationActive={false}
-                                                        shape={(props: any) => {
-                                                            const { cx, cy, payload, index } = props;
-                                                            const errorValue = payload.error;
-                                                            const isHovered = hoveredPoint?.level === 2 && hoveredPoint?.index === index;
-                                                            let color;
-                                                            if (Math.abs(errorValue) <= 2) {
-                                                                color = '#4caf50';
-                                                            } else if (Math.abs(errorValue) <= 3) {
-                                                                color = '#ff9800';
-                                                            } else {
-                                                                color = '#f44336';
-                                                            }
-                                                            return (
-                                                                <circle
-                                                                    cx={cx}
-                                                                    cy={cy}
-                                                                    r={isHovered ? 7 : 5}
-                                                                    fill={color}
-                                                                    stroke={color}
-                                                                    strokeWidth={isHovered ? 2 : 1}
-                                                                    style={{ cursor: 'pointer' }}
-                                                                    onMouseOver={(e: any) => {
-                                                                        setHoveredPoint({ level: 2, index, data: payload });
-                                                                        setTooltipPos({ x: e.clientX, y: e.clientY });
-                                                                    }}
-                                                                    onMouseOut={() => {
-                                                                        setHoveredPoint(null);
-                                                                        setTooltipPos(null);
-                                                                    }}
-                                                                />
-                                                            );
-                                                        }}
-                                                    />
+                                                {level2Data.length > 0 && visibleLevels[2] && (
+                                                    <>
+                                                        <Line
+                                                            type="monotone"
+                                                            data={level2Data}
+                                                            dataKey="error"
+                                                            stroke="#9c27b0"
+                                                            strokeWidth={2}
+                                                            dot={false}
+                                                            activeDot={false}
+                                                            connectNulls
+                                                        />
+                                                        <Scatter
+                                                            id="level2-scatter"
+                                                            data={level2Data}
+                                                            dataKey="error"
+                                                            fill="#9c27b0"
+                                                            isAnimationActive={false}
+                                                            shape={(props: any) => {
+                                                                const { cx, cy, payload, index } = props;
+                                                                const errorValue = payload.error;
+                                                                const isHovered = hoveredPoint?.level === 2 && hoveredPoint?.index === index;
+                                                                let color;
+                                                                if (Math.abs(errorValue) <= 2) {
+                                                                    color = '#4caf50';
+                                                                } else if (Math.abs(errorValue) <= 3) {
+                                                                    color = '#ff9800';
+                                                                } else {
+                                                                    color = '#f44336';
+                                                                }
+                                                                return (
+                                                                    <circle
+                                                                        cx={cx}
+                                                                        cy={cy}
+                                                                        r={isHovered ? 7 : 5}
+                                                                        fill={color}
+                                                                        stroke={color}
+                                                                        strokeWidth={isHovered ? 2 : 1}
+                                                                        style={{ cursor: 'pointer' }}
+                                                                        onMouseOver={(e: any) => {
+                                                                            setHoveredPoint({ level: 2, index, data: payload });
+                                                                            setTooltipPos({ x: e.clientX, y: e.clientY });
+                                                                        }}
+                                                                        onMouseOut={() => {
+                                                                            setHoveredPoint(null);
+                                                                            setTooltipPos(null);
+                                                                        }}
+                                                                    />
+                                                                );
+                                                            }}
+                                                        />
 
-                                                </>
-                                            )}
+                                                    </>
+                                                )}
 
-                                            {level3Data.length > 0 && visibleLevels[3] && (
-                                                <>
-                                                    <Scatter
-                                                        id="level3-scatter"
-                                                        data={level3Data}
-                                                        dataKey="error"
-                                                        fill="#ff9800"
-                                                        isAnimationActive={false}
-                                                        shape={(props: any) => {
-                                                            const { cx, cy, payload, index } = props;
-                                                            const errorValue = payload.error;
-                                                            const isHovered = hoveredPoint?.level === 3 && hoveredPoint?.index === index;
-                                                            let color;
-                                                            if (Math.abs(errorValue) <= 2) {
-                                                                color = '#4caf50';
-                                                            } else if (Math.abs(errorValue) <= 3) {
-                                                                color = '#ff9800';
-                                                            } else {
-                                                                color = '#f44336';
-                                                            }
-                                                            return (
-                                                                <circle
-                                                                    cx={cx}
-                                                                    cy={cy}
-                                                                    r={isHovered ? 7 : 5}
-                                                                    fill={color}
-                                                                    stroke={color}
-                                                                    strokeWidth={isHovered ? 2 : 1}
-                                                                    style={{ cursor: 'pointer' }}
-                                                                    onMouseOver={(e: any) => {
-                                                                        setHoveredPoint({ level: 3, index, data: payload });
-                                                                        setTooltipPos({ x: e.clientX, y: e.clientY });
-                                                                    }}
-                                                                    onMouseOut={() => {
-                                                                        setHoveredPoint(null);
-                                                                        setTooltipPos(null);
-                                                                    }}
-                                                                />
-                                                            );
-                                                        }}
-                                                    />
-                                                    <Line
-                                                        type="monotone"
-                                                        data={level3Data}
-                                                        dataKey="error"
-                                                        stroke="#ff9800"
-                                                        strokeWidth={2}
-                                                        dot={false}
-                                                        activeDot={false}
-                                                        connectNulls
-                                                    />
-                                                </>
-                                            )}
-                                        </ComposedChart>
-                                    </ResponsiveContainer>
+                                                {level3Data.length > 0 && visibleLevels[3] && (
+                                                    <>
+                                                        <Scatter
+                                                            id="level3-scatter"
+                                                            data={level3Data}
+                                                            dataKey="error"
+                                                            fill="#ff9800"
+                                                            isAnimationActive={false}
+                                                            shape={(props: any) => {
+                                                                const { cx, cy, payload, index } = props;
+                                                                const errorValue = payload.error;
+                                                                const isHovered = hoveredPoint?.level === 3 && hoveredPoint?.index === index;
+                                                                let color;
+                                                                if (Math.abs(errorValue) <= 2) {
+                                                                    color = '#4caf50';
+                                                                } else if (Math.abs(errorValue) <= 3) {
+                                                                    color = '#ff9800';
+                                                                } else {
+                                                                    color = '#f44336';
+                                                                }
+                                                                return (
+                                                                    <circle
+                                                                        cx={cx}
+                                                                        cy={cy}
+                                                                        r={isHovered ? 7 : 5}
+                                                                        fill={color}
+                                                                        stroke={color}
+                                                                        strokeWidth={isHovered ? 2 : 1}
+                                                                        style={{ cursor: 'pointer' }}
+                                                                        onMouseOver={(e: any) => {
+                                                                            setHoveredPoint({ level: 3, index, data: payload });
+                                                                            setTooltipPos({ x: e.clientX, y: e.clientY });
+                                                                        }}
+                                                                        onMouseOut={() => {
+                                                                            setHoveredPoint(null);
+                                                                            setTooltipPos(null);
+                                                                        }}
+                                                                    />
+                                                                );
+                                                            }}
+                                                        />
+                                                        <Line
+                                                            type="monotone"
+                                                            data={level3Data}
+                                                            dataKey="error"
+                                                            stroke="#ff9800"
+                                                            strokeWidth={2}
+                                                            dot={false}
+                                                            activeDot={false}
+                                                            connectNulls
+                                                        />
+                                                    </>
+                                                )}
+                                            </ComposedChart>
+                                        </ResponsiveContainer>
+                                    </MuiBox>
 
                                     {hoveredPoint && tooltipPos && (
                                         <Paper
@@ -813,7 +1077,8 @@ export const QCForm = () => {
                                     <TableCell align="center"><strong>Absolute Error</strong></TableCell>
                                     <TableCell align="center"><strong>Relative Error (%)</strong></TableCell>
                                     <TableCell align="center"><strong>Result</strong></TableCell>
-                                    <TableCell><strong>Operator</strong></TableCell>
+                                    <TableCell><strong>Source</strong></TableCell>
+                                    <TableCell><strong>Created By</strong></TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -895,7 +1160,18 @@ export const QCForm = () => {
                                                     }}
                                                 />
                                             </TableCell>
-                                            <TableCell>{result.operator}</TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={result.message_control_id ? 'Analyzer' : 'Manual'}
+                                                    size="small"
+                                                    sx={{
+                                                        backgroundColor: result.message_control_id ? 'rgba(33, 150, 243, 0.1)' : 'rgba(156, 39, 176, 0.1)',
+                                                        color: result.message_control_id ? '#2196f3' : '#9c27b0',
+                                                        fontWeight: 500
+                                                    }}
+                                                />
+                                            </TableCell>
+                                            <TableCell>{result.created_by || result.operator}</TableCell>
                                         </TableRow>
                                     ))}
                             </TableBody>
@@ -911,6 +1187,15 @@ export const QCForm = () => {
                     )}
                 </CardContent>
             </Card>
+
+            <ManualQCInputDialog
+                open={manualInputDialogOpen}
+                onClose={() => setManualInputDialogOpen(false)}
+                deviceId={deviceId || ''}
+                testTypeId={testTypeId || ''}
+                activeEntries={activeEntries}
+                onSuccess={fetchQCData}
+            />
         </MuiBox >
     );
 };

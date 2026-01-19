@@ -273,36 +273,6 @@ const HeaderInfo = (props: any) => (
                 <DateField source="created_at" showTime />
             </Labeled>
         </Grid>
-        <Grid item xs={12} md={4}>
-            <Labeled>
-                <WithRecord label="Medical Record Number" render={(record: WorkOrder) => (
-                    <span>{record.medical_record_number || '-'}</span>
-                )} />
-            </Labeled>
-        </Grid>
-        <Grid item xs={12} md={4}>
-            <Labeled>
-                <WithRecord label="Visit Number" render={(record: WorkOrder) => (
-                    <Typography component="span">{record.visit_number || '-'}</Typography>
-                )} />
-            </Labeled>
-        </Grid>
-        <Grid item xs={12} md={4}>
-            <Labeled>
-                <WithRecord label="Sampling" render={(record: WorkOrder) => {
-                    if (!record.specimen_collection_date) return <span>-</span>;
-                    const date = new Date(record.specimen_collection_date);
-                    return <span>{dayjs(date).format('DD-MM-YYYY HH:mm')}</span>;
-                }} />
-            </Labeled>
-        </Grid>
-        <Grid item xs={12} md={8}>
-            <Labeled>
-                <WithRecord label="Diagnosis / Clinical Notes" render={(record: WorkOrder) => (
-                    <span>{record.diagnosis || '-'}</span>
-                )} />
-            </Labeled>
-        </Grid>
         <Grid item xs={12} md={4} >
             <Labeled>
                 <TextField source="total_request" label="Total Request" />
@@ -423,7 +393,7 @@ const TestResultTable = (props: TestResultTableProps) => {
             ...r,
             id: r.id || negID--,
             name: r?.test_type?.name || r?.history?.[0]?.test_type?.name || r.test,
-            specimen_type: r?.test_type?.types?.[0]?.type || '',
+            specimen_type: r?.test_type?.types[0].type,
             alias: r?.test_type?.alias_code || r?.history?.[0]?.test_type?.alias_code || r.alias || r.test,
         })));
     }, [props?.rows]);
@@ -449,7 +419,7 @@ const TestResultTable = (props: TestResultTableProps) => {
                 },
                 {
                     field: 'alias',
-                    headerName: 'Alias/Code',
+                    headerName: 'Alias',
                     flex: 1,
                 },
 
@@ -558,8 +528,6 @@ type HistoryDialogProps = {
 const HistoryDialog = (props: HistoryDialogProps) => {
     const notify = useNotify();
     const refresh = useRefresh();
-    const record = useRecordContext<Result>();
-    const currentUser = useCurrentUser();
 
     // Some Hack because Dialog is on top, and it will refresh
     // some updated value, then we need to make the values
@@ -569,9 +537,6 @@ const HistoryDialog = (props: HistoryDialogProps) => {
     }
 
     const axios = useAxios();
-
-    // Check if current user is a doctor
-    const isDoctor = record?.doctors?.map(v => v.id).includes(currentUser?.id ?? 0);
     const pickTestResult = async (testResultID: number) => {
         try {
             const url = `/result/${props.workOrderID}/test/${testResultID}/pick`
@@ -584,15 +549,12 @@ const HistoryDialog = (props: HistoryDialogProps) => {
                 type: 'success',
             });
 
-            // Close dialog first so user sees fresh data when reopening
-            props.onClose();
-
-            // Refresh to get updated data from backend
             refresh()
 
-            // Note: We close the dialog instead of updating local state
-            // because history dialog needs fresh data from backend to show correct picked status
-            // Backend handles unpicking correctly based on test_type_id
+            props.setHistory({
+                rows: props.rows.map(v => v.id === testResultID ? { ...v, picked: true } : { ...v, picked: false }),
+                title: props.title,
+            })
         } catch (err) {
             notify("Error pick test result", {
                 type: 'error',
@@ -683,12 +645,10 @@ const HistoryDialog = (props: HistoryDialogProps) => {
                             headerName: 'Action',
                             flex: 1,
                             renderCell: (params: GridRenderCellParams) => {
-
                                 return <ButtonGroup sx={{
                                     gap: 2,
                                 }}>
                                     <DeleteButton
-                                        disabled={!isDoctor}
                                         sx={{ marginLeft: 2 }}
                                         label={''}
                                         mutationMode="pessimistic"

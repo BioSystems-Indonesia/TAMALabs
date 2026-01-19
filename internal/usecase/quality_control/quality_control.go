@@ -91,9 +91,6 @@ func (u *QualityControlUsecase) processQCRecord(
 	}
 
 	operator := "SYSTEM"
-	if len(obxParts) > 16 {
-		operator = obxParts[16]
-	}
 
 	device, err := u.deviceRepo.FindOneByType(ctx, entity.DeviceType(deviceIdentifier))
 	if err != nil {
@@ -111,94 +108,7 @@ func (u *QualityControlUsecase) processQCRecord(
 		return err
 	}
 
-	if qcEntry.TargetSD == nil || *qcEntry.TargetSD == 0 {
-		return fmt.Errorf("target SD not defined for QC entry")
-	}
-
-	prevStats, _ := u.qcResultRepo.GetByEntryIDAndMethod(
-		ctx,
-		qcEntry.ID,
-		"statistic",
-	)
-
-	values := make([]float64, 0, len(prevStats)+1)
-	for _, r := range prevStats {
-		values = append(values, r.MeasuredValue)
-	}
-	values = append(values, measuredValue)
-
-	manualMean := qcEntry.TargetMean
-	manualSD := *qcEntry.TargetSD
-	manualCV := (manualSD / manualMean) * 100
-	manualErrorSD := (measuredValue - manualMean) / manualSD
-
-	manualResult := u.buildQCResult(
-		qcEntry.ID,
-		measuredValue,
-		manualMean,
-		manualSD,
-		manualCV,
-		manualErrorSD,
-		"manual",
-		operator,
-		messageControlID,
-	)
-
-	if err := u.qcResultRepo.Create(ctx, manualResult); err != nil {
-		return err
-	}
-
-	var statMean, statSD, statCV float64
-
-	targetMean := manualMean
-	targetSD := manualSD
-
-	count := len(values)
-
-	if count < 5 {
-		statMean = targetMean
-		statSD = targetSD
-		statCV = manualCV
-
-	} else {
-		stats := calculateStats(values)
-
-		statMean = stats.Mean
-		statSD = stats.SD
-
-		minSD := targetSD * 0.7
-		if statSD < minSD {
-			statSD = minSD
-		}
-
-		alpha := math.Min(float64(count-5)/5.0, 1.0)
-
-		statMean = alpha*statMean + (1-alpha)*targetMean
-		statSD = alpha*statSD + (1-alpha)*targetSD
-
-		if statMean != 0 {
-			statCV = (statSD / statMean) * 100
-		}
-	}
-
-	statErrorSD := 0.0
-	if statSD != 0 {
-		statErrorSD = (measuredValue - statMean) / statSD
-	}
-
-	statResult := u.buildQCResult(
-		qcEntry.ID,
-		measuredValue,
-		statMean,
-		statSD,
-		statCV,
-		statErrorSD,
-		"statistic",
-		operator,
-		messageControlID,
-	)
-
-	return u.qcResultRepo.Create(ctx, statResult)
+	return u.saveRawQCResult(ctx, qcEntry.ID, measuredValue, operator, messageControlID)
 }
 
 func (u *QualityControlUsecase) extractQCLevel(sampleID string) int {
@@ -212,7 +122,26 @@ func (u *QualityControlUsecase) extractQCLevel(sampleID string) int {
 	if strings.Contains(upper, " I ") || strings.Contains(upper, " 1 ") {
 		return 1
 	}
-	return 1 // Default to level 1
+	return 1
+}
+
+func (u *QualityControlUsecase) saveRawQCResult(
+	ctx context.Context,
+	qcEntryID int,
+	measuredValue float64,
+	operator string,
+	messageControlID string,
+) error {
+	rawResult := &entity.QCResult{
+		QCEntryID:        qcEntryID,
+		MeasuredValue:    measuredValue,
+		Method:           "raw",
+		Operator:         operator,
+		MessageControlID: messageControlID,
+		CreatedBy:        operator,
+	}
+
+	return u.qcResultRepo.Create(ctx, rawResult)
 }
 
 func (u *QualityControlUsecase) parseReferenceRange(refRange string) (ref, sd float64, err error) {
@@ -232,7 +161,7 @@ func (u *QualityControlUsecase) parseReferenceRange(refRange string) (ref, sd fl
 	}
 
 	ref = (min + max) / 2
-	sd = (max - min) / 4 // Assuming range is ±2SD
+	sd = (max - min) / 6
 
 	return ref, sd, nil
 }
@@ -270,7 +199,81 @@ func (u *QualityControlUsecase) GetQCEntries(ctx context.Context, req entity.Get
 }
 
 func (u *QualityControlUsecase) GetQCResults(ctx context.Context, req entity.GetManyRequestQCResult) ([]entity.QCResult, int64, error) {
-	return u.qcResultRepo.GetMany(ctx, req)
+	rawReq := req
+	rawMethod := "raw"
+	rawReq.Method = &rawMethod
+
+	rawResults, total, err := u.qcResultRepo.GetMany(ctx, rawReq)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if req.Method == nil || *req.Method == "raw" {
+		return rawResults, total, nil
+	}
+
+	calculatedResults := make([]entity.QCResult, 0, len(rawResults))
+	for _, rawResult := range rawResults {
+		qcEntry, err := u.qcEntryRepo.GetByID(ctx, rawResult.QCEntryID)
+		if err != nil {
+			continue
+		}
+
+		if qcEntry.TargetSD == nil || *qcEntry.TargetSD == 0 {
+			continue
+		}
+
+		var mean, sd, cv, errorSD float64
+
+		switch *req.Method {
+		case "manual":
+			mean = qcEntry.TargetMean
+			sd = *qcEntry.TargetSD
+			cv = (sd / mean) * 100
+			errorSD = (rawResult.MeasuredValue - mean) / sd
+		case "statistic":
+			// Get all raw data for this entry within the date range for statistical calculation
+			allRawForEntry, _ := u.qcResultRepo.GetByEntryIDAndMethodWithDateRange(ctx, rawResult.QCEntryID, "raw", req.StartDate, req.EndDate)
+
+			values := make([]float64, 0, len(allRawForEntry))
+			for _, r := range allRawForEntry {
+				values = append(values, r.MeasuredValue)
+			}
+
+			var ok bool
+			mean, sd, cv, ok = calculatePureStatistical(values)
+			if !ok {
+				mean = qcEntry.TargetMean
+				sd = *qcEntry.TargetSD
+				cv = (sd / mean) * 100
+			}
+
+			if sd != 0 {
+				errorSD = (rawResult.MeasuredValue - mean) / sd
+			}
+		}
+
+		calculatedResult := u.buildQCResult(
+			qcEntry.ID,
+			rawResult.MeasuredValue,
+			mean,
+			sd,
+			cv,
+			errorSD,
+			*req.Method,
+			rawResult.Operator,
+			rawResult.MessageControlID,
+		)
+		calculatedResult.ID = rawResult.ID
+		calculatedResult.QCEntryID = rawResult.QCEntryID
+		calculatedResult.CreatedAt = rawResult.CreatedAt
+		calculatedResult.CreatedBy = rawResult.CreatedBy
+		calculatedResult.QCEntry = qcEntry
+
+		calculatedResults = append(calculatedResults, *calculatedResult)
+	}
+
+	return calculatedResults, total, nil
 }
 
 func (u *QualityControlUsecase) GetQCHistory(ctx context.Context, req entity.GetManyRequestQualityControl) ([]entity.QualityControl, int64, error) {
@@ -385,5 +388,82 @@ func (u *QualityControlUsecase) buildQCResult(
 		Method:           method,
 		Operator:         operator,
 		MessageControlID: messageControlID,
+		CreatedBy:        operator, // CreatedBy sama dengan operator untuk backward compatibility
 	}
+}
+
+// CreateManualQCResult creates a manual QC result entry
+func (u *QualityControlUsecase) CreateManualQCResult(ctx context.Context, req *entity.CreateManualQCResultRequest, createdBy string) (*entity.QCResult, error) {
+	// Get active QC entry
+	qcEntry, err := u.qcEntryRepo.GetActiveEntry(ctx, req.DeviceID, req.TestTypeID, req.QCLevel)
+	if err != nil {
+		return nil, fmt.Errorf("error getting active QC entry: %w", err)
+	}
+
+	// Simpan raw result saja
+	rawResult := &entity.QCResult{
+		QCEntryID:     qcEntry.ID,
+		MeasuredValue: req.MeasuredValue,
+		Method:        "raw",
+		Operator:      createdBy,
+		CreatedBy:     createdBy,
+		QCEntry:       qcEntry,
+	}
+
+	if err := u.qcResultRepo.Create(ctx, rawResult); err != nil {
+		return nil, fmt.Errorf("error creating raw QC result: %w", err)
+	}
+
+	return rawResult, nil
+}
+
+// UpdateSelectedQCResult for backward compatibility (deprecated)
+func (u *QualityControlUsecase) UpdateSelectedQCResult(ctx context.Context, qcEntryID int, qcLevel int, resultID int) error {
+	// Create update request with the appropriate selected result ID
+	req := &entity.UpdateQCEntryRequest{}
+	switch qcLevel {
+	case 1:
+		req.Level1SelectedResultID = &resultID
+	case 2:
+		req.Level2SelectedResultID = &resultID
+	case 3:
+		req.Level3SelectedResultID = &resultID
+	default:
+		return fmt.Errorf("invalid QC level: %d", qcLevel)
+	}
+
+	// Update the entry
+	return u.qcEntryRepo.Update(ctx, qcEntryID, req)
+}
+
+// UpdateSelectedQCResultWithMethod (deprecated - not needed anymore)
+func (u *QualityControlUsecase) UpdateSelectedQCResultWithMethod(ctx context.Context, qcEntryID int, qcLevel int, resultID int, method string) error {
+	return u.UpdateSelectedQCResult(ctx, qcEntryID, qcLevel, resultID)
+}
+
+func calculatePureStatistical(values []float64) (mean, sd, cv float64, ok bool) {
+	n := len(values)
+	if n < 5 {
+		return 0, 0, 0, false
+	}
+
+	var sum float64
+	for _, v := range values {
+		sum += v
+	}
+	mean = sum / float64(n)
+
+	var variance float64
+	for _, v := range values {
+		diff := v - mean
+		variance += diff * diff
+	}
+
+	sd = math.Sqrt(variance / float64(n-1))
+
+	if mean != 0 {
+		cv = (sd / mean) * 100
+	}
+
+	return mean, sd, cv, true
 }

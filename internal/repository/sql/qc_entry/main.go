@@ -37,6 +37,15 @@ func (r *QCEntryRepository) Update(ctx context.Context, id int, req *entity.Upda
 	if req.IsActive != nil {
 		updates["is_active"] = *req.IsActive
 	}
+	if req.Level1SelectedResultID != nil {
+		updates["level1_selected_result_id"] = *req.Level1SelectedResultID
+	}
+	if req.Level2SelectedResultID != nil {
+		updates["level2_selected_result_id"] = *req.Level2SelectedResultID
+	}
+	if req.Level3SelectedResultID != nil {
+		updates["level3_selected_result_id"] = *req.Level3SelectedResultID
+	}
 
 	if len(updates) == 0 {
 		return fmt.Errorf("no fields to update")

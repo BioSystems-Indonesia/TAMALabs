@@ -308,27 +308,7 @@ func (wo *WorkOrder) pickDefaultResult(
 	totalResultFilled := 0
 	for i, test := range allTests {
 		newTest := test
-		// Lookup by test_type_id first (precise), fallback to test code
-		var historyKey string
-		if test.TestTypeID > 0 {
-			historyKey = fmt.Sprintf("tid_%d", test.TestTypeID)
-		} else {
-			historyKey = test.Test
-		}
-		history := testResults[historyKey]
-
-		// Fallback: if no history found by test_type_id, try by test_code
-		// BUT filter by test_type_id to prevent mixing different tests with same code (GDP/GDS/G2JPP)
-		if len(history) == 0 && test.TestTypeID > 0 {
-			allHistoryByCode := testResults[test.Test]
-			// Filter only observations matching this test_type_id
-			for _, obs := range allHistoryByCode {
-				if obs.TestTypeID != nil && *obs.TestTypeID == int(test.TestTypeID) {
-					history = append(history, obs)
-				}
-			}
-		}
-
+		history := testResults[test.Test]
 		if len(history) > 0 {
 			// Pick the latest history or the manually picked one
 			pickedTest := history[0]

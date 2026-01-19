@@ -65,13 +65,6 @@ func (h *TestTypeHandler) GetOneTestType(c echo.Context) error {
 		return handleError(c, err)
 	}
 
-	// Log devices for debugging
-	deviceIDs := make([]int, len(testType.Devices))
-	for i, d := range testType.Devices {
-		deviceIDs[i] = d.ID
-	}
-	slog.Info("GetOneTestType response", "test_type_id", testType.ID, "devices_count", len(testType.Devices), "device_ids", deviceIDs)
-
 	return c.JSON(http.StatusOK, testType)
 }
 

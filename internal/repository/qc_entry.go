@@ -18,9 +18,11 @@ type QCEntry interface {
 
 type QCResult interface {
 	Create(ctx context.Context, result *entity.QCResult) error
+	GetByID(ctx context.Context, id int) (*entity.QCResult, error)
 	GetMany(ctx context.Context, req entity.GetManyRequestQCResult) ([]entity.QCResult, int64, error)
 	GetByEntryID(ctx context.Context, entryID int) ([]entity.QCResult, error)
 	GetByEntryIDAndMethod(ctx context.Context, entryID int, method string) ([]entity.QCResult, error)
+	GetByEntryIDAndMethodWithDateRange(ctx context.Context, entryID int, method string, startDate, endDate *string) ([]entity.QCResult, error)
 	CalculateStatistics(ctx context.Context, entryID int) (mean float64, sd float64, count int, err error)
 	GetCountByLevel(ctx context.Context, deviceID int, testTypeID *int) (map[string]interface{}, error)
 }
