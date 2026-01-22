@@ -15,6 +15,7 @@ import TableViewIcon from '@mui/icons-material/TableView';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import InfoIcon from '@mui/icons-material/Info';
 import LicenseIcon from '@mui/icons-material/VerifiedUser';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 import { Box, Stack, Tooltip, Typography, Avatar, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -279,6 +280,7 @@ const PageTitle = () => {
         const resourceData: { [key: string]: { title: string; icon: React.ReactElement } } = {
             'work-order': { title: 'Lab Request', icon: <BiotechIcon /> },
             'result': { title: 'Result', icon: <AssessmentIcon /> },
+            'quality-control': { title: 'Quality Control', icon: <FactCheckIcon /> },
             'approval': { title: 'Approval', icon: <ApprovalIcon /> },
             'patient': { title: 'Patients', icon: <PersonIcon /> },
             'test-type': { title: 'Test Type', icon: <BiotechIcon /> },

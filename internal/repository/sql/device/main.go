@@ -92,3 +92,17 @@ func (r DeviceRepository) FindOneByReceivePort(port string) (entity.Device, erro
 
 	return device, nil
 }
+
+func (r DeviceRepository) FindOneByType(ctx context.Context, deviceType entity.DeviceType) (entity.Device, error) {
+	var device entity.Device
+	err := r.db.WithContext(ctx).Where("type = ?", deviceType).First(&device).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return entity.Device{}, entity.ErrNotFound
+	}
+
+	if err != nil {
+		return entity.Device{}, fmt.Errorf("error finding device by type: %w", err)
+	}
+
+	return device, nil
+}

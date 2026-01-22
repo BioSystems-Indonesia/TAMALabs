@@ -30,6 +30,9 @@ import (
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/observation_request"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/observation_result"
 	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
+	qcentryrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/qc_entry"
+	qcresultrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/qc_result"
+	qualitycontrolrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/quality_control"
 	rolerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/role"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/specimen"
 	summaryrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/summary"
@@ -51,6 +54,7 @@ import (
 	simrsuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simrs"
 	observation_requestuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/observation_request"
 	patientuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/patient"
+	quality_control_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/quality_control"
 	resultUC "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
 	role_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/role"
 	specimenuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/specimen"
@@ -97,6 +101,8 @@ var restUsecaseSet = wire.NewSet(
 	externaluc.NewUsecase,
 	provideLicenseService,
 	summary_uc.NewSummaryUsecase,
+	quality_control_uc.NewQualityControlUsecase,
+	wire.Bind(new(usecase.QualityControl), new(*quality_control_uc.QualityControlUsecase)),
 )
 
 var restRepositorySet = wire.NewSet(
@@ -104,6 +110,12 @@ var restRepositorySet = wire.NewSet(
 	observation_result.NewRepository,
 	observation_request.NewRepository,
 	device.NewDeviceRepository,
+	qualitycontrolrepo.NewQualityControlRepository,
+	wire.Bind(new(repository.QualityControl), new(*qualitycontrolrepo.QualityControlRepository)),
+	qcentryrepo.NewQCEntryRepository,
+	wire.Bind(new(repository.QCEntry), new(*qcentryrepo.QCEntryRepository)),
+	qcresultrepo.NewQCResultRepository,
+	wire.Bind(new(repository.QCResult), new(*qcresultrepo.QCResultRepository)),
 	daily_sequence.NewRepository,
 	patientrepo.NewPatientRepository,
 	workOrderrepo.NewWorkOrderRepository,
@@ -168,6 +180,7 @@ var restHandlerSet = wire.NewSet(
 	rest.NewDeviceHandler,
 	rest.NewTestTemplateHandler,
 	rest.NewServerControllerHandler,
+	rest.NewQCEntryHandler,
 	rest.NewLogHandler,
 	rest.NewExternalHandler,
 	rest.NewKhanzaExternalHandler,

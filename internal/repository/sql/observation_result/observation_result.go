@@ -3,7 +3,6 @@ package observation_result
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/BioSystems-Indonesia/TAMALabs/config"
@@ -91,43 +90,12 @@ func (r *Repository) PickObservationResult(ctx context.Context, id int64) (entit
 		}
 
 		// Update all other observation result picked to false
-		// CRITICAL: Use test_type_id for precise unpicking to prevent affecting other tests with same code
-		// For multiple tests with same code (GDP/GDS/G2JPP all using GLUCOSE), test_type_id is required
-		if observationResult.TestTypeID != nil && *observationResult.TestTypeID > 0 {
-			// Unpick only observations with same specimen_id AND same test_type_id (precise)
-			// This ensures GDP picks don't affect GDS, even though both use GLUCOSE code
-			result := tx.Model(&entity.ObservationResult{}).
-				Where("specimen_id = ? AND test_type_id = ? AND id != ?",
-					observationResult.SpecimenID, *observationResult.TestTypeID, id).
-				Update("picked", false)
-
-			if result.Error != nil {
-				return fmt.Errorf("failed to update observation result: %w", result.Error)
-			}
-
-			slog.Info("PickObservationResult: unpicking by test_type_id",
-				"observation_id", id,
-				"specimen_id", observationResult.SpecimenID,
-				"test_type_id", *observationResult.TestTypeID,
-				"test_code", observationResult.TestCode,
-				"unpicked_count", result.RowsAffected)
-		} else {
-			// Fallback: If no test_type_id, unpick by code (backward compatibility)
-			// But log warning since this may affect unintended tests
-			result := tx.Model(&entity.ObservationResult{}).
-				Where("specimen_id = ? AND code = ? AND id != ?",
-					observationResult.SpecimenID, observationResult.TestCode, id).
-				Update("picked", false)
-
-			if result.Error != nil {
-				return fmt.Errorf("failed to update observation result: %w", result.Error)
-			}
-
-			slog.Warn("PickObservationResult: unpicking by code only (no test_type_id)",
-				"observation_id", id,
-				"specimen_id", observationResult.SpecimenID,
-				"test_code", observationResult.TestCode,
-				"unpicked_count", result.RowsAffected)
+		err = tx.Model(&entity.ObservationResult{}).
+			Where("specimen_id = ? AND code = ? AND id != ?", observationResult.SpecimenID, observationResult.TestCode, id).
+			Update("picked", false).
+			Error
+		if err != nil {
+			return fmt.Errorf("failed to update observation result: %w", err)
 		}
 
 		// Update the picked result to true

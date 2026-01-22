@@ -82,6 +82,7 @@ func provideRestServer(
 	hrisExternal *rest.KhanzaExternalHandler,
 	simrsExternal *rest.SimrsExternalHandler,
 	khanzaHandler *rest.ExternalHandler,
+	qcEntryHandler *rest.QCEntryHandler,
 	authMiddleware *middleware.JWTMiddleware,
 	cronManager *cron.CronManager,
 	summaryHandler *summary_uc.SummaryUseCase,
@@ -98,6 +99,7 @@ func provideRestServer(
 		hrisExternal,
 		simrsExternal,
 		khanzaHandler,
+		qcEntryHandler,
 		authMiddleware,
 		summaryHandler,
 	)

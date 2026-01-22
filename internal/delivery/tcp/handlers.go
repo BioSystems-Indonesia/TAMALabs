@@ -14,22 +14,42 @@ import (
 // OULR22 handles the OULR22 message.
 func (h *HlSevenHandler) OULR22(ctx context.Context, m h251.OUL_R22, message []byte) (string, error) {
 	msgControlID := m.MSH.MessageControlID
-	d := hl7.NewDecoder(h251.Registry, nil)
-	message = h.deleteSegment(message, "ORC")
-	msg, err := d.Decode(message)
-	if err != nil {
-		return "", fmt.Errorf("decode failed: %w", err)
-	}
 
-	oul22 := msg.(h251.OUL_R22)
-	data, err := MapOULR22ToEntity(&oul22)
-	if err != nil {
-		return "", fmt.Errorf("mapping failed: %w", err)
-	}
+	// Check if this is a QC message by looking for "QC HUMAN" in SPM segment
+	messageStr := string(message)
+	isQCMessage := h.isQCMessage(messageStr)
 
-	err = h.analyzerUsecase.ProcessOULR22(ctx, data)
-	if err != nil {
-		return "", fmt.Errorf("process failed: %w", err)
+	if isQCMessage {
+		// Extract device identifier from MSH segment
+		deviceIdentifier := ""
+		if m.MSH.SendingApplication != nil {
+			deviceIdentifier = m.MSH.SendingApplication.NamespaceID
+		}
+
+		// Process as QC message
+		err := h.qcUsecase.ParseAndSaveQC(ctx, messageStr, deviceIdentifier)
+		if err != nil {
+			return "", fmt.Errorf("QC process failed: %w", err)
+		}
+	} else {
+		// Process as regular patient result
+		d := hl7.NewDecoder(h251.Registry, nil)
+		message = h.deleteSegment(message, "ORC")
+		msg, err := d.Decode(message)
+		if err != nil {
+			return "", fmt.Errorf("decode failed: %w", err)
+		}
+
+		oul22 := msg.(h251.OUL_R22)
+		data, err := MapOULR22ToEntity(&oul22)
+		if err != nil {
+			return "", fmt.Errorf("mapping failed: %w", err)
+		}
+
+		err = h.analyzerUsecase.ProcessOULR22(ctx, data)
+		if err != nil {
+			return "", fmt.Errorf("process failed: %w", err)
+		}
 	}
 
 	msh := h251.MSH{

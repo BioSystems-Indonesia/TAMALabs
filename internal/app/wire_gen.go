@@ -35,6 +35,8 @@ import (
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/observation_request"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/observation_result"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/qc_entry"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/qc_result"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/role"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/specimen"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/summary"
@@ -54,6 +56,7 @@ import (
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/license"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/observation_request"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/patient"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/quality_control"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/role"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/specimen"
@@ -111,7 +114,10 @@ func InitRestApp() server.RestServer {
 	coaxHandler := coax.NewHandler(usecase)
 	diestroHandler := diestro.NewHandler(usecase)
 	ncc3300Handler := ncc3300.NewHandler(usecase)
-	tcpHlSevenHandler := tcp.NewHlSevenHandler(usecase)
+	qcEntryRepository := qcentryrepo.NewQCEntryRepository(gormDB)
+	qcResultRepository := qcresultrepo.NewQCResultRepository(gormDB)
+	qualityControlUsecase := quality_control.NewQualityControlUsecase(qcEntryRepository, qcResultRepository, deviceRepository, test_typeRepository)
+	tcpHlSevenHandler := tcp.NewHlSevenHandler(usecase, qualityControlUsecase)
 	analyxtriasHandler := analyxtrias.NewHandler(usecase)
 	analyxpancaHandler := analyxpanca.NewHandler(usecase)
 	swelabalfaHandler := swelabalfa.NewHandler(usecase)
@@ -174,10 +180,11 @@ func InitRestApp() server.RestServer {
 	simrsExternalHandler := rest.NewSimrsExternalHandler(simrsucUsecase, integrationCheckMiddleware)
 	externalucUsecase := externaluc.NewUsecase(khanzaucUsecase, simrsucUsecase, workOrderRepository, schema)
 	externalHandler := rest.NewExternalHandler(externalucUsecase)
+	qcEntryHandler := rest.NewQCEntryHandler(qualityControlUsecase)
 	jwtMiddleware := middleware.NewJWTMiddleware(schema)
 	summaryRepository := summaryrepo.NewSummaryRepository(gormDB)
 	summaryUseCase := summary_uc.NewSummaryUsecase(summaryRepository)
-	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, simrsExternalHandler, externalHandler, jwtMiddleware, cronManager, summaryUseCase)
+	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, simrsExternalHandler, externalHandler, qcEntryHandler, jwtMiddleware, cronManager, summaryUseCase)
 	return restServer
 }
 

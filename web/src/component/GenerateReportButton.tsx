@@ -67,18 +67,18 @@ const GenerateReportButton = (prop: GenerateReportButtonProps) => {
 
     const reportDocument = useMemo(() => {
         // Format release date for QR code
-        const releaseDate = prop.workOrder.result_release_date
-            ? dayjs(prop.workOrder.result_release_date).format('DD-MM-YYYY HH:mm')
-            : dayjs().format('DD-MM-YYYY HH:mm');
+        // const releaseDate = prop.workOrder.result_release_date
+        //     ? dayjs(prop.workOrder.result_release_date).format('DD-MM-YYYY HH:mm')
+        //     : dayjs().format('DD-MM-YYYY HH:mm');
 
-        const doctorQRText = `Dikeluarkan di UPT.RSUD KH. HAYYUNG, Kabupaten Kepulauan Selayar. Ditandatangani secara elektronik oleh dr.Hj. Misnah, M.Kes, Sp.PK(K), Pada tanggal: ${releaseDate}`;
+        // const doctorQRText = `Dikeluarkan di UPT.RSUD KH. HAYYUNG, Kabupaten Kepulauan Selayar. Ditandatangani secara elektronik oleh dr.Hj. Misnah, M.Kes, Sp.PK(K), Pada tanggal: ${releaseDate}`;
 
         return (
             <ReportDocument
                 data={data}
                 patientData={prop.patient}
                 workOrderData={prop.workOrder}
-                customDoctorQRText={doctorQRText}
+            // customDoctorQRText={doctorQRText}
             />
         );
     }, [data, prop.patient, prop.workOrder])

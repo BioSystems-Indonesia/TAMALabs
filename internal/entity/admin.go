@@ -10,9 +10,9 @@ import (
 type RoleName string
 
 const (
-	RoleAdmin    RoleName = "Admin"
-	RoleDoctor   RoleName = "Doctor"
-	RoleAnalyzer RoleName = "Analyzer"
+	RoleAdmin   RoleName = "Admin"
+	RoleDoctor  RoleName = "Doctor"
+	RoleAnalyst RoleName = "Analyst"
 )
 
 // Admin represents a user within the system.
