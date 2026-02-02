@@ -1,6 +1,5 @@
 package simrsuc
 
-// Request represents a SIMRS lab request structure
 type Request struct {
 	NoOrder      string   `json:"no_order"`
 	PatientID    string   `json:"patient_id"`
@@ -9,7 +8,6 @@ type Request struct {
 	RequestedAt  string   `json:"requested_at"`
 }
 
-// Response represents a SIMRS lab result response structure
 type Response struct {
 	NoOrder string               `json:"no_order"`
 	Results []ResponseResultTest `json:"results"`

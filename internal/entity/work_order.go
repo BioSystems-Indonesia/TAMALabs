@@ -61,12 +61,16 @@ type WorkOrder struct {
 	//nolint:lll // tag cannot be shorter
 	Barcode                string     `json:"barcode" gorm:"column:barcode;type:varchar(255);default:'';index:work_order_barcode,unique"`
 	BarcodeSIMRS           string     `json:"barcode_simrs" gorm:"column:barcode_simrs;type:varchar(255);default:''"`
+	Source                 string     `json:"source" gorm:"column:source;type:varchar(100);default:''"`
 	MedicalRecordNumber    string     `json:"medical_record_number" gorm:"column:medical_record_number;type:varchar(255);default:''"`
 	VisitNumber            string     `json:"visit_number" gorm:"column:visit_number;type:varchar(255);default:''"`
 	SpecimenCollectionDate *time.Time `json:"specimen_collection_date" gorm:"column:specimen_collection_date;type:datetime"`
 	ResultReleaseDate      *time.Time `json:"result_release_date" gorm:"column:result_release_date;type:datetime"`
 	Diagnosis              string     `json:"diagnosis" gorm:"column:diagnosis;type:text;default:''"`
 	VerifiedStatus         string     `json:"verified_status" gorm:"column:verified_status;type:varchar(255);default:''"`
+	VerifiedAt             *time.Time `json:"verified_at" gorm:"column:verified_at;type:datetime"`
+	VerifiedBy             *string    `json:"verified_by" gorm:"column:verified_by;type:varchar(255)"`
+	CompletedAt            *time.Time `json:"completed_at" gorm:"column:completed_at;type:datetime"`
 	CreatedBy              int64      `json:"created_by" gorm:"column:created_by;type:bigint;default:0"`
 	LastUpdatedBy          int64      `json:"last_updated_by" gorm:"column:last_updated_by;type:bigint;default:0"`
 	CreatedAt              time.Time  `json:"created_at" gorm:"index:work_order_created_at"`

@@ -48,6 +48,10 @@ var seedConfig = []entity.Config{
 		ID:    "SimgosDatabaseDSN",
 		Value: "client:LabBridgingLIS001@tcp(192.168.0.10:3306)/lis_bridging?charset=utf8mb4&parseTime=True&loc=Local",
 	},
+	{
+		ID:    "TechnoMedicIntegrationEnabled",
+		Value: "false",
+	},
 }
 
 // GenerateRandomSigningKey creates a cryptographically secure random signing key.

@@ -4,6 +4,7 @@ import CheckIcon from '@mui/icons-material/CheckCircleOutline'; // Using outline
 import CloseIcon from '@mui/icons-material/HighlightOff'; // Using a different close icon for variety
 
 import HistoryIcon from '@mui/icons-material/History';
+import ScienceIcon from '@mui/icons-material/Science';
 import {
     Badge,
     Box,
@@ -13,6 +14,7 @@ import {
     CardActions,
     Checkbox,
     Chip,
+    CircularProgress,
     Dialog,
     DialogContent,
     DialogTitle,
@@ -57,6 +59,18 @@ export const ResultShow = (props: any) => {
         title: '',
     });
 
+    const [loading, setLoading] = useState(true);
+
+    // Loader helper: uses the record context (provided by <Show>) to toggle loading state
+    const Loader = () => {
+        const record = useRecordContext<Result>();
+        useEffect(() => {
+            if (!record) setLoading(true);
+            else setLoading(false);
+        }, [record]);
+        return null;
+    }
+
     return (
         <Show title="Edit Result" sx={{
             overflow: 'visible',
@@ -78,32 +92,104 @@ export const ResultShow = (props: any) => {
                     overflow: 'visible',
                 },
             }}>
-                <ActionButton />
-                <HeaderInfo />
-                <WithRecord label="Test Result" render={(record: Result) => (
-                    <>
-                        {
-                            record?.test_result ? Object.entries(record.test_result).map(([category, rows]) => (
-                                <TestResultTableGroup
-                                    key={category}
-                                    category={category}
-                                    rows={rows}
-                                    setHistory={setHistory}
-                                    setOpenHistory={setOpenHistory}
-                                />
-                            )) : null
-                        }
+                {/* Hook into Show's record context to know when data is ready */}
+                <Loader />
 
-                        <HistoryDialog
-                            workOrderID={record.id}
-                            title={history.title}
-                            open={openHistory}
-                            onClose={() => setOpenHistory(false)}
-                            rows={history.rows}
-                            setHistory={setHistory}
-                        />
-                    </>)
-                } />
+                {loading ? (
+                    <Box>
+                        <Box
+                            display="flex"
+                            justifyContent="center"
+                            alignItems="center"
+                            minHeight="200px"
+                            flexDirection="column"
+                            gap={2}
+                            sx={{
+                                backgroundColor: 'background.paper',
+                                borderRadius: 2,
+                                mb: 2,
+                                p: 3
+                            }}
+                        >
+                            <Box position="relative">
+                                <CircularProgress
+                                    size={60}
+                                    thickness={4}
+                                    sx={{
+                                        color: 'primary.main',
+                                        animationDuration: '1.5s',
+                                    }}
+                                />
+                                <Box
+                                    position="absolute"
+                                    top="50%"
+                                    left="50%"
+                                    sx={{
+                                        transform: 'translate(-50%, -50%)',
+                                    }}
+                                >
+                                    <ScienceIcon
+                                        sx={{
+                                            fontSize: 24,
+                                            color: 'primary.main',
+                                            animation: 'pulse 2s infinite',
+                                            '@keyframes pulse': {
+                                                '0%': { opacity: 1 },
+                                                '50%': { opacity: 0.5 },
+                                                '100%': { opacity: 1 },
+                                            }
+                                        }}
+                                    />
+                                </Box>
+                            </Box>
+
+                            <Typography
+                                variant="h6"
+                                color="text.primary"
+                                sx={{ fontWeight: 500 }}
+                            >
+                                Loading Lab Results...
+                            </Typography>
+
+                            <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                textAlign="center"
+                            >
+                                Please wait while we prepare your data and PDF reports...
+                            </Typography>
+                        </Box>
+                    </Box>
+                ) : (
+                    <>
+                        <ActionButton />
+                        <HeaderInfo />
+                        <WithRecord label="Test Result" render={(record: Result) => (
+                            <>
+                                {
+                                    record?.test_result ? Object.entries(record.test_result).map(([category, rows]) => (
+                                        <TestResultTableGroup
+                                            key={category}
+                                            category={category}
+                                            rows={rows}
+                                            setHistory={setHistory}
+                                            setOpenHistory={setOpenHistory}
+                                        />
+                                    )) : null
+                                }
+
+                                <HistoryDialog
+                                    workOrderID={record.id}
+                                    title={history.title}
+                                    open={openHistory}
+                                    onClose={() => setOpenHistory(false)}
+                                    rows={history.rows}
+                                    setHistory={setHistory}
+                                />
+                            </>)
+                        } />
+                    </>
+                )}
 
             </SimpleShowLayout>
         </Show>
@@ -387,15 +473,20 @@ const TestResultTable = (props: TestResultTableProps) => {
         if (!props?.rows) return;
         if (!Array.isArray(props.rows)) return;
 
-        console.log(props.rows)
+        setRows(props.rows.map((r: any) => {
+            // Guard against missing nested fields (some records have null test_type or types)
+            const name = r?.test_type?.name || r?.history?.[0]?.test_type?.name || r.test;
+            const specimen_type = r?.test_type?.types?.[0]?.type || r?.history?.[0]?.test_type?.types?.[0]?.type || '';
+            const alias = r?.test_type?.alias_code || r?.history?.[0]?.test_type?.alias_code || r.alias || r.test;
 
-        setRows(props.rows.map((r: any) => ({
-            ...r,
-            id: r.id || negID--,
-            name: r?.test_type?.name || r?.history?.[0]?.test_type?.name || r.test,
-            specimen_type: r?.test_type?.types[0].type,
-            alias: r?.test_type?.alias_code || r?.history?.[0]?.test_type?.alias_code || r.alias || r.test,
-        })));
+            return {
+                ...r,
+                id: r.id || negID--,
+                name,
+                specimen_type,
+                alias,
+            };
+        }));
     }, [props?.rows]);
 
     return (
@@ -485,17 +576,18 @@ const TestResultTable = (props: TestResultTableProps) => {
                     headerName: 'Action',
                     flex: 1,
                     renderCell: (params: GridRenderCellParams) => {
-                        const resultDifference = !params.row.history
+                        const history = Array.isArray(params.row.history) ? params.row.history : [];
+                        const resultDifference = !history
                             .map((h: TestResult) => "" + h.result + h.unit)
                             .every((v: string, _: number, a: string[]) => v === a[0])
 
                         return <Box>
                             <Tooltip title={resultDifference ? "History has different result" : "Show History"}>
-                                <Badge badgeContent={params.row.history.length} color={resultDifference ? "warning" : "primary"}>
+                                <Badge badgeContent={history.length} color={resultDifference ? "warning" : "primary"}>
                                     <IconButton color={resultDifference ? "warning" : "primary"}
                                         onClick={() => {
                                             props.setHistory({
-                                                rows: params.row.history,
+                                                rows: history,
                                                 title: `History of ${params.row.test}`
                                             })
                                             props.setOpenHistory(true)
