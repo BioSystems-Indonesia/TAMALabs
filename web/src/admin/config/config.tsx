@@ -131,6 +131,16 @@ export const ConfigList = () => {
         enabled: true,
     });
 
+    // TechnoMedic Configuration Queries
+    const { data: technomedicEnabledEntry } = useQuery({
+        queryKey: ["config", "TechnoMedicIntegrationEnabled"],
+        queryFn: async () => {
+            const { data } = await axios.get(`/config/TechnoMedicIntegrationEnabled`);
+            return data;
+        },
+        enabled: true,
+    });
+
     // Backup Configuration Queries
     const { data: backupScheduleTypeEntry } = useQuery({
         queryKey: ["config", "BackupScheduleType"],
@@ -175,6 +185,7 @@ export const ConfigList = () => {
         { id: "khanza", label: "Khanza" },
         { id: "simrs-api", label: "SIMRS (API)" },
         { id: "simgos", label: "SIMRS (Database Sharing)" },
+        { id: "technomedic", label: "TechnoMedic (API)" },
         { id: "softmedix", label: "Softmedix" },
         { id: "simrs-local", label: "Local SIMRS" },
     ];
@@ -361,6 +372,11 @@ export const ConfigList = () => {
         if (simgosEnabledEntry && (simgosEnabledEntry as any).value === "true") {
             bridgingEnabled = true;
             selectedSimrsType = "simgos"; // If SimgosIntegrationEnabled is true, SIMGOS is selected
+        }
+
+        if (technomedicEnabledEntry && (technomedicEnabledEntry as any).value === "true") {
+            bridgingEnabled = true;
+            selectedSimrsType = "technomedic"; // If TechnoMedicIntegrationEnabled is true, TechnoMedic is selected
         }
 
         // Override with SelectedSimrs if available
@@ -1216,6 +1232,120 @@ Database DSN Examples:
                         </Stack>
                     )}
 
+                    {/* TechnoMedic API Configuration */}
+                    {simrsBridgingActive && selectedSimrs === "technomedic" && (
+                        <Stack direction="column" gap={2} alignItems="flex-start" style={{ width: "100%" }}>
+                            <Card sx={{ width: "100%", border: "1px solid #e6e6e6ff" }} elevation={0}>
+                                <Accordion defaultExpanded={true}>
+                                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                        <Typography variant="subtitle1">TechnoMedic API Documentation</Typography>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <CardContent>
+                                            <Typography variant="subtitle1" gutterBottom>TechnoMedic External API Endpoints</Typography>
+                                            <Divider sx={{ mb: 1 }} />
+                                            <Typography variant="body2" paragraph>
+                                                External API endpoints that TechnoMedic can call to manage lab orders and retrieve results.
+                                            </Typography>
+                                            <Typography sx={{ mb: 1 }} variant="subtitle1">Server {`${data.serverIP}:${data.port}`}</Typography>
+
+                                            <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>GET /api/v1/technomedic/test-types</Typography>
+                                            <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', mt: 1 }}>
+                                                {`Get all available test types
+
+Response:
+{
+    "code": 200,
+    "status": "success",
+    "data": [
+        {
+            "id": "1",
+            "code": "HB",
+            "name": "Hemoglobin",
+            "category": "Hematologi",
+            "sub_category": "Complete Blood Count",
+            "specimen_type": "Whole Blood",
+            "unit": "g/dL"
+        }
+    ]
+}`}
+                                            </Typography>
+
+                                            <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>GET /api/v1/technomedic/sub-categories</Typography>
+                                            <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', mt: 1 }}>
+                                                {`Get all sub-categories
+
+Response:
+{
+    "code": 200,
+    "status": "success",
+    "data": [
+        {
+            "id": "1",
+            "code": "CBC",
+            "name": "Complete Blood Count",
+            "category": "Hematologi"
+        }
+    ]
+}`}
+                                            </Typography>
+
+                                            <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>POST /api/v1/technomedic/order</Typography>
+                                            <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', mt: 1 }}>
+                                                {`Create a new lab order from TechnoMedic
+
+Request Body:
+{
+    "no_order": "TM-2024-001",
+    "patient": {
+        "full_name": "John Doe",
+        "sex": "M",
+        "birthdate": "1990-01-15",
+        "medical_record_number": "MR001"
+    },
+    "test_type_ids": [1, 2, 3],
+    "sub_category_ids": [1]
+}
+
+Response:
+{
+    "code": 201,
+    "status": "success",
+    "message": "Order created successfully",
+    "data": {
+        "no_order": "TM-2024-001"
+    }
+}`}
+                                            </Typography>
+
+                                            <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>GET /api/v1/technomedic/order/:no_order</Typography>
+                                            <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', mt: 1 }}>
+                                                {`Get order details with results
+
+Response:
+{
+    "code": 200,
+    "status": "success",
+    "data": {
+        "no_order": "TM-2024-001",
+        "status": "SUCCESS",
+        "patient": {...},
+        "sub_categories": [...],
+        "parameters_result": [...]
+    }
+}`}
+                                            </Typography>
+
+                                            <Typography variant="caption" color="info.main" sx={{ mt: 2, display: 'block' }}>
+                                                ℹ️ Note: All endpoints require TechnoMedic integration to be enabled. See full documentation for detailed request/response schemas.
+                                            </Typography>
+                                        </CardContent>
+                                    </AccordionDetails>
+                                </Accordion>
+                            </Card>
+                        </Stack>
+                    )}
+
 
 
                     <Button
@@ -1241,6 +1371,12 @@ Database DSN Examples:
                                 await axios.put(`/config/SimgosIntegrationEnabled`, {
                                     id: "SimgosIntegrationEnabled",
                                     value: (simrsBridgingActive && selectedSimrs === "simgos") ? "true" : "false",
+                                });
+
+                                // Always save TechnoMedic integration status
+                                await axios.put(`/config/TechnoMedicIntegrationEnabled`, {
+                                    id: "TechnoMedicIntegrationEnabled",
+                                    value: (simrsBridgingActive && selectedSimrs === "technomedic") ? "true" : "false",
                                 });
 
                                 if (simrsBridgingActive) {
@@ -1306,6 +1442,7 @@ Database DSN Examples:
                                 queryClient.invalidateQueries({ queryKey: ["config", "SimrsDatabaseDSN"] });
                                 queryClient.invalidateQueries({ queryKey: ["config", "SimgosIntegrationEnabled"] });
                                 queryClient.invalidateQueries({ queryKey: ["config", "SimgosDatabaseDSN"] });
+                                queryClient.invalidateQueries({ queryKey: ["config", "TechnoMedicIntegrationEnabled"] });
 
                                 // Reload cron jobs to register/unregister based on new config
                                 try {

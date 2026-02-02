@@ -147,6 +147,7 @@ func RegisterRoutes(
 	khanzaExternalHandler *KhanzaExternalHandler,
 	simrsExternalHandler *SimrsExternalHandler,
 	externalHandler *ExternalHandler,
+	technomedicHandler *TechnoMedicHandler,
 	qcHandler *QCEntryHandler,
 	authMiddleware *appMiddleware.JWTMiddleware,
 	summaryHandler *summary_uc.SummaryUseCase,
@@ -345,6 +346,7 @@ func RegisterRoutes(
 	simrsExternalHandler.RegisterRoutes(unauthenticatedV1)
 	handler.RegisterFeatureList(authenticatedV1)
 	externalHandler.RegisterRoutes(authenticatedV1)
+	technomedicHandler.RegisterRoutes(unauthenticatedV1)
 }
 
 func registerFrontendPath(e *echo.Echo) {

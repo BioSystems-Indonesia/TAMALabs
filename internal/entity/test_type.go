@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -20,16 +21,19 @@ type TestType struct {
 	NormalRefString  string  `json:"normal_ref_string" gorm:"column:normal_ref_string"` // New field for string reference values
 	Decimal          int     `json:"decimal"`
 	Category         string  `json:"category"`
-	SubCategory      string  `json:"sub_category"`
+	SubCategory      string  `json:"sub_category"`                                                // Keep for backward compatibility
+	SubCategoryID    *int    `json:"sub_category_id" gorm:"index:idx_test_types_sub_category_id"` // New foreign key
 	Description      string  `json:"description"`
 	IsCalculatedTest bool    `json:"is_calculated_test" gorm:"column:is_calculated_test;default:false"`
 	DeviceID         *int    `json:"device_id" gorm:"index:test_type_device_id"` // Deprecated: Use Devices instead
 
+	UpdatedAt         time.Time
 	Type              []TestTypeSpecimenType   `json:"types" gorm:"-"`
 	Device            *Device                  `json:"device,omitempty" gorm:"foreignKey:DeviceID"` // Deprecated: Use Devices instead
 	Devices           []Device                 `json:"devices,omitempty" gorm:"many2many:test_type_devices;"`
-	SpecificRefRanges []SpecificReferenceRange `json:"specific_ref_ranges,omitempty" gorm:"-"` // Not stored directly, converted to/from JSON
-	AlternativeCodes  []string                 `json:"alternative_codes,omitempty" gorm:"-"`   // Alternative codes for the same test from different devices
+	SubCategoryDetail *SubCategory             `json:"sub_category_detail,omitempty" gorm:"foreignKey:SubCategoryID"` // New relation
+	SpecificRefRanges []SpecificReferenceRange `json:"specific_ref_ranges,omitempty" gorm:"-"`                        // Not stored directly, converted to/from JSON
+	AlternativeCodes  []string                 `json:"alternative_codes,omitempty" gorm:"-"`                          // Alternative codes for the same test from different devices
 	// TypeDB is a specimen type separated by comma
 	TypeDB              string `json:"-" gorm:"column:type"`
 	SpecificRefRangesDB string `json:"-" gorm:"column:specific_ref_ranges"` // JSON string in database

@@ -19,6 +19,9 @@ type Schema struct {
 	SimgosIntegrationEnabled string `validate:"-"`
 	SimgosDatabaseDSN        string `validate:"-"`
 
+	// TechnoMedic Configuration
+	TechnoMedicIntegrationEnabled string `validate:"-"`
+
 	// Backup Configuration
 	BackupScheduleType string `validate:"-"` // "interval" or "daily"
 	BackupInterval     string `validate:"-"` // hours between backups (for interval type)

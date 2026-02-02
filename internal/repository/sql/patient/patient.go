@@ -80,8 +80,40 @@ func (r PatientRepository) FindOne(id int64) (entity.Patient, error) {
 	return patient, nil
 }
 
+func (r PatientRepository) FindByID(ctx context.Context, id int64) (*entity.Patient, error) {
+	var patient entity.Patient
+	err := r.db.WithContext(ctx).Where("id = ?", id).First(&patient).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, entity.ErrNotFound
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error finding patient: %w", err)
+	}
+
+	return &patient, nil
+}
+
+func (r PatientRepository) FindByPatientID(ctx context.Context, patientID string) (*entity.Patient, error) {
+	var patient entity.Patient
+	err := r.db.WithContext(ctx).Where("patient_id = ?", patientID).First(&patient).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error finding patient by patient_id: %w", err)
+	}
+
+	return &patient, nil
+}
+
 func (r PatientRepository) Create(patient *entity.Patient) error {
 	return r.db.Create(patient).Error
+}
+
+func (r PatientRepository) CreateWithContext(ctx context.Context, patient *entity.Patient) error {
+	return r.db.WithContext(ctx).Create(patient).Error
 }
 
 func (r PatientRepository) CreateManyFromSIMRS(patients []entity.Patient) error {

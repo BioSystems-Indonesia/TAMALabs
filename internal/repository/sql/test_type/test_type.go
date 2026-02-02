@@ -2,6 +2,7 @@ package test_type
 
 import (
 	"context"
+	"time"
 
 	"github.com/BioSystems-Indonesia/TAMALabs/config"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
@@ -189,6 +190,7 @@ func (r *Repository) FindUnassignedTestTypes(ctx context.Context) ([]entity.Test
 }
 
 func (r *Repository) Create(ctx context.Context, req *entity.TestType) (entity.TestType, error) {
+	req.UpdatedAt = time.Now()
 	if err := r.DB.Create(req).Error; err != nil {
 		return entity.TestType{}, err
 	}
