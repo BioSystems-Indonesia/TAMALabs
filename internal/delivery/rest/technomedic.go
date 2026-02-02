@@ -29,6 +29,10 @@ func NewTechnoMedicHandler(
 
 // RegisterRoutes registers all TechnoMedic routes with integration check middleware
 func (h *TechnoMedicHandler) RegisterRoutes(router *echo.Group) {
+	// Documentation endpoint - publicly accessible, no middleware
+	router.GET("/technomedic/documentation", h.GetDocumentation)
+
+	// API endpoints - protected by integration check middleware
 	technomedic := router.Group("/technomedic", h.integrationMiddleware.CheckTechnoMedicEnabled())
 
 	// GET endpoints
@@ -272,4 +276,331 @@ func (h *TechnoMedicHandler) GetOrder(c echo.Context) error {
 		Message: "Order retrieved successfully",
 		Data:    order,
 	})
+}
+
+// GetDocumentation serves Swagger UI for TechnoMedic API documentation
+func (h *TechnoMedicHandler) GetDocumentation(c echo.Context) error {
+	html := `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechnoMedic API Documentation</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .topbar {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            const spec = ` + "`" + `
+openapi: 3.0.3
+info:
+  title: TechnoMedic API Integration
+  description: |
+    API bridging untuk integrasi dengan TechnoMedic SIMRS.
+    
+    ## Configuration
+    Sebelum menggunakan API ini, pastikan TechnoMedic integration sudah diaktifkan:
+    1. Login sebagai Administrator
+    2. Navigate to Config page
+    3. Enable "SIMRS Bridging"
+    4. Select "TechnoMedic (API)"
+    5. Save configuration
+    
+    ## Features
+    - Get master data (test types, sub-categories, doctors, analysts)
+    - Create lab orders
+    - Retrieve order results
+    - Support multiple test selection methods (IDs, codes, sub-categories)
+    
+  version: 1.0.0
+  contact:
+    name: API Support
+  license:
+    name: Proprietary
+    
+servers:
+  - url: ` + "`" + ` + window.location.origin + ` + "`" + `/api/v1
+    description: Current Server
+
+tags:
+  - name: Master Data
+    description: Endpoints untuk mendapatkan master data
+  - name: Orders
+    description: Endpoints untuk manajemen order laboratorium
+
+paths:
+  /technomedic/test-types:
+    get:
+      tags:
+        - Master Data
+      summary: Get All Test Types
+      description: Mendapatkan daftar semua test types yang tersedia
+      operationId: getTestTypes
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Test types retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TestType'
+
+  /technomedic/sub-categories:
+    get:
+      tags:
+        - Master Data
+      summary: Get All Sub-Categories
+      description: Mendapatkan daftar semua sub-categories dari tabel master
+      operationId: getSubCategories
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SubCategoryInfo'
+
+  /technomedic/sub-categories/{id}/test-types:
+    get:
+      tags:
+        - Master Data
+      summary: Get Test Types by Sub-Category
+      description: Mendapatkan daftar test types untuk sub-category tertentu
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+
+  /technomedic/doctors:
+    get:
+      tags:
+        - Master Data
+      summary: Get All Doctors
+      description: Mendapatkan daftar semua dokter yang aktif
+      responses:
+        '200':
+          description: Successful response
+
+  /technomedic/analysts:
+    get:
+      tags:
+        - Master Data
+      summary: Get All Analysts
+      description: Mendapatkan daftar semua analis yang aktif
+      responses:
+        '200':
+          description: Successful response
+
+  /technomedic/order:
+    post:
+      tags:
+        - Orders
+      summary: Create Lab Order
+      description: |
+        Membuat order laboratorium baru dari TechnoMedic.
+        
+        ## Test Selection Methods
+        Minimal salah satu dari method berikut harus diisi:
+        - test_type_ids: Array of test type IDs (RECOMMENDED)
+        - sub_category_ids: Array of sub-category IDs (RECOMMENDED)
+        - param_request: Array of test type codes
+        - sub_category_request: Array of sub-category names
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+            examples:
+              withTestTypeIDs:
+                summary: Using test_type_ids
+                value:
+                  no_order: TM-2024-001
+                  patient:
+                    patient_id: P001
+                    full_name: John Doe
+                    sex: M
+                    birthdate: '1990-01-15'
+                    medical_record_number: MR001
+                  test_type_ids: [1, 2, 3]
+      responses:
+        '201':
+          description: Order created successfully
+
+  /technomedic/order/{no_order}:
+    get:
+      tags:
+        - Orders
+      summary: Get Order Details
+      description: Mendapatkan detail order termasuk hasil pemeriksaan
+      parameters:
+        - name: no_order
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+
+components:
+  schemas:
+    TestType:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1'
+        code:
+          type: string
+          example: HB
+        name:
+          type: string
+          example: Hemoglobin
+        category:
+          type: string
+          example: Hematologi
+        sub_category:
+          type: string
+          example: Complete Blood Count
+        specimen_type:
+          type: string
+          example: Whole Blood
+        unit:
+          type: string
+          example: g/dL
+
+    SubCategoryInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1'
+        name:
+          type: string
+          example: Complete Blood Count
+        category:
+          type: string
+          example: Hematologi
+        description:
+          type: string
+          example: Pemeriksaan darah lengkap
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - no_order
+        - patient
+      properties:
+        no_order:
+          type: string
+          example: TM-2024-001
+        patient:
+          type: object
+          required:
+            - patient_id
+            - full_name
+            - sex
+            - birthdate
+          properties:
+            patient_id:
+              type: string
+              example: P001
+            full_name:
+              type: string
+              example: John Doe
+            sex:
+              type: string
+              enum: [M, F]
+              example: M
+            birthdate:
+              type: string
+              format: date
+              example: '1990-01-15'
+            medical_record_number:
+              type: string
+              example: MR001
+            phone_number:
+              type: string
+              example: '081234567890'
+        test_type_ids:
+          type: array
+          items:
+            type: integer
+          example: [1, 2, 3]
+        sub_category_ids:
+          type: array
+          items:
+            type: integer
+          example: [1, 2]
+        param_request:
+          type: array
+          items:
+            type: string
+          example: [HB, WBC]
+` + "`" + `;
+
+            SwaggerUIBundle({
+                spec: jsyaml.load(spec),
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                tryItOutEnabled: true,
+                supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch']
+            });
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+</body>
+</html>`
+
+	return c.HTML(http.StatusOK, html)
 }
