@@ -334,7 +334,7 @@ Response akan memiliki 2 bagian:
           {
             "id": "1",
             "code": "HB",
-            "category_name": "Hemoglobin",
+            "category_name": "Hematologi",
             "value": "14.5",
             "specimen_type": "Whole Blood",
             "unit": "g/dL",

@@ -341,7 +341,7 @@ func (u *Usecase) GetOrder(ctx context.Context, noOrder string) (*externalEntity
 			result := externalEntity.Results{
 				ID:           strconv.FormatInt(obsResult.ID, 10),
 				Code:         obsResult.TestCode,
-				CategoryName: obsResult.TestType.Name,
+				CategoryName: obsResult.TestType.Category,
 				Value:        value,
 				SpecimenType: obsResult.TestType.GetFirstType(),
 				Unit:         obsResult.Unit,
