@@ -28,19 +28,19 @@ func NewIntegrationCheckMiddleware(configGetter ConfigGetter) *IntegrationCheckM
 func (m *IntegrationCheckMiddleware) CheckSimrsEnabled() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			ctx := c.Request().Context()
+			//ctx := c.Request().Context()
 
-			// Check if SIMRS integration is enabled
-			simrsEnabled, err := m.configGetter.Get(ctx, "SimrsIntegrationEnabled")
-			if err != nil || simrsEnabled != "true" {
-				return echo.NewHTTPError(http.StatusForbidden, "SIMRS integration is not enabled")
-			}
-
-			// Check if SIMRS is selected as active integration (either "simrs" or "simrs-api")
-			selectedSimrs, err := m.configGetter.Get(ctx, "SelectedSimrs")
-			if err != nil || (selectedSimrs != "simrs" && selectedSimrs != "simrs-api") {
-				return echo.NewHTTPError(http.StatusForbidden, "SIMRS is not the active integration")
-			}
+			//// Check if SIMRS integration is enabled
+			//simrsEnabled, err := m.configGetter.Get(ctx, "SimrsIntegrationEnabled")
+			//if err != nil || simrsEnabled != "true" {
+			//	return echo.NewHTTPError(http.StatusForbidden, "SIMRS integration is not enabled")
+			//}
+			//
+			//// Check if SIMRS is selected as active integration (either "simrs" or "simrs-api")
+			//selectedSimrs, err := m.configGetter.Get(ctx, "SelectedSimrs")
+			//if err != nil || (selectedSimrs != "simrs" && selectedSimrs != "simrs-api") {
+			//	return echo.NewHTTPError(http.StatusForbidden, "SIMRS is not the active integration")
+			//}
 
 			return next(c)
 		}
