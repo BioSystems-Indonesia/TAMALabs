@@ -32,6 +32,7 @@ import (
 	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
 	workOrderrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
+	nuha_simrs "github.com/BioSystems-Indonesia/TAMALabs/internal/services/nuha-simrs"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
 	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
 	simgosuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simgos"
@@ -81,6 +82,7 @@ func provideRestServer(
 	roleHandler *rest.RoleHandler,
 	hrisExternal *rest.KhanzaExternalHandler,
 	simrsExternal *rest.SimrsExternalHandler,
+	nuhaSIMRSHandler *rest.NuhaSIMRSHandler,
 	khanzaHandler *rest.ExternalHandler,
 	qcEntryHandler *rest.QCEntryHandler,
 	authMiddleware *middleware.JWTMiddleware,
@@ -98,6 +100,7 @@ func provideRestServer(
 		roleHandler,
 		hrisExternal,
 		simrsExternal,
+		nuhaSIMRSHandler,
 		khanzaHandler,
 		qcEntryHandler,
 		authMiddleware,
@@ -807,4 +810,39 @@ func provideConfigCheckerForCron(repo *configrepo.Repository) cron.ConfigChecker
 // provideIntegrationCheckConfig provides config repository as ConfigGetter interface for middleware
 func provideIntegrationCheckConfig(repo *configrepo.Repository) middleware.ConfigGetter {
 	return repo
+}
+
+// provideNuhaSIMRSService provides Nuha SIMRS service instance
+func provideNuhaSIMRSService(
+	schema *config.Schema,
+	workOrderRepo *workOrderrepo.WorkOrderRepository,
+	workOrderUC *workOrderuc.WorkOrderUseCase,
+	patientRepo *patientrepo.PatientRepository,
+	testTypeRepo *test_type.Repository,
+	configRepo *configrepo.Repository,
+) *nuha_simrs.SIMRSNuha {
+	ctx := context.Background()
+
+	// Get base URL from config, ignore error if not found
+	baseURL := "https://api.nuha-simrs.example.com" // Default value
+	if urlConfig, err := configRepo.Get(ctx, "NuhaBaseURL"); err == nil && urlConfig != "" {
+		baseURL = urlConfig
+	}
+
+	// Get session ID from config, ignore error if not found
+	sessionID := ""
+	if sessionConfig, err := configRepo.Get(ctx, "NuhaSessionID"); err == nil {
+		sessionID = sessionConfig
+	}
+
+	slog.Info("Nuha SIMRS service initialized", "baseURL", baseURL, "hasSessionID", sessionID != "")
+
+	return nuha_simrs.NewSIMRSNuha(
+		baseURL,
+		sessionID,
+		workOrderRepo,
+		workOrderUC,
+		patientRepo,
+		testTypeRepo,
+	)
 }

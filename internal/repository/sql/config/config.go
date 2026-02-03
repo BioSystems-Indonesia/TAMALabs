@@ -54,6 +54,18 @@ func (r *Repository) Get(ctx context.Context, key string) (string, error) {
 func (r *Repository) Edit(ctx context.Context, id string, value string) (entity.Config, error) {
 	config, err := r.FindOne(ctx, id)
 	if err != nil {
+		// If not found, create new config entry
+		if err == gorm.ErrRecordNotFound {
+			config = entity.Config{
+				ID:    id,
+				Value: value,
+			}
+			err = r.DB.WithContext(ctx).Create(&config).Error
+			if err != nil {
+				return entity.Config{}, fmt.Errorf("error creating Config: %w", err)
+			}
+			return config, nil
+		}
 		return entity.Config{}, fmt.Errorf("error finding Config: %w", err)
 	}
 
@@ -61,6 +73,19 @@ func (r *Repository) Edit(ctx context.Context, id string, value string) (entity.
 	err = r.DB.WithContext(ctx).Save(&config).Error
 	if err != nil {
 		return entity.Config{}, fmt.Errorf("error updating Config: %w", err)
+	}
+	return config, nil
+}
+
+// FirstOrCreate finds a config by key or creates it with default value
+func (r *Repository) FirstOrCreate(ctx context.Context, id string, defaultValue string) (entity.Config, error) {
+	var config entity.Config
+	err := r.DB.WithContext(ctx).Where("id = ?", id).FirstOrCreate(&config, entity.Config{
+		ID:    id,
+		Value: defaultValue,
+	}).Error
+	if err != nil {
+		return entity.Config{}, fmt.Errorf("error in FirstOrCreate Config: %w", err)
 	}
 	return config, nil
 }

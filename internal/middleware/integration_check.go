@@ -92,3 +92,26 @@ func (m *IntegrationCheckMiddleware) CheckKhanzaEnabled() echo.MiddlewareFunc {
 		}
 	}
 }
+
+// CheckNuhaEnabled returns middleware that checks if Nuha SIMRS integration is enabled
+func (m *IntegrationCheckMiddleware) CheckNuhaEnabled() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			ctx := c.Request().Context()
+
+			// Check if Nuha SIMRS integration is enabled
+			nuhaEnabled, err := m.configGetter.Get(ctx, "NuhaIntegrationEnabled")
+			if err != nil || nuhaEnabled != "true" {
+				return echo.NewHTTPError(http.StatusForbidden, "Nuha SIMRS integration is not enabled. Please enable it in Settings/Config.")
+			}
+
+			// Check if Nuha is selected as active integration
+			selectedSimrs, err := m.configGetter.Get(ctx, "SelectedSimrs")
+			if err != nil || selectedSimrs != "nuha" {
+				return echo.NewHTTPError(http.StatusForbidden, "Nuha SIMRS is not the active integration. Please select it in Settings/Config.")
+			}
+
+			return next(c)
+		}
+	}
+}

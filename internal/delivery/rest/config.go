@@ -47,10 +47,39 @@ func (h *ConfigHandler) GetConfig(c echo.Context) error {
 
 	result, err := h.configUC.FindOneByID(c.Request().Context(), key)
 	if err != nil {
+		// If not found, return default value for known keys
+		if err.Error() == "record not found" || err.Error() == "error finding Config: record not found" {
+			defaultValue := getDefaultConfigValue(key)
+			result = entity.Config{
+				ID:    key,
+				Value: defaultValue,
+			}
+			return c.JSON(http.StatusOK, result)
+		}
 		return handleError(c, err)
 	}
 
 	return c.JSON(http.StatusOK, result)
+}
+
+// getDefaultConfigValue returns default value for config keys
+func getDefaultConfigValue(key string) string {
+	defaults := map[string]string{
+		"NuhaIntegrationEnabled":   "false",
+		"NuhaBaseURL":              "https://api.nuha-simrs.example.com",
+		"NuhaSessionID":            "",
+		"SimrsIntegrationEnabled":  "false",
+		"SimgosIntegrationEnabled": "false",
+		"KhanzaIntegrationEnabled": "false",
+		"BackupScheduleType":       "daily",
+		"BackupInterval":           "6",
+		"BackupTime":               "02:00",
+	}
+
+	if val, ok := defaults[key]; ok {
+		return val
+	}
+	return ""
 }
 
 func (h *ConfigHandler) EditConfig(c echo.Context) error {

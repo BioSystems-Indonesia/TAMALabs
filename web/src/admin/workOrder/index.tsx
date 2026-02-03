@@ -290,71 +290,6 @@ function getRequestLength(data: WorkOrder): number {
     return data.specimen_list?.reduce((acc, specimen) => acc + specimen.observation_requests.length, 0) || 0
 }
 
-function SyncAllRequestButton() {
-    const notify = useNotify();
-    const refresh = useRefresh();
-    const axios = useAxios();
-
-    const { mutate: syncAllRequest, isPending } = useMutation({
-        mutationFn: async () => {
-            try {
-                const response = await axios.post('/external/sync-all-requests');
-                if (!response || response.status !== 200) {
-                    throw new Error(response?.data?.error || 'Failed to sync requests');
-                }
-                return response.data;
-            } catch (error: any) {
-                // Handle axios errors or network errors
-                if (error.response) {
-                    // Server responded with error status
-                    throw new Error(error.response.data?.error || `Server error: ${error.response.status}`);
-                } else if (error.request) {
-                    // Network error
-                    throw new Error('Network error: Unable to connect to server');
-                } else {
-                    // Other error
-                    throw new Error(error.message || 'Unknown error occurred');
-                }
-            }
-        },
-        onSuccess: () => {
-            notify('Successfully synced all requests from external systems', {
-                type: 'success',
-            });
-            refresh();
-        },
-        onError: (error) => {
-            notify(`Sync failed: ${error.message}`, {
-                type: 'error',
-            });
-        },
-    });
-
-    return (
-        <Button
-            label="Sync All Request"
-            onClick={() => syncAllRequest()}
-            disabled={isPending}
-            sx={{
-                backgroundColor: 'primary.main',
-                color: 'white',
-                '&:hover': {
-                    backgroundColor: 'primary.dark',
-                },
-                '&:disabled': {
-                    backgroundColor: 'action.disabled',
-                },
-            }}
-        >
-            {isPending ? (
-                <CircularProgress size={16} sx={{ color: 'white' }} />
-            ) : (
-                <SyncIcon />
-            )}
-        </Button>
-    );
-}
-
 function RunWorkOrderButton(props: RunWorkOrderProps) {
     const notify = useNotify();
     const refresh = useRefresh();
@@ -505,11 +440,115 @@ const WorkOrderListBulkActionButtons = (props: RunWorkOrderProps) => (
     </>
 )
 
+function SyncNuhaButton() {
+    const axios = useAxios();
+    const notify = useNotify();
+    const refresh = useRefresh();
+
+    const mutation = useMutation({
+        mutationFn: async () => {
+            const response = await axios.post('/nuha-simrs/sync-orders');
+            return response.data;
+        },
+        onSuccess: (data) => {
+            notify(data?.message || 'Successfully synced lab orders from Nuha SIMRS', { type: 'success' });
+            refresh();
+        },
+        onError: (error: any) => {
+            console.error('Nuha SIMRS sync error:', error);
+
+            // Handle different error cases
+            if (error?.response?.status === 403) {
+                // Integration not enabled - check all possible message locations
+                const errorMsg =
+                    error?.response?.data?.message ||
+                    error?.response?.data?.error ||
+                    (typeof error?.response?.data === 'string' ? error?.response?.data : null);
+
+                notify(
+                    errorMsg || '⚠️ Nuha SIMRS integration is not enabled!\n\nPlease enable it in: Settings → Config → SIMRS Bridging → Select "Nuha SIMRS"',
+                    {
+                        type: 'warning',
+                        autoHideDuration: 10000,
+                        multiLine: true,
+                    }
+                );
+            } else if (error?.response?.status === 500) {
+                // Server error
+                const errorMsg =
+                    error?.response?.data?.error ||
+                    error?.response?.data?.message ||
+                    (typeof error?.response?.data === 'string' ? error?.response?.data : null);
+
+                notify(
+                    `❌ Error syncing from Nuha SIMRS:\n\n${errorMsg || 'Server error occurred. Please check the logs.'}`,
+                    {
+                        type: 'error',
+                        autoHideDuration: 8000,
+                        multiLine: true,
+                    }
+                );
+            } else if (error?.response?.data?.error || error?.response?.data?.message) {
+                // Other errors with error message
+                const errorMsg = error?.response?.data?.error || error?.response?.data?.message;
+                notify(
+                    `❌ Failed to sync: ${errorMsg}`,
+                    {
+                        type: 'error',
+                        autoHideDuration: 6000,
+                    }
+                );
+            } else if (error?.message) {
+                // Axios error with message
+                notify(
+                    `⚠️ Nuha SIMRS integration is not enabled!\nPlease enable it in: Settings → Config → SIMRS Bridging → Select "Nuha SIMRS"`,
+                    {
+                        type: 'error',
+                        autoHideDuration: 6000,
+                        multiLine: true,
+                    }
+                );
+            } else {
+                // Generic error
+                notify(
+                    `❌ Failed to sync orders from Nuha SIMRS.\n\nPlease check:\n• Your network connection\n• Nuha SIMRS integration is enabled in Settings\n• Base URL and Session ID are configured correctly`,
+                    {
+                        type: 'error',
+                        autoHideDuration: 8000,
+                        multiLine: true,
+                    }
+                );
+            }
+        },
+    });
+
+    return (
+        <Button
+            label="Sync Nuha SIMRS"
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending}
+            sx={{
+                backgroundColor: '#10b981',
+                color: 'white',
+                '&:hover': {
+                    backgroundColor: '#059669',
+                },
+                '&.Mui-disabled': {
+                    backgroundColor: '#6ee7b7',
+                    color: 'white',
+                    opacity: 0.7,
+                },
+            }}
+        >
+            {mutation.isPending ? <CircularProgress size={20} sx={{ color: 'white' }} /> : <SyncIcon />}
+        </Button>
+    );
+}
 
 function WorkOrderListActions() {
     return (
         <TopToolbar>
-            <SyncAllRequestButton />
+            <SyncNuhaButton />
             <CreateButton />
         </TopToolbar>
     )

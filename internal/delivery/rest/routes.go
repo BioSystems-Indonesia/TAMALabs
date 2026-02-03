@@ -146,6 +146,7 @@ func RegisterRoutes(
 	roleHandler *RoleHandler,
 	khanzaExternalHandler *KhanzaExternalHandler,
 	simrsExternalHandler *SimrsExternalHandler,
+	nuhaSIMRSHandler *NuhaSIMRSHandler,
 	externalHandler *ExternalHandler,
 	qcHandler *QCEntryHandler,
 	authMiddleware *appMiddleware.JWTMiddleware,
@@ -343,6 +344,7 @@ func RegisterRoutes(
 
 	khanzaExternalHandler.RegisterRoutes(unauthenticatedV1)
 	simrsExternalHandler.RegisterRoutes(unauthenticatedV1)
+	nuhaSIMRSHandler.RegisterRoutes(authenticatedV1)
 	handler.RegisterFeatureList(authenticatedV1)
 	externalHandler.RegisterRoutes(authenticatedV1)
 }

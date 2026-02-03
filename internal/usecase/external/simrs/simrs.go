@@ -611,12 +611,12 @@ func (u *Usecase) createWorkOrderFromAPI(ctx context.Context, req entity.SimrsOr
 		allTestTypes = append(allTestTypes, newTestTypes...)
 
 		// Merge doctor and analyzer IDs
-		doctorIDs := append(existingWorkOrder.DoctorIDs, req.Order.OBR.Doctor...)
-		analyzerIDs := append(existingWorkOrder.AnalyzerIDs, req.Order.OBR.Analyst...)
+		mergedDoctorIDs := append(existingWorkOrder.DoctorIDs, req.Order.OBR.Doctor...)
+		mergedAnalyzerIDs := append(existingWorkOrder.AnalyzerIDs, req.Order.OBR.Analyst...)
 
 		// Remove duplicates
-		doctorIDs = uniqueInt64(doctorIDs)
-		analyzerIDs = uniqueInt64(analyzerIDs)
+		mergedDoctorIDs = uniqueInt64(mergedDoctorIDs)
+		mergedAnalyzerIDs = uniqueInt64(mergedAnalyzerIDs)
 
 		workOrderReq := &entity.WorkOrderCreateRequest{
 			PatientID:           patient.ID,
@@ -625,8 +625,8 @@ func (u *Usecase) createWorkOrderFromAPI(ctx context.Context, req entity.SimrsOr
 			BarcodeSIMRS:        req.Order.OBR.OrderLab,
 			MedicalRecordNumber: req.Order.PID.MedicalRecordNumber,
 			Barcode:             existingWorkOrder.Barcode,
-			DoctorIDs:           doctorIDs,
-			AnalyzerIDs:         analyzerIDs,
+			DoctorIDs:           mergedDoctorIDs,
+			AnalyzerIDs:         mergedAnalyzerIDs,
 		}
 
 		_, err := u.workOrderRepo.Edit(int(existingWorkOrder.ID), workOrderReq)

@@ -185,6 +185,7 @@ var restHandlerSet = wire.NewSet(
 	rest.NewExternalHandler,
 	rest.NewKhanzaExternalHandler,
 	rest.NewSimrsExternalHandler,
+	rest.NewNuhaSIMRSHandler,
 	rest.NewLicenseHandler,
 	provideCronHandler,
 )
@@ -207,6 +208,7 @@ var (
 		provideConfigCheckerForCron,
 		provideRestHandler,
 		provideRestServer,
+		provideNuhaSIMRSService,
 	)
 
 	canalHandlerSet = wire.NewSet(

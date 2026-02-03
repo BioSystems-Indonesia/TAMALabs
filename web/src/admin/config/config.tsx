@@ -131,6 +131,34 @@ export const ConfigList = () => {
         enabled: true,
     });
 
+    // Nuha SIMRS Configuration Queries
+    const { data: nuhaEnabledEntry } = useQuery({
+        queryKey: ["config", "NuhaIntegrationEnabled"],
+        queryFn: async () => {
+            const { data } = await axios.get(`/config/NuhaIntegrationEnabled`);
+            return data;
+        },
+        enabled: true,
+    });
+
+    const { data: nuhaBaseURLEntry } = useQuery({
+        queryKey: ["config", "NuhaBaseURL"],
+        queryFn: async () => {
+            const { data } = await axios.get(`/config/NuhaBaseURL`);
+            return data;
+        },
+        enabled: true,
+    });
+
+    const { data: nuhaSessionIDEntry } = useQuery({
+        queryKey: ["config", "NuhaSessionID"],
+        queryFn: async () => {
+            const { data } = await axios.get(`/config/NuhaSessionID`);
+            return data;
+        },
+        enabled: true,
+    });
+
     // Backup Configuration Queries
     const { data: backupScheduleTypeEntry } = useQuery({
         queryKey: ["config", "BackupScheduleType"],
@@ -175,6 +203,7 @@ export const ConfigList = () => {
         { id: "khanza", label: "Khanza" },
         { id: "simrs-api", label: "SIMRS (API)" },
         { id: "simgos", label: "SIMRS (Database Sharing)" },
+        { id: "nuha", label: "Nuha SIMRS" },
         { id: "softmedix", label: "Softmedix" },
         { id: "simrs-local", label: "Local SIMRS" },
     ];
@@ -194,6 +223,7 @@ export const ConfigList = () => {
         main: { user: string; pass: string; host: string; port: string; db: string; params: string };
         simrs: { dsn: string };
         simgos: { dsn: string };
+        nuha: { baseURL: string; sessionID: string };
         backup: { scheduleType: string; interval: string; time: string };
     }>(null);
     const [khanzaMethod, setKhanzaMethod] = useState<string>("api");
@@ -217,6 +247,10 @@ export const ConfigList = () => {
 
     // SIMGOS states
     const [simgosDsn, setSimgosDsn] = useState<string>("");
+
+    // Nuha SIMRS states
+    const [nuhaBaseURL, setNuhaBaseURL] = useState<string>("");
+    const [nuhaSessionID, setNuhaSessionID] = useState<string>("");
 
     // Backup configuration states
     const [backupScheduleType, setBackupScheduleType] = useState<string>("daily");
@@ -363,6 +397,11 @@ export const ConfigList = () => {
             selectedSimrsType = "simgos"; // If SimgosIntegrationEnabled is true, SIMGOS is selected
         }
 
+        if (nuhaEnabledEntry && (nuhaEnabledEntry as any).value === "true") {
+            bridgingEnabled = true;
+            selectedSimrsType = "nuha"; // If NuhaIntegrationEnabled is true, Nuha is selected
+        }
+
         // Override with SelectedSimrs if available
         if (selectedEntry && (selectedEntry as any).value !== undefined && (selectedEntry as any).value !== "" && (selectedEntry as any).value !== "none") {
             selectedSimrsType = (selectedEntry as any).value;
@@ -413,6 +452,16 @@ export const ConfigList = () => {
             setSimgosDsn((simgosDsnEntry as any).value);
         }
 
+        // Load Nuha SIMRS config
+        const currentNuhaBaseURL = (nuhaBaseURLEntry as any)?.value || "";
+        if (nuhaBaseURLEntry && (nuhaBaseURLEntry as any).value !== undefined) {
+            setNuhaBaseURL((nuhaBaseURLEntry as any).value);
+        }
+        const currentNuhaSessionID = (nuhaSessionIDEntry as any)?.value || "";
+        if (nuhaSessionIDEntry && (nuhaSessionIDEntry as any).value !== undefined) {
+            setNuhaSessionID((nuhaSessionIDEntry as any).value);
+        }
+
         // Load Backup configuration
         if (backupScheduleTypeEntry && (backupScheduleTypeEntry as any).value !== undefined) {
             setBackupScheduleType((backupScheduleTypeEntry as any).value || "daily");
@@ -450,13 +499,17 @@ export const ConfigList = () => {
             simgos: {
                 dsn: currentSimgosDsn,
             },
+            nuha: {
+                baseURL: currentNuhaBaseURL,
+                sessionID: currentNuhaSessionID,
+            },
             backup: {
                 scheduleType: (backupScheduleTypeEntry as any)?.value || "daily",
                 interval: (backupIntervalEntry as any)?.value || "6",
                 time: (backupTimeEntry as any)?.value || "02:00",
             },
         });
-    }, [configEntry, simrsEnabledEntry, simgosEnabledEntry, selectedEntry, khanzaBridgeEntry, khanzaMainEntry, khanzaMethodEntry, simrsDsnEntry, simgosDsnEntry, backupScheduleTypeEntry, backupIntervalEntry, backupTimeEntry]);
+    }, [configEntry, simrsEnabledEntry, simgosEnabledEntry, nuhaEnabledEntry, selectedEntry, khanzaBridgeEntry, khanzaMainEntry, khanzaMethodEntry, simrsDsnEntry, simgosDsnEntry, nuhaBaseURLEntry, nuhaSessionIDEntry, backupScheduleTypeEntry, backupIntervalEntry, backupTimeEntry]);
 
     // Track SIMRS Bridging configuration changes
     useEffect(() => {
@@ -477,10 +530,13 @@ export const ConfigList = () => {
             initialSnapshot.main.port === mainPort &&
             initialSnapshot.main.db === mainDb &&
             initialSnapshot.main.params === mainParams &&
-            initialSnapshot.simrs.dsn === simrsDsn;
+            initialSnapshot.simrs.dsn === simrsDsn &&
+            initialSnapshot.simgos.dsn === simgosDsn &&
+            (initialSnapshot.nuha?.baseURL || "") === nuhaBaseURL &&
+            (initialSnapshot.nuha?.sessionID || "") === nuhaSessionID;
 
         setIsDirty(!same);
-    }, [initialSnapshot, simrsBridgingActive, selectedSimrs, khanzaMethod, bridgeUser, bridgePassword, bridgeHost, bridgePort, bridgeDb, bridgeParams, mainUser, mainPassword, mainHost, mainPort, mainDb, mainParams, simrsDsn]);
+    }, [initialSnapshot, simrsBridgingActive, selectedSimrs, khanzaMethod, bridgeUser, bridgePassword, bridgeHost, bridgePort, bridgeDb, bridgeParams, mainUser, mainPassword, mainHost, mainPort, mainDb, mainParams, simrsDsn, simgosDsn, nuhaBaseURL, nuhaSessionID]);
 
     // Track Backup configuration changes separately
     useEffect(() => {
@@ -553,6 +609,9 @@ export const ConfigList = () => {
         }
         if (selectedSimrs === "simgos") {
             if (!simgosDsn) return false;
+        }
+        if (selectedSimrs === "nuha") {
+            if (!nuhaBaseURL || !nuhaSessionID) return false;
         }
         return true;
     })();
@@ -1216,6 +1275,90 @@ Database DSN Examples:
                         </Stack>
                     )}
 
+                    {/* Nuha SIMRS Configuration */}
+                    {simrsBridgingActive && selectedSimrs === "nuha" && (
+                        <Stack direction="column" gap={2} alignItems="flex-start" style={{ width: "100%" }}>
+                            <Typography variant="body1" color="primary">Nuha SIMRS API Configuration</Typography>
+
+                            <MUITextField
+                                label="Base URL"
+                                value={nuhaBaseURL}
+                                size="small"
+                                fullWidth
+                                onChange={(e) => { setNuhaBaseURL(e.target.value); markDirty(); }}
+                                placeholder="https://api.nuha-simrs.example.com"
+                                helperText="Nuha SIMRS API Base URL (without /api/v1)"
+                                required
+                            />
+
+                            <MUITextField
+                                label="Session ID"
+                                value={nuhaSessionID}
+                                size="small"
+                                fullWidth
+                                onChange={(e) => { setNuhaSessionID(e.target.value); markDirty(); }}
+                                placeholder="$2a$10$..."
+                                helperText="Session ID / API Token for authentication"
+                                required
+                                type="password"
+                            />
+
+                            <Card sx={{ width: "100%", border: "1px solid #e6e6e6ff" }} elevation={0}>
+                                <Accordion>
+                                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                        <Typography variant="subtitle1">Nuha SIMRS Integration Documentation</Typography>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <CardContent>
+                                            <Typography variant="subtitle1" gutterBottom>Nuha SIMRS API Integration</Typography>
+                                            <Divider sx={{ mb: 1 }} />
+                                            <Typography variant="body2" paragraph>
+                                                This integration uses REST API to fetch lab orders from Nuha SIMRS and automatically creates work orders in TAMALabs.
+                                            </Typography>
+
+                                            <Typography variant="subtitle2" gutterBottom>How it works:</Typography>
+                                            <Typography variant="body2" paragraph>
+                                                • Click "Sync Nuha SIMRS" button in Work Order page<br />
+                                                • System fetches today's lab orders from Nuha SIMRS<br />
+                                                • Automatically creates patients if not exist (by Medical Record Number)<br />
+                                                • Creates work orders with test types matched by Alias Code<br />
+                                                • Updates existing orders if same lab number found
+                                            </Typography>
+
+                                            <Typography variant="subtitle2" gutterBottom>Configuration:</Typography>
+                                            <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', mt: 1 }}>
+                                                {`• Base URL: https://nuha-simrs.example.com
+• Session ID: Obtained from Nuha SIMRS admin panel
+• Date Range: Automatically uses current date
+• Test Matching: Uses Alias Code field in Test Type master
+
+Example API Endpoint:
+GET {BaseURL}/api/v1/emr/lab/list-new
+Request Body:
+{
+    "session_id": "your_session_id",
+    "valid_from": "2026-02-03",
+    "valid_to": "2026-02-03"
+}`}
+                                            </Typography>
+
+                                            <Typography variant="subtitle2" sx={{ mt: 2 }} gutterBottom>Test Type Mapping:</Typography>
+                                            <Typography variant="body2">
+                                                • System searches for Test Type by <strong>Alias Code = TestID from Nuha</strong><br />
+                                                • If not found by Alias Code, fallback to search by Test Name<br />
+                                                • Ensure Alias Code is properly configured in Test Type master
+                                            </Typography>
+
+                                            <Typography variant="caption" color="info.main" sx={{ mt: 2, display: 'block' }}>
+                                                💡 Tip: Set Alias Code in Test Type master to match Nuha SIMRS TestID for accurate test matching.
+                                            </Typography>
+                                        </CardContent>
+                                    </AccordionDetails>
+                                </Accordion>
+                            </Card>
+                        </Stack>
+                    )}
+
 
 
                     <Button
@@ -1241,6 +1384,12 @@ Database DSN Examples:
                                 await axios.put(`/config/SimgosIntegrationEnabled`, {
                                     id: "SimgosIntegrationEnabled",
                                     value: (simrsBridgingActive && selectedSimrs === "simgos") ? "true" : "false",
+                                });
+
+                                // Always save Nuha SIMRS integration status
+                                await axios.put(`/config/NuhaIntegrationEnabled`, {
+                                    id: "NuhaIntegrationEnabled",
+                                    value: (simrsBridgingActive && selectedSimrs === "nuha") ? "true" : "false",
                                 });
 
                                 if (simrsBridgingActive) {
@@ -1287,6 +1436,18 @@ Database DSN Examples:
                                             value: simgosDsn,
                                         });
                                     }
+
+                                    // Save Nuha SIMRS configuration
+                                    if (selectedSimrs === "nuha") {
+                                        await axios.put(`/config/NuhaBaseURL`, {
+                                            id: "NuhaBaseURL",
+                                            value: nuhaBaseURL,
+                                        });
+                                        await axios.put(`/config/NuhaSessionID`, {
+                                            id: "NuhaSessionID",
+                                            value: nuhaSessionID,
+                                        });
+                                    }
                                 } else {
                                     // When bridging is disabled, set SelectedSimrs to "none" instead of empty string
                                     await axios.put(`/config/SelectedSimrs`, {
@@ -1306,6 +1467,9 @@ Database DSN Examples:
                                 queryClient.invalidateQueries({ queryKey: ["config", "SimrsDatabaseDSN"] });
                                 queryClient.invalidateQueries({ queryKey: ["config", "SimgosIntegrationEnabled"] });
                                 queryClient.invalidateQueries({ queryKey: ["config", "SimgosDatabaseDSN"] });
+                                queryClient.invalidateQueries({ queryKey: ["config", "NuhaIntegrationEnabled"] });
+                                queryClient.invalidateQueries({ queryKey: ["config", "NuhaBaseURL"] });
+                                queryClient.invalidateQueries({ queryKey: ["config", "NuhaSessionID"] });
 
                                 // Reload cron jobs to register/unregister based on new config
                                 try {

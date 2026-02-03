@@ -178,13 +178,15 @@ func InitRestApp() server.RestServer {
 	integrationCheckMiddleware := middleware.NewIntegrationCheckMiddleware(configGetter)
 	khanzaExternalHandler := rest.NewKhanzaExternalHandler(khanzaucUsecase, integrationCheckMiddleware)
 	simrsExternalHandler := rest.NewSimrsExternalHandler(simrsucUsecase, integrationCheckMiddleware)
+	simrsNuha := provideNuhaSIMRSService(schema, workOrderRepository, workOrderUseCase, patientRepository, test_typeRepository, configrepoRepository)
+	nuhaSIMRSHandler := rest.NewNuhaSIMRSHandler(simrsNuha, integrationCheckMiddleware)
 	externalucUsecase := externaluc.NewUsecase(khanzaucUsecase, simrsucUsecase, workOrderRepository, schema)
 	externalHandler := rest.NewExternalHandler(externalucUsecase)
 	qcEntryHandler := rest.NewQCEntryHandler(qualityControlUsecase)
 	jwtMiddleware := middleware.NewJWTMiddleware(schema)
 	summaryRepository := summaryrepo.NewSummaryRepository(gormDB)
 	summaryUseCase := summary_uc.NewSummaryUsecase(summaryRepository)
-	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, simrsExternalHandler, externalHandler, qcEntryHandler, jwtMiddleware, cronManager, summaryUseCase)
+	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, simrsExternalHandler, nuhaSIMRSHandler, externalHandler, qcEntryHandler, jwtMiddleware, cronManager, summaryUseCase)
 	return restServer
 }
 
