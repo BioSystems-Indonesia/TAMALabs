@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 	"time"
 
@@ -352,23 +353,25 @@ func (c *SIMRSNuha) SendResultToNuha(
 	nuhaService := NewNuhaService(c.BaseURL)
 
 	req := InsertResultRequest{
-		SessionID:    c.SessionID,
-		NoLab:        labNumber,
-		NamaTest:     testName,
-		Hasil:        resultValue,
-		Satuan:       unit,
-		NilaiRujukan: referenceRange,
-		Abnormal:     abnormalFlag,
-		Keterangan:   "",
-		Catatan:      "",
-		TestID:       testID,
-		HasilText:    resultText,
-		PaketID:      packageID,
-		Spasi:        "",
-		Index:        index,
-		InsertedUser: insertedUser,
-		InsertedIP:   insertedIP,
+		SessionID:      c.SessionID,
+		LabNumber:      labNumber,
+		TestName:       testName,
+		Result:         resultValue,
+		Unit:           unit,
+		ReferenceRange: referenceRange,
+		Abnormal:       abnormalFlag,
+		Description:    "",
+		Notes:          "",
+		TestID:         testID,
+		ResultText:     resultText,
+		PackageID:      packageID,
+		Spacing:        "",
+		Index:          index,
+		InsertedUser:   insertedUser,
+		InsertedIP:     insertedIP,
 	}
+
+	fmt.Println(req)
 
 	result, err := nuhaService.InsertResult(ctx, req)
 	if err != nil {
@@ -386,7 +389,6 @@ func (c *SIMRSNuha) SendResultToNuha(
 }
 
 // SendWorkOrderResults sends all test results from a work order to Nuha SIMRS
-// This is a placeholder - will be implemented when result sending is needed
 func (c *SIMRSNuha) SendWorkOrderResults(
 	ctx context.Context,
 	barcodeSIMRS string,
@@ -400,14 +402,184 @@ func (c *SIMRSNuha) SendWorkOrderResults(
 		return fmt.Errorf("invalid SIMRS barcode format: %s", barcodeSIMRS)
 	}
 
-	slog.InfoContext(ctx, "SendWorkOrderResults called",
-		"barcode_simrs", barcodeSIMRS,
-		"lab_number", labNumber,
-		"inserted_user", insertedUser)
+	// Get work order by SIMRS barcode
+	wo, err := c.workOrderRepo.GetBySIMRSBarcode(ctx, barcodeSIMRS)
+	if err != nil {
+		return fmt.Errorf("failed to get work order: %w", err)
+	}
 
-	// TODO: Implement full result sending logic
-	// This requires getting work order with all observation results
-	// and mapping them to Nuha SIMRS format
+	return c.sendWorkOrderResults(ctx, wo, labNumber, insertedUser, insertedIP)
+}
+
+// SendWorkOrderResultsByID sends all test results from a work order to Nuha SIMRS by work order ID
+func (c *SIMRSNuha) SendWorkOrderResultsByID(
+	ctx context.Context,
+	workOrderIDStr string,
+	insertedUser string,
+	insertedIP string,
+) error {
+	// Parse work order ID
+	var workOrderID int64
+	if _, err := fmt.Sscanf(workOrderIDStr, "%d", &workOrderID); err != nil {
+		return fmt.Errorf("invalid work order ID: %s", workOrderIDStr)
+	}
+
+	// Get work order by ID
+	wo, err := c.workOrderRepo.FindOneForResult(workOrderID)
+	if err != nil {
+		return fmt.Errorf("failed to get work order: %w", err)
+	}
+
+	// Check if barcode_simrs exists
+	if wo.BarcodeSIMRS == "" {
+		return fmt.Errorf("work order does not have SIMRS barcode, cannot send to Nuha")
+	}
+
+	// Extract lab number from SIMRS barcode (NUHA-12345 -> 12345)
+	labNumberStr := strings.TrimPrefix(wo.BarcodeSIMRS, "NUHA-")
+	labNumber := 0
+	if _, err := fmt.Sscanf(labNumberStr, "%d", &labNumber); err != nil || labNumber == 0 {
+		return fmt.Errorf("invalid SIMRS barcode format: %s", wo.BarcodeSIMRS)
+	}
+
+	return c.sendWorkOrderResults(ctx, wo, labNumber, insertedUser, insertedIP)
+}
+
+// sendWorkOrderResults is the actual implementation that sends results to Nuha
+func (c *SIMRSNuha) sendWorkOrderResults(
+	ctx context.Context,
+	workOrder entity.WorkOrder,
+	labNumber int,
+	insertedUser string,
+	insertedIP string,
+) error {
+	slog.InfoContext(ctx, "Sending work order results to Nuha SIMRS",
+		"work_order_id", workOrder.ID,
+		"barcode_simrs", workOrder.BarcodeSIMRS,
+		"lab_number", labNumber,
+		"inserted_user", insertedUser,
+		"specimen_count", len(workOrder.Specimen))
+
+	// Validate that work order has specimens
+	if len(workOrder.Specimen) == 0 {
+		return fmt.Errorf("work order has no specimens to send")
+	}
+
+	// Collect all test results into batch
+	var batchItems []BatchInsertResultItem
+	skippedCount := 0
+	index := 1
+
+	// Loop through all specimens and observation results
+	for specIdx, specimen := range workOrder.Specimen {
+		slog.InfoContext(ctx, "Processing specimen",
+			"specimen_index", specIdx,
+			"specimen_id", specimen.ID,
+			"observation_result_count", len(specimen.ObservationResult))
+
+		for obsIdx, obsResult := range specimen.ObservationResult {
+			// Skip if no result value
+			if len(obsResult.Values) == 0 || obsResult.Values[0] == "" {
+				skippedCount++
+				slog.WarnContext(ctx, "Skipping observation result - no value",
+					"observation_result_id", obsResult.ID,
+					"test_name", obsResult.TestType.Name,
+					"values_length", len(obsResult.Values))
+				continue
+			}
+
+			slog.InfoContext(ctx, "Processing observation result",
+				"observation_index", obsIdx,
+				"observation_result_id", obsResult.ID,
+				"test_name", obsResult.TestType.Name,
+				"value", obsResult.Values[0])
+
+			// Get the test type to map TestID (using alias code)
+			testIDFromAlias := 0
+			if obsResult.TestType.AliasCode != "" {
+				if _, err := fmt.Sscanf(obsResult.TestType.AliasCode, "%d", &testIDFromAlias); err != nil {
+					slog.WarnContext(ctx, "Failed to parse alias code as test ID",
+						"alias_code", obsResult.TestType.AliasCode,
+						"test_name", obsResult.TestType.Name)
+				}
+			}
+
+			// Determine abnormal flag based on reference range and result value
+			abnormalFlag := determineAbnormalFlag(obsResult.Values[0], obsResult.ReferenceRange)
+
+			slog.InfoContext(ctx, "Determined abnormal flag",
+				"test_name", obsResult.TestType.Name,
+				"value", obsResult.Values[0],
+				"reference_range", obsResult.ReferenceRange,
+				"abnormal_flag", abnormalFlag)
+
+			// Get result value (use first value)
+			resultValue := obsResult.Values[0]
+
+			// Create result text if comment exists
+			resultText := ""
+			if obsResult.Comments != "" {
+				resultText = obsResult.Comments
+			}
+
+			// Add to batch
+			batchItems = append(batchItems, BatchInsertResultItem{
+				LabNumber:      labNumber,
+				TestName:       obsResult.TestType.Name,
+				Result:         resultValue,
+				ReferenceRange: obsResult.ReferenceRange,
+				Abnormal:       abnormalFlag,
+				Unit:           obsResult.Unit,
+				TestID:         testIDFromAlias,
+				PackageID:      nil, // null for non-package tests
+				Index:          index,
+				ResultText:     resultText,
+				InsertedUser:   insertedUser,
+				InsertedIP:     insertedIP,
+			})
+			index++
+		}
+	}
+
+	slog.InfoContext(ctx, "Collected test results for batch sending",
+		"work_order_id", workOrder.ID,
+		"batch_count", len(batchItems),
+		"skipped_count", skippedCount)
+
+	// Check if there are no results to send
+	if len(batchItems) == 0 {
+		if skippedCount > 0 {
+			return fmt.Errorf("no valid results to send to Nuha SIMRS (all %d results were skipped - empty values)", skippedCount)
+		}
+		return fmt.Errorf("no observation results found in work order")
+	}
+
+	// Send batch request
+	nuhaService := NewNuhaService(c.BaseURL)
+	batchReq := BatchInsertResultRequest{
+		SessionID: c.SessionID,
+		Data:      batchItems,
+	}
+
+	result, err := nuhaService.BatchInsertResults(ctx, batchReq)
+	if err != nil {
+		// All failed - update status as failed
+		_ = c.workOrderRepo.UpdateSIMRSSentStatus(ctx, workOrder.ID, "FAILED", nil)
+		return fmt.Errorf("failed to send batch results to Nuha SIMRS: %w", err)
+	}
+
+	slog.InfoContext(ctx, "Batch results sent to Nuha SIMRS successfully",
+		"work_order_id", workOrder.ID,
+		"sent_count", len(batchItems),
+		"status", result.Response.Status,
+		"message", result.Response.Message)
+
+	// All results sent successfully - update status
+	now := time.Now()
+	if err := c.workOrderRepo.UpdateSIMRSSentStatus(ctx, workOrder.ID, "SENT", &now); err != nil {
+		slog.ErrorContext(ctx, "Failed to update SIMRS sent status", "error", err)
+		// Don't return error here as the main operation (sending results) succeeded
+	}
 
 	return nil
 }
@@ -421,4 +593,103 @@ func parsePatientName(fullName string) (firstName, lastName string) {
 		return parts[0], ""
 	}
 	return parts[0], strings.Join(parts[1:], " ")
+}
+
+// determineAbnormalFlag determines if a result value is normal, low, or high based on reference range
+// Returns: "1" (Normal), "2" (Abnormal - High or Low)
+func determineAbnormalFlag(resultValue, referenceRange string) string {
+	if resultValue == "" || referenceRange == "" {
+		return "1" // Default to normal if no data
+	}
+
+	// Try to parse result value as float
+	value, err := strconv.ParseFloat(strings.TrimSpace(resultValue), 64)
+	if err != nil {
+		// If result is not numeric, return normal
+		return "1"
+	}
+
+	// Clean reference range
+	refRange := strings.TrimSpace(referenceRange)
+	refRange = strings.ReplaceAll(refRange, " ", "")
+
+	// Handle different reference range formats
+	// Format: "min-max" (e.g., "10-20", "3.5-5.5")
+	if strings.Contains(refRange, "-") && !strings.HasPrefix(refRange, "<") && !strings.HasPrefix(refRange, ">") {
+		parts := strings.Split(refRange, "-")
+		if len(parts) == 2 {
+			min, err1 := strconv.ParseFloat(parts[0], 64)
+			max, err2 := strconv.ParseFloat(parts[1], 64)
+
+			if err1 == nil && err2 == nil {
+				if value < min || value > max {
+					return "2" // Abnormal (Low or High)
+				}
+				return "1" // Normal
+			}
+		}
+	}
+
+	// Format: "< max" or "<max" (e.g., "< 5", "<10")
+	if strings.HasPrefix(refRange, "<") {
+		maxStr := strings.TrimPrefix(refRange, "<")
+		maxStr = strings.TrimPrefix(maxStr, "=")
+		maxStr = strings.TrimSpace(maxStr)
+
+		if max, err := strconv.ParseFloat(maxStr, 64); err == nil {
+			if strings.Contains(refRange, "=") {
+				// <= case
+				if value > max {
+					return "2" // Abnormal (High)
+				}
+			} else {
+				// < case
+				if value >= max {
+					return "2" // Abnormal (High)
+				}
+			}
+			return "1" // Normal
+		}
+	}
+
+	// Format: "> min" or ">min" (e.g., "> 100", ">50")
+	if strings.HasPrefix(refRange, ">") {
+		minStr := strings.TrimPrefix(refRange, ">")
+		minStr = strings.TrimPrefix(minStr, "=")
+		minStr = strings.TrimSpace(minStr)
+
+		if min, err := strconv.ParseFloat(minStr, 64); err == nil {
+			if strings.Contains(refRange, "=") {
+				// >= case
+				if value < min {
+					return "2" // Abnormal (Low)
+				}
+			} else {
+				// > case
+				if value <= min {
+					return "2" // Abnormal (Low)
+				}
+			}
+			return "1" // Normal
+		}
+	}
+
+	// Format: "min to max" (e.g., "10 to 20")
+	if strings.Contains(strings.ToLower(refRange), "to") {
+		parts := strings.Split(strings.ToLower(refRange), "to")
+		if len(parts) == 2 {
+			min, err1 := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+			max, err2 := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+
+			if err1 == nil && err2 == nil {
+				if value < min || value > max {
+					return "2" // Abnormal (Low or High)
+				}
+				return "1" // Normal
+			}
+		}
+	}
+
+	// If format not recognized, return normal
+	return "1"
 }

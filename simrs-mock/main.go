@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -11,6 +13,7 @@ func main() {
 	http.HandleFunc("/api/v1/emr/lab/list-new", handleGetLabList)
 	http.HandleFunc("/api/v1/emr/lab/insert", handleInsertLabResult)
 	http.HandleFunc("/api/v1/emr/lab/update-validasi", handleUpdateValidation)
+	http.HandleFunc("/api/v1/emr/lab/insert-bulk", handleBulkLabInsert)
 
 	log.Println("🏥 SIMRS Mock Server running on :4040")
 	log.Fatal(http.ListenAndServe(":4040", nil))
@@ -222,11 +225,103 @@ func handleGetLabList(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+type InsertLabResultRequest struct {
+	LabNumber    int    `json:"no_lab"`
+	TestID       int    `json:"test_id"`
+	TestName     string `json:"nama_test"`
+	ResultValue  string `json:"nilai"`
+	Unit         string `json:"satuan"`
+	NormalRange  string `json:"nilai_normal"`
+	AbnormalFlag string `json:"flag"`
+	ResultText   string `json:"keterangan"`
+	PackageID    int    `json:"paket_id"`
+	Index        int    `json:"index"`
+	InsertedUser string `json:"inserted_user"`
+	InsertedIP   string `json:"inserted_ip"`
+}
+
 func handleInsertLabResult(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	// Read raw body
+	rawBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("❌ Error reading raw body: %v", err)
+		http.Error(w, fmt.Sprintf("Error reading body: %v", err), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	log.Printf("📝 Raw Request Body: %s", string(rawBody))
+
+	// Decode JSON from raw body
+	var reqBody InsertLabResultRequest
+	if err := json.Unmarshal(rawBody, &reqBody); err != nil {
+		log.Printf("❌ Error decoding request body: %v", err)
+		http.Error(w, fmt.Sprintf("Invalid request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("✅ Received lab result - Lab#%d, Test: %s (%d), Value: %s %s, Flag: %s, User: %s",
+		reqBody.LabNumber,
+		reqBody.TestName,
+		reqBody.TestID,
+		reqBody.ResultValue,
+		reqBody.Unit,
+		reqBody.AbnormalFlag,
+		reqBody.InsertedUser,
+	)
+
+	fmt.Printf("📦 Parsed Struct: %+v\n", reqBody)
+
+	resp := map[string]interface{}{
+		"message": "Ok",
+		"status":  200,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func handleBulkLabInsert(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Read raw body
+	rawBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("❌ Error reading raw body: %v", err)
+		http.Error(w, fmt.Sprintf("Error reading body: %v", err), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	log.Printf("📝 Raw Request Body: %s", string(rawBody))
+
+	// // Decode JSON from raw body
+	// var reqBody InsertLabResultRequest
+	// if err := json.Unmarshal(rawBody, &reqBody); err != nil {
+	// 	log.Printf("❌ Error decoding request body: %v", err)
+	// 	http.Error(w, fmt.Sprintf("Invalid request body: %v", err), http.StatusBadRequest)
+	// 	return
+	// }
+
+	// log.Printf("✅ Received lab result - Lab#%d, Test: %s (%d), Value: %s %s, Flag: %s, User: %s",
+	// 	reqBody.LabNumber,
+	// 	reqBody.TestName,
+	// 	reqBody.TestID,
+	// 	reqBody.ResultValue,
+	// 	reqBody.Unit,
+	// 	reqBody.AbnormalFlag,
+	// 	reqBody.InsertedUser,
+	// )
+
+	// fmt.Printf("📦 Parsed Struct: %+v\n", reqBody)
 
 	resp := map[string]interface{}{
 		"message": "Ok",

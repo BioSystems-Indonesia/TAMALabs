@@ -1,4 +1,5 @@
-import type { Patient } from "./patient";
+import {Patient} from "./patient.ts";
+
 import { User } from "./user";
 import { VerifiedStatus } from "./work_order";
 

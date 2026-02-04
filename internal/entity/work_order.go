@@ -67,6 +67,8 @@ type WorkOrder struct {
 	ResultReleaseDate      *time.Time `json:"result_release_date" gorm:"column:result_release_date;type:datetime"`
 	Diagnosis              string     `json:"diagnosis" gorm:"column:diagnosis;type:text;default:''"`
 	VerifiedStatus         string     `json:"verified_status" gorm:"column:verified_status;type:varchar(255);default:''"`
+	SIMRSSentStatus        string     `json:"simrs_sent_status" gorm:"column:simrs_sent_status;type:varchar(50);default:'';index:idx_work_order_simrs_sent_status"`
+	SIMRSSentAt            *time.Time `json:"simrs_sent_at" gorm:"column:simrs_sent_at;type:datetime"`
 	CreatedBy              int64      `json:"created_by" gorm:"column:created_by;type:bigint;default:0"`
 	LastUpdatedBy          int64      `json:"last_updated_by" gorm:"column:last_updated_by;type:bigint;default:0"`
 	CreatedAt              time.Time  `json:"created_at" gorm:"index:work_order_created_at"`

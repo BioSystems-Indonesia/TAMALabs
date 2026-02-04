@@ -10,22 +10,44 @@ type LabListRequest struct {
 
 // InsertResultRequest represents request for inserting test result to Nuha SIMRS
 type InsertResultRequest struct {
-	SessionID    string `json:"session_id"`
-	NoLab        int    `json:"no_lab"`        // Lab number
-	NamaTest     string `json:"nama_test"`     // Test name
-	Hasil        string `json:"hasil"`         // Result value
-	Satuan       string `json:"satuan"`        // Unit
-	NilaiRujukan string `json:"nilai_rujukan"` // Reference range
-	Abnormal     string `json:"abnormal"`      // Abnormal flag: "0"=Normal, "1"=Low, "2"=High
-	Keterangan   string `json:"keterangan"`    // Notes
-	Catatan      string `json:"catatan"`       // Additional notes
-	TestID       int    `json:"test_id"`       // Test ID from Nuha SIMRS
-	HasilText    string `json:"hasil_text"`    // Long text result
-	PaketID      int    `json:"paket_id"`      // Package ID (0 if not from package)
-	Spasi        string `json:"spasi"`         // Spacing
-	Index        int    `json:"index"`         // Index order
-	InsertedUser string `json:"inserted_user"` // User who inserted
-	InsertedIP   string `json:"inserted_ip"`   // IP address
+	SessionID      string `json:"session_id"`
+	LabNumber      int    `json:"no_lab"`        // Lab number
+	TestName       string `json:"nama_test"`     // Test name
+	Result         string `json:"hasil"`         // Result value
+	Unit           string `json:"satuan"`        // Unit
+	ReferenceRange string `json:"nilai_rujukan"` // Reference range
+	Abnormal       string `json:"abnormal"`      // Abnormal flag: "0"=Normal, "1"=Low, "2"=High
+	Description    string `json:"keterangan"`    // Notes
+	Notes          string `json:"catatan"`       // Additional notes
+	TestID         int    `json:"test_id"`       // Test ID from Nuha SIMRS
+	ResultText     string `json:"hasil_text"`    // Long text result
+	PackageID      int    `json:"paket_id"`      // Package ID (0 if not from package)
+	Spacing        string `json:"spasi"`         // Spacing
+	Index          int    `json:"index"`         // Index order
+	InsertedUser   string `json:"inserted_user"` // User who inserted
+	InsertedIP     string `json:"inserted_ip"`   // IP address
+}
+
+// BatchInsertResultRequest represents batch request for inserting multiple test results
+type BatchInsertResultRequest struct {
+	SessionID string                  `json:"session_id"`
+	Data      []BatchInsertResultItem `json:"data"`
+}
+
+// BatchInsertResultItem represents single test result item in batch request
+type BatchInsertResultItem struct {
+	LabNumber      int    `json:"no_lab"`
+	TestName       string `json:"nama_test"`
+	Result         string `json:"hasil"`
+	ReferenceRange string `json:"nilai_rujukan"`
+	Abnormal       string `json:"abnormal"`
+	Unit           string `json:"satuan"`
+	TestID         int    `json:"test_id"`
+	PackageID      *int   `json:"paket_id"` // nullable
+	Index          int    `json:"index"`
+	ResultText     string `json:"hasil_text"`
+	InsertedUser   string `json:"inserted_user"`
+	InsertedIP     string `json:"inserted_ip"`
 }
 
 // InsertResultResponse represents response from insert result API

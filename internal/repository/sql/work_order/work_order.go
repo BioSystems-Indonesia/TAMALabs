@@ -927,3 +927,25 @@ func (r WorkOrderRepository) UpdateReleaseDate(id int, resultReleaseDate string)
 
 	return nil
 }
+
+// UpdateSIMRSSentStatus updates the SIMRS sent status and timestamp for a work order
+func (r WorkOrderRepository) UpdateSIMRSSentStatus(ctx context.Context, id int64, status string, sentAt *time.Time) error {
+	updates := map[string]interface{}{
+		"simrs_sent_status": status,
+		"simrs_sent_at":     sentAt,
+	}
+
+	res := r.db.WithContext(ctx).Model(&entity.WorkOrder{}).
+		Where("id = ?", id).
+		Updates(updates)
+
+	if res.Error != nil {
+		return fmt.Errorf("error updating SIMRS sent status: %w", res.Error)
+	}
+
+	if res.RowsAffected == 0 {
+		return entity.ErrNotFound
+	}
+
+	return nil
+}

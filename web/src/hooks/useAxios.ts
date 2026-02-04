@@ -20,12 +20,16 @@ const useAxios = (config?: CreateAxiosDefaults) => {
     (error) => {
       if (axios.isAxiosError(error)) {
         const errorResponse = error.response?.data as ErrorPayload;
+
+        // If no error response, show generic error
         if (!errorResponse) {
           notify("Something went wrong", {
             type: "error",
           });
-          return;
+          return Promise.reject(error);
         }
+
+        // Handle specific status codes with default notifications
         switch (errorResponse.status_code) {
           case 401:
             notify("Session expired", {
@@ -33,21 +37,23 @@ const useAxios = (config?: CreateAxiosDefaults) => {
             });
             break;
           case 403:
-            notify("Forbidden", {
-              type: "error",
-            });
             break;
           default:
-            notify(
-              `Error ${errorResponse.status_code}: ${errorResponse.error}`,
-              {
-                type: "error",
-              }
-            );
+            if (!error.config?.url?.includes('/nuha-simrs/')) {
+              notify(
+                `Error ${errorResponse.status_code}: ${errorResponse.error}`,
+                {
+                  type: "error",
+                }
+              );
+            }
             break;
         }
+
+        // Always re-throw error so mutation onError can handle it
+        return Promise.reject(error);
       } else {
-        throw error;
+        return Promise.reject(error);
       }
     }
   );

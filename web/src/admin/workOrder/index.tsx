@@ -456,68 +456,55 @@ function SyncNuhaButton() {
         },
         onError: (error: any) => {
             console.error('Nuha SIMRS sync error:', error);
+            console.log('Error details:', {
+                hasResponse: !!error.response,
+                status: error.response?.status,
+                statusCode: error.response?.data?.status_code,
+                errorData: error.response?.data,
+                hasRequest: !!error.request,
+                message: error.message,
+            });
 
-            // Handle different error cases
-            if (error?.response?.status === 403) {
-                // Integration not enabled - check all possible message locations
-                const errorMsg =
-                    error?.response?.data?.message ||
-                    error?.response?.data?.error ||
-                    (typeof error?.response?.data === 'string' ? error?.response?.data : null);
+            // Check for axios error response
+            if (error.response) {
+                const status = error.response.status;
+                const errorMsg = error.response.data?.error || error.response.data?.message || 'Unknown error';
 
-                notify(
-                    errorMsg || '⚠️ Nuha SIMRS integration is not enabled!\n\nPlease enable it in: Settings → Config → SIMRS Bridging → Select "Nuha SIMRS"',
-                    {
+                console.log('Processing sync error with status:', status, 'Message:', errorMsg);
+
+                if (status === 403) {
+                    // 403 Forbidden - Integration not enabled
+                    notify('⚠️ Nuha SIMRS integration is not enabled!\n\nPlease enable it in: Settings → Config → SIMRS Bridging → Select "Nuha SIMRS"', {
                         type: 'warning',
                         autoHideDuration: 10000,
                         multiLine: true,
-                    }
-                );
-            } else if (error?.response?.status === 500) {
-                // Server error
-                const errorMsg =
-                    error?.response?.data?.error ||
-                    error?.response?.data?.message ||
-                    (typeof error?.response?.data === 'string' ? error?.response?.data : null);
-
-                notify(
-                    `❌ Error syncing from Nuha SIMRS:\n\n${errorMsg || 'Server error occurred. Please check the logs.'}`,
-                    {
+                    });
+                } else if (status === 500) {
+                    // 500 Server error
+                    notify(`❌ Error syncing from Nuha SIMRS:\n\n${errorMsg}`, {
                         type: 'error',
                         autoHideDuration: 8000,
                         multiLine: true,
-                    }
-                );
-            } else if (error?.response?.data?.error || error?.response?.data?.message) {
-                // Other errors with error message
-                const errorMsg = error?.response?.data?.error || error?.response?.data?.message;
-                notify(
-                    `❌ Failed to sync: ${errorMsg}`,
-                    {
+                    });
+                } else {
+                    // Other server errors
+                    notify(`❌ Failed to sync: ${errorMsg}`, {
                         type: 'error',
                         autoHideDuration: 6000,
-                    }
-                );
-            } else if (error?.message) {
-                // Axios error with message
-                notify(
-                    `⚠️ Nuha SIMRS integration is not enabled!\nPlease enable it in: Settings → Config → SIMRS Bridging → Select "Nuha SIMRS"`,
-                    {
-                        type: 'error',
-                        autoHideDuration: 6000,
-                        multiLine: true,
-                    }
-                );
+                    });
+                }
+            } else if (error.request) {
+                // Network error - no response received
+                notify('❌ Network error: Unable to connect to server. Please check if the server is running.', {
+                    type: 'error',
+                    autoHideDuration: 8000,
+                });
             } else {
-                // Generic error
-                notify(
-                    `❌ Failed to sync orders from Nuha SIMRS.\n\nPlease check:\n• Your network connection\n• Nuha SIMRS integration is enabled in Settings\n• Base URL and Session ID are configured correctly`,
-                    {
-                        type: 'error',
-                        autoHideDuration: 8000,
-                        multiLine: true,
-                    }
-                );
+                // Other errors
+                notify(`❌ Failed to sync orders from Nuha SIMRS: ${error.message || 'Unknown error'}`, {
+                    type: 'error',
+                    autoHideDuration: 6000,
+                });
             }
         },
     });

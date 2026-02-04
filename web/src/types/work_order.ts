@@ -23,6 +23,8 @@ export type WorkOrder = {
   specimen_collection_date: string;
   result_release_date: string;
   diagnosis: string;
+  simrs_sent_status: string;
+  simrs_sent_at: string | null;
   devices: Device[] | null;
   created_at: string;
   updated_at: string;

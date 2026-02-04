@@ -1,8 +1,17 @@
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SyncIcon from '@mui/icons-material/Sync';
+import SendIcon from '@mui/icons-material/Send';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ScienceIcon from '@mui/icons-material/Science';
-import { Box, Chip, Button as MUIButton, Stack, Typography, useTheme, CircularProgress, } from "@mui/material";
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PrintIcon from '@mui/icons-material/Print';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import PendingIcon from '@mui/icons-material/Pending';
+import CloudDoneIcon from '@mui/icons-material/CloudDone';
+import CloudOffIcon from '@mui/icons-material/CloudOff';
+import CloudQueueIcon from '@mui/icons-material/CloudQueue';
+import { Box, Chip, Button as MUIButton, Stack, Typography, useTheme, CircularProgress, Menu, MenuItem, IconButton, Tooltip } from "@mui/material";
 import { useState } from "react";
 import {
     AutocompleteArrayInput,
@@ -117,6 +126,155 @@ function SyncAllResultButton() {
                 <SyncIcon />
             )}
         </Button>
+    );
+}
+
+// ActionMenuButton component - dropdown menu for Generate Report and Send to SIMRS
+function ActionMenuButton({ record, currentGeneratedId, onGenerate }: { record: WorkOrder; currentGeneratedId: string | null; onGenerate: (id: string) => void }) {
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+    const axios = useAxios();
+    const notify = useNotify();
+    const refresh = useRefresh();
+
+    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+        event.stopPropagation();
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const mutation = useMutation({
+        mutationFn: async () => {
+            const response = await axios.post(`/nuha-simrs/send-result/${record.id}`);
+            return response.data;
+        },
+        onSuccess: (data) => {
+            notify(data?.message || 'Successfully sent results to Nuha SIMRS', { type: 'success' });
+            refresh();
+            handleClose();
+        },
+        onError: (error: any) => {
+            console.error('Send to Nuha error:', error);
+
+            if (error.response) {
+                const status = error.response.status;
+                const errorMsg = error.response.data?.error || error.response.data?.message || 'Unknown error';
+
+                if (status === 403) {
+                    notify('⚠️ Nuha SIMRS integration is not enabled!\n\nPlease enable it in: Settings → Config → SIMRS Bridging → Select "Nuha SIMRS"', {
+                        type: 'warning',
+                        autoHideDuration: 8000,
+                        multiLine: true,
+                    });
+                } else {
+                    notify(`❌ Failed to send results: ${errorMsg}`, {
+                        type: 'error',
+                        autoHideDuration: 6000,
+                    });
+                }
+            } else if (error.request) {
+                notify('❌ Network error: Unable to connect to server. Please check if the server is running.', {
+                    type: 'error',
+                    autoHideDuration: 8000,
+                });
+            } else {
+                notify(`❌ Failed to send results: ${error.message || 'Unknown error'}`, {
+                    type: 'error',
+                    autoHideDuration: 6000,
+                });
+            }
+            handleClose();
+        },
+    });
+
+    const handleSendToSimrs = () => {
+        if (record.total_result_filled === 0) {
+            notify('⚠️ No results to send. Please fill in test results first.', {
+                type: 'warning',
+                autoHideDuration: 5000,
+            });
+            handleClose();
+            return;
+        }
+        mutation.mutate();
+    };
+
+    const hasResults = record.total_result_filled > 0;
+    const isFromNuha = record.barcode_simrs && record.barcode_simrs.startsWith('NUHA-');
+
+    return (
+        <>
+            <Tooltip title="Actions Menu" arrow>
+                <IconButton
+                    size="small"
+                    onClick={handleClick}
+                    sx={{
+                        backgroundColor: 'primary.main',
+                        color: 'white',
+                        borderRadius: '8px',
+                        width: 32,
+                        height: 32,
+                        '&:hover': {
+                            backgroundColor: 'primary.dark',
+                            transform: 'scale(1.1)',
+                            transition: 'all 0.2s',
+                        },
+                    }}
+                >
+                    <MoreVertIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
+            <Menu
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                onClick={(e) => e.stopPropagation()}
+                PaperProps={{
+                    sx: {
+                        minWidth: 200,
+                    }
+                }}
+            >
+                <MenuItem
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleClose();
+                    }}
+                    disabled={record.verified_status !== "" && record.verified_status !== "VERIFIED"}
+                >
+                    <PrintIcon fontSize="small" sx={{ mr: 1 }} />
+                    <GenerateReportButton
+                        results={record.test_result}
+                        patient={record.patient}
+                        workOrder={record}
+                        currentGeneratedId={currentGeneratedId}
+                        onGenerate={onGenerate}
+                    />
+                </MenuItem>
+
+                {isFromNuha && (
+                    <MenuItem
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleSendToSimrs();
+                        }}
+                        disabled={!hasResults || mutation.isPending}
+                    >
+                        {mutation.isPending ? (
+                            <CircularProgress size={16} sx={{ mr: 1 }} />
+                        ) : (
+                            <SendIcon fontSize="small" sx={{ mr: 1 }} />
+                        )}
+                        <Typography variant="body2">
+                            {mutation.isPending ? 'Sending to SIMRS...' : 'Send to SIMRS'}
+                        </Typography>
+                    </MenuItem>
+                )}
+            </Menu>
+        </>
     );
 }
 
@@ -262,43 +420,132 @@ export const ResultDataGrid = (props: any) => {
             <WithRecord label="Filled" render={(record: WorkOrder) => (
                 <FilledPercentChip percent={record.percent_complete} />
             )} />
-            <WithRecord label="Verified" render={(record: WorkOrder) => (
-                <VerifiedChip verified={record.verified_status !== '' ? record.verified_status : "VERIFIED"} />
-            )} />
-            <DateField source="created_at" showDate showTime />
-            <WithRecord label="Print Result" render={(record: WorkOrder) => {
-                if (record.verified_status !== "" && record.verified_status !== "VERIFIED") {
-                    return (
-                        <MUIButton
-                            variant="contained"
-                            color="warning"
-                            startIcon={<WarningAmberIcon />}
-                            size="small"
-                            sx={{
-                                textTransform: 'none',
-                                fontSize: '12px',
-                                whiteSpace: 'nowrap',
-                                '&:hover': {
-                                    backgroundColor: 'warning.main',
-                                    cursor: 'default'
-                                }
-                            }}
-                        >
-                            Not verified
-                        </MUIButton>
-                    )
+            <WithRecord label="Status" render={(record: WorkOrder) => {
+                const status = record.verified_status;
+                const isVerified = status === "" || status === "VERIFIED";
+                const isPending = status === "PENDING";
+                const isRejected = status === "REJECTED";
+
+                let color: "success" | "warning" | "error" = "success";
+                let icon = <CheckCircleIcon />;
+                let label = "Verified";
+
+                if (isPending) {
+                    color = "warning";
+                    icon = <PendingIcon />;
+                    label = "Not Verified";
+                } else if (isRejected) {
+                    color = "error";
+                    icon = <CancelIcon />;
+                    label = "Rejected";
+                } else if (!isVerified) {
+                    color = "error";
+                    icon = <CancelIcon />;
+                    label = "Not Verified";
                 }
 
                 return (
-                    <GenerateReportButton
-                        results={record.test_result}
-                        patient={record.patient}
-                        workOrder={record}
+                    <MUIButton
+                        variant="contained"
+                        color={color}
+                        startIcon={icon}
+                        size="small"
+                        sx={{
+                            textTransform: 'none',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            borderRadius: '8px',
+                            px: 2,
+                            boxShadow: 2,
+                            color: "white",
+                            '&:hover': {
+                                cursor: 'default',
+                                boxShadow: 3,
+                            }
+                        }}
+                    >
+                        {label}
+                    </MUIButton>
+                );
+            }} />
+            <WithRecord label="SIMRS Status" render={(record: WorkOrder) => {
+                const simrsStatus = record.simrs_sent_status || "";
+                const isFromNuha = record.barcode_simrs && record.barcode_simrs.startsWith('NUHA-');
+
+                // Don't show SIMRS status if not from Nuha
+                if (!isFromNuha) {
+                    return <Typography variant="body2" color="text.secondary">-</Typography>;
+                }
+
+                let color: "success" | "warning" | "error" | "info" = "info";
+                let icon = <CloudQueueIcon />;
+                let label = "Not Sent";
+
+                if (simrsStatus === "SENT") {
+                    color = "success";
+                    icon = <CloudDoneIcon />;
+                    label = "Sent";
+                } else if (simrsStatus === "PARTIAL") {
+                    color = "warning";
+                    icon = <CloudQueueIcon />;
+                    label = "Partial";
+                } else if (simrsStatus === "FAILED") {
+                    color = "error";
+                    icon = <CloudOffIcon />;
+                    label = "Failed";
+                }
+
+                return (
+                    <MUIButton
+                        variant="contained"
+                        color={color}
+                        startIcon={icon}
+                        size="small"
+                        sx={{
+                            textTransform: 'none',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            borderRadius: '8px',
+                            px: 2,
+                            boxShadow: 2,
+                            color: "white",
+                            '&:hover': {
+                                cursor: 'default',
+                                boxShadow: 3,
+                            }
+                        }}
+                    >
+                        {label}
+                    </MUIButton>
+                );
+            }} />
+            <WithRecord label="Actions" render={(record: WorkOrder) => {
+                // Show warning if not verified
+                if (record.verified_status !== "" && record.verified_status !== "VERIFIED") {
+                    return (
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+
+                            <ActionMenuButton
+                                record={record}
+                                currentGeneratedId={currentGeneratedId}
+                                onGenerate={handleGenerate}
+                            />
+                        </Box>
+                    )
+                }
+
+                // Show action menu for verified results
+                return (
+                    <ActionMenuButton
+                        record={record}
                         currentGeneratedId={currentGeneratedId}
                         onGenerate={handleGenerate}
                     />
                 )
             }} />
+
         </Datagrid>
     )
 }
