@@ -95,7 +95,7 @@ func (o *ObservationResult) AfterFind(tx *gorm.DB) error {
 	if o.TestTypeID != nil && *o.TestTypeID > 0 {
 		// Use test_type_id for accurate lookup (handles cases where multiple tests share the same code)
 		var testType TestType
-		err := tx.First(&testType, *o.TestTypeID).Error
+		err := tx.Preload("SubCategoryDetail").First(&testType, *o.TestTypeID).Error
 		if err == nil {
 			o.TestType = testType
 		} else {

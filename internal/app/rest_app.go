@@ -35,6 +35,7 @@ import (
 	qualitycontrolrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/quality_control"
 	rolerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/role"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/specimen"
+	subcategoryrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/sub_category"
 	summaryrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/summary"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_template"
 	testTypeRepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
@@ -125,6 +126,7 @@ var restRepositorySet = wire.NewSet(
 	adminrepo.NewAdminRepository,
 	unit.NewRepository,
 	rolerepo.NewRoleRepository,
+	subcategoryrepo.NewRepository,
 	hlsRepo.NewBa400,
 	smbA15.NewA15,
 	a15rest.NewA15,
@@ -185,8 +187,10 @@ var restHandlerSet = wire.NewSet(
 	rest.NewExternalHandler,
 	rest.NewKhanzaExternalHandler,
 	rest.NewSimrsExternalHandler,
+	rest.NewTechnoMedicHandler,
 	rest.NewLicenseHandler,
 	provideCronHandler,
+	provideTechnoMedicUsecase,
 )
 
 var (

@@ -27,15 +27,18 @@ import (
 	simgos "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/external/simgos"
 	simrs "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/external/simrs"
 	licenserepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/license"
+	adminrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/admin"
 	configrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/config"
 	devicerepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/device"
 	patientrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/patient"
+	subcategoryrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/sub_category"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
 	workOrderrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/work_order"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase"
 	khanzauc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/khanza"
 	simgosuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simgos"
 	simrsuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/simrs"
+	technomedicuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/external/technomedic"
 	licenseuc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/license"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/result"
 	summary_uc "github.com/BioSystems-Indonesia/TAMALabs/internal/usecase/summary"
@@ -82,6 +85,7 @@ func provideRestServer(
 	hrisExternal *rest.KhanzaExternalHandler,
 	simrsExternal *rest.SimrsExternalHandler,
 	khanzaHandler *rest.ExternalHandler,
+	technomedicHandler *rest.TechnoMedicHandler,
 	qcEntryHandler *rest.QCEntryHandler,
 	authMiddleware *middleware.JWTMiddleware,
 	cronManager *cron.CronManager,
@@ -99,6 +103,7 @@ func provideRestServer(
 		hrisExternal,
 		simrsExternal,
 		khanzaHandler,
+		technomedicHandler,
 		qcEntryHandler,
 		authMiddleware,
 		summaryHandler,
@@ -807,4 +812,31 @@ func provideConfigCheckerForCron(repo *configrepo.Repository) cron.ConfigChecker
 // provideIntegrationCheckConfig provides config repository as ConfigGetter interface for middleware
 func provideIntegrationCheckConfig(repo *configrepo.Repository) middleware.ConfigGetter {
 	return repo
+}
+
+// provideTechnoMedicUsecase provides TechnoMedic usecase
+func provideTechnoMedicUsecase(
+	testTypeRepo *test_type.Repository,
+	adminRepo *adminrepo.AdminRepository,
+	patientRepo *patientrepo.PatientRepository,
+	workOrderRepo *workOrderrepo.WorkOrderRepository,
+	subCategoryRepo *subcategoryrepo.Repository,
+	barcodeUC usecase.BarcodeGenerator,
+) *technomedicuc.Usecase {
+	return technomedicuc.NewUsecase(
+		testTypeRepo,
+		adminRepo,
+		patientRepo,
+		workOrderRepo,
+		subCategoryRepo,
+		barcodeUC,
+	)
+}
+
+// provideTechnoMedicHandler provides TechnoMedic handler
+func provideTechnoMedicHandler(
+	technomedicUC *technomedicuc.Usecase,
+	integrationCheckMiddleware *middleware.IntegrationCheckMiddleware,
+) *rest.TechnoMedicHandler {
+	return rest.NewTechnoMedicHandler(technomedicUC, integrationCheckMiddleware)
 }

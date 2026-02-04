@@ -39,6 +39,7 @@ import (
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/qc_result"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/role"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/specimen"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/sub_category"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/summary"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_template"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/test_type"
@@ -136,7 +137,8 @@ func InitRestApp() server.RestServer {
 	workOrderHandler := rest.NewWorkOrderHandler(schema, workOrderUseCase, patientUseCase, deviceUseCase, specimenUseCase, observationRequestUseCase)
 	featureListHandler := rest.NewFeatureListHandler()
 	observationRequestHandler := rest.NewObservationRequestHandler(schema, observationRequestUseCase)
-	test_typeUsecase := test_type2.NewUsecase(test_typeRepository)
+	sub_categoryRepository := sub_category.NewRepository(gormDB, schema)
+	test_typeUsecase := test_type2.NewUsecase(test_typeRepository, sub_categoryRepository)
 	testTypeHandler := rest.NewTestTypeHandler(schema, test_typeUsecase)
 	resultUsecase := result.NewUsecase(repository, workOrderRepository, specimenRepository, test_typeRepository)
 	resultHandler := rest.NewResultHandler(schema, resultUsecase, usecase)
@@ -180,11 +182,13 @@ func InitRestApp() server.RestServer {
 	simrsExternalHandler := rest.NewSimrsExternalHandler(simrsucUsecase, integrationCheckMiddleware)
 	externalucUsecase := externaluc.NewUsecase(khanzaucUsecase, simrsucUsecase, workOrderRepository, schema)
 	externalHandler := rest.NewExternalHandler(externalucUsecase)
+	technomedicUsecase := provideTechnoMedicUsecase(test_typeRepository, adminRepository, patientRepository, workOrderRepository, sub_categoryRepository, barcode_generatorUsecase)
+	technoMedicHandler := rest.NewTechnoMedicHandler(technomedicUsecase, integrationCheckMiddleware)
 	qcEntryHandler := rest.NewQCEntryHandler(qualityControlUsecase)
 	jwtMiddleware := middleware.NewJWTMiddleware(schema)
 	summaryRepository := summaryrepo.NewSummaryRepository(gormDB)
 	summaryUseCase := summary_uc.NewSummaryUsecase(summaryRepository)
-	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, simrsExternalHandler, externalHandler, qcEntryHandler, jwtMiddleware, cronManager, summaryUseCase)
+	restServer := provideRestServer(schema, restHandler, validate, deviceHandler, serverControllerHandler, testTemplateHandler, authHandler, adminHandler, roleHandler, khanzaExternalHandler, simrsExternalHandler, externalHandler, technoMedicHandler, qcEntryHandler, jwtMiddleware, cronManager, summaryUseCase)
 	return restServer
 }
 

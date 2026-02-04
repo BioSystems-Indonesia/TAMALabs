@@ -1,0 +1,795 @@
+openapi: 3.0.3
+info:
+  title: TechnoMedic API Integration
+  description: |
+    API bridging untuk integrasi dengan TechnoMedic Laboratory Information System.
+    
+    ## Configuration
+    Sebelum menggunakan API ini, pastikan TechnoMedic integration sudah diaktifkan:
+    1. Login sebagai Administrator
+    2. Navigate to Config page
+    3. Enable "SIMRS Bridging"
+    4. Select "TechnoMedic (API)"
+    5. Save configuration
+    
+    ## Features
+    - Get master data (test types, sub-categories, doctors, analysts)
+    - Create lab orders
+    - Retrieve order results
+    - Support multiple test selection methods (IDs, codes, sub-categories)
+
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@tamalabs.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://{server}:{port}/api/v1
+    description: Production Server
+    variables:
+      server:
+        default: localhost
+        description: Server IP address
+      port:
+        default: '8080'
+        description: Server port
+
+tags:
+  - name: Master Data
+    description: Endpoints untuk mendapatkan master data
+  - name: Orders
+    description: Endpoints untuk manajemen order laboratorium
+
+paths:
+  /technomedic/test-types:
+    get:
+      tags:
+        - Master Data
+      summary: Get All Test Types
+      description: Mendapatkan daftar semua test types yang tersedia
+      operationId: getTestTypes
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Test types retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TestType'
+        '403':
+          $ref: '#/components/responses/IntegrationDisabled'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /technomedic/sub-categories:
+    get:
+      tags:
+        - Master Data
+      summary: Get All Sub-Categories
+      description: Mendapatkan daftar semua sub-categories dari tabel master
+      operationId: getSubCategories
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Sub-categories retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SubCategoryInfo'
+        '403':
+          $ref: '#/components/responses/IntegrationDisabled'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /technomedic/sub-categories/{id}/test-types:
+    get:
+      tags:
+        - Master Data
+      summary: Get Test Types by Sub-Category
+      description: Mendapatkan daftar test types untuk sub-category tertentu
+      operationId: getTestTypesBySubCategory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Sub-category ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Test types retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TestType'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/IntegrationDisabled'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /technomedic/doctors:
+    get:
+      tags:
+        - Master Data
+      summary: Get All Doctors
+      description: Mendapatkan daftar semua dokter yang aktif
+      operationId: getDoctors
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Doctors retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Doctor'
+        '403':
+          $ref: '#/components/responses/IntegrationDisabled'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /technomedic/analysts:
+    get:
+      tags:
+        - Master Data
+      summary: Get All Analysts
+      description: Mendapatkan daftar semua analis yang aktif
+      operationId: getAnalysts
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Analysts retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Analyst'
+        '403':
+          $ref: '#/components/responses/IntegrationDisabled'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /technomedic/order:
+    post:
+      tags:
+        - Orders
+      summary: Create Lab Order
+      description: |
+        Membuat order laboratorium baru dari TechnoMedic.
+        
+        ## Test Selection Methods
+        Minimal salah satu dari method berikut harus diisi:
+        - `test_type_ids`: Array of test type IDs (RECOMMENDED)
+        - `sub_category_ids`: Array of sub-category IDs (RECOMMENDED)
+        - `param_request`: Array of test type codes
+        - `sub_category_request`: Array of sub-category names
+        
+        Jika menggunakan kombinasi, semua test akan digabung dan de-duplicated.
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+            examples:
+              withTestTypeIDs:
+                summary: Using test_type_ids (Recommended)
+                value:
+                  no_order: TM-2024-001
+                  patient:
+                    patient_id: P001
+                    full_name: John Doe
+                    sex: M
+                    birthdate: '1990-01-15'
+                    medical_record_number: MR001
+                    phone_number: '081234567890'
+                  test_type_ids: [1, 2, 3]
+                  requested_by: Dr. Smith
+                  requested_at: '2024-01-20 10:30:00'
+              withSubCategoryIDs:
+                summary: Using sub_category_ids (Recommended)
+                value:
+                  no_order: TM-2024-002
+                  patient:
+                    patient_id: P002
+                    full_name: Jane Smith
+                    sex: F
+                    birthdate: '1985-05-20'
+                    medical_record_number: MR002
+                  sub_category_ids: [1, 2]
+              withTestCodes:
+                summary: Using param_request (Alternative)
+                value:
+                  no_order: TM-2024-003
+                  patient:
+                    patient_id: P003
+                    full_name: Bob Johnson
+                    sex: M
+                    birthdate: '1992-12-10'
+                    medical_record_number: MR003
+                  param_request: [HB, WBC, PLT]
+              withCombination:
+                summary: Using combination
+                value:
+                  no_order: TM-2024-004
+                  patient:
+                    patient_id: P004
+                    full_name: Alice Brown
+                    sex: F
+                    birthdate: '1988-08-15'
+                    medical_record_number: MR004
+                  sub_category_ids: [1]
+                  test_type_ids: [10, 11]
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 201
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Order created successfully
+                  data:
+                    type: object
+                    properties:
+                      no_order:
+                        type: string
+                        example: TM-2024-001
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/IntegrationDisabled'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /technomedic/order/{no_order}:
+    get:
+      tags:
+        - Orders
+      summary: Get Order Details
+      description: |
+        Mendapatkan detail order termasuk hasil pemeriksaan.
+        
+        ## Response Structure
+        Response akan memiliki 2 bagian:
+        - `sub_categories`: Test types yang memiliki sub-category (dikelompokkan)
+        - `parameters_result`: Test types yang TIDAK memiliki sub-category (langsung di root)
+      operationId: getOrder
+      parameters:
+        - name: no_order
+          in: path
+          required: true
+          description: Nomor order
+          schema:
+            type: string
+            example: TM-2024-001
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Order retrieved successfully
+                  data:
+                    $ref: '#/components/schemas/OrderResponse'
+              examples:
+                withSubCategory:
+                  summary: Tests with sub-category
+                  value:
+                    code: 200
+                    status: success
+                    message: Order retrieved successfully
+                    data:
+                      no_order: TM-2024-001
+                      status: SUCCESS
+                      patient:
+                        patient_id: MR001
+                        full_name: John Doe
+                        sex: M
+                        address: Jl. Contoh No. 123
+                        birthdate: '1990-01-15'
+                        medical_record_number: MR001
+                        phone_number: '081234567890'
+                      requested_by: ''
+                      requested_at: '2024-01-20 10:30:00'
+                      sub_categories:
+                        - id: '1'
+                          name: Complete Blood Count
+                          parameters_result:
+                            - id: '1'
+                              code: HB
+                              category_name: Hemoglobin
+                              value: '14.5'
+                              specimen_type: Whole Blood
+                              unit: g/dL
+                              ref: 12.0-16.0
+                              flag: ''
+                            - id: '2'
+                              code: WBC
+                              category_name: White Blood Cell
+                              value: '7.2'
+                              specimen_type: Whole Blood
+                              unit: 10^3/µL
+                              ref: 4.0-10.0
+                              flag: ''
+                      completed_at: '2024-01-20 11:00:00'
+                      verified_at: '2024-01-20 11:15:00'
+                      verified_by: Dr. Smith
+                withoutSubCategory:
+                  summary: Tests without sub-category
+                  value:
+                    code: 200
+                    status: success
+                    data:
+                      no_order: TM-2024-002
+                      status: SUCCESS
+                      patient:
+                        patient_id: MR002
+                        full_name: Jane Smith
+                        sex: F
+                        birthdate: '1985-05-20'
+                        medical_record_number: MR002
+                      requested_by: ''
+                      requested_at: '2024-01-20 10:30:00'
+                      parameters_result:
+                        - id: '10'
+                          code: COVID19
+                          category_name: COVID-19 Antigen Test
+                          value: Negative
+                          specimen_type: Nasopharyngeal Swab
+                          unit: ''
+                          ref: Negative
+                          flag: ''
+                      completed_at: '2024-01-20 11:00:00'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/IntegrationDisabled'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    TestType:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Test type ID
+          example: '1'
+        code:
+          type: string
+          description: Test type code
+          example: HB
+        name:
+          type: string
+          description: Test type name
+          example: Hemoglobin
+        category:
+          type: string
+          description: Test category
+          example: Hematologi
+        sub_category:
+          type: string
+          description: Test sub-category
+          example: Complete Blood Count
+        specimen_type:
+          type: string
+          description: Specimen type required
+          example: Whole Blood
+        unit:
+          type: string
+          description: Unit of measurement
+          example: g/dL
+
+    SubCategoryInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Sub-category ID
+          example: '1'
+        name:
+          type: string
+          description: Sub-category name
+          example: Complete Blood Count
+        category:
+          type: string
+          description: Parent category
+          example: Hematologi
+        description:
+          type: string
+          description: Sub-category description
+          example: Pemeriksaan darah lengkap
+
+    Doctor:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Doctor ID
+          example: 1
+        fullname:
+          type: string
+          description: Doctor full name
+          example: Dr. John Doe
+        username:
+          type: string
+          description: Doctor username
+          example: johndoe
+        is_active:
+          type: boolean
+          description: Doctor active status
+          example: true
+
+    Analyst:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Analyst ID
+          example: 3
+        fullname:
+          type: string
+          description: Analyst full name
+          example: Alice Johnson
+        username:
+          type: string
+          description: Analyst username
+          example: alicejohnson
+        is_active:
+          type: boolean
+          description: Analyst active status
+          example: true
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - no_order
+        - patient
+      properties:
+        no_order:
+          type: string
+          description: Unique order number from TechnoMedic
+          example: TM-2024-001
+        patient:
+          $ref: '#/components/schemas/PatientInfo'
+        test_type_ids:
+          type: array
+          description: Array of test type IDs (RECOMMENDED)
+          items:
+            type: integer
+          example: [1, 2, 3]
+        sub_category_ids:
+          type: array
+          description: Array of sub-category IDs (RECOMMENDED)
+          items:
+            type: integer
+          example: [1, 2]
+        param_request:
+          type: array
+          description: Array of test type codes (Alternative)
+          items:
+            type: string
+          example: [HB, WBC, PLT]
+        sub_category_request:
+          type: array
+          description: Array of sub-category names (Alternative)
+          items:
+            type: string
+          example: [Complete Blood Count, Liver Function Test]
+        requested_by:
+          type: string
+          description: Requesting doctor name
+          example: Dr. Smith
+        requested_at:
+          type: string
+          format: date-time
+          description: Request timestamp (default current time)
+          example: '2024-01-20 10:30:00'
+
+    PatientInfo:
+      type: object
+      required:
+        - patient_id
+        - full_name
+        - sex
+        - birthdate
+      properties:
+        patient_id:
+          type: string
+          description: Patient ID
+          example: P001
+        full_name:
+          type: string
+          description: Patient full name
+          example: John Doe
+        sex:
+          type: string
+          enum: [M, F]
+          description: Patient gender
+          example: M
+        address:
+          type: string
+          description: Patient address
+          example: Jl. Contoh No. 123
+        birthdate:
+          type: string
+          format: date
+          description: Patient birthdate (YYYY-MM-DD)
+          example: '1990-01-15'
+        medical_record_number:
+          type: string
+          description: Medical record number
+          example: MR001
+        phone_number:
+          type: string
+          description: Patient phone number
+          example: '081234567890'
+
+    OrderResponse:
+      type: object
+      properties:
+        no_order:
+          type: string
+          description: Order number
+          example: TM-2024-001
+        status:
+          type: string
+          enum: [NEW, PENDING, SUCCESS, CANCELLED]
+          description: Order status
+          example: SUCCESS
+        patient:
+          $ref: '#/components/schemas/PatientInfo'
+        requested_by:
+          type: string
+          description: Requesting doctor
+          example: Dr. Smith
+        requested_at:
+          type: string
+          format: date-time
+          description: Request timestamp
+          example: '2024-01-20 10:30:00'
+        sub_categories:
+          type: array
+          description: Test results grouped by sub-category
+          items:
+            $ref: '#/components/schemas/SubCategoryResult'
+        parameters_result:
+          type: array
+          description: Test results without sub-category
+          items:
+            $ref: '#/components/schemas/TestResult'
+        completed_at:
+          type: string
+          format: date-time
+          description: Completion timestamp
+          example: '2024-01-20 11:00:00'
+        verified_at:
+          type: string
+          format: date-time
+          description: Verification timestamp
+          example: '2024-01-20 11:15:00'
+        verified_by:
+          type: string
+          description: Verifier name
+          example: Dr. Smith
+
+    SubCategoryResult:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Sub-category ID
+          example: '1'
+        name:
+          type: string
+          description: Sub-category name
+          example: Complete Blood Count
+        parameters_result:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestResult'
+
+    TestResult:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Result ID
+          example: '1'
+        code:
+          type: string
+          description: Test code
+          example: HB
+        category_name:
+          type: string
+          description: Test name
+          example: Hemoglobin
+        value:
+          type: string
+          description: Test result value
+          example: '14.5'
+        specimen_type:
+          type: string
+          description: Specimen type
+          example: Whole Blood
+        unit:
+          type: string
+          description: Unit of measurement
+          example: g/dL
+        ref:
+          type: string
+          description: Reference range
+          example: 12.0-16.0
+        flag:
+          type: string
+          description: Abnormal flag
+          example: ''
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: Error code
+        status:
+          type: string
+          description: Error status
+          example: error
+        message:
+          type: string
+          description: Error message
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            validationError:
+              summary: Validation error
+              value:
+                code: 400
+                status: error
+                message: 'Validation error: sex must be M or F'
+            missingTests:
+              summary: No tests specified
+              value:
+                code: 400
+                status: error
+                message: At least one test type must be specified
+
+    IntegrationDisabled:
+      description: TechnoMedic integration not enabled
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: TechnoMedic integration is not enabled
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 404
+            status: error
+            message: 'Order not found: TM-2024-999'
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 500
+            status: error
+            message: Internal server error
+
+  securitySchemes:
+    none:
+      type: http
+      scheme: none
+      description: No authentication required
+
+security:
+  - none: []
