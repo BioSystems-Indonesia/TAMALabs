@@ -444,6 +444,7 @@ function SyncNuhaButton() {
     const axios = useAxios();
     const notify = useNotify();
     const refresh = useRefresh();
+    const theme = useTheme();
 
     const mutation = useMutation({
         mutationFn: async () => {
@@ -515,10 +516,10 @@ function SyncNuhaButton() {
             onClick={() => mutation.mutate()}
             disabled={mutation.isPending}
             sx={{
-                backgroundColor: '#10b981',
+                backgroundColor: theme.palette.primary.main,
                 color: 'white',
                 '&:hover': {
-                    backgroundColor: '#059669',
+                    backgroundColor: theme.palette.primary.main,
                 },
                 '&.Mui-disabled': {
                     backgroundColor: '#6ee7b7',

@@ -67,6 +67,27 @@ func GetAllJob(h *CronHandler) []CronJob {
 		slog.Info("Database Sharing cron jobs not added: Integration not enabled", "enabled", simgosEnabled)
 	}
 
+	// Conditionally add Nuha SIMRS jobs only if enabled and selected
+	nuhaEnabled, err := h.configUC.Get(ctx, "NuhaIntegrationEnabled")
+	if err == nil && nuhaEnabled == "true" {
+		selectedSimrs, err := h.configUC.Get(ctx, "SelectedSimrs")
+		if err == nil && selectedSimrs == "nuha" {
+			slog.Info("Adding Nuha SIMRS cron jobs to scheduler")
+			jobs = append(jobs,
+				CronJob{
+					Name:        "sync_lab_orders_nuha",
+					Description: "Synchronizes lab orders from Nuha SIMRS",
+					Schedule:    "*/30 * * * * *", // Run every 30 seconds
+					Execute:     h.SyncLabOrdersNuha,
+				},
+			)
+		} else {
+			slog.Info("Nuha SIMRS cron jobs not added: not selected", "selected", selectedSimrs)
+		}
+	} else {
+		slog.Info("Nuha SIMRS cron jobs not added: Integration not enabled", "enabled", nuhaEnabled)
+	}
+
 	// TODO: Add SIMRS jobs conditionally when needed
 	// simrsEnabled, err := h.configUC.Get(ctx, "SimrsIntegrationEnabled")
 	// if err == nil && simrsEnabled == "true" { ... }

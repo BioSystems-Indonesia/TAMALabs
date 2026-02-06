@@ -209,6 +209,7 @@ var (
 		provideRestHandler,
 		provideRestServer,
 		provideNuhaSIMRSService,
+		provideNuhaSIMRSUsecase,
 	)
 
 	canalHandlerSet = wire.NewSet(

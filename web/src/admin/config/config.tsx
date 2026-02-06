@@ -1507,6 +1507,10 @@ Request Body:
                                     simgos: {
                                         dsn: simgosDsn,
                                     },
+                                    nuha: {
+                                        baseURL: nuhaBaseURL,
+                                        sessionID: nuhaSessionID,
+                                    },
                                     backup: {
                                         scheduleType: backupScheduleType,
                                         interval: backupInterval,

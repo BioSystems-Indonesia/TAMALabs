@@ -84,9 +84,9 @@ func handleGetLabList(w http.ResponseWriter, r *http.Request) {
 			List: []LabRegistration{
 				{
 					OrderDate:       time.Date(2023, 7, 31, 0, 12, 0, 0, time.UTC),
-					LabNumber:       153305,
-					MedicalRecordNo: "001063898",
-					PatientName:     "WAHYUDI",
+					LabNumber:       153310,
+					MedicalRecordNo: "001063899",
+					PatientName:     "Widad",
 					BirthDate:       time.Date(1976, 5, 15, 0, 0, 0, 0, time.UTC),
 					Gender:          "Laki-laki",
 					AgeDescription:  "47 tahun, 2 bulan, 15 hari",

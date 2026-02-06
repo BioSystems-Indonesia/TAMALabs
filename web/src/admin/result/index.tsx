@@ -1,7 +1,6 @@
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SyncIcon from '@mui/icons-material/Sync';
 import SendIcon from '@mui/icons-material/Send';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ScienceIcon from '@mui/icons-material/Science';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PrintIcon from '@mui/icons-material/Print';
@@ -18,7 +17,6 @@ import {
     BooleanInput,
     Button,
     Datagrid,
-    DateField,
     FilterLiveForm,
     Link,
     List,
@@ -37,7 +35,7 @@ import SideFilter from "../../component/SideFilter";
 import useAxios from "../../hooks/useAxios";
 import type { WorkOrder } from "../../types/work_order";
 import { WorkOrderChipColorMap } from "../workOrder/ChipFieldStatus";
-import { FilledPercentChip, VerifiedChip } from "./component";
+import { FilledPercentChip } from "./component";
 
 
 export const ResultList = () => (

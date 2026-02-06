@@ -21,6 +21,11 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+type testTypeWithPackage struct {
+	testType  entity.TestType
+	packageID *int
+}
+
 type WorkOrderRepository struct {
 	db            *gorm.DB
 	cfg           *config.Schema
@@ -561,7 +566,8 @@ func (r WorkOrderRepository) upsertRelation(
 			}
 		}
 
-		for _, testType := range testTypes {
+		for _, ttWithPkg := range testTypes {
+			testType := ttWithPkg.testType
 			testTypeID := testType.ID
 			observationRequest := entity.ObservationRequest{
 				TestCode:        testType.Code,
@@ -569,13 +575,15 @@ func (r WorkOrderRepository) upsertRelation(
 				TestDescription: testType.Name,
 				SpecimenID:      int64(specimen.ID),
 				RequestedDate:   time.Now(),
+				PackageID:       ttWithPkg.packageID,
 			}
 
 			slog.InfoContext(trx.Statement.Context, "Creating ObservationRequest",
 				"test_type_id", testTypeID,
 				"test_code", testType.Code,
 				"test_name", testType.Name,
-				"specimen_id", specimen.ID)
+				"specimen_id", specimen.ID,
+				"package_id", ttWithPkg.packageID)
 
 			observationRequestQuery := trx.Clauses(clause.OnConflict{DoNothing: true}).Create(&observationRequest)
 			err := observationRequestQuery.Error
@@ -596,7 +604,7 @@ func (r WorkOrderRepository) upsertRelation(
 	return nil
 }
 
-func (r WorkOrderRepository) groupBySpecimenType(trx *gorm.DB, req *entity.WorkOrderCreateRequest) (map[entity.SpecimenType][]entity.TestType, error) {
+func (r WorkOrderRepository) groupBySpecimenType(trx *gorm.DB, req *entity.WorkOrderCreateRequest) (map[entity.SpecimenType][]testTypeWithPackage, error) {
 	testIDs := util.Map(req.TestTypes, func(testType entity.WorkOrderCreateRequestTestType) int64 {
 		return testType.TestTypeID
 	})
@@ -606,7 +614,7 @@ func (r WorkOrderRepository) groupBySpecimenType(trx *gorm.DB, req *entity.WorkO
 		return nil, fmt.Errorf("error getting test type: %w", err)
 	}
 
-	specimenTypes := make(map[entity.SpecimenType][]entity.TestType)
+	specimenTypes := make(map[entity.SpecimenType][]testTypeWithPackage)
 	for _, testType := range req.TestTypes {
 		specimenType := entity.SpecimenType(testType.SpecimenType)
 		if specimenType == "" {
@@ -620,7 +628,11 @@ func (r WorkOrderRepository) groupBySpecimenType(trx *gorm.DB, req *entity.WorkO
 		}
 
 		specimenTypes[specimenType] = append(
-			specimenTypes[specimenType], tt,
+			specimenTypes[specimenType],
+			testTypeWithPackage{
+				testType:  tt,
+				packageID: testType.PackageID,
+			},
 		)
 	}
 

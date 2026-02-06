@@ -51,6 +51,7 @@ type WorkOrderCreateRequestTestType struct {
 	TestTypeID   int64  `json:"test_type_id" validate:"required"`
 	TestTypeCode string `json:"test_type_code" validate:"required"`
 	SpecimenType string `json:"specimen_type" validate:"required"`
+	PackageID    *int   `json:"package_id,omitempty"`
 }
 
 type WorkOrder struct {

@@ -34,6 +34,11 @@ type SIMGOSUsecase interface {
 	SyncAllResult(ctx context.Context, workOrderIDs []int64) error
 }
 
+// NuhaSIMRSUsecase interface to avoid import cycle
+type NuhaSIMRSUsecase interface {
+	GetLabOrder(ctx context.Context) error
+}
+
 // License heartbeat request/response structs
 type HeartbeatRequest struct {
 	MachineID   string `json:"machine_id"`
@@ -53,6 +58,7 @@ type CronHandler struct {
 	khanzaUC         *khanzauc.Usecase
 	simrsUC          SIMRSUsecase
 	simgosUC         SIMGOSUsecase
+	nuhaUC           NuhaSIMRSUsecase
 	configUC         ConfigUsecase
 	licenseServerURL string
 	machineID        string
@@ -92,7 +98,7 @@ func licenseDirPaths() (licenseDir, licensePath, pubKeyPath, revokedPath, expire
 
 var API_KEY = "KJKDANCJSANIUWYR6243UJFOISJFJKVOMV72487YEHFHFHSDVOHF9AMDC9AN9SDN98YE98YEHDIU2Y897873YYY68686487WGDUDUAGYTE8QTEYADIUHADUYW8E8BWTNC8N8NAMDOAIMDAUDUWYAD87NYW7Y7CBT87EY8142164B36248732M87MCIFH8NYRWCM8MYCMUOIDOIADOIDOIUR83YR983Y98328N32C83NYC8732NYC8732Y87Y32NCNSAIHJAOJFOIJFOIQFIUIUNCNHCIUHWV8NRYNV8Y989N9198298YOIJOI090103021313JKJDHAHDJAJASHHAH"
 
-func NewCronHandler(khanzaUC *khanzauc.Usecase, simrsUC SIMRSUsecase, simgosUC SIMGOSUsecase, configUC ConfigUsecase) *CronHandler {
+func NewCronHandler(khanzaUC *khanzauc.Usecase, simrsUC SIMRSUsecase, simgosUC SIMGOSUsecase, nuhaUC NuhaSIMRSUsecase, configUC ConfigUsecase) *CronHandler {
 	licenseServerURL := os.Getenv("LICENSE_SERVER_URL")
 	if licenseServerURL == "" {
 		licenseServerURL = "https://tamalabs.biosystems.id"
@@ -108,6 +114,7 @@ func NewCronHandler(khanzaUC *khanzauc.Usecase, simrsUC SIMRSUsecase, simgosUC S
 		khanzaUC:         khanzaUC,
 		simrsUC:          simrsUC,
 		simgosUC:         simgosUC,
+		nuhaUC:           nuhaUC,
 		configUC:         configUC,
 		licenseServerURL: licenseServerURL,
 		machineID:        machineID,
@@ -554,5 +561,22 @@ func (c *CronHandler) BackupDB(ctx context.Context) error {
 		return fmt.Errorf("backup failed: %w", err)
 	}
 
+	return nil
+}
+
+// SyncLabOrdersNuha syncs lab orders from Nuha SIMRS
+func (c *CronHandler) SyncLabOrdersNuha(ctx context.Context) error {
+	if c.nuhaUC == nil {
+		return fmt.Errorf("nuha usecase is not initialized")
+	}
+
+	slog.Info("Starting Nuha SIMRS lab orders sync")
+
+	if err := c.nuhaUC.GetLabOrder(ctx); err != nil {
+		slog.Error("Failed to sync lab orders from Nuha SIMRS", "error", err)
+		return fmt.Errorf("failed to sync lab orders: %w", err)
+	}
+
+	slog.Info("Successfully synced lab orders from Nuha SIMRS")
 	return nil
 }

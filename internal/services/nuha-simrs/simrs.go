@@ -221,10 +221,12 @@ func (c *SIMRSNuha) parseTestTypes(ctx context.Context, testList []LabTest) ([]e
 						"alias_code", testType.AliasCode)
 				}
 
+				packageID := detail.PackageID
 				testTypes = append(testTypes, entity.WorkOrderCreateRequestTestType{
 					TestTypeID:   int64(testType.ID),
 					TestTypeCode: testType.Code,
 					SpecimenType: testType.GetFirstType(),
+					PackageID:    &packageID,
 				})
 			}
 		} else {
@@ -264,6 +266,7 @@ func (c *SIMRSNuha) parseTestTypes(ctx context.Context, testList []LabTest) ([]e
 				TestTypeID:   int64(testType.ID),
 				TestTypeCode: testType.Code,
 				SpecimenType: testType.GetFirstType(),
+				PackageID:    nil,
 			})
 		}
 	}
@@ -305,6 +308,7 @@ func (c *SIMRSNuha) updateWorkOrder(
 				TestTypeID:   int64(obsReq.TestType.ID),
 				TestTypeCode: obsReq.TestType.Code,
 				SpecimenType: specimen.Type,
+				PackageID:    obsReq.PackageID,
 			})
 		}
 	}
@@ -477,6 +481,14 @@ func (c *SIMRSNuha) sendWorkOrderResults(
 			"specimen_id", specimen.ID,
 			"observation_result_count", len(specimen.ObservationResult))
 
+		// Create a map from test_type_id to package_id from observation requests
+		testTypeToPackageID := make(map[int]*int)
+		for _, obsReq := range specimen.ObservationRequest {
+			if obsReq.TestTypeID != nil {
+				testTypeToPackageID[*obsReq.TestTypeID] = obsReq.PackageID
+			}
+		}
+
 		for obsIdx, obsResult := range specimen.ObservationResult {
 			// Skip if no result value
 			if len(obsResult.Values) == 0 || obsResult.Values[0] == "" {
@@ -522,6 +534,12 @@ func (c *SIMRSNuha) sendWorkOrderResults(
 				resultText = obsResult.Comments
 			}
 
+			// Get package ID from observation request mapping
+			packageID := 0
+			if pkgID, ok := testTypeToPackageID[obsResult.TestType.ID]; ok && pkgID != nil {
+				packageID = *pkgID
+			}
+
 			// Add to batch
 			batchItems = append(batchItems, BatchInsertResultItem{
 				LabNumber:      labNumber,
@@ -531,7 +549,7 @@ func (c *SIMRSNuha) sendWorkOrderResults(
 				Abnormal:       abnormalFlag,
 				Unit:           obsResult.Unit,
 				TestID:         testIDFromAlias,
-				PackageID:      nil, // null for non-package tests
+				PackageID:      packageID,
 				Index:          index,
 				ResultText:     resultText,
 				InsertedUser:   insertedUser,

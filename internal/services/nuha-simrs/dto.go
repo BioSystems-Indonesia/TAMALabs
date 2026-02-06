@@ -43,7 +43,7 @@ type BatchInsertResultItem struct {
 	Abnormal       string `json:"abnormal"`
 	Unit           string `json:"satuan"`
 	TestID         int    `json:"test_id"`
-	PackageID      *int   `json:"paket_id"` // nullable
+	PackageID      int    `json:"paket_id"` // 0 for non-package tests
 	Index          int    `json:"index"`
 	ResultText     string `json:"hasil_text"`
 	InsertedUser   string `json:"inserted_user"`

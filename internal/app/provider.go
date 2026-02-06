@@ -846,3 +846,8 @@ func provideNuhaSIMRSService(
 		testTypeRepo,
 	)
 }
+
+// provideNuhaSIMRSUsecase provides Nuha SIMRS service as NuhaSIMRSUsecase interface for cron
+func provideNuhaSIMRSUsecase(service *nuha_simrs.SIMRSNuha) cron.NuhaSIMRSUsecase {
+	return service
+}

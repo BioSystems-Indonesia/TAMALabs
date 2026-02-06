@@ -17,6 +17,7 @@ type ObservationRequest struct {
 	RequestedDate   time.Time `json:"requested_date"`
 	ResultStatus    string    `json:"result_status"`
 	SpecimenID      int64     `json:"specimen_id" gorm:"not null;index:observation_request_uniq,unique,priority:2" validate:"required"`
+	PackageID       *int      `json:"package_id" gorm:"default:null"`
 	CreatedAt       time.Time `json:"created_at" gorm:"not null"`
 	UpdatedAt       time.Time `json:"updated_at" gorm:"not null"`
 
