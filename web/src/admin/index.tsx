@@ -40,6 +40,7 @@ import LicensePage from './license/index.tsx';
 import LicenseStatusPage from './licenseStatus/index.tsx';
 import { QualityControlList, QualityControlDetail, QCForm, QCEntryForm } from './qualityControl';
 import { useEffect, useState } from 'react';
+import { ServiceProvider } from '../context/ServiceContext.tsx';
 
 // Component to handle license check before authentication
 const LicenseChecker = ({ children }: { children: React.ReactNode }) => {
@@ -150,197 +151,199 @@ const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND_BASE_URL, h
 
 const App = () => {
     return (
-        <LicenseChecker>
-            <Admin
-                dataProvider={dataProvider}
-                layout={DefaultLayout}
-                theme={radiantLightTheme}
-                darkTheme={radiantDarkTheme}
-                authProvider={useAuthProvider()}
-                loginPage={CustomLoginPage}
-            >
-                {permissions => (
-                    <>
-                        {permissions === "Admin" && (
-                            <>
-                                <CustomRoutes>
-                                    <Route path="/settings/*" element={<Settings />} />
-                                </CustomRoutes>
-                                <CustomRoutes>
-                                    <Route path="/logs" element={<LogViewer />} />
-                                </CustomRoutes>
-                                <CustomRoutes>
-                                    <Route path="/license" element={<LicensePage />} />
-                                </CustomRoutes>
-                                <CustomRoutes>
-                                    <Route path="/license-status" element={<LicenseStatusPage />} />
-                                </CustomRoutes>
-                            </>
-                        )}
-                        <Resource name="dashboard"
-                            list={DashboardPage}
-                            options={{ label: "Dashboard" }}
-                            icon={DashboardIcon}
-                        >
+        <ServiceProvider>
+            <LicenseChecker>
+                <Admin
+                    dataProvider={dataProvider}
+                    layout={DefaultLayout}
+                    theme={radiantLightTheme}
+                    darkTheme={radiantDarkTheme}
+                    authProvider={useAuthProvider()}
+                    loginPage={CustomLoginPage}
+                >
+                    {permissions => (
+                        <>
+                            {permissions === "Admin" && (
+                                <>
+                                    <CustomRoutes>
+                                        <Route path="/settings/*" element={<Settings />} />
+                                    </CustomRoutes>
+                                    <CustomRoutes>
+                                        <Route path="/logs" element={<LogViewer />} />
+                                    </CustomRoutes>
+                                    <CustomRoutes>
+                                        <Route path="/license" element={<LicensePage />} />
+                                    </CustomRoutes>
+                                    <CustomRoutes>
+                                        <Route path="/license-status" element={<LicenseStatusPage />} />
+                                    </CustomRoutes>
+                                </>
+                            )}
+                            <Resource name="dashboard"
+                                list={DashboardPage}
+                                options={{ label: "Dashboard" }}
+                                icon={DashboardIcon}
+                            >
 
-                        </Resource>
-                        <Resource
-                            name="work-order"
-                            list={WorkOrderList}
-                            create={WorkOrderCreate}
-                            show={WorkOrderShow}
-                            hasCreate={true}
-                            edit={WorkOrderEdit}
-                            hasShow={true}
-                            icon={BiotechIcon}
-                            options={{
-                                label: "Lab Request"
-                            }}
-                            recordRepresentation={record => `#${record.id} - ${dateFormatter(record.created_at)}`}
-                        >
-                            <Route path="/:id/show/device/create" element={<DeviceCreate />} />
-                        </Resource>
-
-                        <Resource name="result" list={ResultList} show={ResultShow}
-                            hasCreate={false}
-                            hasEdit={false}
-                            hasShow={true}
-                            icon={AssessmentIcon}
-                            recordRepresentation={record => `#${record.barcode}}`}
-                        />
-                        <Resource
-                            name="quality-control"
-                            list={QualityControlList}
-                            hasCreate={false}
-                            hasEdit={false}
-                            hasShow={false}
-                            icon={FactCheckIcon}
-                            options={{
-                                label: "Quality Control"
-                            }}
-                        >
-                            <Route path="/:id" element={<QualityControlDetail />} />
-                            <Route path="/:deviceId/parameter/:testTypeId" element={<QCForm />} />
-                            <Route path="/:deviceId/parameter/:testTypeId/entry/new" element={<QCEntryForm />} />
-                        </Resource>
-                        <Resource name="approval" list={ApprovalList} show={ResultShow}
-                            hasCreate={false}
-                            hasEdit={false}
-                            hasShow={true}
-                            icon={ApprovalIcon}
-                            recordRepresentation={record => `#${record.barcode}}`}
-                        />
-
-                        <Resource name="patient" list={PatientList} show={PatientShow} edit={PatientEdit} create={PatientCreate}
-                            hasCreate={true}
-                            hasEdit={true}
-                            hasShow={true}
-                            icon={UserIcon}
-                            recordRepresentation={record => `#${record.id} - ${record.first_name} ${record.last_name}`} >
-                            <Route path="/:id/result/history" element={<PatientResultHistory />} />
-                        </Resource>
-                        <Resource name="patient-history"
-                            list={PatientResultHistory}
-                            hasCreate={false}
-                            hasEdit={false}
-                            hasShow={false}
-                            icon={HistoryEduIcon}
-                            options={{
-                                label: "Patient History"
-                            }}
-                        >
-                        </Resource>
-                        <Resource name="test-type" list={TestTypeList} show={TestTypeShow}
-                            {...(permissions !== "Analyzer" ? {
-                                create: TestTypeCreate,
-                                edit: TestTypeEdit,
-                                hasCreate: true,
-                                hasEdit: true,
-                            } : {
-                                hasCreate: false,
-                                hasEdit: false,
-                            })}
-                            icon={BiotechIcon}
-                            recordRepresentation={record => `#${record.id} - ${record.code}`}
-                            options={{
-                                label: "Test Type"
-                            }}
-                        />
-                        <Resource name="test-template" list={TestTemplateList}
-                            create={TestTemplateCreate}
-                            edit={TestTemplateEdit}
-                            hasCreate={true}
-                            hasEdit={true}
-                            hasShow={false}
-                            icon={TableViewIcon}
-                            recordRepresentation={record => `${record.name}`}
-                            options={{
-                                label: "Test Template"
-                            }}
-                        />
-                        {permissions === "Admin" && (
-                            <Resource name="device" list={DeviceList} show={DeviceShow} edit={DeviceEdit}
-                                create={DeviceCreate}
-                                hasCreate={true}
-                                hasEdit={true}
-                                hasShow={true}
-                                icon={LanIcon}
-                                recordRepresentation={record => `#${record.id} - ${record.name}`}
-                            />
-                        )}
-
-                        <Resource name="user" list={UserList} show={UserShow}
-                            {...(permissions === "Admin" ? {
-                                create: UserCreate,
-                                edit: UserEdit,
-                                hasCreate: true,
-                                hasEdit: true,
-                            } : {
-                                hasCreate: false,
-                                hasEdit: false,
-                            })}
-                            icon={AdminPanelSettingsIcon}
-                            recordRepresentation={record => `#${record.id} - ${record.fullname}`}
-                        />
-
-                        {permissions === "Admin" && (
-                            <Resource name="config" list={ConfigList} edit={ConfigEdit}
-                                hasCreate={false}
-                                hasEdit={true}
-                                icon={BuildIcon}
-                                recordRepresentation={record => `#${record.id} - ${record.type}`}
-                            />
-                        )}
-
-                        <Resource
-                            name="about"
-                            list={() => <AboutPage />}
-                            hasCreate={false}
-                            hasEdit={false}
-                            hasShow={false}
-                            icon={InfoIcon}
-                            options={{
-                                label: "About Us"
-                            }}
-                        />
-
-                        {permissions === "Admin" && (
+                            </Resource>
                             <Resource
-                                name="license-status"
-                                list={() => <LicenseStatusPage />}
+                                name="work-order"
+                                list={WorkOrderList}
+                                create={WorkOrderCreate}
+                                show={WorkOrderShow}
+                                hasCreate={true}
+                                edit={WorkOrderEdit}
+                                hasShow={true}
+                                icon={BiotechIcon}
+                                options={{
+                                    label: "Lab Request"
+                                }}
+                                recordRepresentation={record => `#${record.id} - ${dateFormatter(record.created_at)}`}
+                            >
+                                <Route path="/:id/show/device/create" element={<DeviceCreate />} />
+                            </Resource>
+
+                            <Resource name="result" list={ResultList} show={ResultShow}
+                                hasCreate={false}
+                                hasEdit={false}
+                                hasShow={true}
+                                icon={AssessmentIcon}
+                                recordRepresentation={record => `#${record.barcode}}`}
+                            />
+                            <Resource
+                                name="quality-control"
+                                list={QualityControlList}
                                 hasCreate={false}
                                 hasEdit={false}
                                 hasShow={false}
-                                icon={LicenseIcon}
+                                icon={FactCheckIcon}
                                 options={{
-                                    label: "License Status"
+                                    label: "Quality Control"
+                                }}
+                            >
+                                <Route path="/:id" element={<QualityControlDetail />} />
+                                <Route path="/:deviceId/parameter/:testTypeId" element={<QCForm />} />
+                                <Route path="/:deviceId/parameter/:testTypeId/entry/new" element={<QCEntryForm />} />
+                            </Resource>
+                            <Resource name="approval" list={ApprovalList} show={ResultShow}
+                                hasCreate={false}
+                                hasEdit={false}
+                                hasShow={true}
+                                icon={ApprovalIcon}
+                                recordRepresentation={record => `#${record.barcode}}`}
+                            />
+
+                            <Resource name="patient" list={PatientList} show={PatientShow} edit={PatientEdit} create={PatientCreate}
+                                hasCreate={true}
+                                hasEdit={true}
+                                hasShow={true}
+                                icon={UserIcon}
+                                recordRepresentation={record => `#${record.id} - ${record.first_name} ${record.last_name}`} >
+                                <Route path="/:id/result/history" element={<PatientResultHistory />} />
+                            </Resource>
+                            <Resource name="patient-history"
+                                list={PatientResultHistory}
+                                hasCreate={false}
+                                hasEdit={false}
+                                hasShow={false}
+                                icon={HistoryEduIcon}
+                                options={{
+                                    label: "Patient History"
+                                }}
+                            >
+                            </Resource>
+                            <Resource name="test-type" list={TestTypeList} show={TestTypeShow}
+                                {...(permissions !== "Analyzer" ? {
+                                    create: TestTypeCreate,
+                                    edit: TestTypeEdit,
+                                    hasCreate: true,
+                                    hasEdit: true,
+                                } : {
+                                    hasCreate: false,
+                                    hasEdit: false,
+                                })}
+                                icon={BiotechIcon}
+                                recordRepresentation={record => `#${record.id} - ${record.code}`}
+                                options={{
+                                    label: "Test Type"
                                 }}
                             />
-                        )}
-                    </>
-                )}
-            </Admin>
-        </LicenseChecker>
+                            <Resource name="test-template" list={TestTemplateList}
+                                create={TestTemplateCreate}
+                                edit={TestTemplateEdit}
+                                hasCreate={true}
+                                hasEdit={true}
+                                hasShow={false}
+                                icon={TableViewIcon}
+                                recordRepresentation={record => `${record.name}`}
+                                options={{
+                                    label: "Test Template"
+                                }}
+                            />
+                            {permissions === "Admin" && (
+                                <Resource name="device" list={DeviceList} show={DeviceShow} edit={DeviceEdit}
+                                    create={DeviceCreate}
+                                    hasCreate={true}
+                                    hasEdit={true}
+                                    hasShow={true}
+                                    icon={LanIcon}
+                                    recordRepresentation={record => `#${record.id} - ${record.name}`}
+                                />
+                            )}
+
+                            <Resource name="user" list={UserList} show={UserShow}
+                                {...(permissions === "Admin" ? {
+                                    create: UserCreate,
+                                    edit: UserEdit,
+                                    hasCreate: true,
+                                    hasEdit: true,
+                                } : {
+                                    hasCreate: false,
+                                    hasEdit: false,
+                                })}
+                                icon={AdminPanelSettingsIcon}
+                                recordRepresentation={record => `#${record.id} - ${record.fullname}`}
+                            />
+
+                            {permissions === "Admin" && (
+                                <Resource name="config" list={ConfigList} edit={ConfigEdit}
+                                    hasCreate={false}
+                                    hasEdit={true}
+                                    icon={BuildIcon}
+                                    recordRepresentation={record => `#${record.id} - ${record.type}`}
+                                />
+                            )}
+
+                            <Resource
+                                name="about"
+                                list={() => <AboutPage />}
+                                hasCreate={false}
+                                hasEdit={false}
+                                hasShow={false}
+                                icon={InfoIcon}
+                                options={{
+                                    label: "About Us"
+                                }}
+                            />
+
+                            {permissions === "Admin" && (
+                                <Resource
+                                    name="license-status"
+                                    list={() => <LicenseStatusPage />}
+                                    hasCreate={false}
+                                    hasEdit={false}
+                                    hasShow={false}
+                                    icon={LicenseIcon}
+                                    options={{
+                                        label: "License Status"
+                                    }}
+                                />
+                            )}
+                        </>
+                    )}
+                </Admin>
+            </LicenseChecker>
+        </ServiceProvider>
     )
 }
 

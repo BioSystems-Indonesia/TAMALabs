@@ -24,6 +24,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import CustomDateInput from "../../component/CustomDateInput";
 import GenerateReportButton from "../../component/GenerateReportButton";
+import ShareResultButton from "../../component/ShareResultButton";
 import SideFilter from "../../component/SideFilter";
 import useAxios from "../../hooks/useAxios";
 import type { WorkOrder } from "../../types/work_order";
@@ -266,7 +267,7 @@ export const ResultDataGrid = (props: any) => {
                 <VerifiedChip verified={record.verified_status !== '' ? record.verified_status : "VERIFIED"} />
             )} />
             <DateField source="created_at" showDate showTime />
-            <WithRecord label="Print Result" render={(record: WorkOrder) => {
+            <WithRecord label="Actions" render={(record: WorkOrder) => {
                 if (record.verified_status !== "" && record.verified_status !== "VERIFIED") {
                     return (
                         <MUIButton
@@ -290,13 +291,16 @@ export const ResultDataGrid = (props: any) => {
                 }
 
                 return (
-                    <GenerateReportButton
-                        results={record.test_result}
-                        patient={record.patient}
-                        workOrder={record}
-                        currentGeneratedId={currentGeneratedId}
-                        onGenerate={handleGenerate}
-                    />
+                    <Stack direction="row" spacing={1}>
+                        <GenerateReportButton
+                            results={record.test_result}
+                            patient={record.patient}
+                            workOrder={record}
+                            currentGeneratedId={currentGeneratedId}
+                            onGenerate={handleGenerate}
+                        />
+                        <ShareResultButton workOrder={record} />
+                    </Stack>
                 )
             }} />
         </Datagrid>

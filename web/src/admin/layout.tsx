@@ -16,7 +16,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import InfoIcon from '@mui/icons-material/Info';
 import LicenseIcon from '@mui/icons-material/VerifiedUser';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
-import { Box, Stack, Tooltip, Typography, Avatar, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Box, Stack, Tooltip, Typography, Avatar, Menu, MenuItem, ListItemIcon, ListItemText, Divider } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import { useEffect, useState, type ReactNode } from 'react';
 import React from 'react';
@@ -29,6 +29,7 @@ import FileOpenIcon from '@mui/icons-material/FileOpen';
 import logo from '../assets/elgatama-logo.png';
 import { useCurrentUser, useCurrentUserRole } from '../hooks/currentUser';
 import WhatsNew from './WhatsNew';
+import ServiceIndicator from '../component/ServiceIndicator';
 
 
 const SettingsButton = () => (
@@ -246,8 +247,13 @@ const MyAppBar = () => {
                     <Box sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 4
+                        gap: 5,
+                        marginRight: 2
                     }}>
+                        <Box sx={{}}>
+                            <AppIndicator />
+                            <ServiceIndicator />
+                        </Box>
                         <Box sx={{
                             display: 'flex',
                             alignItems: 'center'
@@ -258,7 +264,7 @@ const MyAppBar = () => {
                                     <LogButton />
                                 </>
                             }
-                            <AppIndicator />
+
                             <CustomToggleThemeButton />
                             <LoadingIndicator sx={{ scale: 1.2 }} />
                         </Box>

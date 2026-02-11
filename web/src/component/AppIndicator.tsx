@@ -34,16 +34,20 @@ const AppIndicator = () => {
     }, [])
 
     const icon = () => {
-        switch(state) {
-            case "online": return <WifiIcon style={{color: "#4CAF50", width: 30, height:'auto'}}/>
-            case "offline": return <WifiOffIcon style={{color: "#af4c4cff", width: 30, height:'auto'}}/>
-            case "loading": return <WifiOffIcon style={{width: 30, height:'auto'}}/>
+        switch (state) {
+            case "online": return <WifiIcon style={{ color: "#4CAF50", width: 30, height: 'auto' }} />
+            case "offline": return <WifiOffIcon style={{ color: "#af4c4cff", width: 30, height: 'auto' }} />
+            case "loading": return <WifiOffIcon style={{ width: 30, height: 'auto' }} />
             default: <WifiOffIcon />
         };
     }
 
     const tooltipTitle = () => {
-        return "server: " + detailState.rest ;
+        switch (state) {
+            case "online": return "LIS Server Connected";
+            case "offline": return "LIS Server Down";
+            case "loading": return "Waiting for LIS Server";
+        }
     }
 
     // const navigate = useNavigate()
