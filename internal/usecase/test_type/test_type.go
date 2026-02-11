@@ -3,6 +3,7 @@ package test_type
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/entity"
 	subcategoryrepo "github.com/BioSystems-Indonesia/TAMALabs/internal/repository/sql/sub_category"
@@ -52,6 +53,8 @@ func (u *Usecase) Create(ctx context.Context, req *entity.TestType) (entity.Test
 			req.SubCategoryID = &subCategoryID
 		}
 	}
+
+	req.UpdatedAt = time.Now()
 
 	return u.repository.Create(ctx, req)
 }
