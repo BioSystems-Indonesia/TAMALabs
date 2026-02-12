@@ -18,6 +18,7 @@ const AppIndicator = () => {
             const response = await axios.get(`/server/status`);
             setDetailState(response.data);
             setState("online");
+            console.log(detailState)
         } catch {
             setState("offline")
             setDetailState({
