@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -71,7 +72,6 @@ func (s *NuhaService) GetLabList(
 	return &result, nil
 }
 
-// InsertResult sends test result to Nuha SIMRS
 func (s *NuhaService) InsertResult(
 	ctx context.Context,
 	req InsertResultRequest,
@@ -95,6 +95,20 @@ func (s *NuhaService) InsertResult(
 
 	httpReq.Header.Set("Content-Type", "application/json")
 
+	maskedReq := req
+	if len(maskedReq.SessionID) > 6 {
+		maskedReq.SessionID = maskedReq.SessionID[:6] + "..."
+	}
+	if pb, err := json.Marshal(maskedReq); err == nil {
+		payload := string(pb)
+		if len(payload) > 2048 {
+			payload = payload[:2048] + "...(truncated)"
+		}
+		slog.InfoContext(ctx, "Nuha InsertResult request (masked)", "url", url, "payload", payload)
+	} else {
+		slog.WarnContext(ctx, "Failed to marshal InsertResult request for logging", "error", err)
+	}
+
 	resp, err := s.HTTPClient.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("send request failed: %w", err)
@@ -102,7 +116,12 @@ func (s *NuhaService) InsertResult(
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		bodyStr := strings.TrimSpace(string(bodyBytes))
+		if len(bodyStr) > 2048 {
+			bodyStr = bodyStr[:2048] + "...(truncated)"
+		}
+		return nil, fmt.Errorf("unexpected status code: %d from %s - response body: %s", resp.StatusCode, url, bodyStr)
 	}
 
 	var result InsertResultResponse
@@ -113,7 +132,6 @@ func (s *NuhaService) InsertResult(
 	return &result, nil
 }
 
-// BatchInsertResults sends multiple test results to Nuha SIMRS in one request
 func (s *NuhaService) BatchInsertResults(
 	ctx context.Context,
 	req BatchInsertResultRequest,
@@ -137,6 +155,23 @@ func (s *NuhaService) BatchInsertResults(
 
 	httpReq.Header.Set("Content-Type", "application/json")
 
+	maskedBatch := req
+	if len(maskedBatch.SessionID) > 6 {
+		maskedBatch.SessionID = maskedBatch.SessionID[:6] + "..."
+	}
+	if len(maskedBatch.Data) > 5 {
+		maskedBatch.Data = maskedBatch.Data[:5]
+	}
+	if pb, err := json.Marshal(maskedBatch); err == nil {
+		payload := string(pb)
+		if len(payload) > 4096 {
+			payload = payload[:4096] + "...(truncated)"
+		}
+		slog.InfoContext(ctx, "Nuha BatchInsertResults request (masked preview)", "url", url, "data_preview", payload, "original_count", len(req.Data))
+	} else {
+		slog.WarnContext(ctx, "Failed to marshal BatchInsertResults request for logging", "error", err)
+	}
+
 	resp, err := s.HTTPClient.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("send request failed: %w", err)
@@ -144,7 +179,12 @@ func (s *NuhaService) BatchInsertResults(
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		bodyStr := strings.TrimSpace(string(bodyBytes))
+		if len(bodyStr) > 2048 {
+			bodyStr = bodyStr[:2048] + "...(truncated)"
+		}
+		return nil, fmt.Errorf("unexpected status code: %d from %s - response body: %s", resp.StatusCode, url, bodyStr)
 	}
 
 	var result InsertResultResponse

@@ -10,16 +10,13 @@ type NuhaTime struct {
 	time.Time
 }
 
-// UnmarshalJSON accepts multiple date/time formats returned by Nuha SIMRS.
 func (t *NuhaTime) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), `"`)
 	if s == "null" || s == "" {
-		// keep zero value
 		t.Time = time.Time{}
 		return nil
 	}
 
-	// Common layouts we expect from SIMRS: full RFC3339, space-separated, or date-only
 	layouts := []string{
 		time.RFC3339,
 		"2006-01-02 15:04:05",
@@ -36,7 +33,6 @@ func (t *NuhaTime) UnmarshalJSON(b []byte) error {
 	return fmt.Errorf("unable to parse NuhaTime: %s", s)
 }
 
-// MarshalJSON outputs RFC3339 if value is non-zero, otherwise null
 func (t NuhaTime) MarshalJSON() ([]byte, error) {
 	if t.Time.IsZero() {
 		return []byte("null"), nil
@@ -46,37 +42,34 @@ func (t NuhaTime) MarshalJSON() ([]byte, error) {
 
 type LabListRequest struct {
 	SessionID string `json:"session_id"`
-	ValidFrom string `json:"valid_from"` // yyyy-mm-dd
-	ValidTo   string `json:"valid_to"`   // yyyy-mm-dd
+	ValidFrom string `json:"valid_from"`
+	ValidTo   string `json:"valid_to"`
 }
 
-// InsertResultRequest represents request for inserting test result to Nuha SIMRS
 type InsertResultRequest struct {
 	SessionID      string `json:"session_id"`
-	LabNumber      int    `json:"no_lab"`        // Lab number
-	TestName       string `json:"nama_test"`     // Test name
-	Result         string `json:"hasil"`         // Result value
-	Unit           string `json:"satuan"`        // Unit
-	ReferenceRange string `json:"nilai_rujukan"` // Reference range
-	Abnormal       string `json:"abnormal"`      // Abnormal flag: "0"=Normal, "1"=Low, "2"=High
-	Description    string `json:"keterangan"`    // Notes
-	Notes          string `json:"catatan"`       // Additional notes
-	TestID         int    `json:"test_id"`       // Test ID from Nuha SIMRS
-	ResultText     string `json:"hasil_text"`    // Long text result
-	PackageID      int    `json:"paket_id"`      // Package ID (0 if not from package)
-	Spacing        string `json:"spasi"`         // Spacing
-	Index          int    `json:"index"`         // Index order
-	InsertedUser   string `json:"inserted_user"` // User who inserted
-	InsertedIP     string `json:"inserted_ip"`   // IP address
+	LabNumber      int    `json:"no_lab"`
+	TestName       string `json:"nama_test"`
+	Result         string `json:"hasil"`
+	Unit           string `json:"satuan"`
+	ReferenceRange string `json:"nilai_rujukan"`
+	Abnormal       string `json:"abnormal"`
+	Description    string `json:"keterangan"`
+	Notes          string `json:"catatan"`
+	TestID         int    `json:"test_id"`
+	ResultText     string `json:"hasil_text"`
+	PackageID      int    `json:"paket_id"`
+	Spacing        string `json:"spasi"`
+	Index          int    `json:"index"`
+	InsertedUser   string `json:"inserted_user"`
+	InsertedIP     string `json:"inserted_ip"`
 }
 
-// BatchInsertResultRequest represents batch request for inserting multiple test results
 type BatchInsertResultRequest struct {
 	SessionID string                  `json:"session_id"`
 	Data      []BatchInsertResultItem `json:"data"`
 }
 
-// BatchInsertResultItem represents single test result item in batch request
 type BatchInsertResultItem struct {
 	LabNumber      int    `json:"no_lab"`
 	TestName       string `json:"nama_test"`
@@ -85,21 +78,20 @@ type BatchInsertResultItem struct {
 	Abnormal       string `json:"abnormal"`
 	Unit           string `json:"satuan"`
 	TestID         int    `json:"test_id"`
-	PackageID      int    `json:"paket_id"` // 0 for non-package tests
+	PackageID      int    `json:"paket_id"`
 	Index          int    `json:"index"`
 	ResultText     string `json:"hasil_text"`
 	InsertedUser   string `json:"inserted_user"`
 	InsertedIP     string `json:"inserted_ip"`
 }
 
-// InsertResultResponse represents response from insert result API
 type InsertResultResponse struct {
 	Response InsertResultResponseData `json:"response"`
 }
 
 type InsertResultResponseData struct {
-	Status  string `json:"status"`  // Success status
-	Message string `json:"message"` // Response message
+	Status  string `json:"status"`
+	Message string `json:"message"`
 }
 
 type LabListResponse struct {
@@ -159,7 +151,7 @@ type InsertLabResultRequest struct {
 	ResultValue  string `json:"hasil"`
 	Unit         string `json:"satuan"`
 	Reference    string `json:"nilai_rujukan"`
-	AbnormalFlag string `json:"abnormal"` // 0,1,2,3
+	AbnormalFlag string `json:"abnormal"`
 	Note         string `json:"keterangan"`
 	Comment      string `json:"catatan"`
 	TestID       int    `json:"test_id"`
