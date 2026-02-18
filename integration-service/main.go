@@ -160,7 +160,6 @@ func main() {
 	}
 	defer dlw.Close()
 
-	// Write to both terminal and file
 	multiWriter := io.MultiWriter(os.Stdout, dlw)
 	log.SetOutput(multiWriter)
 	log.SetFlags(log.LstdFlags)
@@ -463,7 +462,6 @@ func (s *SyncScheduler) startHTTPServer() {
 			return
 		}
 
-		// Check if services are active (server connection is alive)
 		s.tickersMutex.Lock()
 		isActive := s.servicesActive
 		s.tickersMutex.Unlock()

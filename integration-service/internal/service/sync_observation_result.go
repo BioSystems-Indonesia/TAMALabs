@@ -80,11 +80,14 @@ func (s *ObservationResultSyncService) SyncObservationResult(ctx context.Context
 
 	for _, specimen := range specimens {
 		var items []dto.ObservationResultItem
-		for index, item := range specimen.ObservationResult {
+		for _, item := range specimen.ObservationResult {
 			var createdBy string
-			if item.CreatedBy == -1 {
+			switch item.CreatedBy {
+			case -2:
 				createdBy = "Analyzer"
-			} else {
+			case -1:
+				createdBy = "Unknown"
+			default:
 				user, _ := s.user.FindById(ctx, int(item.CreatedBy))
 				createdBy = user.Fullname
 			}
@@ -98,11 +101,34 @@ func (s *ObservationResultSyncService) SyncObservationResult(ctx context.Context
 				flag = item.AbnormalFlag[0]
 			}
 
+			var category string
+			if item.TestTypeID != nil {
+				for _, req := range specimen.ObservationRequest {
+					if req.TestTypeID != nil && *req.TestTypeID == *item.TestTypeID {
+						category = req.TestType.Category
+						break
+					}
+				}
+			}
+			if category == "" {
+				for _, req := range specimen.ObservationRequest {
+					if req.TestCode == item.Code {
+						category = req.TestType.Category
+						break
+					}
+				}
+			}
+
+			var value string
+			if len(item.Values) > 0 {
+				value = item.Values[0]
+			}
+
 			items = append(items, dto.ObservationResultItem{
 				Id:       fmt.Sprintf("%sItemTEST%s%d", labKey.LabId, item.Code, item.SpecimenID),
-				Category: specimen.ObservationRequest[index].TestType.Category,
+				Category: category,
 				Code:     fmt.Sprintf("%s|%s", labKey.LabId, item.Code),
-				Value:    item.Values[0],
+				Value:    value,
 				Flag:     flag,
 				AddedBy:  createdBy,
 			})

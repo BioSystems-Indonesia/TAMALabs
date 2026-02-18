@@ -29,30 +29,44 @@ func (r ObservationResultImpl) FindAll(ctx context.Context) ([]models.Specimen, 
 
 	err := r.db.WithContext(ctx).
 		Table("specimens").
-		Joins(`
-			JOIN observation_results 
-			ON observation_results.specimen_id = specimens.id
-		`).
-		Where("observation_results.picked = ?", true).
+		// only include specimens that have at least one observation_result needing sync
 		Where(`
-			(
-				observation_results.last_sync IS NULL
-				OR observation_results.updated_at IS NULL
-				OR observation_results.updated_at > observation_results.last_sync
+			EXISTS (
+				SELECT 1 FROM observation_results o
+				WHERE o.specimen_id = specimens.id
+				AND (
+					o.last_sync IS NULL
+					OR o.updated_at IS NULL
+					OR o.updated_at > o.last_sync
+				)
 			)
 		`).
+		// Preload observation results: among those that need sync prefer picked=true;
+		// if no picked result requires sync, include the (unpicked) results that require sync.
 		Preload(
 			"ObservationResult",
 			`
-				picked = ?
-						AND (
-						last_sync IS NULL
-				OR updated_at IS NULL
-				OR updated_at > last_sync
+			(
+				(
+					last_sync IS NULL
+					OR updated_at IS NULL
+					OR updated_at > last_sync
 				)
-			`,
-			true,
-		).
+				AND (
+					picked = ?
+					OR NOT EXISTS (
+						SELECT 1 FROM observation_results o2
+						WHERE o2.specimen_id = observation_results.specimen_id
+						AND (
+							o2.last_sync IS NULL
+							OR o2.updated_at IS NULL
+							OR o2.updated_at > o2.last_sync
+						)
+						AND o2.picked = 1
+					)
+				)
+			)
+		`, true).
 		Preload("ObservationRequest").
 		Preload("ObservationRequest.TestType").
 		Preload("WorkOrder").
