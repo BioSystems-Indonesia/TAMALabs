@@ -11,7 +11,10 @@ type SpecimenType string
 
 const (
 	// SpecimenTypeSER is a specimen type for serum.
-	SpecimenTypeSER SpecimenType = "SER"
+	SpecimenTypeSER      SpecimenType = "SER"
+	SpecimenTypeSEROne   SpecimenType = "SER1"
+	SpecimenTypeSERTwo   SpecimenType = "SER2"
+	SpecimenTypeSERThree SpecimenType = "SER3"
 	// SpecimenTypeURI is a specimen type for urine.
 	SpecimenTypeURI SpecimenType = "URI"
 	// SpecimenTypePLM is a specimen type for plasma.
@@ -30,6 +33,12 @@ func (s SpecimenType) Name() string {
 	switch s {
 	case SpecimenTypeSER:
 		return "Serum"
+	case SpecimenTypeSEROne:
+		return "Serum 1"
+	case SpecimenTypeSERTwo:
+		return "Serum 2"
+	case SpecimenTypeSERThree:
+		return "Serum 3"
 	case SpecimenTypeURI:
 		return "Urine"
 	case SpecimenTypePLM:

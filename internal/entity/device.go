@@ -21,6 +21,10 @@ const (
 	DeviceTypeAlifax           DeviceType = "ALIFAX"
 	DeviceTypeBTS              DeviceType = "BTS"
 	DeviceTypeDiestro          DeviceType = "DIESTRO"
+	DeviceTypeAbbott           DeviceType = "ABBOTT"
+	DeviceTypeResponse911      DeviceType = "RESPONSE_911"
+	DeviceTypeEdanI15          DeviceType = "EDAN_I15"
+	DeviceTypeEdanH30          DeviceType = "EDAN_H30"
 
 	// Others
 	DeviceTypeWondfo     DeviceType = "Wondfo"
@@ -97,6 +101,19 @@ var TableDeviceType = Tables{
 	{ID: string(DeviceTypeVerifyU120), Name: string(DeviceTypeVerifyU120), AdditionalInfo: DeviceCapability{
 		CanReceive: true,
 		UseSerial:  true,
+	}},
+	{ID: string(DeviceTypeAbbott), Name: string(DeviceTypeAbbott), AdditionalInfo: DeviceCapability{
+		CanSend:    true,
+		CanReceive: true,
+	}},
+	{ID: string(DeviceTypeResponse911), Name: string(DeviceTypeResponse911), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+	}},
+	{ID: string(DeviceTypeEdanI15), Name: string(DeviceTypeEdanI15), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
+	}},
+	{ID: string(DeviceTypeEdanH30), Name: string(DeviceTypeEdanH30), AdditionalInfo: DeviceCapability{
+		CanReceive: true,
 	}},
 }
 

@@ -12,9 +12,13 @@ import (
 	verifyu120 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/verifyU120"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/a15"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/abbott"
 	analyxpanca "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/analyx_panca"
 	analyxtrias "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/analyx_trias"
+	edanh30 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/edan_h30"
+	edani15 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/edan_i15"
 	ncc61 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/neomedika_ncc61"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/response911"
 	swelabalfa "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/swelab_alfa"
 	swelablumi "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/swelab_lumi"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/wondfo"
@@ -140,6 +144,8 @@ var restRepositorySet = wire.NewSet(
 
 var tcpHandlerSet = wire.NewSet(
 	a15.NewHandler,
+	abbott.NewHandler,
+	response911.NewHandler,
 	coax.NewHandler,
 	diestro.NewHandler,
 	ncc3300.NewHandler,
@@ -152,6 +158,8 @@ var tcpHandlerSet = wire.NewSet(
 	ncc61.NewHandler,
 	delivery.NewDeviceServerStrategy,
 	wondfo.NewHandler,
+	edani15.NewHandler,
+	edanh30.NewHandler,
 	cbs400.NewHandler,
 	verifyu120.NewHandler,
 	wire.Bind(new(repository.DeviceServerStrategy), new(*delivery.DeviceServerStrategy)),
