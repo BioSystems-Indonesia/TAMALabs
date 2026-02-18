@@ -5,7 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -53,7 +55,12 @@ func (s *NuhaService) GetLabList(
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		bodyStr := strings.TrimSpace(string(bodyBytes))
+		if len(bodyStr) > 2048 {
+			bodyStr = bodyStr[:2048] + "...(truncated)"
+		}
+		return nil, fmt.Errorf("unexpected status code: %d from %s - response body: %s", resp.StatusCode, url, bodyStr)
 	}
 
 	var result LabListResponse

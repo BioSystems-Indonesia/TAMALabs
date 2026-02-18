@@ -2,6 +2,7 @@ package nuha_simrs
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -55,24 +56,111 @@ func (c *SIMRSNuha) GetLabOrder(ctx context.Context) error {
 		ValidTo:   today,
 	}
 
+	// Mask session ID for logs (avoid leaking full session token)
+	maskedSession := c.SessionID
+	if len(maskedSession) > 6 {
+		maskedSession = maskedSession[:6] + "..."
+	}
+
+	slog.InfoContext(ctx, "Starting GetLabOrder",
+		"base_url", c.BaseURL,
+		"session_id_masked", maskedSession,
+		"valid_from", req.ValidFrom,
+		"valid_to", req.ValidTo,
+	)
+
+	// Log masked request payload for easier debugging (session id masked above)
+	logReq := req
+	logReq.SessionID = maskedSession
+	if payloadBytes, err := json.Marshal(logReq); err == nil {
+		slog.InfoContext(ctx, "Nuha GetLabList request payload (masked)", "request_payload", string(payloadBytes))
+	} else {
+		slog.WarnContext(ctx, "Failed to marshal Nuha GetLabList request payload for logging", "error", err)
+	}
+
+	start := time.Now()
 	result, err := nuhaService.GetLabList(ctx, req)
+	durationMs := time.Since(start).Milliseconds()
 	if err != nil {
+		slog.ErrorContext(ctx, "Failed to get lab list from Nuha SIMRS",
+			"error", err,
+			"duration_ms", durationMs,
+			"session_id_masked", maskedSession,
+		)
 		return fmt.Errorf("failed to get lab list: %w", err)
 	}
 
-	slog.InfoContext(ctx, "Retrieved lab orders from Nuha SIMRS",
-		"count", len(result.Response.List),
-		"date", today)
+	count := 0
+	if result != nil {
+		count = len(result.Response.List)
+	}
 
-	for _, labReg := range result.Response.List {
+	slog.InfoContext(ctx, "Retrieved lab orders from Nuha SIMRS",
+		"count", count,
+		"date", today,
+		"duration_ms", durationMs,
+	)
+
+	// Log response metadata if present
+	if result != nil {
+		slog.InfoContext(ctx, "Nuha response metadata",
+			"metadata_code", result.Metadata.Code,
+			"metadata_message", result.Metadata.Message,
+		)
+	}
+
+	if count == 0 {
+		slog.WarnContext(ctx, "No lab orders returned from Nuha SIMRS", "date", today)
+		return nil
+	}
+
+	// Process entries and collect stats
+	var processedCount, failedCount int
+	for idx, labReg := range result.Response.List {
+		// Build concise test summary (limit to first 8 tests)
+		testSummaries := make([]string, 0, len(labReg.TestList))
+		for i, t := range labReg.TestList {
+			if i >= 8 {
+				break
+			}
+			testSummaries = append(testSummaries, fmt.Sprintf("%s(%d)", t.TestName, t.TestID))
+		}
+
+		slog.InfoContext(ctx, "Processing lab registration from Nuha SIMRS",
+			"index", idx,
+			"lab_number", labReg.LabNumber,
+			"order_date", labReg.OrderDate.Format("2006-01-02 15:04:05"),
+			"patient_name", labReg.PatientName,
+			"mrn", labReg.MedicalRecordNo,
+			"birthdate", labReg.BirthDate.Format("2006-01-02"),
+			"gender", labReg.Gender,
+			"age", labReg.AgeDescription,
+			"room", labReg.Room,
+			"is_cito", labReg.IsCITO,
+			"test_count", len(labReg.TestList),
+			"tests_sample", strings.Join(testSummaries, ", "),
+		)
+
 		if err := c.processLabRegistration(ctx, labReg); err != nil {
+			failedCount++
 			slog.ErrorContext(ctx, "Failed to process lab registration",
 				"lab_number", labReg.LabNumber,
 				"patient_name", labReg.PatientName,
-				"error", err)
+				"mrn", labReg.MedicalRecordNo,
+				"error", err,
+			)
 			continue
 		}
+
+		processedCount++
 	}
+
+	slog.InfoContext(ctx, "GetLabOrder processing summary",
+		"total_retrieved", count,
+		"processed_success", processedCount,
+		"processed_failed", failedCount,
+		"date", today,
+	)
 
 	return nil
 }
@@ -155,7 +243,7 @@ func (c *SIMRSNuha) findOrCreatePatient(ctx context.Context, labReg LabRegistrat
 	patient := &entity.Patient{
 		FirstName:           firstName,
 		LastName:            lastName,
-		Birthdate:           labReg.BirthDate,
+		Birthdate:           labReg.BirthDate.Time,
 		Sex:                 sex,
 		MedicalRecordNumber: labReg.MedicalRecordNo,
 		Address:             labReg.Address,

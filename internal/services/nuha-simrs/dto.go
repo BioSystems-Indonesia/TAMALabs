@@ -1,6 +1,48 @@
 package nuha_simrs
 
-import "time"
+import (
+	"fmt"
+	"strings"
+	"time"
+)
+
+type NuhaTime struct {
+	time.Time
+}
+
+// UnmarshalJSON accepts multiple date/time formats returned by Nuha SIMRS.
+func (t *NuhaTime) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), `"`)
+	if s == "null" || s == "" {
+		// keep zero value
+		t.Time = time.Time{}
+		return nil
+	}
+
+	// Common layouts we expect from SIMRS: full RFC3339, space-separated, or date-only
+	layouts := []string{
+		time.RFC3339,
+		"2006-01-02 15:04:05",
+		"2006-01-02T15:04:05",
+		"2006-01-02",
+	}
+	for _, l := range layouts {
+		if tm, err := time.Parse(l, s); err == nil {
+			t.Time = tm
+			return nil
+		}
+	}
+
+	return fmt.Errorf("unable to parse NuhaTime: %s", s)
+}
+
+// MarshalJSON outputs RFC3339 if value is non-zero, otherwise null
+func (t NuhaTime) MarshalJSON() ([]byte, error) {
+	if t.Time.IsZero() {
+		return []byte("null"), nil
+	}
+	return []byte(fmt.Sprintf("\"%s\"", t.Time.Format(time.RFC3339))), nil
+}
 
 type LabListRequest struct {
 	SessionID string `json:"session_id"`
@@ -70,11 +112,11 @@ type LabListData struct {
 }
 
 type LabRegistration struct {
-	OrderDate       time.Time `json:"tgl"`
+	OrderDate       NuhaTime  `json:"tgl"`
 	LabNumber       int       `json:"no_lab"`
 	MedicalRecordNo string    `json:"no_rm"`
 	PatientName     string    `json:"nama"`
-	BirthDate       time.Time `json:"tgl_lahir"`
+	BirthDate       NuhaTime  `json:"tgl_lahir"`
 	Gender          string    `json:"jenis_kelamin"`
 	AgeDescription  string    `json:"umur"`
 	Address         string    `json:"alamat"`
@@ -165,16 +207,16 @@ type UpdateLabFlagResponse struct {
 }
 
 type LabFlagLog struct {
-	LogID        int       `json:"id_log"`
-	LabNumber    int       `json:"no_lab"`
-	FetchedAt    time.Time `json:"fetched_at"`
-	Flag         bool      `json:"flag"`
-	InsertedUser string    `json:"inserted_user"`
-	InsertedDate time.Time `json:"inserted_date"`
-	InsertedIP   string    `json:"inserted_ip"`
-	UpdatedUser  string    `json:"updated_user"`
-	UpdatedDate  time.Time `json:"updated_date"`
-	UpdatedIP    string    `json:"updated_ip"`
+	LogID        int      `json:"id_log"`
+	LabNumber    int      `json:"no_lab"`
+	FetchedAt    NuhaTime `json:"fetched_at"`
+	Flag         bool     `json:"flag"`
+	InsertedUser string   `json:"inserted_user"`
+	InsertedDate NuhaTime `json:"inserted_date"`
+	InsertedIP   string   `json:"inserted_ip"`
+	UpdatedUser  string   `json:"updated_user"`
+	UpdatedDate  NuhaTime `json:"updated_date"`
+	UpdatedIP    string   `json:"updated_ip"`
 }
 
 type InsertBulkResultRequest struct {
@@ -203,30 +245,30 @@ type InsertBulkResultResponse struct {
 }
 
 type LabResultRecord struct {
-	ResultID       int       `json:"hasil_id"`
-	LabNumber      int       `json:"no_lab"`
-	TestName       string    `json:"nama_test"`
-	ResultValue    string    `json:"hasil"`
-	Unit           string    `json:"satuan"`
-	Reference      string    `json:"nilai_rujukan"`
-	AbnormalFlag   string    `json:"abnormal"`
-	Note           string    `json:"keterangan"`
-	Comment        string    `json:"catatan"`
-	TestID         int       `json:"test_id"`
-	PackageID      int       `json:"paket_id"`
-	Index          int       `json:"index"`
-	ResultText     string    `json:"hasil_text"`
-	Spacing        string    `json:"spasi"`
-	Status         string    `json:"status"`
-	ValidationFlag string    `json:"validasi"`
-	ValidatedBy    string    `json:"user_validasi"`
-	ValidatedAt    time.Time `json:"tanggal_validasi"`
-	InsertedUser   string    `json:"inserted_user"`
-	InsertedDate   time.Time `json:"inserted_date"`
-	InsertedIP     string    `json:"inserted_ip"`
-	UpdatedUser    string    `json:"updated_user"`
-	UpdatedDate    time.Time `json:"updated_date"`
-	UpdatedIP      string    `json:"updated_ip"`
+	ResultID       int      `json:"hasil_id"`
+	LabNumber      int      `json:"no_lab"`
+	TestName       string   `json:"nama_test"`
+	ResultValue    string   `json:"hasil"`
+	Unit           string   `json:"satuan"`
+	Reference      string   `json:"nilai_rujukan"`
+	AbnormalFlag   string   `json:"abnormal"`
+	Note           string   `json:"keterangan"`
+	Comment        string   `json:"catatan"`
+	TestID         int      `json:"test_id"`
+	PackageID      int      `json:"paket_id"`
+	Index          int      `json:"index"`
+	ResultText     string   `json:"hasil_text"`
+	Spacing        string   `json:"spasi"`
+	Status         string   `json:"status"`
+	ValidationFlag string   `json:"validasi"`
+	ValidatedBy    string   `json:"user_validasi"`
+	ValidatedAt    NuhaTime `json:"tanggal_validasi"`
+	InsertedUser   string   `json:"inserted_user"`
+	InsertedDate   NuhaTime `json:"inserted_date"`
+	InsertedIP     string   `json:"inserted_ip"`
+	UpdatedUser    string   `json:"updated_user"`
+	UpdatedDate    NuhaTime `json:"updated_date"`
+	UpdatedIP      string   `json:"updated_ip"`
 }
 
 type Metadata struct {
