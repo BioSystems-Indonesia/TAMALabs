@@ -201,7 +201,7 @@ func (s *ObservationResultSyncService) SyncObservationResult(ctx context.Context
 
 func (s *ObservationResultSyncService) GeneratePublicLink(ctx context.Context, apiKey string, barcode string) (*GeneratePublicLinkResponse, error) {
 	log.Printf("🔗 [GeneratePublicLink] Starting public link generation for barcode: %s", barcode)
-	
+
 	labKey, err := helper.LoadLabKey(s.labKeyPath)
 	if err != nil {
 		log.Printf("❌ [GeneratePublicLink] Failed to load lab key from path '%s': %v", s.labKeyPath, err)
@@ -225,7 +225,7 @@ func (s *ObservationResultSyncService) GeneratePublicLink(ctx context.Context, a
 
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("X-API-Key", apiKey)
-	
+
 	log.Printf("📤 [GeneratePublicLink] Sending POST request to: %s", url)
 
 	resp, err := s.client.Do(req)
