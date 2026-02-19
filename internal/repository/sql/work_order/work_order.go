@@ -22,8 +22,8 @@ import (
 )
 
 type testTypeWithPackage struct {
-	testType   entity.TestType
-	packageID  *int
+	testType  entity.TestType
+	packageID *int
 	// optional SIMRS index carried from WorkOrderCreateRequestTestType.SimrsIndex
 	simrsIndex *int
 }

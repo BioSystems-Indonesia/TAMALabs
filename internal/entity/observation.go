@@ -19,9 +19,9 @@ type ObservationRequest struct {
 	SpecimenID      int64     `json:"specimen_id" gorm:"not null;index:observation_request_uniq,unique,priority:2" validate:"required"`
 	PackageID       *int      `json:"package_id" gorm:"default:null"`
 	// simrs_index: index value coming from external SIMRS (Nuha). Nullable for backward compatibility.
-	SimrsIndex      *int      `json:"simrs_index,omitempty" gorm:"column:simrs_index;default:null"`
-	CreatedAt       time.Time `json:"created_at" gorm:"not null"`
-	UpdatedAt       time.Time `json:"updated_at" gorm:"not null"`
+	SimrsIndex *int      `json:"simrs_index,omitempty" gorm:"column:simrs_index;default:null"`
+	CreatedAt  time.Time `json:"created_at" gorm:"not null"`
+	UpdatedAt  time.Time `json:"updated_at" gorm:"not null"`
 
 	TestType  TestType  `json:"test_type" gorm:"foreignKey:TestTypeID;references:ID;->" validate:"-"`
 	WorkOrder WorkOrder `json:"work_order" gorm:"-" validate:"-"`
