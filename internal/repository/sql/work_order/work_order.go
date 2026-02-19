@@ -22,8 +22,10 @@ import (
 )
 
 type testTypeWithPackage struct {
-	testType  entity.TestType
-	packageID *int
+	testType   entity.TestType
+	packageID  *int
+	// optional SIMRS index carried from WorkOrderCreateRequestTestType.SimrsIndex
+	simrsIndex *int
 }
 
 type WorkOrderRepository struct {
@@ -576,6 +578,7 @@ func (r WorkOrderRepository) upsertRelation(
 				SpecimenID:      int64(specimen.ID),
 				RequestedDate:   time.Now(),
 				PackageID:       ttWithPkg.packageID,
+				SimrsIndex:      ttWithPkg.simrsIndex,
 			}
 
 			slog.InfoContext(trx.Statement.Context, "Creating ObservationRequest",
@@ -630,8 +633,9 @@ func (r WorkOrderRepository) groupBySpecimenType(trx *gorm.DB, req *entity.WorkO
 		specimenTypes[specimenType] = append(
 			specimenTypes[specimenType],
 			testTypeWithPackage{
-				testType:  tt,
-				packageID: testType.PackageID,
+				testType:   tt,
+				packageID:  testType.PackageID,
+				simrsIndex: testType.SimrsIndex,
 			},
 		)
 	}

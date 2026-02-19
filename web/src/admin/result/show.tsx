@@ -509,12 +509,6 @@ const TestResultTable = (props: TestResultTableProps) => {
                     flex: 1,
                 },
                 {
-                    field: 'alias',
-                    headerName: 'Alias',
-                    flex: 1,
-                },
-
-                {
                     field: 'result',
                     headerName: 'Result',
                     type: 'string',

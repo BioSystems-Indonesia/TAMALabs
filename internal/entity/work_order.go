@@ -52,6 +52,8 @@ type WorkOrderCreateRequestTestType struct {
 	TestTypeCode string `json:"test_type_code" validate:"required"`
 	SpecimenType string `json:"specimen_type" validate:"required"`
 	PackageID    *int   `json:"package_id,omitempty"`
+	// Optional index provided by external SIMRS (e.g. Nuha) for multi‑specimen tests
+	SimrsIndex   *int   `json:"simrs_index,omitempty" gorm:"-"`
 }
 
 type WorkOrder struct {

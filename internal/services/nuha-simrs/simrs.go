@@ -304,11 +304,14 @@ func (c *SIMRSNuha) parseTestTypes(ctx context.Context, testList []LabTest) ([]e
 				}
 
 				packageID := detail.PackageID
-				testTypes = append(testTypes, entity.WorkOrderCreateRequestTestType{
-					TestTypeID:   int64(testType.ID),
-					TestTypeCode: testType.Code,
-					SpecimenType: testType.GetFirstType(),
-					PackageID:    &packageID,
+			// preserve simrs index from incoming package detail
+			simrsIdx := detail.Index
+			testTypes = append(testTypes, entity.WorkOrderCreateRequestTestType{
+				TestTypeID:   int64(testType.ID),
+				TestTypeCode: testType.Code,
+				SpecimenType: testType.GetFirstType(),
+				PackageID:    &packageID,
+				SimrsIndex:   &simrsIdx,
 				})
 			}
 		} else {
@@ -622,10 +625,14 @@ func (c *SIMRSNuha) sendWorkOrderResults(
 			"specimen_id", specimen.ID,
 			"observation_result_count", len(specimen.ObservationResult))
 
-		testTypeToPackageID := make(map[int]*int)
-		for _, obsReq := range specimen.ObservationRequest {
-			if obsReq.TestTypeID != nil {
-				testTypeToPackageID[*obsReq.TestTypeID] = obsReq.PackageID
+// map test_type -> package_id and test_type -> simrs index (if available)
+			testTypeToPackageID := make(map[int]*int)
+			testTypeToSimrsIndex := make(map[int]*int)
+			for _, obsReq := range specimen.ObservationRequest {
+				if obsReq.TestTypeID != nil {
+					testTypeToPackageID[*obsReq.TestTypeID] = obsReq.PackageID
+					// preserve simrs index from observation request (nullable)
+					testTypeToSimrsIndex[*obsReq.TestTypeID] = obsReq.SimrsIndex
 			}
 		}
 
@@ -727,16 +734,22 @@ func (c *SIMRSNuha) sendWorkOrderResults(
 				packageID = *pkgID
 			}
 
-			item := BatchInsertResultItem{
-				LabNumber:      labNumber,
-				TestName:       testName,
-				Result:         valueStr,
-				ReferenceRange: obsResult.ReferenceRange,
-				Abnormal:       abnormalFlag,
-				Unit:           obsResult.Unit,
-				TestID:         testIDFromAlias,
-				PackageID:      packageID,
-				Index:          index,
+// prefer SIMRS (Nuha) index saved in ObservationRequest if available
+				itemIndex := index
+				if simIdx, ok := testTypeToSimrsIndex[obsResult.TestType.ID]; ok && simIdx != nil {
+					itemIndex = *simIdx
+				}
+
+				item := BatchInsertResultItem{
+					LabNumber:      labNumber,
+					TestName:       testName,
+					Result:         valueStr,
+					ReferenceRange: obsResult.ReferenceRange,
+					Abnormal:       abnormalFlag,
+					Unit:           obsResult.Unit,
+					TestID:         testIDFromAlias,
+					PackageID:      packageID,
+					Index:          itemIndex,
 				ResultText:     resultText,
 				InsertedUser:   insertedUser,
 				InsertedIP:     insertedIP,

@@ -284,7 +284,7 @@ export function WorkOrderShow() {
                                 return (
                                     <LIMSBarcode
                                         barcode={specimen.barcode}
-                                        name={record.patient.first_name}
+                                        name={`${record.patient.first_name} ${record.patient.last_name}`}
                                         height={settings.barcode_height}
                                         width={settings.barcode_width}
                                         birthDt={record.patient.birthdate}
