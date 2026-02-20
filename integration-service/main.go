@@ -160,8 +160,11 @@ func main() {
 	}
 	defer dlw.Close()
 
-	multiWriter := io.MultiWriter(os.Stdout, dlw)
-	log.SetOutput(multiWriter)
+	writers := []io.Writer{dlw}
+	if stdoutIsAttached() {
+		writers = append(writers, os.Stdout)
+	}
+	log.SetOutput(io.MultiWriter(writers...))
 	log.SetFlags(log.LstdFlags)
 
 	log.Println("🚀 LIS Integration Service started")
@@ -536,6 +539,14 @@ func corsMiddleware(next http.Handler) http.Handler {
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+func stdoutIsAttached() bool {
+	fi, err := os.Stdout.Stat()
+	if err != nil {
+		return false
+	}
+	return (fi.Mode() & os.ModeCharDevice) != 0
 }
 
 func retryWithBackoff(maxRetries int, baseDelay time.Duration, fn func() error) error {

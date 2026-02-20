@@ -42,7 +42,7 @@ build-service-helper:
 # Build Integration Service
 build-integration-service:
 	@echo "Building integration service..."
-	cd integration-service && go build -ldflags -v -o ../bin/TAMALabsIntegration.exe .
+	cd integration-service && go build -ldflags "-H windowsgui" -v -o ../bin/TAMALabsIntegration.exe .
 	@echo "✅ Integration service built successfully."
 
 # Simple Tray Build (no manifest)

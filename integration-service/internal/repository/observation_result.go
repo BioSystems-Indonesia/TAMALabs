@@ -29,7 +29,6 @@ func (r ObservationResultImpl) FindAll(ctx context.Context) ([]models.Specimen, 
 
 	err := r.db.WithContext(ctx).
 		Table("specimens").
-		// only include specimens that have at least one observation_result needing sync
 		Where(`
 			EXISTS (
 				SELECT 1 FROM observation_results o
@@ -41,8 +40,6 @@ func (r ObservationResultImpl) FindAll(ctx context.Context) ([]models.Specimen, 
 				)
 			)
 		`).
-		// Preload observation results: among those that need sync prefer picked=true;
-		// if no picked result requires sync, include the (unpicked) results that require sync.
 		Preload(
 			"ObservationResult",
 			`
