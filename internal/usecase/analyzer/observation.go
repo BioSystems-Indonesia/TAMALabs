@@ -422,3 +422,76 @@ func (u *Usecase) ProcessVerifyU120Batch(ctx context.Context, data []entity.Veri
 
 	return nil
 }
+
+func (u *Usecase) ProcessAbbott(ctx context.Context, data entity.AbbottMessage) error {
+	// Find specimen by patient ID or sample ID
+	barcode := data.SampleInfo.PatientID
+	if barcode == "" {
+		barcode = data.SampleInfo.SampleID
+	}
+
+	specimen, err := u.SpecimenRepository.FindByBarcode(ctx, barcode)
+	if err != nil {
+		slog.Error("specimen not found for Abbott", "barcode", barcode, "error", err)
+		return err
+	}
+
+	if len(data.TestResults) == 0 {
+		slog.Warn("no test results in Abbott message", "barcode", barcode)
+		return nil
+	}
+
+	observations := make([]entity.ObservationResult, 0, len(data.TestResults))
+
+	for _, testResult := range data.TestResults {
+		// Skip empty values
+		if testResult.Value == "" {
+			continue
+		}
+
+		observation := entity.ObservationResult{
+			SpecimenID: int64(specimen.ID),
+			TestCode:   testResult.TestCode,
+			Values:     []string{testResult.Value},
+			Unit:       testResult.Unit,
+			Date:       data.Timestamp,
+		}
+
+		// Add reference range if available
+		if testResult.RefMin != "" && testResult.RefMax != "" {
+			observation.ReferenceRange = fmt.Sprintf("%s - %s", testResult.RefMin, testResult.RefMax)
+		}
+
+		observations = append(observations, observation)
+	}
+
+	if len(observations) == 0 {
+		slog.Warn("no valid observations to create for Abbott", "barcode", barcode)
+		return nil
+	}
+
+	// Create all observations at once
+	err = u.ObservationResultRepository.CreateMany(ctx, observations)
+	if err != nil {
+		slog.Error("failed to create observation results for Abbott", "specimen_id", specimen.ID, "count", len(observations), "error", err)
+		return err
+	}
+
+	// Update work order status to completed
+	workOrder := specimen.WorkOrder
+	workOrder.Status = entity.WorkOrderStatusCompleted
+	err = u.WorkOrderRepository.Update(&workOrder)
+	if err != nil {
+		slog.Error("failed to update work order status for Abbott", "work_order_id", workOrder.ID, "error", err)
+		return err
+	}
+
+	slog.Info("Successfully processed Abbott results",
+		"patientID", data.SampleInfo.PatientID,
+		"sampleID", data.SampleInfo.SampleID,
+		"specimenID", specimen.ID,
+		"workOrderID", workOrder.ID,
+		"resultCount", len(observations))
+
+	return nil
+}

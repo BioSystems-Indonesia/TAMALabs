@@ -17,4 +17,5 @@ type Analyzer interface {
 	ProcessCBS400(ctx context.Context, data entity.CBS400Result) error
 	ProcessVerifyU120(ctx context.Context, data entity.VerifyResult) error
 	ProcessVerifyU120Batch(ctx context.Context, data []entity.VerifyResult) error
+	ProcessAbbott(ctx context.Context, data entity.AbbottMessage) error
 }

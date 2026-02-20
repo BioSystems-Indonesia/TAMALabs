@@ -90,6 +90,7 @@ func (dlw *DailyLogWriter) rotateIfNeeded() error {
 
 	if dlw.lastDate != currentDate {
 		if dlw.file != nil {
+			dlw.file.Sync() // Flush sebelum menutup file
 			dlw.file.Close()
 		}
 
@@ -117,7 +118,17 @@ func (dlw *DailyLogWriter) Write(p []byte) (n int, err error) {
 		return 0, err
 	}
 
-	return dlw.file.Write(p)
+	n, err = dlw.file.Write(p)
+	if err != nil {
+		return n, err
+	}
+
+	// Sync untuk memastikan data benar-benar ditulis ke disk
+	if syncErr := dlw.file.Sync(); syncErr != nil {
+		return n, syncErr
+	}
+
+	return n, nil
 }
 
 func (dlw *DailyLogWriter) Close() error {
@@ -125,6 +136,7 @@ func (dlw *DailyLogWriter) Close() error {
 	defer dlw.mu.Unlock()
 
 	if dlw.file != nil {
+		dlw.file.Sync() // Flush sebelum menutup
 		return dlw.file.Close()
 	}
 

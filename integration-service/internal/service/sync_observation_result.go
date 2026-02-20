@@ -226,43 +226,67 @@ func (s *ObservationResultSyncService) SyncObservationResult(ctx context.Context
 }
 
 func (s *ObservationResultSyncService) GeneratePublicLink(ctx context.Context, apiKey string, barcode string) (*GeneratePublicLinkResponse, error) {
+	log.Printf("🔗 [GeneratePublicLink] Starting public link generation for barcode: %s", barcode)
+
 	labKey, err := helper.LoadLabKey(s.labKeyPath)
 	if err != nil {
+		log.Printf("❌ [GeneratePublicLink] Failed to load lab key from path '%s': %v", s.labKeyPath, err)
 		return nil, err
 	}
 
 	resultId := fmt.Sprintf("%sORD%s", labKey.LabId, barcode)
+	log.Printf("🔍 [GeneratePublicLink] Generated result ID: %s (LabId: %s, Barcode: %s)", resultId, labKey.LabId, barcode)
 
+	url := fmt.Sprintf("https://%s/unauthenticated/observation-result/generate/%s", s.baseUrl, resultId)
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("https://%s/unauthenticated/observation-result/generate/%s", s.baseUrl, resultId),
+		url,
 		nil,
 	)
+	if err != nil {
+		log.Printf("❌ [GeneratePublicLink] Failed to create HTTP request for URL '%s': %v", url, err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
 
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("X-API-Key", apiKey)
 
+	log.Printf("📤 [GeneratePublicLink] Sending POST request to: %s", url)
+
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return nil, err
+		log.Printf("❌ [GeneratePublicLink] HTTP request failed for URL '%s': %v", url, err)
+		return nil, fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
+		respBody, _ := ioutil.ReadAll(resp.Body)
+		log.Printf("❌ [GeneratePublicLink] Server returned error status %d for barcode '%s'. Response body: %s", resp.StatusCode, barcode, string(respBody))
+		return nil, fmt.Errorf("server returned status %d: %s", resp.StatusCode, string(respBody))
 	}
 
-	respBody, _ := ioutil.ReadAll(resp.Body)
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("❌ [GeneratePublicLink] Failed to read response body: %v", err)
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	log.Printf("📥 [GeneratePublicLink] Received response body: %s", string(respBody))
 
 	var serverResponse map[string]interface{}
 	if err := json.Unmarshal(respBody, &serverResponse); err != nil {
+		log.Printf("❌ [GeneratePublicLink] Failed to parse JSON response: %v. Raw response: %s", err, string(respBody))
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	data := ""
 	if d, ok := serverResponse["data"]; ok {
 		data = fmt.Sprintf("%v", d)
+		log.Printf("✅ [GeneratePublicLink] Successfully generated public link for barcode '%s': %s", barcode, data)
+	} else {
+		log.Printf("⚠️ [GeneratePublicLink] Response doesn't contain 'data' field for barcode '%s'. Full response: %+v", barcode, serverResponse)
 	}
 
 	response := &GeneratePublicLinkResponse{

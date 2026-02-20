@@ -47,6 +47,15 @@ var TableSpecimenType = Tables{
 		ID: string(SpecimenTypeSER), Name: `SER`,
 	},
 	{
+		ID: string(SpecimenTypeSEROne), Name: `SER1`,
+	},
+	{
+		ID: string(SpecimenTypeSERTwo), Name: `SER2`,
+	},
+	{
+		ID: string(SpecimenTypeSERThree), Name: `SER3`,
+	},
+	{
 		ID: string(SpecimenTypeURI), Name: `URI`,
 	},
 	{

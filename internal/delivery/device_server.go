@@ -12,9 +12,13 @@ import (
 	verifyu120 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/serial/verifyU120"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/a15"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/abbott"
 	analyxpanca "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/analyx_panca"
 	analyxtrias "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/analyx_trias"
+	edanh30 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/edan_h30"
+	edani15 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/edan_i15"
 	ncc61 "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/neomedika_ncc61"
+	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/response911"
 	swelabalfa "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/swelab_alfa"
 	swelablumi "github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/swelab_lumi"
 	"github.com/BioSystems-Indonesia/TAMALabs/internal/delivery/tcp/wondfo"
@@ -37,9 +41,13 @@ type DeviceServerStrategy struct {
 	alifaxHandler      *alifax.Handler
 	ncc61Handler       *ncc61.Handler
 
-	wondfoHandler     *wondfo.Handler
-	cbs400Handler     *cbs400.Handler
-	verifyu120Handler *verifyu120.Handler
+	wondfoHandler      *wondfo.Handler
+	edani15Handler     *edani15.Handler
+	edanh30Handler     *edanh30.Handler
+	cbs400Handler      *cbs400.Handler
+	verifyu120Handler  *verifyu120.Handler
+	abbottHandler      *abbott.Handler
+	response911Handler *response911.Handler
 }
 
 func NewDeviceServerStrategy(
@@ -56,8 +64,12 @@ func NewDeviceServerStrategy(
 	ncc61handler *ncc61.Handler,
 
 	wondfoHandler *wondfo.Handler,
+	edani15Handler *edani15.Handler,
+	edanh30Handler *edanh30.Handler,
 	cbs400Handler *cbs400.Handler,
 	verifyu120Handler *verifyu120.Handler,
+	abbottHandler *abbott.Handler,
+	response911Handler *response911.Handler,
 
 ) *DeviceServerStrategy {
 	return &DeviceServerStrategy{
@@ -74,9 +86,13 @@ func NewDeviceServerStrategy(
 		alifaxHandler:      alifaxHandler,
 		ncc61Handler:       ncc61handler,
 
-		wondfoHandler:     wondfoHandler,
-		cbs400Handler:     cbs400Handler,
-		verifyu120Handler: verifyu120Handler,
+		wondfoHandler:      wondfoHandler,
+		edani15Handler:     edani15Handler,
+		edanh30Handler:     edanh30Handler,
+		cbs400Handler:      cbs400Handler,
+		verifyu120Handler:  verifyu120Handler,
+		abbottHandler:      abbottHandler,
+		response911Handler: response911Handler,
 	}
 }
 
@@ -119,6 +135,10 @@ var tcpDeviceType = []entity.DeviceType{
 	entity.DeviceTypeNeomedicaNCC61,
 	entity.DeviceTypeOther,
 	entity.DeviceTypeWondfo,
+	entity.DeviceTypeEdanI15,
+	entity.DeviceTypeEdanH30,
+	entity.DeviceTypeAbbott,
+	entity.DeviceTypeResponse911,
 }
 
 var deviceTypeNotSupport = []entity.DeviceType{}
@@ -191,6 +211,14 @@ func (d *DeviceServerStrategy) ChooseDeviceTCPHandler(device entity.Device) (ser
 		return d.ncc61Handler, nil
 	case entity.DeviceTypeWondfo:
 		return d.wondfoHandler, nil
+	case entity.DeviceTypeEdanI15:
+		return d.edani15Handler, nil
+	case entity.DeviceTypeEdanH30:
+		return d.edanh30Handler, nil
+	case entity.DeviceTypeAbbott:
+		return d.abbottHandler, nil
+	case entity.DeviceTypeResponse911:
+		return d.response911Handler, nil
 	default:
 		return nil, nil
 	}
