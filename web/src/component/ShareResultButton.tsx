@@ -35,7 +35,7 @@ const ShareResultButton = ({ workOrder }: ShareResultButtonProps) => {
             }
 
             const data = await response.text();
-            await navigator.clipboard.writeText(data);
+            await navigator.clipboard.writeText(`https://tama-connection.com/public/result?id=${data}`);
 
             notify('Public link copied to clipboard!', {
                 type: 'success',

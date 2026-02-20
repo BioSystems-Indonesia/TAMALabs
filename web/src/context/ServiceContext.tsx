@@ -39,7 +39,7 @@ export const ServiceProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         pingService();
-        timer.current = setInterval(pingService, 30000);
+        timer.current = setInterval(pingService, 5000);
 
         return () => {
             if (timer.current != null) clearInterval(timer.current);

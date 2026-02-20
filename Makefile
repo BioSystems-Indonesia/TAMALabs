@@ -1,5 +1,5 @@
 .ONESHELL:
-.PHONY: build build-fe build-be build-be-win build-tray build-service-helper installer dev-fe dev-be migrate-hash migrate-down migrate-diff icon install wire release
+.PHONY: build build-fe build-be build-be-win build-tray build-service-helper build-integration-service installer dev-fe dev-be migrate-hash migrate-down migrate-diff icon install wire release
 
 # Inno Setup Compiler command line tool
 ISCC = ISCC.exe
@@ -8,7 +8,7 @@ ISCC = ISCC.exe
 ISS_FILE = setup.iss
 
 # Default build (semua komponen)
-build: build-fe build-be build-tray
+build: build-fe build-be build-tray build-integration-service
 
 # Build Frontend (React)
 build-fe:
@@ -38,6 +38,12 @@ build-service-helper:
 	rsrc -manifest cmd/service-helper/service-helper.exe.manifest -o cmd/service-helper/rsrc.syso
 	go build -ldflags "-H windowsgui" -v -o bin/service-helper.exe ./cmd/service-helper
 	@echo "✅ Service-helper built successfully."
+
+# Build Integration Service
+build-integration-service:
+	@echo "Building integration service..."
+	cd integration-service && go build -ldflags "-H windowsgui" -v -o ../bin/TAMALabsIntegration.exe .
+	@echo "✅ Integration service built successfully."
 
 # Simple Tray Build (no manifest)
 build-tray-simple:
