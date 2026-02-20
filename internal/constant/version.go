@@ -1,3 +1,3 @@
 package constant
 
-const AppVersion = "v1.1.1 Beta"
+const AppVersion = "v1.1.1"
